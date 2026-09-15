@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Empresas de Transporte</title>
+</h:head>
+<h:body>
+
+    <h1>Empresas de Transporte</h1>
+
+    <h2>Buscar</h2>
+    <h:form>
+        <h:inputText value="#{empresaView.nombre}" pt:placeholder="Nombre o razon social" />
+        <h:commandButton value="Buscar" action="#{empresaView.findEmpresas}">
+            <f:ajax execute="@form" render="tabla" />
+        </h:commandButton>
+        <h:commandLink value="Ver todas" action="#{empresaView.getAllEmpresas}">
+            <f:ajax render="tabla" />
+        </h:commandLink>
+        <h:link value="Crear empresa" outcome="crear-empresa" />
+
+        <h:panelGroup id="tabla" layout="block">
+            <ui:fragment rendered="#{not empty empresaView.empresas}">
+                <table border="1">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nro. Empresa</th>
+                        <th>Nombre Publico</th>
+                        <th>Razon Social</th>
+                        <th>Direccion Principal</th>
+                        <th>Fecha de Alta</th>
+                    </tr>
+                    <ui:repeat value="#{empresaView.empresas}" var="empresa">
+                        <tr>
+                            <td>#{empresa.id}</td>
+                            <td>#{empresa.nroEmpresa}</td>
+                            <td>#{empresa.nombrePublico}</td>
+                            <td>#{empresa.razonSocial}</td>
+                            <td>#{empresa.direccionPrincipal}</td>
+                            <td>#{empresa.fechaAlta}</td>
+                        </tr>
+                    </ui:repeat>
+                </table>
+            </ui:fragment>
+            <ui:fragment rendered="#{empty empresaView.empresas}">
+                <p>No se encontraron empresas.</p>
+            </ui:fragment>
+        </h:panelGroup>
+    </h:form>
+
+</h:body>
+</html>

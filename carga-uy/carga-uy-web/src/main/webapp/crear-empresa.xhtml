@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Crear Empresa</title>
+</h:head>
+<h:body>
+
+    <h1>Crear Empresa</h1>
+
+    <h:form>
+        <ui:fragment rendered="#{not empty empresaView.error}">
+            <p style="color: red;">#{empresaView.error}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty empresaView.mensaje}">
+            <p style="color: green;">#{empresaView.mensaje}</p>
+        </ui:fragment>
+        <h:messages style="color: red;" />
+
+        <p>Nro. Empresa: <h:inputText value="#{empresaView.empresa.nroEmpresa}" required="true" pt:type="number" /></p>
+        <p>Nombre Publico: <h:inputText value="#{empresaView.empresa.nombrePublico}" required="true" /></p>
+        <p>Razon Social: <h:inputText value="#{empresaView.empresa.razonSocial}" required="true" /></p>
+        <p>Direccion Principal: <h:inputText value="#{empresaView.empresa.direccionPrincipal}" /></p>
+
+        <h:commandButton value="Guardar" action="#{empresaView.createEmpresa}">
+            <f:ajax execute="@form" render="@form" />
+        </h:commandButton>
+    </h:form>
+
+    <p><h:link value="Volver al listado" outcome="empresas" /></p>
+
+</h:body>
+</html>

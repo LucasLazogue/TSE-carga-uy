@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: cargauy
+      POSTGRES_USER: cargauy
+      POSTGRES_PASSWORD: cargauy
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  carga-uy:
+    build: .
+    hostname: localhost
+    ports:
+      - "8080:8080"
+      - "9990:9990"
+
+volumes:
+  pgdata:

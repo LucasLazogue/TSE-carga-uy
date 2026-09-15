@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>carga-uy</artifactId>
+    <groupId>tse.cargauy</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>tse.cargauy</groupId>
+  <artifactId>carga-uy-ear</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>ear</packaging>
+
+  <name>carga-uy-ear</name>
+  <!-- FIXME change it to the project's website -->
+  <url>http://www.example.com</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>tse.cargauy</groupId>
+      <artifactId>carga-uy-datos</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <type>ejb</type>
+    </dependency>
+    <dependency>
+      <groupId>tse.cargauy</groupId>
+      <artifactId>carga-uy-ejb</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <type>ejb</type>
+    </dependency>
+    <dependency>
+      <groupId>tse.cargauy</groupId>
+      <artifactId>carga-uy-web</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <type>war</type>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>carga-uy</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-ear-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <version>10</version>
+          <defaultLibBundleDir>lib</defaultLibBundleDir>
+          <modules>
+            <webModule>
+              <groupId>tse.cargauy</groupId>
+              <artifactId>carga-uy-web</artifactId>
+              <contextRoot>/carga-uy</contextRoot>
+            </webModule>
+            <ejbModule>
+              <groupId>tse.cargauy</groupId>
+              <artifactId>carga-uy-ejb</artifactId>
+            </ejbModule>
+            <ejbModule>
+              <groupId>tse.cargauy</groupId>
+              <artifactId>carga-uy-datos</artifactId>
+            </ejbModule>
+          </modules>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
