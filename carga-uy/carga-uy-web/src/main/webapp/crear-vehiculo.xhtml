@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Crear Vehiculo</title>
+</h:head>
+<h:body>
+
+    <h1>Crear Vehiculo</h1>
+
+    <h:form>
+        <ui:fragment rendered="#{not empty vehiculoView.error}">
+            <p style="color: red;">#{vehiculoView.error}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty vehiculoView.mensaje}">
+            <p style="color: green;">#{vehiculoView.mensaje}</p>
+        </ui:fragment>
+        <h:messages style="color: red;" />
+
+        <p>Matricula: <h:inputText value="#{vehiculoView.vehiculo.matricula}" required="true" /></p>
+        <p>Marca: <h:inputText value="#{vehiculoView.vehiculo.marca}" required="true" /></p>
+        <p>Modelo: <h:inputText value="#{vehiculoView.vehiculo.modelo}" /></p>
+        <p>Peso (kg): <h:inputText value="#{vehiculoView.vehiculo.pesoVehiculo}" required="true" pt:type="number" /></p>
+        <p>Capacidad de Carga (kg): <h:inputText value="#{vehiculoView.vehiculo.capacidadCarga}" required="true" pt:type="number" /></p>
+        <p>Empresa:
+            <h:selectOneMenu value="#{vehiculoView.vehiculo.idEmpresa}" required="true">
+                <f:selectItem itemLabel="Seleccione una empresa" itemValue="" />
+                <f:selectItems value="#{vehiculoView.empresas}" var="empresa" itemValue="#{empresa.id}" itemLabel="#{empresa.nombrePublico}" />
+            </h:selectOneMenu>
+        </p>
+
+        <h:commandButton value="Guardar" action="#{vehiculoView.createVehiculo}">
+            <f:ajax execute="@form" render="@form" />
+        </h:commandButton>
+    </h:form>
+
+    <p><h:link value="Volver al listado" outcome="vehiculos" /></p>
+
+</h:body>
+</html>

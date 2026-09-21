@@ -17,6 +17,7 @@ Backoffice JSF corre en el puerto 8080:
 
 API REST:
 - http://localhost:8080/carga-uy/api/empresas
+- http://localhost:8080/carga-uy/api/vehiculos
 
 Alta asincronica: cola JMS queue_alta_empresa, mensaje de texto
 nroEmpresa|nombrePublico|razonSocial|direccionPrincipal

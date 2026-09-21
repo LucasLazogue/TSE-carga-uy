@@ -11,14 +11,17 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.negocio.empresa.EmpresaEJBRemote;
+import tse.cargauy.negocio.vehiculo.VehiculoEJBRemote;
 
 public class App {
     public static void main(String[] args) {
 
         Context ctx = null;
         EmpresaEJBRemote empresaEJB = null;
+        VehiculoEJBRemote vehiculoEJB = null;
 
         Properties props = new Properties();
         props.setProperty("java.naming.factory.initial", "org.wildfly.naming.client.WildFlyInitialContextFactory");
@@ -28,8 +31,10 @@ public class App {
 
         try {
             ctx = new InitialContext(props);
-            String jndiName = "carga-uy/tse.cargauy-carga-uy-ejb-1.0-SNAPSHOT/EmpresaEJB!tse.cargauy.negocio.empresa.EmpresaEJBRemote";
-            empresaEJB = (EmpresaEJBRemote) ctx.lookup(jndiName);
+            String empresaJndiName = "carga-uy/tse.cargauy-carga-uy-ejb-1.0-SNAPSHOT/EmpresaEJB!tse.cargauy.negocio.empresa.EmpresaEJBRemote";
+            empresaEJB = (EmpresaEJBRemote) ctx.lookup(empresaJndiName);
+            String vehiculoJndiName = "carga-uy/tse.cargauy-carga-uy-ejb-1.0-SNAPSHOT/VehiculoEJB!tse.cargauy.negocio.vehiculo.VehiculoEJBRemote";
+            vehiculoEJB = (VehiculoEJBRemote) ctx.lookup(vehiculoJndiName);
         } catch (NamingException e) {
             e.printStackTrace();
             return;
@@ -52,6 +57,15 @@ public class App {
                     createEmpresaCola(ctx);
                     break;
                 case 5:
+                    listVehiculos(vehiculoEJB);
+                    break;
+                case 6:
+                    listVehiculosByEmpresa(vehiculoEJB);
+                    break;
+                case 7:
+                    createVehiculo(vehiculoEJB);
+                    break;
+                case 8:
                     System.out.println("Saliendo del sistema...");
                     System.exit(0);
             }
@@ -65,7 +79,10 @@ public class App {
         System.out.println("2. Buscar empresa por nombre");
         System.out.println("3. Crear nueva empresa");
         System.out.println("4. Crear empresa por cola");
-        System.out.println("5. Salir");
+        System.out.println("5. Listar vehiculos");
+        System.out.println("6. Listar vehiculos por empresa");
+        System.out.println("7. Crear nuevo vehiculo");
+        System.out.println("8. Salir");
     }
 
     private static void listEmpresas(EmpresaEJBRemote empresaEJB) {
@@ -133,6 +150,50 @@ public class App {
             System.out.println("El numero de empresa debe ser numerico.");
         } catch (NamingException e) {
             System.out.println("Error al enviar el mensaje a la cola: " + e.getMessage());
+        }
+    }
+
+    private static void listVehiculos(VehiculoEJBRemote vehiculoEJB) {
+        List<VehiculoDto> vehiculos = vehiculoEJB.getAll();
+        for (VehiculoDto vehiculo : vehiculos) {
+            System.out.println(vehiculo);
+        }
+    }
+
+    private static void listVehiculosByEmpresa(VehiculoEJBRemote vehiculoEJB) {
+        try {
+            System.out.print("Ingrese el id de la empresa: ");
+            Long idEmpresa = Long.parseLong(System.console().readLine().trim());
+            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(idEmpresa);
+            for (VehiculoDto vehiculo : vehiculos) {
+                System.out.println(vehiculo);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("El id de la empresa debe ser numerico.");
+        }
+    }
+
+    private static void createVehiculo(VehiculoEJBRemote vehiculoEJB) {
+        try {
+            System.out.print("Ingrese la matricula: ");
+            String matricula = System.console().readLine();
+            System.out.print("Ingrese la marca: ");
+            String marca = System.console().readLine();
+            System.out.print("Ingrese el modelo: ");
+            String modelo = System.console().readLine();
+            System.out.print("Ingrese el peso del vehiculo en kg: ");
+            int pesoVehiculo = Integer.parseInt(System.console().readLine().trim());
+            System.out.print("Ingrese la capacidad de carga en kg: ");
+            int capacidadCarga = Integer.parseInt(System.console().readLine().trim());
+            System.out.print("Ingrese el id de la empresa: ");
+            Long idEmpresa = Long.parseLong(System.console().readLine().trim());
+
+            vehiculoEJB.addVehiculo(new VehiculoDto(matricula, marca, modelo, pesoVehiculo, capacidadCarga, idEmpresa));
+            System.out.println("Vehiculo creado exitosamente.");
+        } catch (NumberFormatException e) {
+            System.out.println("El peso, la capacidad de carga y el id de la empresa deben ser numericos.");
+        } catch (CargaUYException e) {
+            System.out.println("Error al crear el vehiculo: " + e.getMessage());
         }
     }
 }

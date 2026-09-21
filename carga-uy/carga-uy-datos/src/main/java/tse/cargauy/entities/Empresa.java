@@ -1,11 +1,14 @@
 package tse.cargauy.entities;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Empresa {
@@ -18,6 +21,8 @@ public class Empresa {
     private String razonSocial;
     private String direccionPrincipal;
     private LocalDate fechaAlta;
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.REMOVE)
+    private List<Vehiculo> vehiculos;
 
     public Empresa() {
     }
@@ -76,6 +81,14 @@ public class Empresa {
 
     public void setFechaAlta(LocalDate fechaAlta) {
         this.fechaAlta = fechaAlta;
+    }
+
+    public List<Vehiculo> getVehiculos() {
+        return vehiculos;
+    }
+
+    public void setVehiculos(List<Vehiculo> vehiculos) {
+        this.vehiculos = vehiculos;
     }
 
 }

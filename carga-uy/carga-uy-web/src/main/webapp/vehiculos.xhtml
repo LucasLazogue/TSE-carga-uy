@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Vehiculos</title>
+</h:head>
+<h:body>
+
+    <h1>Vehiculos</h1>
+
+    <h2>Buscar</h2>
+    <h:form>
+        <h:selectOneMenu value="#{vehiculoView.idEmpresa}">
+            <f:selectItem itemLabel="Todas las empresas" itemValue="" />
+            <f:selectItems value="#{vehiculoView.empresas}" var="empresa" itemValue="#{empresa.id}" itemLabel="#{empresa.nombrePublico}" />
+        </h:selectOneMenu>
+        <h:commandButton value="Buscar" action="#{vehiculoView.findVehiculos}">
+            <f:ajax execute="@form" render="tabla" />
+        </h:commandButton>
+        <h:commandLink value="Ver todos" action="#{vehiculoView.getAllVehiculos}">
+            <f:ajax render="tabla" />
+        </h:commandLink>
+        <h:link value="Crear vehiculo" outcome="crear-vehiculo" />
+        <h:link value="Empresas" outcome="empresas" />
+
+        <h:panelGroup id="tabla" layout="block">
+            <ui:fragment rendered="#{not empty vehiculoView.vehiculos}">
+                <table border="1">
+                    <tr>
+                        <th>ID</th>
+                        <th>Matricula</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Peso (kg)</th>
+                        <th>Capacidad de Carga (kg)</th>
+                        <th>Empresa</th>
+                    </tr>
+                    <ui:repeat value="#{vehiculoView.vehiculos}" var="vehiculo">
+                        <tr>
+                            <td>#{vehiculo.id}</td>
+                            <td>#{vehiculo.matricula}</td>
+                            <td>#{vehiculo.marca}</td>
+                            <td>#{vehiculo.modelo}</td>
+                            <td>#{vehiculo.pesoVehiculo}</td>
+                            <td>#{vehiculo.capacidadCarga}</td>
+                            <td>#{vehiculo.nombreEmpresa}</td>
+                        </tr>
+                    </ui:repeat>
+                </table>
+            </ui:fragment>
+            <ui:fragment rendered="#{empty vehiculoView.vehiculos}">
+                <p>No se encontraron vehiculos.</p>
+            </ui:fragment>
+        </h:panelGroup>
+    </h:form>
+
+</h:body>
+</html>

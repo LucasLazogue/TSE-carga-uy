@@ -7,6 +7,9 @@ function Inicio() {
       <p>
         <Link to="/empresas">Empresas</Link>
       </p>
+      <p>
+        <Link to="/vehiculos">Vehiculos</Link>
+      </p>
     </div>
   )
 }
