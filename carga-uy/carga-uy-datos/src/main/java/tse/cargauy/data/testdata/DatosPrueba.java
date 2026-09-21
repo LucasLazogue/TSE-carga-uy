@@ -7,8 +7,10 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
+import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 
 @Singleton
@@ -20,6 +22,9 @@ public class DatosPrueba {
 
     @EJB
     private VehiculoDAOLocal vehiculoDAO;
+
+    @EJB
+    private PermisoDAOLocal permisoDAO;
 
     @PostConstruct
     public void init() {
@@ -36,6 +41,19 @@ public class DatosPrueba {
             vehiculoDAO.addVehiculo(new VehiculoDto("SBB5678", "Scania", "R 450", 9000, 26000, empresas.get(0).getId()));
             vehiculoDAO.addVehiculo(new VehiculoDto("SCC9012", "Mercedes-Benz", "Actros 2646", 8800, 25000, empresas.get(1).getId()));
             vehiculoDAO.addVehiculo(new VehiculoDto("SDD3456", "Iveco", "Stralis 480", 8200, 23000, empresas.get(2).getId()));
+        }
+
+        if (permisoDAO.getAll().isEmpty() && vehiculoDAO.getAll().size() >= 4) {
+            Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
+            Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
+            Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();
+            Long sdd = vehiculoDAO.getVehiculoByMatricula("SDD3456").getId();
+
+            permisoDAO.addPermiso(new PermisoDto("PNC-1001", LocalDate.of(2024, 1, 1), LocalDate.of(2025, 12, 31), sta));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1002", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), sta));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1003", LocalDate.of(2026, 3, 1), LocalDate.of(2027, 2, 28), sbb));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1004", LocalDate.of(2026, 2, 1), LocalDate.of(2027, 1, 31), scc));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1005", LocalDate.of(2025, 6, 1), LocalDate.of(2026, 5, 31), sdd));
         }
     }
 }

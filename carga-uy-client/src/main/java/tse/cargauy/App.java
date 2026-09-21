@@ -1,5 +1,7 @@
 package tse.cargauy;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Properties;
 
@@ -11,9 +13,11 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.negocio.empresa.EmpresaEJBRemote;
+import tse.cargauy.negocio.permiso.PermisoEJBRemote;
 import tse.cargauy.negocio.vehiculo.VehiculoEJBRemote;
 
 public class App {
@@ -22,6 +26,7 @@ public class App {
         Context ctx = null;
         EmpresaEJBRemote empresaEJB = null;
         VehiculoEJBRemote vehiculoEJB = null;
+        PermisoEJBRemote permisoEJB = null;
 
         Properties props = new Properties();
         props.setProperty("java.naming.factory.initial", "org.wildfly.naming.client.WildFlyInitialContextFactory");
@@ -35,6 +40,8 @@ public class App {
             empresaEJB = (EmpresaEJBRemote) ctx.lookup(empresaJndiName);
             String vehiculoJndiName = "carga-uy/tse.cargauy-carga-uy-ejb-1.0-SNAPSHOT/VehiculoEJB!tse.cargauy.negocio.vehiculo.VehiculoEJBRemote";
             vehiculoEJB = (VehiculoEJBRemote) ctx.lookup(vehiculoJndiName);
+            String permisoJndiName = "carga-uy/tse.cargauy-carga-uy-ejb-1.0-SNAPSHOT/PermisoEJB!tse.cargauy.negocio.permiso.PermisoEJBRemote";
+            permisoEJB = (PermisoEJBRemote) ctx.lookup(permisoJndiName);
         } catch (NamingException e) {
             e.printStackTrace();
             return;
@@ -66,6 +73,12 @@ public class App {
                     createVehiculo(vehiculoEJB);
                     break;
                 case 8:
+                    listPermisosByVehiculo(permisoEJB);
+                    break;
+                case 9:
+                    createPermiso(permisoEJB);
+                    break;
+                case 10:
                     System.out.println("Saliendo del sistema...");
                     System.exit(0);
             }
@@ -82,7 +95,9 @@ public class App {
         System.out.println("5. Listar vehiculos");
         System.out.println("6. Listar vehiculos por empresa");
         System.out.println("7. Crear nuevo vehiculo");
-        System.out.println("8. Salir");
+        System.out.println("8. Listar permisos de un vehiculo");
+        System.out.println("9. Crear nuevo permiso");
+        System.out.println("10. Salir");
     }
 
     private static void listEmpresas(EmpresaEJBRemote empresaEJB) {
@@ -194,6 +209,48 @@ public class App {
             System.out.println("El peso, la capacidad de carga y el id de la empresa deben ser numericos.");
         } catch (CargaUYException e) {
             System.out.println("Error al crear el vehiculo: " + e.getMessage());
+        }
+    }
+
+    private static void listPermisosByVehiculo(PermisoEJBRemote permisoEJB) {
+        try {
+            System.out.print("Ingrese el id del vehiculo: ");
+            Long idVehiculo = Long.parseLong(System.console().readLine().trim());
+            List<PermisoDto> permisos = permisoEJB.getByVehiculo(idVehiculo);
+            for (PermisoDto permiso : permisos) {
+                System.out.println(permiso);
+            }
+
+            PermisoDto vigente = permisoEJB.getVigente(idVehiculo, LocalDate.now());
+            if (vigente == null) {
+                System.out.println("El vehiculo no tiene permiso vigente a la fecha.");
+            } else {
+                System.out.println("Permiso vigente: " + vigente.getNroPermiso());
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("El id del vehiculo debe ser numerico.");
+        }
+    }
+
+    private static void createPermiso(PermisoEJBRemote permisoEJB) {
+        try {
+            System.out.print("Ingrese el numero de permiso: ");
+            String nroPermiso = System.console().readLine();
+            System.out.print("Ingrese la fecha de inicio de validez (aaaa-mm-dd): ");
+            LocalDate validoDesde = LocalDate.parse(System.console().readLine().trim());
+            System.out.print("Ingrese la fecha de fin de validez (aaaa-mm-dd): ");
+            LocalDate validoHasta = LocalDate.parse(System.console().readLine().trim());
+            System.out.print("Ingrese el id del vehiculo: ");
+            Long idVehiculo = Long.parseLong(System.console().readLine().trim());
+
+            permisoEJB.addPermiso(new PermisoDto(nroPermiso, validoDesde, validoHasta, idVehiculo));
+            System.out.println("Permiso creado exitosamente.");
+        } catch (DateTimeParseException e) {
+            System.out.println("Las fechas deben tener el formato aaaa-mm-dd.");
+        } catch (NumberFormatException e) {
+            System.out.println("El id del vehiculo debe ser numerico.");
+        } catch (CargaUYException e) {
+            System.out.println("Error al crear el permiso: " + e.getMessage());
         }
     }
 }

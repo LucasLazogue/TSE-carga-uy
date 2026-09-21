@@ -10,6 +10,9 @@ function Inicio() {
       <p>
         <Link to="/vehiculos">Vehiculos</Link>
       </p>
+      <p>
+        <Link to="/permisos">Permisos</Link>
+      </p>
     </div>
   )
 }

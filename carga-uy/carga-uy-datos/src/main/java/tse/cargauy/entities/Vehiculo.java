@@ -1,10 +1,14 @@
 package tse.cargauy.entities;
 
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Vehiculo {
@@ -19,6 +23,8 @@ public class Vehiculo {
     private int capacidadCarga;
     @ManyToOne(optional = false)
     private Empresa empresa;
+    @OneToMany(mappedBy = "vehiculo", cascade = CascadeType.REMOVE)
+    private List<Permiso> permisos;
 
     public Vehiculo() {
     }
@@ -86,6 +92,14 @@ public class Vehiculo {
 
     public void setEmpresa(Empresa empresa) {
         this.empresa = empresa;
+    }
+
+    public List<Permiso> getPermisos() {
+        return permisos;
+    }
+
+    public void setPermisos(List<Permiso> permisos) {
+        this.permisos = permisos;
     }
 
 }
