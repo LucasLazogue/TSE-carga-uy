@@ -1,9 +1,30 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import auth from './auth/auth.service.ts'
+import type { Sesion } from './auth/auth.service.ts'
 
 function Inicio() {
+  const [sesion, setSesion] = useState<Sesion | null>(null)
+  const [params] = useSearchParams()
+  const error = params.get('error')
+
+  useEffect(() => {
+    auth.me().then(setSesion).catch(() => setSesion(null))
+  }, [])
+
   return (
     <div>
       <h2>Carga UY</h2>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {sesion ? (
+        <p>
+          {sesion.cedula} ({sesion.roles.join(', ')}) <a href={auth.urlLogout}>Salir</a>
+        </p>
+      ) : (
+        <p>
+          <a href={auth.urlLogin}>Ingresar con gub.uy</a>
+        </p>
+      )}
       <p>
         <Link to="/empresas">Empresas</Link>
       </p>
