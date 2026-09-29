@@ -16,6 +16,7 @@ import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.MensajesError;
 import tse.cargauy.negocio.empresa.EmpresaEJBRemote;
 import tse.cargauy.negocio.permiso.PermisoEJBRemote;
 import tse.cargauy.negocio.vehiculo.VehiculoEJBRemote;
@@ -141,7 +142,7 @@ public class App {
         } catch (NumberFormatException e) {
             System.out.println("El numero de empresa debe ser numerico.");
         } catch (CargaUYException e) {
-            System.out.println("Error al crear la empresa: " + e.getMessage());
+            System.out.println("Error al crear la empresa: " + MensajesError.resolver(e));
         }
     }
 
@@ -208,7 +209,7 @@ public class App {
         } catch (NumberFormatException e) {
             System.out.println("El peso, la capacidad de carga y el id de la empresa deben ser numericos.");
         } catch (CargaUYException e) {
-            System.out.println("Error al crear el vehiculo: " + e.getMessage());
+            System.out.println("Error al crear el vehiculo: " + MensajesError.resolver(e));
         }
     }
 
@@ -250,7 +251,7 @@ public class App {
         } catch (NumberFormatException e) {
             System.out.println("El id del vehiculo debe ser numerico.");
         } catch (CargaUYException e) {
-            System.out.println("Error al crear el permiso: " + e.getMessage());
+            System.out.println("Error al crear el permiso: " + MensajesError.resolver(e));
         }
     }
 }

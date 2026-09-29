@@ -2,7 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets"
       xmlns:pt="jakarta.faces.passthrough">
 <h:head>
     <meta charset="UTF-8" />
@@ -13,13 +12,7 @@
     <h1>Crear Empresa</h1>
 
     <h:form>
-        <ui:fragment rendered="#{not empty empresaView.error}">
-            <p style="color: red;">#{empresaView.error}</p>
-        </ui:fragment>
-        <ui:fragment rendered="#{not empty empresaView.mensaje}">
-            <p style="color: green;">#{empresaView.mensaje}</p>
-        </ui:fragment>
-        <h:messages style="color: red;" />
+        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
 
         <p>Nro. Empresa: <h:inputText value="#{empresaView.empresa.nroEmpresa}" required="true" pt:type="number" /></p>
         <p>Nombre Publico: <h:inputText value="#{empresaView.empresa.nombrePublico}" required="true" /></p>

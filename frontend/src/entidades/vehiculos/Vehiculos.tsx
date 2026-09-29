@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
+import { mensajeDeError } from '../../common/errores.ts'
 import empresasService from '../empresas/empresas.service.ts'
 import type { Empresa } from '../empresas/empresas.types.ts'
 import { VEHICULO_VACIO } from './vehiculos.constants.ts'
@@ -13,6 +14,7 @@ function Vehiculos() {
   const [idEmpresa, setIdEmpresa] = useState(0)
   const [creando, setCreando] = useState(false)
   const [nuevo, setNuevo] = useState<VehiculoNuevo>(VEHICULO_VACIO)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     empresasService.getAll().then(setEmpresas)
@@ -30,10 +32,15 @@ function Vehiculos() {
 
   async function guardar(e: FormEvent) {
     e.preventDefault()
-    await vehiculos.create(nuevo)
-    setNuevo(VEHICULO_VACIO)
-    setCreando(false)
-    await cargar(idEmpresa)
+    setError('')
+    try {
+      await vehiculos.create(nuevo)
+      setNuevo(VEHICULO_VACIO)
+      setCreando(false)
+      await cargar(idEmpresa)
+    } catch (err) {
+      setError(mensajeDeError(err))
+    }
   }
 
   return (
@@ -63,6 +70,7 @@ function Vehiculos() {
       {creando && (
         <form onSubmit={guardar}>
           <h2>Nuevo vehiculo</h2>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
           <div>
             <label>Matricula </label>
             <input

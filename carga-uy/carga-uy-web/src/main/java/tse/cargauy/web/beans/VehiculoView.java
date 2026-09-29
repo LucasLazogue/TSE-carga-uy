@@ -5,11 +5,12 @@ import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.VehiculoDto;
-import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 import tse.cargauy.negocio.vehiculo.VehiculoEJBLocal;
 
@@ -29,8 +30,6 @@ public class VehiculoView implements Serializable {
     List<EmpresaDto> empresas;
     VehiculoDto vehiculo = new VehiculoDto();
     Long idEmpresa;
-    String error;
-    String mensaje;
 
     @PostConstruct
     public void init() {
@@ -52,15 +51,10 @@ public class VehiculoView implements Serializable {
     }
 
     public void createVehiculo() {
-        error = null;
-        mensaje = null;
-        try {
-            vehiculoEJB.addVehiculo(vehiculo);
-            mensaje = "Vehiculo guardado.";
-            vehiculo = new VehiculoDto();
-        } catch (CargaUYException e) {
-            error = "Error al crear el vehiculo: " + e.getMessage();
-        }
+        vehiculoEJB.addVehiculo(vehiculo);
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Vehiculo guardado.", null));
+        vehiculo = new VehiculoDto();
     }
 
     public List<VehiculoDto> getVehiculos() {
@@ -69,14 +63,6 @@ public class VehiculoView implements Serializable {
 
     public List<EmpresaDto> getEmpresas() {
         return empresas;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public String getMensaje() {
-        return mensaje;
     }
 
     public Long getIdEmpresa() {

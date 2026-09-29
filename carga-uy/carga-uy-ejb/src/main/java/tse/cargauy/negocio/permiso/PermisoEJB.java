@@ -8,15 +8,16 @@ import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.CodigoError;
 
 @Stateless
 public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
 
     @EJB
-    private PermisoDAOLocal permisoDAO;
+    PermisoDAOLocal permisoDAO;
 
     @EJB
-    private VehiculoDAOLocal vehiculoDAO;
+    VehiculoDAOLocal vehiculoDAO;
 
     public PermisoDto getPermisoById(Long id) {
         return permisoDAO.getPermisoById(id);
@@ -37,7 +38,7 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
     public void addPermiso(PermisoDto permisoDto) {
         validar(permisoDto);
         if (permisoDAO.getPermisoByNro(permisoDto.getNroPermiso()) != null) {
-            throw new CargaUYException("Ya existe un permiso con el numero " + permisoDto.getNroPermiso() + ".");
+            throw new CargaUYException(CodigoError.PERMISO_NRO_DUPLICADO, permisoDto.getNroPermiso());
         }
         validarSuperposicion(permisoDto, null);
 
@@ -48,7 +49,7 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
         validar(permisoDto);
         PermisoDto existente = permisoDAO.getPermisoByNro(permisoDto.getNroPermiso());
         if (existente != null && !existente.getId().equals(id)) {
-            throw new CargaUYException("Ya existe un permiso con el numero " + permisoDto.getNroPermiso() + ".");
+            throw new CargaUYException(CodigoError.PERMISO_NRO_DUPLICADO, permisoDto.getNroPermiso());
         }
         validarSuperposicion(permisoDto, id);
 
@@ -61,16 +62,19 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
 
     private void validar(PermisoDto permisoDto) {
         if (permisoDto.getNroPermiso() == null || permisoDto.getNroPermiso().isBlank()) {
-            throw new CargaUYException("El numero de permiso es obligatorio.");
+            throw new CargaUYException(CodigoError.PERMISO_NRO_REQUERIDO);
         }
         if (permisoDto.getValidoDesde() == null || permisoDto.getValidoHasta() == null) {
-            throw new CargaUYException("El periodo de validez es obligatorio.");
+            throw new CargaUYException(CodigoError.PERMISO_PERIODO_REQUERIDO);
         }
         if (permisoDto.getValidoHasta().isBefore(permisoDto.getValidoDesde())) {
-            throw new CargaUYException("La fecha de fin de validez no puede ser anterior a la de inicio.");
+            throw new CargaUYException(CodigoError.PERMISO_RANGO_FECHAS_INVALIDO);
         }
-        if (permisoDto.getIdVehiculo() == null || vehiculoDAO.getVehiculoById(permisoDto.getIdVehiculo()) == null) {
-            throw new CargaUYException("El vehiculo indicado no existe.");
+        if (permisoDto.getIdVehiculo() == null) {
+            throw new CargaUYException(CodigoError.PERMISO_VEHICULO_REQUERIDO);
+        }
+        if (vehiculoDAO.getVehiculoById(permisoDto.getIdVehiculo()) == null) {
+            throw new CargaUYException(CodigoError.VEHICULO_NO_ENCONTRADO, String.valueOf(permisoDto.getIdVehiculo()));
         }
     }
 
@@ -81,8 +85,10 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
             }
             if (!permisoDto.getValidoDesde().isAfter(existente.getValidoHasta())
                     && !permisoDto.getValidoHasta().isBefore(existente.getValidoDesde())) {
-                throw new CargaUYException("El vehiculo ya tiene el permiso " + existente.getNroPermiso() +
-                        " valido entre " + existente.getValidoDesde() + " y " + existente.getValidoHasta() + ".");
+                throw new CargaUYException(CodigoError.PERMISO_SUPERPUESTO,
+                        existente.getNroPermiso(),
+                        existente.getValidoDesde().toString(),
+                        existente.getValidoHasta().toString());
             }
         }
     }

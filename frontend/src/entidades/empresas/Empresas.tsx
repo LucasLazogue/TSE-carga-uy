@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
+import { mensajeDeError } from '../../common/errores.ts'
 import { EMPRESA_VACIA } from './empresas.constants.ts'
 import empresas from './empresas.service.ts'
 import type { Empresa, EmpresaNueva } from './empresas.types.ts'
@@ -10,6 +11,7 @@ function Empresas() {
   const [nombre, setNombre] = useState('')
   const [creando, setCreando] = useState(false)
   const [nueva, setNueva] = useState<EmpresaNueva>(EMPRESA_VACIA)
+  const [error, setError] = useState('')
 
   async function cargar(filtro?: string) {
     setLista(await empresas.getAll(filtro))
@@ -22,10 +24,15 @@ function Empresas() {
 
   async function guardar(e: FormEvent) {
     e.preventDefault()
-    await empresas.create(nueva)
-    setNueva(EMPRESA_VACIA)
-    setCreando(false)
-    await cargar(nombre)
+    setError('')
+    try {
+      await empresas.create(nueva)
+      setNueva(EMPRESA_VACIA)
+      setCreando(false)
+      await cargar(nombre)
+    } catch (err) {
+      setError(mensajeDeError(err))
+    }
   }
 
   return (
@@ -52,6 +59,7 @@ function Empresas() {
       {creando && (
         <form onSubmit={guardar}>
           <h2>Nueva empresa</h2>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
           <div>
             <label>Nro. Empresa </label>
             <input

@@ -7,7 +7,20 @@ public class CargaUYException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public CargaUYException(String mensaje) {
-        super(mensaje);
+    private final CodigoError codigo;
+    private final String[] parametros;
+
+    public CargaUYException(CodigoError codigo, String... parametros) {
+        super(codigo.name());
+        this.codigo = codigo;
+        this.parametros = parametros;
+    }
+
+    public CodigoError getCodigo() {
+        return codigo;
+    }
+
+    public String[] getParametros() {
+        return parametros;
     }
 }

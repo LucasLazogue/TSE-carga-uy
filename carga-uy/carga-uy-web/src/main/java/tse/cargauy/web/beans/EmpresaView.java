@@ -5,10 +5,11 @@ import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import tse.cargauy.dtos.EmpresaDto;
-import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
 @Named
@@ -23,8 +24,6 @@ public class EmpresaView implements Serializable {
     List<EmpresaDto> empresas;
     EmpresaDto empresa = new EmpresaDto();
     String nombre;
-    String error;
-    String mensaje;
 
     @PostConstruct
     public void init() {
@@ -41,27 +40,14 @@ public class EmpresaView implements Serializable {
     }
 
     public void createEmpresa() {
-        error = null;
-        mensaje = null;
-        try {
-            empresaEJB.addEmpresa(empresa);
-            mensaje = "Empresa guardada.";
-            empresa = new EmpresaDto();
-        } catch (CargaUYException e) {
-            error = "Error al crear la empresa: " + e.getMessage();
-        }
+        empresaEJB.addEmpresa(empresa);
+        FacesContext.getCurrentInstance().addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, "Empresa guardada.", null));
+        empresa = new EmpresaDto();
     }
 
     public List<EmpresaDto> getEmpresas() {
         return empresas;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public String getMensaje() {
-        return mensaje;
     }
 
     public String getNombre() {

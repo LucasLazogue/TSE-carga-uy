@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
+import { mensajeDeError } from '../../common/errores.ts'
 import vehiculosService from '../vehiculos/vehiculos.service.ts'
 import type { Vehiculo } from '../vehiculos/vehiculos.types.ts'
 import { PERMISO_VACIO } from './permisos.constants.ts'
@@ -13,6 +14,7 @@ function Permisos() {
   const [idVehiculo, setIdVehiculo] = useState(0)
   const [creando, setCreando] = useState(false)
   const [nuevo, setNuevo] = useState<PermisoNuevo>(PERMISO_VACIO)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     vehiculosService.getAll().then(setVehiculos)
@@ -30,10 +32,15 @@ function Permisos() {
 
   async function guardar(e: FormEvent) {
     e.preventDefault()
-    await permisos.create(nuevo)
-    setNuevo(PERMISO_VACIO)
-    setCreando(false)
-    await cargar(idVehiculo)
+    setError('')
+    try {
+      await permisos.create(nuevo)
+      setNuevo(PERMISO_VACIO)
+      setCreando(false)
+      await cargar(idVehiculo)
+    } catch (err) {
+      setError(mensajeDeError(err))
+    }
   }
 
   return (
@@ -63,6 +70,7 @@ function Permisos() {
       {creando && (
         <form onSubmit={guardar}>
           <h2>Nuevo permiso</h2>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
           <div>
             <label>Nro. permiso </label>
             <input

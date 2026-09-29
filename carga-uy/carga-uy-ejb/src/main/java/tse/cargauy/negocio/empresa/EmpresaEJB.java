@@ -7,12 +7,13 @@ import jakarta.ejb.EJB;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.CodigoError;
 
 @Stateless
 public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
 
     @EJB
-    private EmpresaDAOLocal empresaDAO;
+    EmpresaDAOLocal empresaDAO;
 
     public EmpresaDto getEmpresaById(Long id) {
         return empresaDAO.getEmpresaById(id);
@@ -29,7 +30,7 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
     public void addEmpresa(EmpresaDto empresaDto) {
         validar(empresaDto);
         if (empresaDAO.getEmpresaByNro(empresaDto.getNroEmpresa()) != null) {
-            throw new CargaUYException("Ya existe una empresa con el numero " + empresaDto.getNroEmpresa() + ".");
+            throw new CargaUYException(CodigoError.EMPRESA_NRO_DUPLICADO, String.valueOf(empresaDto.getNroEmpresa()));
         }
 
         empresaDto.setFechaAlta(LocalDate.now());
@@ -40,7 +41,7 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         validar(empresaDto);
         EmpresaDto existente = empresaDAO.getEmpresaByNro(empresaDto.getNroEmpresa());
         if (existente != null && !existente.getId().equals(id)) {
-            throw new CargaUYException("Ya existe una empresa con el numero " + empresaDto.getNroEmpresa() + ".");
+            throw new CargaUYException(CodigoError.EMPRESA_NRO_DUPLICADO, String.valueOf(empresaDto.getNroEmpresa()));
         }
 
         empresaDAO.updateEmpresa(id, empresaDto);
@@ -52,13 +53,13 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
 
     private void validar(EmpresaDto empresaDto) {
         if (empresaDto.getNroEmpresa() <= 0) {
-            throw new CargaUYException("El numero de empresa debe ser mayor a 0.");
+            throw new CargaUYException(CodigoError.EMPRESA_NRO_INVALIDO);
         }
         if (empresaDto.getNombrePublico() == null || empresaDto.getNombrePublico().isBlank()) {
-            throw new CargaUYException("El nombre publico es obligatorio.");
+            throw new CargaUYException(CodigoError.EMPRESA_NOMBRE_PUBLICO_REQUERIDO);
         }
         if (empresaDto.getRazonSocial() == null || empresaDto.getRazonSocial().isBlank()) {
-            throw new CargaUYException("La razon social es obligatoria.");
+            throw new CargaUYException(CodigoError.EMPRESA_RAZON_SOCIAL_REQUERIDA);
         }
     }
 

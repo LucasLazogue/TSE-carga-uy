@@ -7,15 +7,16 @@ import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.CodigoError;
 
 @Stateless
 public class VehiculoEJB implements VehiculoEJBLocal, VehiculoEJBRemote {
 
     @EJB
-    private VehiculoDAOLocal vehiculoDAO;
+    VehiculoDAOLocal vehiculoDAO;
 
     @EJB
-    private EmpresaDAOLocal empresaDAO;
+    EmpresaDAOLocal empresaDAO;
 
     public VehiculoDto getVehiculoById(Long id) {
         return vehiculoDAO.getVehiculoById(id);
@@ -32,7 +33,7 @@ public class VehiculoEJB implements VehiculoEJBLocal, VehiculoEJBRemote {
     public void addVehiculo(VehiculoDto vehiculoDto) {
         validar(vehiculoDto);
         if (vehiculoDAO.getVehiculoByMatricula(vehiculoDto.getMatricula()) != null) {
-            throw new CargaUYException("Ya existe un vehiculo con la matricula " + vehiculoDto.getMatricula() + ".");
+            throw new CargaUYException(CodigoError.VEHICULO_MATRICULA_DUPLICADA, vehiculoDto.getMatricula());
         }
 
         vehiculoDAO.addVehiculo(vehiculoDto);
@@ -42,7 +43,7 @@ public class VehiculoEJB implements VehiculoEJBLocal, VehiculoEJBRemote {
         validar(vehiculoDto);
         VehiculoDto existente = vehiculoDAO.getVehiculoByMatricula(vehiculoDto.getMatricula());
         if (existente != null && !existente.getId().equals(id)) {
-            throw new CargaUYException("Ya existe un vehiculo con la matricula " + vehiculoDto.getMatricula() + ".");
+            throw new CargaUYException(CodigoError.VEHICULO_MATRICULA_DUPLICADA, vehiculoDto.getMatricula());
         }
 
         vehiculoDAO.updateVehiculo(id, vehiculoDto);
@@ -54,19 +55,22 @@ public class VehiculoEJB implements VehiculoEJBLocal, VehiculoEJBRemote {
 
     private void validar(VehiculoDto vehiculoDto) {
         if (vehiculoDto.getMatricula() == null || vehiculoDto.getMatricula().isBlank()) {
-            throw new CargaUYException("La matricula es obligatoria.");
+            throw new CargaUYException(CodigoError.VEHICULO_MATRICULA_REQUERIDA);
         }
         if (vehiculoDto.getMarca() == null || vehiculoDto.getMarca().isBlank()) {
-            throw new CargaUYException("La marca es obligatoria.");
+            throw new CargaUYException(CodigoError.VEHICULO_MARCA_REQUERIDA);
         }
         if (vehiculoDto.getPesoVehiculo() <= 0) {
-            throw new CargaUYException("El peso del vehiculo debe ser mayor a 0.");
+            throw new CargaUYException(CodigoError.VEHICULO_PESO_INVALIDO);
         }
         if (vehiculoDto.getCapacidadCarga() <= 0) {
-            throw new CargaUYException("La capacidad de carga debe ser mayor a 0.");
+            throw new CargaUYException(CodigoError.VEHICULO_CAPACIDAD_INVALIDA);
         }
-        if (vehiculoDto.getIdEmpresa() == null || empresaDAO.getEmpresaById(vehiculoDto.getIdEmpresa()) == null) {
-            throw new CargaUYException("La empresa indicada no existe.");
+        if (vehiculoDto.getIdEmpresa() == null) {
+            throw new CargaUYException(CodigoError.VEHICULO_EMPRESA_REQUERIDA);
+        }
+        if (empresaDAO.getEmpresaById(vehiculoDto.getIdEmpresa()) == null) {
+            throw new CargaUYException(CodigoError.EMPRESA_NO_ENCONTRADA, String.valueOf(vehiculoDto.getIdEmpresa()));
         }
     }
 

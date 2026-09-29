@@ -9,6 +9,7 @@ import jakarta.jms.MessageListener;
 import jakarta.jms.TextMessage;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.MensajesError;
 
 // formato del mensaje: nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
 @MessageDriven(mappedName = "EmpresaQueueMDB", activationConfig = {
@@ -38,9 +39,11 @@ public class EmpresaQueueMDB implements MessageListener {
             empresaEJB.addEmpresa(partsToDto(parts));
         } catch (JMSException e) {
             e.printStackTrace();
-        } catch (NumberFormatException | CargaUYException e) {
+        } catch (NumberFormatException e) {
             // no se relanza para que el mensaje no se reintente indefinidamente
-            System.err.println("No se pudo dar de alta la empresa: " + e.getMessage());
+            System.err.println("No se pudo dar de alta la empresa: el numero no es numerico");
+        } catch (CargaUYException e) {
+            System.err.println("No se pudo dar de alta la empresa: " + MensajesError.resolver(e));
         }
     }
 

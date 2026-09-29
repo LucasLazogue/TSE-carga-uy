@@ -1,0 +1,41 @@
+package tse.cargauy.exceptions;
+
+public enum CodigoError {
+
+    EMPRESA_NRO_INVALIDO(1001, 400),
+    EMPRESA_NOMBRE_PUBLICO_REQUERIDO(1002, 400),
+    EMPRESA_RAZON_SOCIAL_REQUERIDA(1003, 400),
+    EMPRESA_NRO_DUPLICADO(1004, 409),
+    EMPRESA_NO_ENCONTRADA(1005, 404),
+
+    VEHICULO_MATRICULA_REQUERIDA(2001, 400),
+    VEHICULO_MARCA_REQUERIDA(2002, 400),
+    VEHICULO_PESO_INVALIDO(2003, 400),
+    VEHICULO_CAPACIDAD_INVALIDA(2004, 400),
+    VEHICULO_EMPRESA_REQUERIDA(2005, 400),
+    VEHICULO_MATRICULA_DUPLICADA(2006, 409),
+    VEHICULO_NO_ENCONTRADO(2007, 404),
+
+    PERMISO_NRO_REQUERIDO(3001, 400),
+    PERMISO_PERIODO_REQUERIDO(3002, 400),
+    PERMISO_RANGO_FECHAS_INVALIDO(3003, 400),
+    PERMISO_VEHICULO_REQUERIDO(3004, 400),
+    PERMISO_NRO_DUPLICADO(3005, 409),
+    PERMISO_SUPERPUESTO(3006, 409);
+
+    private final int codigo;
+    private final int status;
+
+    CodigoError(int codigo, int status) {
+        this.codigo = codigo;
+        this.status = status;
+    }
+
+    public int getCodigo() {
+        return codigo;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+}

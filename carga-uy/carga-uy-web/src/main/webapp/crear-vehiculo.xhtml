@@ -2,7 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets"
       xmlns:pt="jakarta.faces.passthrough">
 <h:head>
     <meta charset="UTF-8" />
@@ -13,13 +12,7 @@
     <h1>Crear Vehiculo</h1>
 
     <h:form>
-        <ui:fragment rendered="#{not empty vehiculoView.error}">
-            <p style="color: red;">#{vehiculoView.error}</p>
-        </ui:fragment>
-        <ui:fragment rendered="#{not empty vehiculoView.mensaje}">
-            <p style="color: green;">#{vehiculoView.mensaje}</p>
-        </ui:fragment>
-        <h:messages style="color: red;" />
+        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
 
         <p>Matricula: <h:inputText value="#{vehiculoView.vehiculo.matricula}" required="true" /></p>
         <p>Marca: <h:inputText value="#{vehiculoView.vehiculo.marca}" required="true" /></p>
