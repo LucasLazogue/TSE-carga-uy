@@ -8,10 +8,12 @@ import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
+import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
+import tse.cargauy.entities.Rol;
 
 @Singleton
 @Startup
@@ -25,6 +27,9 @@ public class DatosPrueba {
 
     @EJB
     private PermisoDAOLocal permisoDAO;
+
+    @EJB
+    private UsuarioDAOLocal usuarioDAO;
 
     @PostConstruct
     public void init() {
@@ -54,6 +59,13 @@ public class DatosPrueba {
             permisoDAO.addPermiso(new PermisoDto("PNC-1003", LocalDate.of(2026, 3, 1), LocalDate.of(2027, 2, 28), sbb));
             permisoDAO.addPermiso(new PermisoDto("PNC-1004", LocalDate.of(2026, 2, 1), LocalDate.of(2027, 1, 31), scc));
             permisoDAO.addPermiso(new PermisoDto("PNC-1005", LocalDate.of(2025, 6, 1), LocalDate.of(2026, 5, 31), sdd));
+        }
+
+        if (usuarioDAO.getRoles().isEmpty()) {
+            usuarioDAO.addRol(Rol.CIUDADANO);
+            usuarioDAO.addRol(Rol.CHOFER);
+            usuarioDAO.addRol(Rol.FUNCIONARIO);
+            usuarioDAO.addFuncionario("11111111");
         }
     }
 }
