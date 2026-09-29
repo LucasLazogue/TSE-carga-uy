@@ -7,7 +7,7 @@
 
 ## Ejecutar
 
-Desde carga-uy ejecutar
+Desde carga-uy copiar .env.example a .env y ejecutar
 - docker compose up
 
 El dockerfile ya crea un usuario en el wildfly con credenciales u: admin p: admin123
@@ -19,6 +19,10 @@ API REST:
 - http://localhost:8080/carga-uy/api/empresas
 - http://localhost:8080/carga-uy/api/vehiculos
 - http://localhost:8080/carga-uy/api/permisos
+
+Login con gub.uy: usa el ambiente de testing de ID Uruguay y requiere GUBUY_CLIENT_ID y
+GUBUY_CLIENT_SECRET en .env. La cedula 11111111 es un funcionario precargado; cualquier otra
+entra como ciudadano.
 
 Alta asincronica: cola JMS queue_alta_empresa, mensaje de texto
 nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
