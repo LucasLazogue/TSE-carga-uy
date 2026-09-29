@@ -1,0 +1,13 @@
+*.iml
+.gradle
+.kotlin
+/local.properties
+/.idea
+/build
+/captures
+.externalNativeBuild
+.cxx
+.DS_Store
+
+# El .gitignore raiz ignora *.jar, pero el wrapper de Gradle debe versionarse para que ./gradlew funcione al clonar el repo.
+!gradle/wrapper/gradle-wrapper.jar
