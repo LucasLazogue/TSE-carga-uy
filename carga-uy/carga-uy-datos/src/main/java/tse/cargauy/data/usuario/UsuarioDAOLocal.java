@@ -10,6 +10,7 @@ public interface UsuarioDAOLocal {
     UsuarioDto getFuncionarioByCedula(String cedula);
     UsuarioDto addCiudadano(String cedula, String correo);
     void addFuncionario(String cedula);
+    void addChofer(String cedula, String correo);
     List<String> getRoles();
     void addRol(String nombre);
 }

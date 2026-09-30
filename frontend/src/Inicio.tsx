@@ -12,13 +12,17 @@ function Inicio() {
     auth.me().then(setSesion).catch(() => setSesion(null))
   }, [])
 
+  const salir = () => {
+    auth.salir().then(() => setSesion(null))
+  }
+
   return (
     <div>
       <h2>Carga UY</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {sesion ? (
         <p>
-          {sesion.cedula} ({sesion.roles.join(', ')}) <a href={auth.urlLogout}>Salir</a>
+          {sesion.cedula} ({sesion.roles.join(', ')}) <button onClick={salir}>Salir</button>
         </p>
       ) : (
         <p>

@@ -67,5 +67,9 @@ public class DatosPrueba {
             usuarioDAO.addRol(Rol.FUNCIONARIO);
             usuarioDAO.addFuncionario("11111111");
         }
+
+        if (usuarioDAO.getCiudadanoByCedula("55555555") == null) {
+            usuarioDAO.addChofer("55555555", "carlos.suarez@example.com");
+        }
     }
 }

@@ -9,4 +9,7 @@ import tse.cargauy.dtos.UsuarioDto;
 public interface UsuarioEJBLocal {
     URI getGubUyLoginUrl(String state, String nonce);
     UsuarioDto loginGubUy(String code, String nonce);
+    UsuarioDto loginPrueba(String cedula);
+    String crearToken(UsuarioDto usuario);
+    UsuarioDto validarToken(String token);
 }

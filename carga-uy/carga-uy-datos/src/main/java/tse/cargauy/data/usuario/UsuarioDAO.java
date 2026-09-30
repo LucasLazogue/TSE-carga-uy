@@ -6,6 +6,7 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import tse.cargauy.dtos.UsuarioDto;
+import tse.cargauy.entities.Chofer;
 import tse.cargauy.entities.Ciudadano;
 import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Rol;
@@ -40,6 +41,14 @@ public class UsuarioDAO implements UsuarioDAOLocal {
         Funcionario funcionario = new Funcionario(cedula);
         funcionario.getRoles().add(getRol(Rol.FUNCIONARIO));
         entityManager.persist(funcionario);
+    }
+
+    @Override
+    public void addChofer(String cedula, String correo) {
+        Chofer chofer = new Chofer(cedula, correo);
+        chofer.getRoles().add(getRol(Rol.CIUDADANO));
+        chofer.getRoles().add(getRol(Rol.CHOFER));
+        entityManager.persist(chofer);
     }
 
     @Override

@@ -20,9 +20,10 @@ API REST:
 - http://localhost:8080/carga-uy/api/vehiculos
 - http://localhost:8080/carga-uy/api/permisos
 
-Login con gub.uy: usa el ambiente de testing de ID Uruguay y requiere GUBUY_CLIENT_ID y
-GUBUY_CLIENT_SECRET en .env. La cedula 11111111 es un funcionario precargado; cualquier otra
-entra como ciudadano.
+Login con gub.uy: mientras no haya credenciales de ID Uruguay (GUBUY_MOCK=true, por defecto)
+/api/auth/login entra directo como el chofer 55555555, o con &cedula=... como otro usuario
+(11111111 es funcionario, cualquier otra entra como ciudadano). Para usar ID Uruguay poner en .env
+GUBUY_MOCK=false, GUBUY_URL, GUBUY_CLIENT_ID y GUBUY_CLIENT_SECRET.
 
 Alta asincronica: cola JMS queue_alta_empresa, mensaje de texto
 nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
