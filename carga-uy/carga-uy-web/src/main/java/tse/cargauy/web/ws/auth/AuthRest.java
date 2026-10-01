@@ -1,16 +1,18 @@
 package tse.cargauy.web.ws.auth;
 
 import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.NotAuthorizedException;
@@ -21,29 +23,25 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
-import tse.cargauy.exceptions.MensajesError;
 import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 
 @RequestScoped
 @Path("/auth")
 public class AuthRest {
 
-    // mientras no haya credenciales de ID Uruguay, /login se saltea gub.uy y devuelve el token directo
-    private static final boolean MOCK = "true".equals(System.getenv("GUBUY_MOCK"));
-    // el chofer que siembra DatosPrueba, asi el login sin cedula tambien sirve para la app
-    private static final String CEDULA_PRUEBA = "55555555";
     private static final String STATE = "gubuy_state";
     private static final String NONCE = "gubuy_nonce";
-    private static final String CLIENTE = "gubuy_cliente";
+    private static final String CODE_CHALLENGE = "mobile_code_challenge";
     private static final String MOBILE = "mobile";
     private static final String BEARER = "Bearer ";
+    private static final String GRANT_TYPE = "authorization_code";
     private static final String COOKIE = "cargauy_token";
-    // a donde vuelve el usuario al terminar el login; solo estos dos, para no redirigir a cualquier url del pedido
     private static final URI FRONTEND = URI.create(System.getenv("CARGAUY_FRONTEND_URL")).resolve("/");
-    private static final URI APP_MOBILE = URI.create(System.getenv("CARGAUY_MOBILE_REDIRECT"));
+    private static final URI APP_MOBILE = URI.create(System.getenv().getOrDefault("CARGAUY_MOBILE_REDIRECT", "cargauy://ingreso"));
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @EJB
@@ -52,30 +50,25 @@ public class AuthRest {
     @Context
     HttpServletRequest request;
 
-    // cliente: web (por defecto) o mobile. cedula: solo con GUBUY_MOCK, para entrar como otro usuario de prueba
     @GET
     @Path("/login")
-    public Response login(@QueryParam("cliente") String cliente, @QueryParam("cedula") String cedula) {
-        if (MOCK) {
-            try {
-                UsuarioDto usuario = usuarioEJB.loginPrueba(cedula == null ? CEDULA_PRUEBA : cedula);
-                return redirectWithToken(cliente, usuarioEJB.crearToken(usuario));
-            } catch (CargaUYException e) {
-                return redirectWithError(cliente, e);
-            }
-        }
-
+    public Response login(@QueryParam("cliente") String cliente, @QueryParam("code_challenge") String codeChallenge,
+            @QueryParam("cedula") String cedulaMock) { // TODO mock: sacar cedula
+        boolean mobile = MOBILE.equals(cliente);
         String state = randomValue();
         String nonce = randomValue();
         try {
-            URI destino = usuarioEJB.getGubUyLoginUrl(state, nonce);
+            if (mobile && (codeChallenge == null || codeChallenge.isBlank())) {
+                throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
+            }
+            URI destino = usuarioEJB.getGubUyLoginUrl(state, nonce, cedulaMock);
             HttpSession session = request.getSession();
             session.setAttribute(STATE, state);
             session.setAttribute(NONCE, nonce);
-            session.setAttribute(CLIENTE, cliente);
+            session.setAttribute(CODE_CHALLENGE, mobile ? codeChallenge : null);
             return Response.seeOther(destino).build();
         } catch (CargaUYException e) {
-            return redirectWithError(cliente, e);
+            return redirectWithError(mobile, e);
         }
     }
 
@@ -83,22 +76,41 @@ public class AuthRest {
     @Path("/callback")
     public Response callback(@QueryParam("code") String code, @QueryParam("state") String state) {
         HttpSession session = request.getSession(false);
-        String cliente = session == null ? null : (String) session.getAttribute(CLIENTE);
+        String codeChallenge = session == null ? null : (String) session.getAttribute(CODE_CHALLENGE);
         try {
             if (session == null || code == null || state == null || !state.equals(session.getAttribute(STATE))) {
                 throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
             }
             UsuarioDto usuario = usuarioEJB.loginGubUy(code, (String) session.getAttribute(NONCE));
-
-            // la sesion http solo sirve para el ida y vuelta con gub.uy, de aca en mas se usa el token
             session.invalidate();
-            return redirectWithToken(cliente, usuarioEJB.crearToken(usuario));
+
+            if (codeChallenge != null) {
+                String codigo = usuarioEJB.crearCodigoMobile(usuario, codeChallenge);
+                return Response.seeOther(URI.create(APP_MOBILE + "?code=" + codigo)).build();
+            }
+            return Response.seeOther(FRONTEND).cookie(cookieSesion(usuarioEJB.crearToken(usuario).getToken(), NewCookie.DEFAULT_MAX_AGE)).build();
         } catch (CargaUYException e) {
-            return redirectWithError(cliente, e);
+            return redirectWithError(codeChallenge != null, e);
         }
     }
 
-    // mobile manda el token como Bearer; el navegador lo manda solo, en la cookie
+    @POST
+    @Path("/token")
+    @Consumes("application/x-www-form-urlencoded")
+    @Produces("application/json")
+    public JsonObject token(@FormParam("grant_type") String grantType, @FormParam("code") String code,
+            @FormParam("code_verifier") String codeVerifier) {
+        if (!GRANT_TYPE.equals(grantType)) {
+            throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
+        }
+        TokenDto token = usuarioEJB.canjearCodigoMobile(code, codeVerifier);
+        return Json.createObjectBuilder()
+                .add("access_token", token.getToken())
+                .add("token_type", "Bearer")
+                .add("expires_in", token.getSegundosVigencia())
+                .build();
+    }
+
     @GET
     @Path("/me")
     @Produces("application/json")
@@ -112,33 +124,17 @@ public class AuthRest {
         return usuarioEJB.validarToken(token);
     }
 
-    // el javascript del front no puede borrar una cookie HttpOnly, la tiene que borrar el backend
     @POST
     @Path("/logout")
     public Response logout() {
         return Response.noContent().cookie(cookieSesion("", 0)).build();
     }
 
-    private static URI destino(String cliente) {
-        return MOBILE.equals(cliente) ? APP_MOBILE : FRONTEND;
+    private Response redirectWithError(boolean mobile, CargaUYException e) {
+        String error = "?error=" + e.getCodigo().getCodigo();
+        return Response.seeOther(URI.create((mobile ? APP_MOBILE : FRONTEND) + error)).build();
     }
 
-    // la app recibe el token en el deep link y despues lo manda como Bearer. en el navegador va en una cookie
-    // HttpOnly: el javascript de la pagina no la puede leer, asi que un XSS no se puede llevar el token
-    private static Response redirectWithToken(String cliente, String token) {
-        if (MOBILE.equals(cliente)) {
-            return Response.seeOther(URI.create(APP_MOBILE + "#token=" + token)).build();
-        }
-        return Response.seeOther(FRONTEND).cookie(cookieSesion(token, NewCookie.DEFAULT_MAX_AGE)).build();
-    }
-
-    private static Response redirectWithError(String cliente, CargaUYException e) {
-        String mensaje = URLEncoder.encode(MensajesError.resolver(e), StandardCharsets.UTF_8);
-        return Response.seeOther(URI.create(destino(cliente) + "?error=" + mensaje)).build();
-    }
-
-    // path "/" porque el front llega por /api (proxy de vite) y el backend esta en /carga-uy/api.
-    // SameSite=Lax: otro sitio no puede hacer que el navegador la mande en un POST (CSRF)
     private static NewCookie cookieSesion(String valor, int maxAge) {
         return new NewCookie.Builder(COOKIE)
                 .value(valor)

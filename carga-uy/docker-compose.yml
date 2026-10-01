@@ -17,14 +17,14 @@ services:
       - "8080:8080"
       - "9990:9990"
     environment:
-      GUBUY_MOCK: ${GUBUY_MOCK:-true}
-      CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
-      CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
       GUBUY_URL: ${GUBUY_URL:-https://auth-testing.iduruguay.gub.uy/oidc/v1}
       GUBUY_CLIENT_ID: ${GUBUY_CLIENT_ID:-}
       GUBUY_CLIENT_SECRET: ${GUBUY_CLIENT_SECRET:-}
+      GUBUY_MOCK: ${GUBUY_MOCK:-false} # TODO mock
       GUBUY_REDIRECT_URI: ${GUBUY_REDIRECT_URI:-http://localhost:8080/carga-uy/api/auth/callback}
       CARGAUY_FRONTEND_URL: ${CARGAUY_FRONTEND_URL:-http://localhost:5173}
+      CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
+      CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
 
 volumes:
   pgdata:

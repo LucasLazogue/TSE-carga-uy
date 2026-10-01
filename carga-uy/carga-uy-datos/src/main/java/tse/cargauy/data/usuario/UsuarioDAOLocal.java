@@ -6,6 +6,7 @@ import tse.cargauy.dtos.UsuarioDto;
 
 @Local
 public interface UsuarioDAOLocal {
+    UsuarioDto getById(Long id);
     UsuarioDto getCiudadanoByCedula(String cedula);
     UsuarioDto getFuncionarioByCedula(String cedula);
     UsuarioDto addCiudadano(String cedula, String correo);

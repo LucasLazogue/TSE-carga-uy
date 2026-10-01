@@ -19,6 +19,12 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     private EntityManager entityManager;
 
     @Override
+    public UsuarioDto getById(Long id) {
+        Usuario usuario = entityManager.find(Usuario.class, id);
+        return usuario == null ? null : Serializers.toDto(usuario);
+    }
+
+    @Override
     public UsuarioDto getCiudadanoByCedula(String cedula) {
         return getByCedula(Ciudadano.class, cedula);
     }

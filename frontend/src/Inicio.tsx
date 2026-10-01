@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import auth from './auth/auth.service.ts'
+import { mensajeDeCodigo } from './common/errores.ts'
 import type { Sesion } from './auth/auth.service.ts'
 
 function Inicio() {
   const [sesion, setSesion] = useState<Sesion | null>(null)
   const [params] = useSearchParams()
-  const error = params.get('error')
+  const error = mensajeDeCodigo(params.get('error'))
 
   useEffect(() => {
     auth.me().then(setSesion).catch(() => setSesion(null))

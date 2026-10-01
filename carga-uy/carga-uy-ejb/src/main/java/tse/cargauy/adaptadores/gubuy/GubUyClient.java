@@ -28,6 +28,7 @@ public class GubUyClient {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
     private static final String SCOPE = "openid personal_info document email";
+    private static final String CEDULA_MOCK = "55555555"; // TODO mock
 
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(TIMEOUT).build();
 
@@ -35,6 +36,7 @@ public class GubUyClient {
     private String clientId;
     private String clientSecret;
     private String redirectUri;
+    private boolean mock; // TODO mock
 
     @PostConstruct
     void init() {
@@ -42,9 +44,14 @@ public class GubUyClient {
         clientId = System.getenv("GUBUY_CLIENT_ID");
         clientSecret = System.getenv("GUBUY_CLIENT_SECRET");
         redirectUri = System.getenv("GUBUY_REDIRECT_URI");
+        mock = Boolean.parseBoolean(System.getenv("GUBUY_MOCK")); // TODO mock
     }
 
-    public URI getAuthorizationUrl(String state, String nonce) {
+    public URI getAuthorizationUrl(String state, String nonce, String cedulaMock) { // TODO mock: sacar cedulaMock
+        if (mock) { // TODO mock: borrar este if
+            String cedula = cedulaMock == null || cedulaMock.isBlank() ? CEDULA_MOCK : cedulaMock;
+            return URI.create(redirectUri + "?code=" + encode(cedula) + "&state=" + encode(state));
+        }
         validateConfiguration();
         return URI.create(url + "/authorize"
                 + "?response_type=code"
@@ -56,6 +63,9 @@ public class GubUyClient {
     }
 
     public IdentidadGubUy exchangeCode(String code, String nonce) {
+        if (mock) { // TODO mock: borrar este if
+            return new IdentidadGubUy(code, code + "@mock.uy");
+        }
         validateConfiguration();
         String credenciales = Base64.getEncoder().encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
         JsonObject tokens = send(HttpRequest.newBuilder(URI.create(url + "/token"))

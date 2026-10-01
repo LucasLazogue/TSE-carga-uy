@@ -20,10 +20,23 @@ API REST:
 - http://localhost:8080/carga-uy/api/vehiculos
 - http://localhost:8080/carga-uy/api/permisos
 
-Login con gub.uy: mientras no haya credenciales de ID Uruguay (GUBUY_MOCK=true, por defecto)
-/api/auth/login entra directo como el chofer 55555555, o con &cedula=... como otro usuario
-(11111111 es funcionario, cualquier otra entra como ciudadano). Para usar ID Uruguay poner en .env
-GUBUY_MOCK=false, GUBUY_URL, GUBUY_CLIENT_ID y GUBUY_CLIENT_SECRET.
+Login con gub.uy: usa el ambiente de testing de ID Uruguay y requiere GUBUY_CLIENT_ID y
+GUBUY_CLIENT_SECRET en .env. La cedula 11111111 es un funcionario precargado; cualquier otra
+entra como ciudadano.
+
+Sin credenciales se puede simular con GUBUY_MOCK=true en .env: el login saltea gub.uy y entra
+con la cedula 55555555 (chofer precargado), o con otra pasandola en /api/auth/login?cedula=22222222
+
+La sesion es un JWT firmado con CARGAUY_JWT_SECRET. En la web viaja en la cookie HttpOnly
+cargauy_token; el logout es POST /api/auth/logout.
+
+Login mobile: la app abre en el navegador /api/auth/login?cliente=mobile&code_challenge=X, donde X es
+el SHA-256 en base64url de un code_verifier aleatorio. Al terminar vuelve a cargauy://ingreso?code=C
+(configurable con CARGAUY_MOBILE_REDIRECT) y la app hace POST /api/auth/token con
+grant_type=authorization_code, code=C y code_verifier; la respuesta trae access_token, token_type y
+expires_in, y el token se manda como Authorization: Bearer.
+
+Si el login falla se vuelve al front o a la app con ?error=CODIGO (los de CodigoError).
 
 Alta asincronica: cola JMS queue_alta_empresa, mensaje de texto
 nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
