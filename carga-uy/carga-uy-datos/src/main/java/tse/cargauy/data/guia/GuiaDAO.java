@@ -95,6 +95,12 @@ public class GuiaDAO implements GuiaDAOLocal {
     }
 
     @Override
+    public RubroDto getRubroById(Long id) {
+        Rubro rubro = entityManager.find(Rubro.class, id);
+        return rubro == null ? null : Serializers.toDto(rubro);
+    }
+
+    @Override
     public void addRubro(String nombre) {
         entityManager.persist(new Rubro(nombre));
     }
@@ -106,6 +112,12 @@ public class GuiaDAO implements GuiaDAOLocal {
             res.add(Serializers.toDto(t));
         }
         return res;
+    }
+
+    @Override
+    public TipoCargaDto getTipoCargaById(Long id) {
+        TipoCarga tipoCarga = entityManager.find(TipoCarga.class, id);
+        return tipoCarga == null ? null : Serializers.toDto(tipoCarga);
     }
 
     @Override
