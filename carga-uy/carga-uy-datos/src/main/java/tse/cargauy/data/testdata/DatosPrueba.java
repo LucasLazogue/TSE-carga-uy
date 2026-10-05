@@ -7,12 +7,19 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
+import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
+import tse.cargauy.data.viaje.ViajeDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.RubroDto;
+import tse.cargauy.dtos.TipoCargaDto;
+import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.dtos.VehiculoDto;
+import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.Rol;
 
 @Singleton
@@ -30,6 +37,12 @@ public class DatosPrueba {
 
     @EJB
     private UsuarioDAOLocal usuarioDAO;
+
+    @EJB
+    private GuiaDAOLocal guiaDAO;
+
+    @EJB
+    private ViajeDAOLocal viajeDAO;
 
     @PostConstruct
     public void init() {
@@ -70,6 +83,34 @@ public class DatosPrueba {
 
         if (usuarioDAO.getCiudadanoByCedula("55555555") == null) {
             usuarioDAO.addChofer("55555555", "carlos.suarez@example.com");
+        }
+
+        if (guiaDAO.getRubros().isEmpty()) {
+            for (String rubro : List.of("Agropecuario", "Comercio", "Construccion", "Forestal", "Industria", "Logistica")) {
+                guiaDAO.addRubro(rubro);
+            }
+            for (String tipo : List.of("Carga general", "Granos", "Madera", "Contenedores", "Refrigerada", "Combustibles")) {
+                guiaDAO.addTipoCarga(tipo);
+            }
+        }
+
+        if (guiaDAO.getAll().isEmpty() && empresas.size() >= 3) {
+            List<RubroDto> rubros = guiaDAO.getRubros();
+            List<TipoCargaDto> tipos = guiaDAO.getTiposCarga();
+            UsuarioDto ciudadano = usuarioDAO.getCiudadanoByCedula("55555555");
+            Long chofer = ciudadano.getId();
+            Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
+
+            GuiaDto montevideoRivera = guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 15),
+                    -34.9011, -56.1645, -30.9053, -55.5508, 18000,
+                    empresas.get(0).getId(), chofer, rubros.get(0).getId(), tipos.get(3).getId()));
+            if (ciudadano.getRoles().contains(Rol.CHOFER)) {
+                viajeDAO.addViaje(new ViajeDto(montevideoRivera.getId(), sta, chofer));
+            }
+
+            guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 20),
+                    -33.1325, -58.2956, -34.9058, -56.2132, 20000,
+                    empresas.get(0).getId(), chofer, rubros.get(3).getId(), tipos.get(4).getId()));
         }
     }
 }
