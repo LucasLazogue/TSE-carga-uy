@@ -56,9 +56,6 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
         if (responsable == null || !responsable.getRoles().contains(Rol.CIUDADANO)) {
             throw new CargaUYException(CodigoError.GUIA_RESPONSABLE_INVALIDO);
         }
-        if (guiaDAO.getGuiaByNro(guiaDto.getNroGuia()) != null) {
-            throw new CargaUYException(CodigoError.GUIA_NRO_DUPLICADO, guiaDto.getNroGuia());
-        }
 
         return guiaDAO.addGuia(guiaDto);
     }
@@ -70,9 +67,8 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
             throw new CargaUYException(CodigoError.GUIA_NO_MODIFICABLE, actual.getNroGuia());
         }
         validar(guiaDto);
-        GuiaDto existente = guiaDAO.getGuiaByNro(guiaDto.getNroGuia());
-        if (existente != null && !existente.getId().equals(id)) {
-            throw new CargaUYException(CodigoError.GUIA_NRO_DUPLICADO, guiaDto.getNroGuia());
+        if (viaje != null && (!guiaDto.getFecha().equals(actual.getFecha()) || guiaDto.getVolumen() != actual.getVolumen())) {
+            throw new CargaUYException(CodigoError.GUIA_ASIGNADA_DATOS_FIJOS, actual.getNroGuia());
         }
 
         guiaDAO.updateGuia(id, guiaDto);
@@ -104,17 +100,17 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
     }
 
     private void validar(GuiaDto guiaDto) {
-        if (guiaDto.getNroGuia() == null || guiaDto.getNroGuia().isBlank()) {
-            throw new CargaUYException(CodigoError.GUIA_NRO_REQUERIDO);
-        }
         if (guiaDto.getFecha() == null) {
             throw new CargaUYException(CodigoError.GUIA_FECHA_REQUERIDA);
         }
-        if (guiaDto.getOrigen() == null || guiaDto.getOrigen().isBlank()) {
+        if (guiaDto.getOrigenLat() == null || guiaDto.getOrigenLon() == null) {
             throw new CargaUYException(CodigoError.GUIA_ORIGEN_REQUERIDO);
         }
-        if (guiaDto.getDestino() == null || guiaDto.getDestino().isBlank()) {
+        if (guiaDto.getDestinoLat() == null || guiaDto.getDestinoLon() == null) {
             throw new CargaUYException(CodigoError.GUIA_DESTINO_REQUERIDO);
+        }
+        if (guiaDto.getOrigenLat().equals(guiaDto.getDestinoLat()) && guiaDto.getOrigenLon().equals(guiaDto.getDestinoLon())) {
+            throw new CargaUYException(CodigoError.GUIA_ORIGEN_IGUAL_DESTINO);
         }
         if (guiaDto.getVolumen() <= 0) {
             throw new CargaUYException(CodigoError.GUIA_VOLUMEN_INVALIDO);

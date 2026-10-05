@@ -10,8 +10,10 @@ public class GuiaDto implements Serializable {
     private Long id;
     private String nroGuia;
     private LocalDate fecha;
-    private String origen;
-    private String destino;
+    private Double origenLat;
+    private Double origenLon;
+    private Double destinoLat;
+    private Double destinoLon;
     private int volumen;
     private Long idEmpresa;
     private String nombreEmpresa;
@@ -25,11 +27,12 @@ public class GuiaDto implements Serializable {
     public GuiaDto() {
     }
 
-    public GuiaDto(String nroGuia, LocalDate fecha, String origen, String destino, int volumen, Long idEmpresa, Long idRegistradaPor, Long idRubro, Long idTipoCarga) {
-        this.nroGuia = nroGuia;
+    public GuiaDto(LocalDate fecha, Double origenLat, Double origenLon, Double destinoLat, Double destinoLon, int volumen, Long idEmpresa, Long idRegistradaPor, Long idRubro, Long idTipoCarga) {
         this.fecha = fecha;
-        this.origen = origen;
-        this.destino = destino;
+        this.origenLat = origenLat;
+        this.origenLon = origenLon;
+        this.destinoLat = destinoLat;
+        this.destinoLon = destinoLon;
         this.volumen = volumen;
         this.idEmpresa = idEmpresa;
         this.idRegistradaPor = idRegistradaPor;
@@ -61,20 +64,36 @@ public class GuiaDto implements Serializable {
         this.fecha = fecha;
     }
 
-    public String getOrigen() {
-        return origen;
+    public Double getOrigenLat() {
+        return origenLat;
     }
 
-    public void setOrigen(String origen) {
-        this.origen = origen;
+    public void setOrigenLat(Double origenLat) {
+        this.origenLat = origenLat;
     }
 
-    public String getDestino() {
-        return destino;
+    public Double getOrigenLon() {
+        return origenLon;
     }
 
-    public void setDestino(String destino) {
-        this.destino = destino;
+    public void setOrigenLon(Double origenLon) {
+        this.origenLon = origenLon;
+    }
+
+    public Double getDestinoLat() {
+        return destinoLat;
+    }
+
+    public void setDestinoLat(Double destinoLat) {
+        this.destinoLat = destinoLat;
+    }
+
+    public Double getDestinoLon() {
+        return destinoLon;
+    }
+
+    public void setDestinoLon(Double destinoLon) {
+        this.destinoLon = destinoLon;
     }
 
     public int getVolumen() {
@@ -151,7 +170,8 @@ public class GuiaDto implements Serializable {
 
     @Override
     public String toString() {
-        return "Nro. Guia: " + nroGuia + ", Fecha: " + fecha + ", Origen: " + origen + ", Destino: " + destino +
-                ", Volumen: " + volumen + " kg, Rubro: " + nombreRubro + ", Tipo de Carga: " + nombreTipoCarga + ", Empresa: " + nombreEmpresa;
+        return "Nro. Guia: " + nroGuia + ", Fecha: " + fecha + ", Origen: (" + origenLat + ", " + origenLon + ")" +
+                ", Destino: (" + destinoLat + ", " + destinoLon + "), Volumen: " + volumen + " kg, Rubro: " + nombreRubro +
+                ", Tipo de Carga: " + nombreTipoCarga + ", Empresa: " + nombreEmpresa;
     }
 }

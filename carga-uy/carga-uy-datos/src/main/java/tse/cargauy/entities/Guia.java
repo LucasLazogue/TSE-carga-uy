@@ -2,7 +2,6 @@ package tse.cargauy.entities;
 
 import java.time.LocalDate;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -15,11 +14,11 @@ public class Guia {
     @Id @GeneratedValue
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String nroGuia;
     private LocalDate fecha;
-    private String origen;
-    private String destino;
+    private double origenLat;
+    private double origenLon;
+    private double destinoLat;
+    private double destinoLon;
     private int volumen;
 
     @ManyToOne(optional = false)
@@ -40,12 +39,13 @@ public class Guia {
     public Guia() {
     }
 
-    public Guia(String nroGuia, LocalDate fecha, String origen, String destino, int volumen,
+    public Guia(LocalDate fecha, double origenLat, double origenLon, double destinoLat, double destinoLon, int volumen,
                 Empresa empresa, Ciudadano registradaPor, Rubro rubro, TipoCarga tipoCarga) {
-        this.nroGuia = nroGuia;
         this.fecha = fecha;
-        this.origen = origen;
-        this.destino = destino;
+        this.origenLat = origenLat;
+        this.origenLon = origenLon;
+        this.destinoLat = destinoLat;
+        this.destinoLon = destinoLon;
         this.volumen = volumen;
         this.empresa = empresa;
         this.registradaPor = registradaPor;
@@ -62,11 +62,7 @@ public class Guia {
     }
 
     public String getNroGuia() {
-        return nroGuia;
-    }
-
-    public void setNroGuia(String nroGuia) {
-        this.nroGuia = nroGuia;
+        return String.format("G-%06d", id);
     }
 
     public LocalDate getFecha() {
@@ -77,20 +73,36 @@ public class Guia {
         this.fecha = fecha;
     }
 
-    public String getOrigen() {
-        return origen;
+    public double getOrigenLat() {
+        return origenLat;
     }
 
-    public void setOrigen(String origen) {
-        this.origen = origen;
+    public void setOrigenLat(double origenLat) {
+        this.origenLat = origenLat;
     }
 
-    public String getDestino() {
-        return destino;
+    public double getOrigenLon() {
+        return origenLon;
     }
 
-    public void setDestino(String destino) {
-        this.destino = destino;
+    public void setOrigenLon(double origenLon) {
+        this.origenLon = origenLon;
+    }
+
+    public double getDestinoLat() {
+        return destinoLat;
+    }
+
+    public void setDestinoLat(double destinoLat) {
+        this.destinoLat = destinoLat;
+    }
+
+    public double getDestinoLon() {
+        return destinoLon;
+    }
+
+    public void setDestinoLon(double destinoLon) {
+        this.destinoLon = destinoLon;
     }
 
     public int getVolumen() {

@@ -15,8 +15,10 @@ public class Serializers {
         dto.setId(guia.getId());
         dto.setNroGuia(guia.getNroGuia());
         dto.setFecha(guia.getFecha());
-        dto.setOrigen(guia.getOrigen());
-        dto.setDestino(guia.getDestino());
+        dto.setOrigenLat(guia.getOrigenLat());
+        dto.setOrigenLon(guia.getOrigenLon());
+        dto.setDestinoLat(guia.getDestinoLat());
+        dto.setDestinoLon(guia.getDestinoLon());
         dto.setVolumen(guia.getVolumen());
         dto.setIdEmpresa(guia.getEmpresa().getId());
         dto.setNombreEmpresa(guia.getEmpresa().getNombrePublico());
@@ -32,7 +34,7 @@ public class Serializers {
     }
 
     public static Guia toEntity(GuiaDto dto, Empresa empresa, Ciudadano registradaPor, Rubro rubro, TipoCarga tipoCarga) {
-        return new Guia(dto.getNroGuia(), dto.getFecha(), dto.getOrigen(), dto.getDestino(), dto.getVolumen(),
+        return new Guia(dto.getFecha(), dto.getOrigenLat(), dto.getOrigenLon(), dto.getDestinoLat(), dto.getDestinoLon(), dto.getVolumen(),
                 empresa, registradaPor, rubro, tipoCarga);
     }
 

@@ -9,7 +9,6 @@ import tse.cargauy.dtos.TipoCargaDto;
 @Local
 public interface GuiaDAOLocal {
     GuiaDto getGuiaById(Long id);
-    GuiaDto getGuiaByNro(String nroGuia);
     List<GuiaDto> getAll();
     List<GuiaDto> getByEmpresa(Long idEmpresa);
     GuiaDto addGuia(GuiaDto guiaDto);

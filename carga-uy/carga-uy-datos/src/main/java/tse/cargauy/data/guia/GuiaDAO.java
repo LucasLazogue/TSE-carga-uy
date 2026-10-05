@@ -28,18 +28,6 @@ public class GuiaDAO implements GuiaDAOLocal {
     }
 
     @Override
-    public GuiaDto getGuiaByNro(String nroGuia) {
-        List<Guia> guias = entityManager.createQuery(
-                        "SELECT g FROM Guia g WHERE g.nroGuia = :nro", Guia.class)
-                .setParameter("nro", nroGuia)
-                .getResultList();
-        if (guias.isEmpty()) {
-            return null;
-        }
-        return Serializers.toDto(guias.get(0));
-    }
-
-    @Override
     public List<GuiaDto> getAll() {
         return toDtos(entityManager.createQuery("SELECT g FROM Guia g ORDER BY g.fecha DESC", Guia.class).getResultList());
     }
@@ -67,10 +55,11 @@ public class GuiaDAO implements GuiaDAOLocal {
     public void updateGuia(Long id, GuiaDto guiaDto) {
         Guia guia = entityManager.find(Guia.class, id);
         if (guia != null) {
-            guia.setNroGuia(guiaDto.getNroGuia());
             guia.setFecha(guiaDto.getFecha());
-            guia.setOrigen(guiaDto.getOrigen());
-            guia.setDestino(guiaDto.getDestino());
+            guia.setOrigenLat(guiaDto.getOrigenLat());
+            guia.setOrigenLon(guiaDto.getOrigenLon());
+            guia.setDestinoLat(guiaDto.getDestinoLat());
+            guia.setDestinoLon(guiaDto.getDestinoLon());
             guia.setVolumen(guiaDto.getVolumen());
             guia.setRubro(entityManager.find(Rubro.class, guiaDto.getIdRubro()));
             guia.setTipoCarga(entityManager.find(TipoCarga.class, guiaDto.getIdTipoCarga()));
