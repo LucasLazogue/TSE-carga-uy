@@ -39,6 +39,12 @@ function Inicio() {
       <p>
         <Link to="/permisos">Permisos</Link>
       </p>
+      <p>
+        <Link to="/guias">Guias</Link>
+      </p>
+      <p>
+        <Link to="/viajes">Viajes</Link>
+      </p>
     </div>
   )
 }
