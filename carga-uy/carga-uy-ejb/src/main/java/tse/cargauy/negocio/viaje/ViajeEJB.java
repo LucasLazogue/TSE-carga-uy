@@ -43,6 +43,10 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return viajeDAO.getByGuia(idGuia);
     }
 
+    public List<ViajeDto> getAll() {
+        return viajeDAO.getAll();
+    }
+
     public List<ViajeDto> getByEmpresa(Long idEmpresa) {
         return viajeDAO.getByEmpresa(idEmpresa);
     }

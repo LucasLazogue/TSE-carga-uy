@@ -37,6 +37,11 @@ public class ViajeDAO implements ViajeDAOLocal {
     }
 
     @Override
+    public List<ViajeDto> getAll() {
+        return toDtos(entityManager.createQuery("SELECT v FROM Viaje v ORDER BY v.guia.fecha DESC", Viaje.class).getResultList());
+    }
+
+    @Override
     public List<ViajeDto> getByEmpresa(Long idEmpresa) {
         return toDtos(entityManager.createQuery(
                         "SELECT v FROM Viaje v WHERE v.guia.empresa.id = :idEmpresa ORDER BY v.guia.fecha DESC", Viaje.class)

@@ -8,6 +8,7 @@ import tse.cargauy.dtos.ViajeDto;
 public interface ViajeEJBRemote {
     ViajeDto getViajeById(Long id);
     ViajeDto getByGuia(Long idGuia);
+    List<ViajeDto> getAll();
     List<ViajeDto> getByEmpresa(Long idEmpresa);
     List<ViajeDto> getByChofer(Long idChofer);
     List<ViajeDto> getByVehiculo(Long idVehiculo);
