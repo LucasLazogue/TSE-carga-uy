@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:pt="jakarta.faces.passthrough">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Registrar Nodo Periferico</title>
+</h:head>
+<h:body>
+
+    <h1>Registrar Nodo Periferico</h1>
+
+    <h:form>
+        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
+
+        <p>Identificador: <h:inputText value="#{nodoView.nodo.identificador}" required="true"
+                                       requiredMessage="El identificador del nodo es obligatorio." /></p>
+        <p>Tipo:
+            <h:selectOneMenu value="#{nodoView.nodo.tipo}" required="true"
+                             requiredMessage="Debe indicar el tipo de nodo (BALANZAS o TRACKING).">
+                <f:selectItem itemLabel="Seleccione un tipo" noSelectionOption="true" />
+                <f:selectItems value="#{nodoView.tipos}" />
+            </h:selectOneMenu>
+        </p>
+        <p>Punto de acceso: <h:inputText value="#{nodoView.nodo.puntoAcceso}" size="40"
+                                         pt:placeholder="https://..." /></p>
+
+        <h:commandButton value="Guardar" action="#{nodoView.createNodo}">
+            <f:ajax execute="@form" render="@form" />
+        </h:commandButton>
+    </h:form>
+
+    <p><h:link value="Volver al listado" outcome="nodos" /></p>
+
+</h:body>
+</html>
