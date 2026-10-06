@@ -20,6 +20,9 @@ jobs:
           distribution: temurin
           java-version: 24
           cache: maven
+      - if: matrix.module == 'carga-uy-client'
+        run: mvn -B install -DskipTests
+        working-directory: carga-uy
       - run: mvn -B verify
         working-directory: ${{ matrix.module }}
 
