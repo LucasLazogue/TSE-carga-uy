@@ -8,8 +8,6 @@ import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.FormParam;
@@ -20,9 +18,9 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -33,22 +31,17 @@ import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 @Path("/auth")
 public class AuthRest {
 
-    private static final String STATE = "gubuy_state";
-    private static final String NONCE = "gubuy_nonce";
-    private static final String CODE_CHALLENGE = "mobile_code_challenge";
     private static final String MOBILE = "mobile";
     private static final String BEARER = "Bearer ";
     private static final String GRANT_TYPE = "authorization_code";
-    private static final String COOKIE = "cargauy_token";
+    private static final String COOKIE_SESION = "cargauy_token";
+    private static final String COOKIE_LOGIN = "cargauy_login";
     private static final URI FRONTEND = URI.create(System.getenv("CARGAUY_FRONTEND_URL")).resolve("/");
     private static final URI APP_MOBILE = URI.create(System.getenv().getOrDefault("CARGAUY_MOBILE_REDIRECT", "cargauy://ingreso"));
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @EJB
     UsuarioEJBLocal usuarioEJB;
-
-    @Context
-    HttpServletRequest request;
 
     @GET
     @Path("/login")
@@ -62,11 +55,10 @@ public class AuthRest {
                 throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
             }
             URI destino = usuarioEJB.getGubUyLoginUrl(state, nonce, cedulaMock);
-            HttpSession session = request.getSession();
-            session.setAttribute(STATE, state);
-            session.setAttribute(NONCE, nonce);
-            session.setAttribute(CODE_CHALLENGE, mobile ? codeChallenge : null);
-            return Response.seeOther(destino).build();
+            TokenDto estado = usuarioEJB.crearEstadoLogin(state, nonce, mobile ? codeChallenge : null);
+            return Response.seeOther(destino)
+                    .cookie(cookie(COOKIE_LOGIN, estado.getToken(), (int) estado.getSegundosVigencia()))
+                    .build();
         } catch (CargaUYException e) {
             return redirectWithError(mobile, e);
         }
@@ -74,23 +66,26 @@ public class AuthRest {
 
     @GET
     @Path("/callback")
-    public Response callback(@QueryParam("code") String code, @QueryParam("state") String state) {
-        HttpSession session = request.getSession(false);
-        String codeChallenge = session == null ? null : (String) session.getAttribute(CODE_CHALLENGE);
+    public Response callback(@QueryParam("code") String code, @QueryParam("state") String state,
+            @CookieParam(COOKIE_LOGIN) String cookieLogin) {
+        NewCookie borrarLogin = cookie(COOKIE_LOGIN, "", 0);
+        String codeChallenge = null;
         try {
-            if (session == null || code == null || state == null || !state.equals(session.getAttribute(STATE))) {
+            EstadoLoginDto estado = usuarioEJB.leerEstadoLogin(cookieLogin);
+            codeChallenge = estado.getCodeChallenge();
+            if (code == null || state == null || !state.equals(estado.getState())) {
                 throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
             }
-            UsuarioDto usuario = usuarioEJB.loginGubUy(code, (String) session.getAttribute(NONCE));
-            session.invalidate();
+            UsuarioDto usuario = usuarioEJB.loginGubUy(code, estado.getNonce());
 
             if (codeChallenge != null) {
                 String codigo = usuarioEJB.crearCodigoMobile(usuario, codeChallenge);
-                return Response.seeOther(URI.create(APP_MOBILE + "?code=" + codigo)).build();
+                return Response.seeOther(URI.create(APP_MOBILE + "?code=" + codigo)).cookie(borrarLogin).build();
             }
-            return Response.seeOther(FRONTEND).cookie(cookieSesion(usuarioEJB.crearToken(usuario).getToken(), NewCookie.DEFAULT_MAX_AGE)).build();
+            NewCookie sesion = cookie(COOKIE_SESION, usuarioEJB.crearToken(usuario).getToken(), NewCookie.DEFAULT_MAX_AGE);
+            return Response.seeOther(FRONTEND).cookie(borrarLogin, sesion).build();
         } catch (CargaUYException e) {
-            return redirectWithError(codeChallenge != null, e);
+            return redirectWithError(codeChallenge != null, e, borrarLogin);
         }
     }
 
@@ -114,7 +109,7 @@ public class AuthRest {
     @GET
     @Path("/me")
     @Produces("application/json")
-    public UsuarioDto me(@HeaderParam("Authorization") String authorization, @CookieParam(COOKIE) String cookie) {
+    public UsuarioDto me(@HeaderParam("Authorization") String authorization, @CookieParam(COOKIE_SESION) String cookie) {
         String token = authorization != null && authorization.startsWith(BEARER)
                 ? authorization.substring(BEARER.length())
                 : cookie;
@@ -127,16 +122,17 @@ public class AuthRest {
     @POST
     @Path("/logout")
     public Response logout() {
-        return Response.noContent().cookie(cookieSesion("", 0)).build();
+        return Response.noContent().cookie(cookie(COOKIE_SESION, "", 0)).build();
     }
 
-    private Response redirectWithError(boolean mobile, CargaUYException e) {
+    private Response redirectWithError(boolean mobile, CargaUYException e, NewCookie... cookies) {
         String error = "?error=" + e.getCodigo().getCodigo();
-        return Response.seeOther(URI.create((mobile ? APP_MOBILE : FRONTEND) + error)).build();
+        return Response.seeOther(URI.create((mobile ? APP_MOBILE : FRONTEND) + error)).cookie(cookies).build();
     }
 
-    private static NewCookie cookieSesion(String valor, int maxAge) {
-        return new NewCookie.Builder(COOKIE)
+    // HttpOnly: el js del front no la lee; Lax: viaja en la vuelta de gub.uy (navegacion GET) pero no en POST de otros sitios
+    private static NewCookie cookie(String nombre, String valor, int maxAge) {
+        return new NewCookie.Builder(nombre)
                 .value(valor)
                 .path("/")
                 .httpOnly(true)

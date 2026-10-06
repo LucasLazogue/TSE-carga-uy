@@ -56,7 +56,8 @@ public enum CodigoError {
     AUTH_PROVEEDOR_NO_DISPONIBLE(4004, 503),
     AUTH_CLIENTE_NO_CONFIGURADO(4005, 503),
     AUTH_SESION_INVALIDA(4006, 401),
-    AUTH_SECRETO_NO_CONFIGURADO(4007, 503);
+    AUTH_SECRETO_NO_CONFIGURADO(4007, 503),
+    AUTH_SECRETO_CORTO(4008, 503);
 
     private final int codigo;
     private final int status;
