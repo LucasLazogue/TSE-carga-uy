@@ -45,6 +45,10 @@ nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
 Una vez desplegada en OpenShift, obtener la URL con
 - oc get route carga-uy
 
+Nodos perifericos (CU-19): pantalla del backoffice en http://localhost:8080/carga-uy/nodos.xhtml y API
+en /api/nodos. Posiciones recibidas del tracking (CU-10):
+/api/posiciones?matricula=X. El simulador del nodo de tracking esta en nodo-tracking (ver su README).
+
 ## Ejecutar aplicacion consola
 Desde carga-uy-client ejecutar
 - mvn compile "exec:java" "-Dexec.mainClass=tse.cargauy.App"

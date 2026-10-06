@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:pt="jakarta.faces.passthrough">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Nodos Perifericos</title>
+</h:head>
+<h:body>
+
+    <h1>Nodos Perifericos</h1>
+
+    <h:form id="nodos">
+        <p><h:link value="Registrar nodo" outcome="crear-nodo" /></p>
+
+        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
+
+        <h:panelGroup id="tabla" layout="block">
+            <ui:fragment rendered="#{not empty nodoView.nodos}">
+                <table border="1">
+                    <tr>
+                        <th>Identificador</th>
+                        <th>Tipo</th>
+                        <th>Punto de acceso</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    <ui:repeat value="#{nodoView.nodos}" var="nodo">
+                        <tr>
+                            <td>#{nodo.identificador}</td>
+                            <td>#{nodo.tipo}</td>
+                            <td>
+                                <h:inputText id="puntoAcceso" value="#{nodo.puntoAcceso}" size="35" />
+                                <h:commandButton value="Cambiar" action="#{nodoView.cambiarPuntoAcceso(nodo)}">
+                                    <f:ajax execute="@this puntoAcceso" render="@form" />
+                                </h:commandButton>
+                            </td>
+                            <td>#{nodo.estado}</td>
+                            <td>
+                                <h:commandButton value="Habilitar" action="#{nodoView.habilitar(nodo)}"
+                                                 rendered="#{not nodoView.habilitado(nodo)}">
+                                    <f:ajax render="@form" />
+                                </h:commandButton>
+                                <h:commandButton value="Deshabilitar" action="#{nodoView.deshabilitar(nodo)}"
+                                                 rendered="#{nodoView.habilitado(nodo)}">
+                                    <f:ajax render="@form" />
+                                </h:commandButton>
+                                <h:commandButton value="Dar de baja" action="#{nodoView.darDeBaja(nodo)}"
+                                                 onclick="return confirm('¿Dar de baja el nodo #{nodo.identificador}?')">
+                                    <f:ajax render="@form" />
+                                </h:commandButton>
+                            </td>
+                        </tr>
+                    </ui:repeat>
+                </table>
+            </ui:fragment>
+            <ui:fragment rendered="#{empty nodoView.nodos}">
+                <p>No hay nodos registrados.</p>
+            </ui:fragment>
+        </h:panelGroup>
+    </h:form>
+
+</h:body>
+</html>
