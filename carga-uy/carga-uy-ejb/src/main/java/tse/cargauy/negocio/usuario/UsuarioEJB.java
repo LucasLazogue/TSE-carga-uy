@@ -5,16 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import javax.crypto.SecretKey;
+
+import io.jsonwebtoken.Claims;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonString;
 import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
@@ -27,7 +28,8 @@ import tse.cargauy.seguridad.Jwt;
 @Stateless
 public class UsuarioEJB implements UsuarioEJBLocal {
 
-    private static final String ISSUER = "carga-uy";
+    // HS256 necesita una clave de al menos 256 bits (RFC 7518 3.2)
+    private static final int LARGO_MINIMO_SECRETO = 32;
     private static final Duration DURACION_SESION = Duration.ofHours(6);
     private static final Duration DURACION_CODIGO_MOBILE = Duration.ofMinutes(1);
     private static final String TIPO_SESION = "sesion";
@@ -64,14 +66,14 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     }
 
     public TokenDto crearToken(UsuarioDto usuario) {
-        JsonObjectBuilder claims = Json.createObjectBuilder()
-                .add("sub", String.valueOf(usuario.getId()))
-                .add("cedula", usuario.getCedula())
-                .add("roles", Json.createArrayBuilder(usuario.getRoles()));
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("cedula", usuario.getCedula());
+        claims.put("roles", usuario.getRoles());
         if (usuario.getCorreo() != null) {
-            claims.add("correo", usuario.getCorreo());
+            claims.put("correo", usuario.getCorreo());
         }
-        return new TokenDto(firmar(claims, TIPO_SESION, DURACION_SESION), DURACION_SESION.toSeconds());
+        String token = Jwt.firmar(String.valueOf(usuario.getId()), TIPO_SESION, claims, DURACION_SESION, clave());
+        return new TokenDto(token, DURACION_SESION.toSeconds());
     }
 
     public UsuarioDto validarToken(String token) {
@@ -79,58 +81,53 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     }
 
     public String crearCodigoMobile(UsuarioDto usuario, String codeChallenge) {
-        JsonObjectBuilder claims = Json.createObjectBuilder()
-                .add("sub", String.valueOf(usuario.getId()))
-                .add(CODE_CHALLENGE, codeChallenge);
-        return firmar(claims, TIPO_CODIGO_MOBILE, DURACION_CODIGO_MOBILE);
+        return Jwt.firmar(String.valueOf(usuario.getId()), TIPO_CODIGO_MOBILE, Map.of(CODE_CHALLENGE, codeChallenge),
+                DURACION_CODIGO_MOBILE, clave());
     }
 
     public TokenDto canjearCodigoMobile(String codigo, String codeVerifier) {
-        JsonObject claims = verificar(codigo, TIPO_CODIGO_MOBILE, CodigoError.AUTH_SOLICITUD_INVALIDA);
-        if (codeVerifier == null || !MessageDigest.isEqual(
-                claims.getString(CODE_CHALLENGE, "").getBytes(StandardCharsets.US_ASCII),
+        Claims claims = verificar(codigo, TIPO_CODIGO_MOBILE, CodigoError.AUTH_SOLICITUD_INVALIDA);
+        String codeChallenge = claims.get(CODE_CHALLENGE, String.class);
+        if (codeVerifier == null || codeChallenge == null || !MessageDigest.isEqual(
+                codeChallenge.getBytes(StandardCharsets.US_ASCII),
                 challenge(codeVerifier).getBytes(StandardCharsets.US_ASCII))) {
             throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
         }
-        UsuarioDto usuario = usuarioDAO.getById(Long.valueOf(claims.getString("sub")));
+        UsuarioDto usuario = usuarioDAO.getById(Long.valueOf(claims.getSubject()));
         if (usuario == null) {
             throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
         }
         return crearToken(usuario);
     }
 
-    private String firmar(JsonObjectBuilder claims, String tipo, Duration duracion) {
-        Instant ahora = Instant.now();
-        claims.add("iss", ISSUER)
-                .add("typ", tipo)
-                .add("iat", ahora.getEpochSecond())
-                .add("exp", ahora.plus(duracion).getEpochSecond());
-        return Jwt.firmar(claims.build(), secreto());
-    }
-
-    private JsonObject verificar(String token, String tipo, CodigoError error) {
-        JsonObject claims = Jwt.verificar(token, secreto());
-        if (claims == null || !ISSUER.equals(claims.getString("iss", null)) || !tipo.equals(claims.getString("typ", null))) {
+    private Claims verificar(String token, String tipo, CodigoError error) {
+        Claims claims = Jwt.verificar(token, tipo, clave());
+        if (claims == null) {
             throw new CargaUYException(error);
         }
         return claims;
     }
 
-    private static UsuarioDto usuario(JsonObject claims) {
+    private static UsuarioDto usuario(Claims claims) {
         UsuarioDto usuario = new UsuarioDto();
-        usuario.setId(Long.valueOf(claims.getString("sub")));
-        usuario.setCedula(claims.getString("cedula"));
-        usuario.setCorreo(claims.getString("correo", null));
-        usuario.setRoles(claims.getJsonArray("roles").getValuesAs(JsonString::getString));
+        usuario.setId(Long.valueOf(claims.getSubject()));
+        usuario.setCedula(claims.get("cedula", String.class));
+        usuario.setCorreo(claims.get("correo", String.class));
+        // el json se lee como lista sin tipo; los roles siempre se firman como textos
+        List<?> roles = claims.get("roles", List.class);
+        usuario.setRoles(roles.stream().map(String::valueOf).toList());
         return usuario;
     }
 
-    private static String secreto() {
+    private static SecretKey clave() {
         String secreto = System.getenv("CARGAUY_JWT_SECRET");
         if (secreto == null || secreto.isBlank()) {
             throw new CargaUYException(CodigoError.AUTH_SECRETO_NO_CONFIGURADO);
         }
-        return secreto;
+        if (secreto.getBytes(StandardCharsets.UTF_8).length < LARGO_MINIMO_SECRETO) {
+            throw new CargaUYException(CodigoError.AUTH_SECRETO_CORTO, String.valueOf(LARGO_MINIMO_SECRETO));
+        }
+        return Jwt.clave(secreto);
     }
 
     private static String challenge(String codeVerifier) {
