@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
+import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -32,9 +33,13 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     private static final int LARGO_MINIMO_SECRETO = 32;
     private static final Duration DURACION_SESION = Duration.ofHours(6);
     private static final Duration DURACION_CODIGO_MOBILE = Duration.ofMinutes(1);
+    private static final Duration DURACION_LOGIN = Duration.ofMinutes(5);
     private static final String TIPO_SESION = "sesion";
     private static final String TIPO_CODIGO_MOBILE = "codigo_mobile";
+    private static final String TIPO_LOGIN = "login";
     private static final String CODE_CHALLENGE = "cc";
+    private static final String STATE = "state";
+    private static final String NONCE = "nonce";
 
     @EJB
     UsuarioDAOLocal usuarioDAO;
@@ -63,6 +68,24 @@ public class UsuarioEJB implements UsuarioEJBLocal {
             return ciudadano;
         }
         return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
+    }
+
+    public TokenDto crearEstadoLogin(String state, String nonce, String codeChallenge) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(STATE, state);
+        claims.put(NONCE, nonce);
+        if (codeChallenge != null) {
+            claims.put(CODE_CHALLENGE, codeChallenge);
+        }
+        // todavia no hay usuario, por eso no lleva sub
+        String token = Jwt.firmar(null, TIPO_LOGIN, claims, DURACION_LOGIN, clave());
+        return new TokenDto(token, DURACION_LOGIN.toSeconds());
+    }
+
+    public EstadoLoginDto leerEstadoLogin(String token) {
+        Claims claims = verificar(token, TIPO_LOGIN, CodigoError.AUTH_SOLICITUD_INVALIDA);
+        return new EstadoLoginDto(claims.get(STATE, String.class), claims.get(NONCE, String.class),
+                claims.get(CODE_CHALLENGE, String.class));
     }
 
     public TokenDto crearToken(UsuarioDto usuario) {
@@ -119,8 +142,8 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         return usuario;
     }
 
-    private static SecretKey clave() {
-        String secreto = System.getenv("CARGAUY_JWT_SECRET");
+    private SecretKey clave() {
+        String secreto = leerSecreto();
         if (secreto == null || secreto.isBlank()) {
             throw new CargaUYException(CodigoError.AUTH_SECRETO_NO_CONFIGURADO);
         }
@@ -128,6 +151,11 @@ public class UsuarioEJB implements UsuarioEJBLocal {
             throw new CargaUYException(CodigoError.AUTH_SECRETO_CORTO, String.valueOf(LARGO_MINIMO_SECRETO));
         }
         return Jwt.clave(secreto);
+    }
+
+    // aparte para poder reemplazarlo en los tests
+    String leerSecreto() {
+        return System.getenv("CARGAUY_JWT_SECRET");
     }
 
     private static String challenge(String codeVerifier) {
