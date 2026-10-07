@@ -21,33 +21,32 @@ API REST:
 - http://localhost:8080/carga-uy/api/permisos
 
 ### Login con gub.uy
-Usa el ambiente de testing de ID Uruguay con el cliente de prueba de AGESIC. En carga-uy/.env:
+Por defecto se usa el login simulado. En carga-uy/.env:
+
+    GUBUY_MOCK=true
+
+La pantalla de ingreso del frontend (http://localhost:5173) muestra un campo de cedula y se entra
+con esa cedula. 11111111 es un funcionario precargado, 55555555 un chofer y cualquier otra entra
+como ciudadano.
+
+Para probar con gub.uy de testing, cambiar en carga-uy/.env:
 
     GUBUY_CLIENT_ID=<pedirlo al grupo>
     GUBUY_CLIENT_SECRET=<pedirlo al grupo>
     GUBUY_MOCK=false
     GUBUY_REDIRECT_URI=http://localhost:8080
 
-Ese cliente solo acepta como redirect http://localhost y http://localhost:8080 (comparacion
-exacta, sin ruta), asi que gub.uy vuelve a la raiz de WildFly. Despues de cada docker compose up
-hay que cargar una regla que reenvia esa vuelta al callback de la API (desde bash):
+y despues de docker compose up -d cargar esta regla en WildFly (desde bash), que reenvia la vuelta
+de gub.uy al callback de la API:
 
     MSYS_NO_PATHCONV=1 docker exec -i carga-uy-carga-uy-1 /opt/jboss/wildfly/bin/jboss-cli.sh --connect --user=admin --password=admin123 <<'EOF'
     /subsystem=undertow/configuration=filter/expression-filter=gubuy-callback:add(expression="path('/') and (exists('%{q,code}') or exists('%{q,error}')) -> redirect('/carga-uy/api/auth/callback%q')")
     /subsystem=undertow/server=default-server/host=default-host/filter-ref=gubuy-callback:add
     EOF
 
-La regla solo actua sobre / con code o error; el resto de la raiz y /carga-uy/ no cambian. Con un
-cliente propio (tramite "Integracion ID Uruguay OpenID Connect" de AGESIC) se registra
-http://localhost:8080/carga-uy/api/auth/callback, se saca GUBUY_REDIRECT_URI del .env y no hace
-falta la regla.
+Se ingresa con un usuario de https://mi-testing.iduruguay.gub.uy (hay que crear la cuenta ahi).
 
-Para probar: levantar el frontend, entrar a http://localhost:5173 e ingresar con un usuario de
-https://mi-testing.iduruguay.gub.uy (es independiente de produccion: hay que crear la cuenta ahi).
-La cedula 11111111 es un funcionario precargado; cualquier otra entra como ciudadano.
-
-Sin credenciales se puede simular con GUBUY_MOCK=true en .env: el login saltea gub.uy y entra
-con la cedula 55555555 (chofer precargado), o con otra pasandola en /api/auth/login?cedula=22222222
+Para volver al simulado, poner GUBUY_MOCK=true y sacar GUBUY_REDIRECT_URI.
 
 La sesion es un JWT firmado con CARGAUY_JWT_SECRET. En la web viaja en la cookie HttpOnly
 cargauy_token; el logout es POST /api/auth/logout.
