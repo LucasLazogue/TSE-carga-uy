@@ -7,15 +7,28 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.AbstractQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
+import tse.cargauy.dtos.FiltroGuias;
 import tse.cargauy.dtos.GuiaDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.entities.Empresa;
+import tse.cargauy.entities.Empresa_;
 import tse.cargauy.entities.Guia;
+import tse.cargauy.entities.Guia_;
 import tse.cargauy.entities.Responsable;
 import tse.cargauy.entities.Rubro;
 import tse.cargauy.entities.TipoCarga;
+import tse.cargauy.entities.Viaje;
+import tse.cargauy.entities.Viaje_;
 
 @Stateless
 public class GuiaDAO implements GuiaDAOLocal {
@@ -38,11 +51,53 @@ public class GuiaDAO implements GuiaDAOLocal {
     }
 
     @Override
-    public List<GuiaDto> getByEmpresa(Long idEmpresa) {
-        return toDtos(entityManager.createQuery(
-                        "SELECT g FROM Guia g WHERE g.empresa.id = :idEmpresa ORDER BY g.fecha DESC", Guia.class)
-                .setParameter("idEmpresa", idEmpresa)
+    public PaginaDto<GuiaDto> buscar(FiltroGuias filtro, Paginacion paginacion) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Guia> query = cb.createQuery(Guia.class);
+        Root<Guia> guia = query.from(Guia.class);
+        query.select(guia)
+                .where(condiciones(filtro, cb, query, guia))
+                .orderBy(cb.desc(guia.get(Guia_.fecha)), cb.desc(guia.get(Guia_.id)));
+        List<GuiaDto> items = toDtos(entityManager.createQuery(query)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
                 .getResultList());
+
+        CriteriaQuery<Long> conteo = cb.createQuery(Long.class);
+        Root<Guia> contada = conteo.from(Guia.class);
+        conteo.select(cb.count(contada)).where(condiciones(filtro, cb, conteo, contada));
+        long total = entityManager.createQuery(conteo).getSingleResult();
+
+        return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    private Predicate[] condiciones(FiltroGuias filtro, CriteriaBuilder cb, AbstractQuery<?> query, Root<Guia> guia) {
+        List<Predicate> condiciones = new ArrayList<>();
+        if (filtro.getIdsEmpresa() != null) {
+            condiciones.add(filtro.getIdsEmpresa().isEmpty()
+                    ? cb.disjunction()
+                    : guia.get(Guia_.empresa).get(Empresa_.id).in(filtro.getIdsEmpresa()));
+        }
+        if (filtro.getBusqueda() != null && !filtro.getBusqueda().isBlank()) {
+            String numero = filtro.getBusqueda().replaceAll("\\D", "");
+            condiciones.add(numero.isEmpty() || numero.length() > 18
+                    ? cb.disjunction()
+                    : cb.equal(guia.get(Guia_.id), Long.valueOf(numero)));
+        }
+        if (filtro.getConViaje() != null) {
+            Subquery<Long> viaje = query.subquery(Long.class);
+            Root<Viaje> v = viaje.from(Viaje.class);
+            viaje.select(v.get(Viaje_.id)).where(cb.equal(v.get(Viaje_.guia), guia));
+            condiciones.add(Boolean.TRUE.equals(filtro.getConViaje()) ? cb.exists(viaje) : cb.not(cb.exists(viaje)));
+        }
+        if (filtro.getDesde() != null) {
+            condiciones.add(cb.greaterThanOrEqualTo(guia.get(Guia_.fecha), filtro.getDesde()));
+        }
+        if (filtro.getHasta() != null) {
+            condiciones.add(cb.lessThanOrEqualTo(guia.get(Guia_.fecha), filtro.getHasta()));
+        }
+        return condiciones.toArray(Predicate[]::new);
     }
 
     @Override

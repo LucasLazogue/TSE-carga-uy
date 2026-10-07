@@ -10,7 +10,7 @@ public interface EmpresaDAOLocal {
     EmpresaDto getEmpresaByNro(int nroEmpresa);
     List<EmpresaDto> getAll();
     List<EmpresaDto> findByNombre(String nombre);
-    void addEmpresa(EmpresaDto empresaDto);
+    EmpresaDto addEmpresa(EmpresaDto empresaDto);
     void updateEmpresa(Long id, EmpresaDto empresaDto);
     void deleteEmpresa(Long id);
 }

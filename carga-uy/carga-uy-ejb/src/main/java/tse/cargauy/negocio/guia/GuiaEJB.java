@@ -1,13 +1,16 @@
 package tse.cargauy.negocio.guia;
 
 import java.util.List;
-import jakarta.ejb.Stateless;
+
 import jakarta.ejb.EJB;
-import tse.cargauy.data.empresa.EmpresaDAOLocal;
+import jakarta.ejb.Stateless;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
+import tse.cargauy.dtos.FiltroGuias;
 import tse.cargauy.dtos.GuiaDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.ViajeDto;
@@ -25,41 +28,30 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
     ViajeDAOLocal viajeDAO;
 
     @EJB
-    EmpresaDAOLocal empresaDAO;
-
-    @EJB
     UsuarioDAOLocal usuarioDAO;
 
-    public GuiaDto getGuiaById(Long id) {
-        return guiaDAO.getGuiaById(id);
+    public PaginaDto<GuiaDto> listar(Long idEmpresa, FiltroGuias filtro, Paginacion paginacion) {
+        filtro.setIdsEmpresa(List.of(idEmpresa));
+        return guiaDAO.buscar(filtro, paginacion);
     }
 
-    public List<GuiaDto> getAll() {
-        return guiaDAO.getAll();
+    public GuiaDto getGuia(Long idEmpresa, Long id) {
+        return getDeEmpresa(idEmpresa, id);
     }
 
-    public List<GuiaDto> getByEmpresa(Long idEmpresa) {
-        return guiaDAO.getByEmpresa(idEmpresa);
-    }
-
-    public GuiaDto addGuia(GuiaDto guiaDto) {
+    public GuiaDto addGuia(Long idEmpresa, GuiaDto guiaDto) {
+        guiaDto.setIdEmpresa(idEmpresa);
         validar(guiaDto);
-        if (guiaDto.getIdEmpresa() == null) {
-            throw new CargaUYException(CodigoError.GUIA_EMPRESA_REQUERIDA);
-        }
-        if (empresaDAO.getEmpresaById(guiaDto.getIdEmpresa()) == null) {
-            throw new CargaUYException(CodigoError.EMPRESA_NO_ENCONTRADA, String.valueOf(guiaDto.getIdEmpresa()));
-        }
         if (guiaDto.getIdRegistradaPor() == null
-                || usuarioDAO.getResponsableVigente(guiaDto.getIdRegistradaPor(), guiaDto.getIdEmpresa(), guiaDto.getFecha()) == null) {
+                || usuarioDAO.getResponsableVigente(guiaDto.getIdRegistradaPor(), idEmpresa, guiaDto.getFecha()) == null) {
             throw new CargaUYException(CodigoError.GUIA_RESPONSABLE_INVALIDO);
         }
 
         return guiaDAO.addGuia(guiaDto);
     }
 
-    public void updateGuia(Long id, GuiaDto guiaDto) {
-        GuiaDto actual = getExistente(id);
+    public GuiaDto updateGuia(Long idEmpresa, Long id, GuiaDto guiaDto) {
+        GuiaDto actual = getDeEmpresa(idEmpresa, id);
         ViajeDto viaje = viajeDAO.getByGuia(id);
         if (viaje != null && viaje.getEstado() != EstadoViaje.ASIGNADO) {
             throw new CargaUYException(CodigoError.GUIA_NO_MODIFICABLE, actual.getNroGuia());
@@ -70,10 +62,11 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
         }
 
         guiaDAO.updateGuia(id, guiaDto);
+        return guiaDAO.getGuiaById(id);
     }
 
-    public void deleteGuia(Long id) {
-        GuiaDto actual = getExistente(id);
+    public void deleteGuia(Long idEmpresa, Long id) {
+        GuiaDto actual = getDeEmpresa(idEmpresa, id);
         if (viajeDAO.getByGuia(id) != null) {
             throw new CargaUYException(CodigoError.GUIA_CON_VIAJE, actual.getNroGuia());
         }
@@ -89,9 +82,9 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
         return guiaDAO.getTiposCarga();
     }
 
-    private GuiaDto getExistente(Long id) {
+    private GuiaDto getDeEmpresa(Long idEmpresa, Long id) {
         GuiaDto guia = guiaDAO.getGuiaById(id);
-        if (guia == null) {
+        if (guia == null || !guia.getIdEmpresa().equals(idEmpresa)) {
             throw new CargaUYException(CodigoError.GUIA_NO_ENCONTRADA, String.valueOf(id));
         }
         return guia;

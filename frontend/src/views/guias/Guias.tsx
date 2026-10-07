@@ -1,63 +1,62 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { FormEvent } from 'react'
 import { useDialogs } from '@/components/dialogs/useDialogs'
 import { empresasApi } from '@/api/empresas/empresas.api'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { guiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
+import type { Page } from '@/api/page'
 import NuevaGuiaDialog from './dialogs/NuevaGuiaDialog'
 
 function Guias() {
-  const [lista, setLista] = useState<Guia[]>([])
+  const [pagina, setPagina] = useState<Page<Guia> | null>(null)
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [idEmpresa, setIdEmpresa] = useState(0)
+  const [numeroPagina, setNumeroPagina] = useState(0)
   const { open } = useDialogs()
 
+  const totalPaginas = pagina ? Math.max(1, Math.ceil(pagina.total / pagina.tamanio)) : 1
+
   useEffect(() => {
-    empresasApi.getAll().then(setEmpresas)
-    guiasApi.getAll().then(setLista)
+    empresasApi.getAll().then((lista) => {
+      setEmpresas(lista)
+      setIdEmpresa(lista[0]?.id ?? 0)
+    })
   }, [])
 
-  async function cargar(filtro: number) {
-    setLista(await guiasApi.getAll(filtro || undefined))
+  useEffect(() => {
+    if (idEmpresa) {
+      guiasApi.getAll(idEmpresa, { pagina: numeroPagina }).then(setPagina)
+    }
+  }, [idEmpresa, numeroPagina])
+
+  function elegirEmpresa(id: number) {
+    setIdEmpresa(id)
+    setNumeroPagina(0)
   }
 
-  async function buscar(e: FormEvent) {
-    e.preventDefault()
-    await cargar(idEmpresa)
+  async function recargar() {
+    setPagina(await guiasApi.getAll(idEmpresa, { pagina: numeroPagina }))
   }
 
   function nuevaGuia() {
     open({
       title: 'Nueva guía',
       size: 'lg',
-      content: (close) => <NuevaGuiaDialog empresas={empresas} close={close} onCreated={() => cargar(idEmpresa)} />,
+      content: (close) => <NuevaGuiaDialog empresas={empresas} close={close} onCreated={recargar} />,
     })
   }
 
   return (
     <div>
       <h1>Guias</h1>
-      <form onSubmit={buscar}>
-        <select value={idEmpresa} onChange={(e) => setIdEmpresa(Number(e.target.value))}>
-          <option value={0}>Todas las empresas</option>
-          {empresas.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nombrePublico}
-            </option>
-          ))}
-        </select>
-        <button type="submit">Buscar</button>
-      </form>
-      <button
-        onClick={() => {
-          setIdEmpresa(0)
-          cargar(0)
-        }}
-      >
-        Ver todas
-      </button>
+      <select value={idEmpresa} onChange={(e) => elegirEmpresa(Number(e.target.value))}>
+        {empresas.map((e) => (
+          <option key={e.id} value={e.id}>
+            {e.nombrePublico}
+          </option>
+        ))}
+      </select>
       <button onClick={nuevaGuia}>Nueva guía</button>
 
       <table border={1}>
@@ -75,7 +74,7 @@ function Guias() {
           </tr>
         </thead>
         <tbody>
-          {lista.map((g) => (
+          {pagina?.items.map((g) => (
             <tr key={g.id}>
               <td>{g.nroGuia}</td>
               <td>{g.fecha}</td>
@@ -94,6 +93,18 @@ function Guias() {
           ))}
         </tbody>
       </table>
+      <div>
+        <button disabled={numeroPagina === 0} onClick={() => setNumeroPagina(numeroPagina - 1)}>
+          Anterior
+        </button>
+        <span>
+          {' '}
+          Página {numeroPagina + 1} de {totalPaginas} ({pagina?.total ?? 0} guías){' '}
+        </span>
+        <button disabled={numeroPagina + 1 >= totalPaginas} onClick={() => setNumeroPagina(numeroPagina + 1)}>
+          Siguiente
+        </button>
+      </div>
       <p>
         <Link to="/">Volver al inicio</Link>
       </p>

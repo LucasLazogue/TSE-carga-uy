@@ -13,6 +13,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
@@ -29,8 +30,9 @@ public class EmpresasRest {
     }
 
     @POST
-    public void createEmpresa(EmpresaDto empresaDto) {
-        empresaEJB.addEmpresa(empresaDto);
+    public Response createEmpresa(EmpresaDto empresaDto) {
+        EmpresaDto empresa = empresaEJB.addEmpresa(empresaDto);
+        return Response.status(Response.Status.CREATED).entity(empresa).build();
     }
 
     @Path("/{id}")

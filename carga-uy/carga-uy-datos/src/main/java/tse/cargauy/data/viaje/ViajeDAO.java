@@ -81,8 +81,10 @@ public class ViajeDAO implements ViajeDAOLocal {
 
     private Predicate[] condiciones(FiltroViajes filtro, CriteriaBuilder cb, Root<Viaje> viaje) {
         List<Predicate> condiciones = new ArrayList<>();
-        if (filtro.getIdEmpresa() != null) {
-            condiciones.add(cb.equal(viaje.get(Viaje_.guia).get(Guia_.empresa).get(Empresa_.id), filtro.getIdEmpresa()));
+        if (filtro.getIdsEmpresa() != null) {
+            condiciones.add(filtro.getIdsEmpresa().isEmpty()
+                    ? cb.disjunction()
+                    : viaje.get(Viaje_.guia).get(Guia_.empresa).get(Empresa_.id).in(filtro.getIdsEmpresa()));
         }
         if (filtro.getIdChofer() != null) {
             condiciones.add(cb.equal(viaje.get(Viaje_.chofer).get(VinculoEmpresa_.ciudadano).get(Usuario_.id), filtro.getIdChofer()));

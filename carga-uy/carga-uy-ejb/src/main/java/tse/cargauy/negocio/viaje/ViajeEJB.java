@@ -1,7 +1,9 @@
 package tse.cargauy.negocio.viaje;
 
-import jakarta.ejb.Stateless;
+import java.util.List;
+
 import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
@@ -35,24 +37,21 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
     @EJB
     UsuarioDAOLocal usuarioDAO;
 
-    public ViajeDto getViajeById(Long id) {
-        return viajeDAO.getViajeById(id);
-    }
-
-    public ViajeDto getByGuia(Long idGuia) {
-        return viajeDAO.getByGuia(idGuia);
-    }
-
-    public PaginaDto<ViajeDto> getAll(FiltroViajes filtro, Paginacion paginacion) {
+    public PaginaDto<ViajeDto> listar(Long idEmpresa, FiltroViajes filtro, Paginacion paginacion) {
+        filtro.setIdsEmpresa(List.of(idEmpresa));
         return viajeDAO.getAll(filtro, paginacion);
     }
 
-    public ViajeDto asignarViaje(ViajeDto viajeDto) {
+    public ViajeDto getViaje(Long idEmpresa, Long id) {
+        return getDeEmpresa(idEmpresa, id);
+    }
+
+    public ViajeDto asignarViaje(Long idEmpresa, ViajeDto viajeDto) {
         if (viajeDto.getIdGuia() == null) {
             throw new CargaUYException(CodigoError.VIAJE_GUIA_REQUERIDA);
         }
         GuiaDto guia = guiaDAO.getGuiaById(viajeDto.getIdGuia());
-        if (guia == null) {
+        if (guia == null || !guia.getIdEmpresa().equals(idEmpresa)) {
             throw new CargaUYException(CodigoError.GUIA_NO_ENCONTRADA, String.valueOf(viajeDto.getIdGuia()));
         }
         if (viajeDAO.getByGuia(guia.getId()) != null) {
@@ -63,24 +62,30 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return viajeDAO.addViaje(viajeDto);
     }
 
-    public void reasignarViaje(Long id, ViajeDto viajeDto) {
-        ViajeDto actual = getModificable(id);
+    public ViajeDto reasignarViaje(Long idEmpresa, Long id, ViajeDto viajeDto) {
+        ViajeDto actual = getModificable(idEmpresa, id);
         validarAsignacion(viajeDto, guiaDAO.getGuiaById(actual.getIdGuia()));
 
         viajeDAO.updateViaje(id, viajeDto);
+        return viajeDAO.getViajeById(id);
     }
 
-    public void deleteViaje(Long id) {
-        getModificable(id);
+    public void deleteViaje(Long idEmpresa, Long id) {
+        getModificable(idEmpresa, id);
 
         viajeDAO.deleteViaje(id);
     }
 
-    private ViajeDto getModificable(Long id) {
+    private ViajeDto getDeEmpresa(Long idEmpresa, Long id) {
         ViajeDto viaje = viajeDAO.getViajeById(id);
-        if (viaje == null) {
+        if (viaje == null || !guiaDAO.getGuiaById(viaje.getIdGuia()).getIdEmpresa().equals(idEmpresa)) {
             throw new CargaUYException(CodigoError.VIAJE_NO_ENCONTRADO, String.valueOf(id));
         }
+        return viaje;
+    }
+
+    private ViajeDto getModificable(Long idEmpresa, Long id) {
+        ViajeDto viaje = getDeEmpresa(idEmpresa, id);
         if (viaje.getEstado() != EstadoViaje.ASIGNADO) {
             throw new CargaUYException(CodigoError.VIAJE_NO_MODIFICABLE, String.valueOf(id));
         }

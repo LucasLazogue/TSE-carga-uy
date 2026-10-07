@@ -16,6 +16,7 @@ function Viajes() {
   const [pagina, setPagina] = useState<Page<Viaje> | null>(null)
   const [filtro, setFiltro] = useState<FiltroViajes>({ pagina: 0 })
   const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [idEmpresa, setIdEmpresa] = useState(0)
   const [guias, setGuias] = useState<Guia[]>([])
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
   const [creando, setCreando] = useState(false)
@@ -25,33 +26,47 @@ function Viajes() {
   const totalPaginas = pagina ? Math.max(1, Math.ceil(pagina.total / pagina.tamanio)) : 1
 
   useEffect(() => {
-    empresasApi.getAll().then(setEmpresas)
-    guiasApi.getAll().then((todas) => setGuias(todas.filter((g) => g.idViaje === null)))
+    empresasApi.getAll().then((lista) => {
+      setEmpresas(lista)
+      setIdEmpresa(lista[0]?.id ?? 0)
+    })
   }, [])
 
   useEffect(() => {
-    viajesApi.getAll(filtro).then(setPagina)
-  }, [filtro])
+    if (idEmpresa) {
+      cargarGuiasSinViaje(idEmpresa)
+      vehiculosApi.getAll(idEmpresa).then(setVehiculos)
+    }
+  }, [idEmpresa])
+
+  useEffect(() => {
+    if (idEmpresa) {
+      viajesApi.getAll(idEmpresa, filtro).then(setPagina)
+    }
+  }, [idEmpresa, filtro])
+
+  async function cargarGuiasSinViaje(id: number) {
+    setGuias((await guiasApi.getAll(id, { conViaje: false, tamanio: 100 })).items)
+  }
+
+  function elegirEmpresa(id: number) {
+    setIdEmpresa(id)
+    setFiltro({ ...filtro, pagina: 0 })
+    setNuevo(VIAJE_VACIO)
+  }
 
   function filtrar(cambio: FiltroViajes) {
     setFiltro({ ...filtro, ...cambio, pagina: 0 })
-  }
-
-  async function elegirGuia(idGuia: number) {
-    setNuevo({ ...nuevo, idGuia, idVehiculo: 0 })
-    const guia = guias.find((g) => g.id === idGuia)
-    setVehiculos(guia ? await vehiculosApi.getAll(guia.idEmpresa) : [])
   }
 
   async function guardar(e: FormEvent) {
     e.preventDefault()
     setError('')
     try {
-      await viajesApi.create(nuevo)
+      await viajesApi.create(idEmpresa, nuevo)
       setNuevo(VIAJE_VACIO)
       setCreando(false)
-      setVehiculos([])
-      setGuias((await guiasApi.getAll()).filter((g) => g.idViaje === null))
+      await cargarGuiasSinViaje(idEmpresa)
       setFiltro({ ...filtro })
     } catch (err) {
       setError(getErrorMessage(err))
@@ -62,11 +77,7 @@ function Viajes() {
     <div>
       <h1>Viajes</h1>
       <div>
-        <select
-          value={filtro.idEmpresa ?? ''}
-          onChange={(e) => filtrar({ idEmpresa: e.target.value ? Number(e.target.value) : undefined })}
-        >
-          <option value="">Todas las empresas</option>
+        <select value={idEmpresa} onChange={(e) => elegirEmpresa(Number(e.target.value))}>
           {empresas.map((e) => (
             <option key={e.id} value={e.id}>
               {e.nombrePublico}
@@ -93,7 +104,7 @@ function Viajes() {
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <div>
             <label>Guia </label>
-            <select value={nuevo.idGuia} onChange={(e) => elegirGuia(Number(e.target.value))}>
+            <select value={nuevo.idGuia} onChange={(e) => setNuevo({ ...nuevo, idGuia: Number(e.target.value) })}>
               <option value={0}>Seleccione una guia</option>
               {guias.map((g) => (
                 <option key={g.id} value={g.id}>

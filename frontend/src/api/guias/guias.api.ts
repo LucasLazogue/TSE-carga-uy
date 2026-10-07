@@ -1,26 +1,25 @@
 import { http } from '@/api/http'
-import type { Guia, GuiaNueva, Rubro, TipoCarga } from './guias.types'
+import type { Page } from '@/api/page'
+import type { FiltroGuias, Guia, GuiaNueva, Rubro, TipoCarga } from './guias.types'
 
 export const guiasApi = {
-  getAll: async (idEmpresa?: number) => {
-    const res = await http.get<Guia[]>('/guias', {
-      params: { idEmpresa },
-    })
+  getAll: async (idEmpresa: number, filtro: FiltroGuias = {}) => {
+    const res = await http.get<Page<Guia>>(`/empresas/${idEmpresa}/guias`, { params: filtro })
     return res.data
   },
 
-  create: async (guia: GuiaNueva) => {
-    const res = await http.post<Guia>('/guias', guia)
+  create: async (idEmpresa: number, guia: GuiaNueva) => {
+    const res = await http.post<Guia>(`/empresas/${idEmpresa}/guias`, guia)
     return res.data
   },
 
   getRubros: async () => {
-    const res = await http.get<Rubro[]>('/guias/rubros')
+    const res = await http.get<Rubro[]>('/rubros')
     return res.data
   },
 
   getTiposCarga: async () => {
-    const res = await http.get<TipoCarga[]>('/guias/tipos-carga')
+    const res = await http.get<TipoCarga[]>('/tipos-carga')
     return res.data
   },
 }
