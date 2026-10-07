@@ -7,12 +7,25 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
+import tse.cargauy.dtos.FiltroViajes;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.Chofer;
+import tse.cargauy.entities.Empresa_;
 import tse.cargauy.entities.Guia;
+import tse.cargauy.entities.Guia_;
+import tse.cargauy.entities.Usuario_;
 import tse.cargauy.entities.Vehiculo;
+import tse.cargauy.entities.Vehiculo_;
 import tse.cargauy.entities.Viaje;
+import tse.cargauy.entities.Viaje_;
+import tse.cargauy.entities.VinculoEmpresa_;
 
 @Stateless
 public class ViajeDAO implements ViajeDAOLocal {
@@ -42,32 +55,45 @@ public class ViajeDAO implements ViajeDAOLocal {
     }
 
     @Override
-    public List<ViajeDto> getAll() {
-        return toDtos(entityManager.createQuery("SELECT v FROM Viaje v ORDER BY v.guia.fecha DESC", Viaje.class).getResultList());
+    public PaginaDto<ViajeDto> getAll(FiltroViajes filtro, Paginacion paginacion) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Viaje> query = cb.createQuery(Viaje.class);
+        Root<Viaje> viaje = query.from(Viaje.class);
+        viaje.fetch(Viaje_.guia);
+        viaje.fetch(Viaje_.vehiculo);
+        viaje.fetch(Viaje_.chofer).fetch(VinculoEmpresa_.ciudadano);
+        query.select(viaje)
+                .where(condiciones(filtro, cb, viaje))
+                .orderBy(cb.desc(viaje.get(Viaje_.guia).get(Guia_.fecha)), cb.desc(viaje.get(Viaje_.id)));
+        List<ViajeDto> items = toDtos(entityManager.createQuery(query)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultList());
+
+        CriteriaQuery<Long> conteo = cb.createQuery(Long.class);
+        Root<Viaje> contado = conteo.from(Viaje.class);
+        conteo.select(cb.count(contado)).where(condiciones(filtro, cb, contado));
+        long total = entityManager.createQuery(conteo).getSingleResult();
+
+        return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
-    @Override
-    public List<ViajeDto> getByEmpresa(Long idEmpresa) {
-        return toDtos(entityManager.createQuery(
-                        "SELECT v FROM Viaje v WHERE v.guia.empresa.id = :idEmpresa ORDER BY v.guia.fecha DESC", Viaje.class)
-                .setParameter("idEmpresa", idEmpresa)
-                .getResultList());
-    }
-
-    @Override
-    public List<ViajeDto> getByChofer(Long idChofer) {
-        return toDtos(entityManager.createQuery(
-                        "SELECT v FROM Viaje v WHERE v.chofer.ciudadano.id = :idChofer ORDER BY v.guia.fecha DESC", Viaje.class)
-                .setParameter("idChofer", idChofer)
-                .getResultList());
-    }
-
-    @Override
-    public List<ViajeDto> getByVehiculo(Long idVehiculo) {
-        return toDtos(entityManager.createQuery(
-                        "SELECT v FROM Viaje v WHERE v.vehiculo.id = :idVehiculo ORDER BY v.guia.fecha DESC", Viaje.class)
-                .setParameter("idVehiculo", idVehiculo)
-                .getResultList());
+    private Predicate[] condiciones(FiltroViajes filtro, CriteriaBuilder cb, Root<Viaje> viaje) {
+        List<Predicate> condiciones = new ArrayList<>();
+        if (filtro.getIdEmpresa() != null) {
+            condiciones.add(cb.equal(viaje.get(Viaje_.guia).get(Guia_.empresa).get(Empresa_.id), filtro.getIdEmpresa()));
+        }
+        if (filtro.getIdChofer() != null) {
+            condiciones.add(cb.equal(viaje.get(Viaje_.chofer).get(VinculoEmpresa_.ciudadano).get(Usuario_.id), filtro.getIdChofer()));
+        }
+        if (filtro.getIdVehiculo() != null) {
+            condiciones.add(cb.equal(viaje.get(Viaje_.vehiculo).get(Vehiculo_.id), filtro.getIdVehiculo()));
+        }
+        if (filtro.getEstado() != null) {
+            condiciones.add(cb.equal(viaje.get(Viaje_.estado), filtro.getEstado()));
+        }
+        return condiciones.toArray(Predicate[]::new);
     }
 
     @Override

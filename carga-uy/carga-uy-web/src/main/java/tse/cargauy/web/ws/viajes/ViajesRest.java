@@ -1,9 +1,8 @@
 package tse.cargauy.web.ws.viajes;
 
-import java.util.List;
-
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -12,7 +11,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.negocio.viaje.ViajeEJBLocal;
 
@@ -46,19 +45,8 @@ public class ViajesRest {
     }
 
     @GET
-    public List<ViajeDto> getViajes(@QueryParam("idEmpresa") Long idEmpresa,
-                                    @QueryParam("idChofer") Long idChofer,
-                                    @QueryParam("idVehiculo") Long idVehiculo) {
-        if (idEmpresa != null) {
-            return viajeEJB.getByEmpresa(idEmpresa);
-        }
-        if (idChofer != null) {
-            return viajeEJB.getByChofer(idChofer);
-        }
-        if (idVehiculo != null) {
-            return viajeEJB.getByVehiculo(idVehiculo);
-        }
-        return viajeEJB.getAll();
+    public PaginaDto<ViajeDto> getViajes(@BeanParam ViajesQuery query) {
+        return viajeEJB.getAll(query.filtro(), query.paginacion());
     }
 
     @Path("/{id}")

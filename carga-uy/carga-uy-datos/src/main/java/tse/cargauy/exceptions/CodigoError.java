@@ -63,7 +63,10 @@ public enum CodigoError {
     NODO_TIPO_REQUERIDO(7002, 400),
     NODO_IDENTIFICADOR_DUPLICADO(7003, 409),
     NODO_NO_ENCONTRADO(7004, 404),
-    NODO_DADO_DE_BAJA(7005, 409);
+    NODO_DADO_DE_BAJA(7005, 409),
+
+    PAGINACION_INVALIDA(8001, 400),
+    PARAMETRO_INVALIDO(8002, 400);
 
     private final int codigo;
     private final int status;
