@@ -10,6 +10,7 @@ public class Rol {
 
     public static final String CIUDADANO = "CIUDADANO";
     public static final String CHOFER = "CHOFER";
+    public static final String RESPONSABLE = "RESPONSABLE";
     public static final String FUNCIONARIO = "FUNCIONARIO";
 
     @Id @GeneratedValue

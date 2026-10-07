@@ -3,15 +3,17 @@ package tse.cargauy.data.guia;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
-import tse.cargauy.entities.Ciudadano;
 import tse.cargauy.entities.Empresa;
 import tse.cargauy.entities.Guia;
+import tse.cargauy.entities.Responsable;
 import tse.cargauy.entities.Rubro;
 import tse.cargauy.entities.TipoCarga;
 
@@ -20,6 +22,9 @@ public class GuiaDAO implements GuiaDAOLocal {
 
     @PersistenceContext(unitName = "carga-uy")
     private EntityManager entityManager;
+
+    @EJB
+    private UsuarioDAOLocal usuarioDAO;
 
     @Override
     public GuiaDto getGuiaById(Long id) {
@@ -42,9 +47,10 @@ public class GuiaDAO implements GuiaDAOLocal {
 
     @Override
     public GuiaDto addGuia(GuiaDto guiaDto) {
+        Long responsable = usuarioDAO.getResponsableVigente(guiaDto.getIdRegistradaPor(), guiaDto.getIdEmpresa(), guiaDto.getFecha());
         Guia guia = Serializers.toEntity(guiaDto,
                 entityManager.find(Empresa.class, guiaDto.getIdEmpresa()),
-                entityManager.find(Ciudadano.class, guiaDto.getIdRegistradaPor()),
+                entityManager.find(Responsable.class, responsable),
                 entityManager.find(Rubro.class, guiaDto.getIdRubro()),
                 entityManager.find(TipoCarga.class, guiaDto.getIdTipoCarga()));
         entityManager.persist(guia);

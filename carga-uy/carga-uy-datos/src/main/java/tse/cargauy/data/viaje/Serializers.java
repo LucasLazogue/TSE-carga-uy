@@ -17,8 +17,8 @@ public class Serializers {
         dto.setNroGuia(viaje.getGuia().getNroGuia());
         dto.setIdVehiculo(viaje.getVehiculo().getId());
         dto.setMatricula(viaje.getVehiculo().getMatricula());
-        dto.setIdChofer(viaje.getChofer().getId());
-        dto.setCedulaChofer(viaje.getChofer().getCedula());
+        dto.setIdChofer(viaje.getChofer().getCiudadano().getId());
+        dto.setCedulaChofer(viaje.getChofer().getCiudadano().getCedula());
         return dto;
     }
 

@@ -25,7 +25,7 @@ public class Guia {
     private Empresa empresa;
 
     @ManyToOne(optional = false)
-    private Ciudadano registradaPor;
+    private Responsable responsable;
 
     @ManyToOne(optional = false)
     private Rubro rubro;
@@ -40,7 +40,7 @@ public class Guia {
     }
 
     public Guia(LocalDate fecha, double origenLat, double origenLon, double destinoLat, double destinoLon, int volumen,
-                Empresa empresa, Ciudadano registradaPor, Rubro rubro, TipoCarga tipoCarga) {
+                Empresa empresa, Responsable responsable, Rubro rubro, TipoCarga tipoCarga) {
         this.fecha = fecha;
         this.origenLat = origenLat;
         this.origenLon = origenLon;
@@ -48,7 +48,7 @@ public class Guia {
         this.destinoLon = destinoLon;
         this.volumen = volumen;
         this.empresa = empresa;
-        this.registradaPor = registradaPor;
+        this.responsable = responsable;
         this.rubro = rubro;
         this.tipoCarga = tipoCarga;
     }
@@ -121,12 +121,12 @@ public class Guia {
         this.empresa = empresa;
     }
 
-    public Ciudadano getRegistradaPor() {
-        return registradaPor;
+    public Responsable getResponsable() {
+        return responsable;
     }
 
-    public void setRegistradaPor(Ciudadano registradaPor) {
-        this.registradaPor = registradaPor;
+    public void setResponsable(Responsable responsable) {
+        this.responsable = responsable;
     }
 
     public Rubro getRubro() {

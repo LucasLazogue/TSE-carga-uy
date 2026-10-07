@@ -76,13 +76,20 @@ public class DatosPrueba {
 
         if (usuarioDAO.getRoles().isEmpty()) {
             usuarioDAO.addRol(Rol.CIUDADANO);
-            usuarioDAO.addRol(Rol.CHOFER);
             usuarioDAO.addRol(Rol.FUNCIONARIO);
             usuarioDAO.addFuncionario("11111111");
         }
 
-        if (usuarioDAO.getCiudadanoByCedula("55555555") == null) {
-            usuarioDAO.addChofer("55555555", "carlos.suarez@example.com");
+        UsuarioDto carlos = usuarioDAO.getCiudadanoByCedula("55555555");
+        if (carlos == null) {
+            carlos = usuarioDAO.addCiudadano("55555555", "carlos.suarez@example.com");
+        }
+        LocalDate ingreso = LocalDate.of(2024, 1, 1);
+        if (usuarioDAO.getChoferVigente(carlos.getId(), empresas.get(0).getId(), ingreso) == null) {
+            usuarioDAO.addChofer(carlos.getId(), empresas.get(0).getId(), ingreso);
+        }
+        if (usuarioDAO.getResponsableVigente(carlos.getId(), empresas.get(0).getId(), ingreso) == null) {
+            usuarioDAO.addResponsable(carlos.getId(), empresas.get(0).getId(), ingreso);
         }
 
         if (guiaDAO.getRubros().isEmpty()) {
@@ -97,16 +104,13 @@ public class DatosPrueba {
         if (guiaDAO.getAll().isEmpty() && empresas.size() >= 3) {
             List<RubroDto> rubros = guiaDAO.getRubros();
             List<TipoCargaDto> tipos = guiaDAO.getTiposCarga();
-            UsuarioDto ciudadano = usuarioDAO.getCiudadanoByCedula("55555555");
-            Long chofer = ciudadano.getId();
+            Long chofer = carlos.getId();
             Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
 
             GuiaDto montevideoRivera = guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 15),
                     -34.9011, -56.1645, -30.9053, -55.5508, 18000,
                     empresas.get(0).getId(), chofer, rubros.get(0).getId(), tipos.get(3).getId()));
-            if (ciudadano.getRoles().contains(Rol.CHOFER)) {
-                viajeDAO.addViaje(new ViajeDto(montevideoRivera.getId(), sta, chofer));
-            }
+            viajeDAO.addViaje(new ViajeDto(montevideoRivera.getId(), sta, chofer));
 
             guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 20),
                     -33.1325, -58.2956, -34.9058, -56.2132, 20000,

@@ -3,9 +3,11 @@ package tse.cargauy.data.viaje;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.Chofer;
 import tse.cargauy.entities.Guia;
@@ -17,6 +19,9 @@ public class ViajeDAO implements ViajeDAOLocal {
 
     @PersistenceContext(unitName = "carga-uy")
     private EntityManager entityManager;
+
+    @EJB
+    private UsuarioDAOLocal usuarioDAO;
 
     @Override
     public ViajeDto getViajeById(Long id) {
@@ -52,7 +57,7 @@ public class ViajeDAO implements ViajeDAOLocal {
     @Override
     public List<ViajeDto> getByChofer(Long idChofer) {
         return toDtos(entityManager.createQuery(
-                        "SELECT v FROM Viaje v WHERE v.chofer.id = :idChofer ORDER BY v.guia.fecha DESC", Viaje.class)
+                        "SELECT v FROM Viaje v WHERE v.chofer.ciudadano.id = :idChofer ORDER BY v.guia.fecha DESC", Viaje.class)
                 .setParameter("idChofer", idChofer)
                 .getResultList());
     }
@@ -70,7 +75,7 @@ public class ViajeDAO implements ViajeDAOLocal {
         Guia guia = entityManager.find(Guia.class, viajeDto.getIdGuia());
         Viaje viaje = Serializers.toEntity(guia,
                 entityManager.find(Vehiculo.class, viajeDto.getIdVehiculo()),
-                entityManager.find(Chofer.class, viajeDto.getIdChofer()));
+                getChofer(viajeDto.getIdChofer(), guia));
         entityManager.persist(viaje);
         guia.setViaje(viaje);
         return Serializers.toDto(viaje);
@@ -81,7 +86,7 @@ public class ViajeDAO implements ViajeDAOLocal {
         Viaje viaje = entityManager.find(Viaje.class, id);
         if (viaje != null) {
             viaje.setVehiculo(entityManager.find(Vehiculo.class, viajeDto.getIdVehiculo()));
-            viaje.setChofer(entityManager.find(Chofer.class, viajeDto.getIdChofer()));
+            viaje.setChofer(getChofer(viajeDto.getIdChofer(), viaje.getGuia()));
         }
     }
 
@@ -92,6 +97,11 @@ public class ViajeDAO implements ViajeDAOLocal {
             viaje.getGuia().setViaje(null);
             entityManager.remove(viaje);
         }
+    }
+
+    private Chofer getChofer(Long idCiudadano, Guia guia) {
+        return entityManager.find(Chofer.class,
+                usuarioDAO.getChoferVigente(idCiudadano, guia.getEmpresa().getId(), guia.getFecha()));
     }
 
     private List<ViajeDto> toDtos(List<Viaje> viajes) {

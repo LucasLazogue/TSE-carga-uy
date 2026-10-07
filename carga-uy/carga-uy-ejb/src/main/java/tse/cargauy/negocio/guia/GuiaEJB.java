@@ -10,10 +10,8 @@ import tse.cargauy.data.viaje.ViajeDAOLocal;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
-import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
-import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -52,8 +50,8 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
         if (empresaDAO.getEmpresaById(guiaDto.getIdEmpresa()) == null) {
             throw new CargaUYException(CodigoError.EMPRESA_NO_ENCONTRADA, String.valueOf(guiaDto.getIdEmpresa()));
         }
-        UsuarioDto responsable = guiaDto.getIdRegistradaPor() == null ? null : usuarioDAO.getById(guiaDto.getIdRegistradaPor());
-        if (responsable == null || !responsable.getRoles().contains(Rol.CIUDADANO)) {
+        if (guiaDto.getIdRegistradaPor() == null
+                || usuarioDAO.getResponsableVigente(guiaDto.getIdRegistradaPor(), guiaDto.getIdEmpresa(), guiaDto.getFecha()) == null) {
             throw new CargaUYException(CodigoError.GUIA_RESPONSABLE_INVALIDO);
         }
 
