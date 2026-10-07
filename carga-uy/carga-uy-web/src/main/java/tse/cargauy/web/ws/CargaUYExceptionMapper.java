@@ -15,7 +15,7 @@ public class CargaUYExceptionMapper implements ExceptionMapper<CargaUYException>
     public Response toResponse(CargaUYException exception) {
         CodigoError codigo = exception.getCodigo();
 
-        return Response.status(codigo.getStatus())
+        return Response.status(codigo.getCategoria().getStatus())
                 .entity(new ErrorDto(codigo.getCodigo(), MensajesError.resolver(exception)))
                 .type(MediaType.APPLICATION_JSON)
                 .build();
