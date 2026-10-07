@@ -4,3 +4,7 @@ export type Session = {
   correo: string
   roles: string[]
 }
+
+export type AuthConfig = {
+  mock: boolean
+}
