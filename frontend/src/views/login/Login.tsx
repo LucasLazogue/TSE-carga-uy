@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,9 @@ function Login() {
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6">
-      <div className="text-lg font-semibold">Carga UY</div>
+      <Link to="/" className="text-lg font-semibold">
+        Carga UY
+      </Link>
       <div className="w-full max-w-sm space-y-4">
         {error && (
           <Alert variant="destructive">

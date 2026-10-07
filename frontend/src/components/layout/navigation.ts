@@ -1,4 +1,4 @@
-import { Building2, CalendarClock, FileText, Home, Route, Truck } from 'lucide-react'
+import { Building2, CalendarClock, FileText, Home, Route, ShieldCheck, Truck } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Profile } from '@/auth/profile'
 
@@ -7,7 +7,7 @@ type NavItem = {
   description?: string
   path: string
   icon: LucideIcon
-  profiles: Profile[]
+  profiles?: Profile[]
 }
 
 type NavGroup = {
@@ -22,7 +22,12 @@ const groups: NavGroup[] = [
         title: 'Inicio',
         path: '/',
         icon: Home,
-        profiles: ['CIUDADANO', 'CHOFER', 'FUNCIONARIO'],
+      },
+      {
+        title: 'Validar permisos',
+        description: 'Verificar si una empresa transportista tiene sus permisos vigentes.',
+        path: '/validar-permisos',
+        icon: ShieldCheck,
       },
     ],
   },
@@ -78,8 +83,11 @@ const groups: NavGroup[] = [
   },
 ]
 
-export function navigationFor(profile: Profile) {
+export function navigationFor(profile: Profile | null) {
   return groups
-    .map((group) => ({ ...group, items: group.items.filter((i) => i.profiles.includes(profile)) }))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((i) => !i.profiles || (profile !== null && i.profiles.includes(profile))),
+    }))
     .filter((group) => group.items.length > 0)
 }
