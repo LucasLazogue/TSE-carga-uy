@@ -119,6 +119,13 @@ public class AuthRest {
         return usuarioEJB.validarToken(token);
     }
 
+    @GET
+    @Path("/config")
+    @Produces("application/json")
+    public JsonObject config() { // TODO mock: borrar
+        return Json.createObjectBuilder().add("mock", usuarioEJB.isLoginMock()).build();
+    }
+
     @POST
     @Path("/logout")
     public Response logout() {

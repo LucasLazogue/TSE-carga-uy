@@ -9,6 +9,7 @@ import tse.cargauy.dtos.UsuarioDto;
 
 @Local
 public interface UsuarioEJBLocal {
+    boolean isLoginMock(); // TODO mock: borrar
     URI getGubUyLoginUrl(String state, String nonce, String cedulaMock); // TODO mock: sacar cedulaMock
     TokenDto crearEstadoLogin(String state, String nonce, String codeChallenge);
     EstadoLoginDto leerEstadoLogin(String token);

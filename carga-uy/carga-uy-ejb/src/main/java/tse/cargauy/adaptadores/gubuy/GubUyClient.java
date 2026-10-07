@@ -47,6 +47,10 @@ public class GubUyClient {
         mock = Boolean.parseBoolean(System.getenv("GUBUY_MOCK")); // TODO mock
     }
 
+    public boolean isMock() { // TODO mock: borrar
+        return mock;
+    }
+
     public URI getAuthorizationUrl(String state, String nonce, String cedulaMock) { // TODO mock: sacar cedulaMock
         if (mock) { // TODO mock: borrar este if
             String cedula = cedulaMock == null || cedulaMock.isBlank() ? CEDULA_MOCK : cedulaMock;
