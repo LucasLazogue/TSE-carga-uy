@@ -2,7 +2,10 @@ package tse.cargauy.negocio.guia;
 
 import java.util.List;
 
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
@@ -15,10 +18,13 @@ import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
 @Stateless
+@RolesAllowed({ Rol.RESPONSABLE, Rol.FUNCIONARIO })
 public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
 
     @EJB
@@ -30,27 +36,39 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
     @EJB
     UsuarioDAOLocal usuarioDAO;
 
+    @EJB
+    EmpresaEJBLocal empresaEJB;
+
+    @Resource
+    SessionContext contexto;
+
     public PaginaDto<GuiaDto> listar(Long idEmpresa, FiltroGuias filtro, Paginacion paginacion) {
+        empresaEJB.validarAcceso(idEmpresa);
         filtro.setIdsEmpresa(List.of(idEmpresa));
         return guiaDAO.buscar(filtro, paginacion);
     }
 
     public GuiaDto getGuia(Long idEmpresa, Long id) {
+        empresaEJB.validarAcceso(idEmpresa);
         return getDeEmpresa(idEmpresa, id);
     }
 
+    @RolesAllowed(Rol.RESPONSABLE)
     public GuiaDto addGuia(Long idEmpresa, GuiaDto guiaDto) {
+        empresaEJB.validarAcceso(idEmpresa);
         guiaDto.setIdEmpresa(idEmpresa);
+        guiaDto.setIdRegistradaPor(Long.valueOf(contexto.getCallerPrincipal().getName()));
         validar(guiaDto);
-        if (guiaDto.getIdRegistradaPor() == null
-                || usuarioDAO.getResponsableVigente(guiaDto.getIdRegistradaPor(), idEmpresa, guiaDto.getFecha()) == null) {
+        if (usuarioDAO.getResponsableVigente(guiaDto.getIdRegistradaPor(), idEmpresa, guiaDto.getFecha()) == null) {
             throw new CargaUYException(CodigoError.GUIA_RESPONSABLE_INVALIDO);
         }
 
         return guiaDAO.addGuia(guiaDto);
     }
 
+    @RolesAllowed(Rol.RESPONSABLE)
     public GuiaDto updateGuia(Long idEmpresa, Long id, GuiaDto guiaDto) {
+        empresaEJB.validarAcceso(idEmpresa);
         GuiaDto actual = getDeEmpresa(idEmpresa, id);
         ViajeDto viaje = viajeDAO.getByGuia(id);
         if (viaje != null && viaje.getEstado() != EstadoViaje.ASIGNADO) {
@@ -65,7 +83,9 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
         return guiaDAO.getGuiaById(id);
     }
 
+    @RolesAllowed(Rol.RESPONSABLE)
     public void deleteGuia(Long idEmpresa, Long id) {
+        empresaEJB.validarAcceso(idEmpresa);
         GuiaDto actual = getDeEmpresa(idEmpresa, id);
         if (viajeDAO.getByGuia(id) != null) {
             throw new CargaUYException(CodigoError.GUIA_CON_VIAJE, actual.getNroGuia());

@@ -9,6 +9,7 @@ public interface EmpresaEJBLocal {
     EmpresaDto getEmpresaById(Long id);
     List<EmpresaDto> getAll();
     List<EmpresaDto> findByNombre(String nombre);
+    void validarAcceso(Long idEmpresa);
     EmpresaDto addEmpresa(EmpresaDto empresaDto);
     void updateEmpresa(Long id, EmpresaDto empresaDto);
     void deleteEmpresa(Long id);

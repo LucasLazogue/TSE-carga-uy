@@ -12,8 +12,6 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HeaderParam;
-import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -32,7 +30,6 @@ import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 public class AuthRest {
 
     private static final String MOBILE = "mobile";
-    private static final String BEARER = "Bearer ";
     private static final String GRANT_TYPE = "authorization_code";
     private static final String COOKIE_SESION = "cargauy_token";
     private static final String COOKIE_LOGIN = "cargauy_login";
@@ -104,19 +101,6 @@ public class AuthRest {
                 .add("token_type", "Bearer")
                 .add("expires_in", token.getSegundosVigencia())
                 .build();
-    }
-
-    @GET
-    @Path("/me")
-    @Produces("application/json")
-    public UsuarioDto me(@HeaderParam("Authorization") String authorization, @CookieParam(COOKIE_SESION) String cookie) {
-        String token = authorization != null && authorization.startsWith(BEARER)
-                ? authorization.substring(BEARER.length())
-                : cookie;
-        if (token == null) {
-            throw new NotAuthorizedException("Bearer");
-        }
-        return usuarioEJB.validarToken(token);
     }
 
     @GET

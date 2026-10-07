@@ -17,17 +17,21 @@ function Vehiculos() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    empresasApi.getAll().then(setEmpresas)
-    vehiculosApi.getAll().then(setLista)
+    empresasApi.getAll().then((lista) => {
+      setEmpresas(lista)
+      if (lista.length) {
+        elegirEmpresa(lista[0].id)
+      }
+    })
   }, [])
 
-  async function cargar(filtro: number) {
-    setLista(await vehiculosApi.getAll(filtro || undefined))
+  async function cargar(id: number) {
+    setLista(await vehiculosApi.getAll(id))
   }
 
-  async function buscar(e: FormEvent) {
-    e.preventDefault()
-    await cargar(idEmpresa)
+  function elegirEmpresa(id: number) {
+    setIdEmpresa(id)
+    cargar(id)
   }
 
   async function guardar(e: FormEvent) {
@@ -46,25 +50,13 @@ function Vehiculos() {
   return (
     <div>
       <h1>Vehiculos</h1>
-      <form onSubmit={buscar}>
-        <select value={idEmpresa} onChange={(e) => setIdEmpresa(Number(e.target.value))}>
-          <option value={0}>Todas las empresas</option>
-          {empresas.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nombrePublico}
-            </option>
-          ))}
-        </select>
-        <button type="submit">Buscar</button>
-      </form>
-      <button
-        onClick={() => {
-          setIdEmpresa(0)
-          cargar(0)
-        }}
-      >
-        Ver todos
-      </button>
+      <select value={idEmpresa} onChange={(e) => elegirEmpresa(Number(e.target.value))}>
+        {empresas.map((e) => (
+          <option key={e.id} value={e.id}>
+            {e.nombrePublico}
+          </option>
+        ))}
+      </select>
       <button onClick={() => setCreando(true)}>Crear</button>
 
       {creando && (

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
+import { empresasApi } from '@/api/empresas/empresas.api'
+import type { Empresa } from '@/api/empresas/empresas.types'
 import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
 import { PERMISO_VACIO } from './permisos.constants'
@@ -10,6 +12,8 @@ import type { Permiso, PermisoNuevo } from '@/api/permisos/permisos.types'
 
 function Permisos() {
   const [lista, setLista] = useState<Permiso[]>([])
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [idEmpresa, setIdEmpresa] = useState(0)
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
   const [idVehiculo, setIdVehiculo] = useState(0)
   const [creando, setCreando] = useState(false)
@@ -17,17 +21,28 @@ function Permisos() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    vehiculosApi.getAll().then(setVehiculos)
-    permisosApi.getAll().then(setLista)
+    empresasApi.getAll().then((lista) => {
+      setEmpresas(lista)
+      if (lista.length) {
+        elegirEmpresa(lista[0].id)
+      }
+    })
   }, [])
 
-  async function cargar(filtro: number) {
-    setLista(await permisosApi.getAll(filtro || undefined))
+  async function cargar(id: number) {
+    setLista(id ? await permisosApi.getAll(id) : [])
   }
 
-  async function buscar(e: FormEvent) {
-    e.preventDefault()
-    await cargar(idVehiculo)
+  async function elegirEmpresa(id: number) {
+    setIdEmpresa(id)
+    const delaEmpresa = await vehiculosApi.getAll(id)
+    setVehiculos(delaEmpresa)
+    elegirVehiculo(delaEmpresa[0]?.id ?? 0)
+  }
+
+  function elegirVehiculo(id: number) {
+    setIdVehiculo(id)
+    cargar(id)
   }
 
   async function guardar(e: FormEvent) {
@@ -46,25 +61,20 @@ function Permisos() {
   return (
     <div>
       <h1>Permisos de circulacion</h1>
-      <form onSubmit={buscar}>
-        <select value={idVehiculo} onChange={(e) => setIdVehiculo(Number(e.target.value))}>
-          <option value={0}>Todos los vehiculos</option>
-          {vehiculos.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.matricula}
-            </option>
-          ))}
-        </select>
-        <button type="submit">Buscar</button>
-      </form>
-      <button
-        onClick={() => {
-          setIdVehiculo(0)
-          cargar(0)
-        }}
-      >
-        Ver todos
-      </button>
+      <select value={idEmpresa} onChange={(e) => elegirEmpresa(Number(e.target.value))}>
+        {empresas.map((e) => (
+          <option key={e.id} value={e.id}>
+            {e.nombrePublico}
+          </option>
+        ))}
+      </select>
+      <select value={idVehiculo} onChange={(e) => elegirVehiculo(Number(e.target.value))}>
+        {vehiculos.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.matricula}
+          </option>
+        ))}
+      </select>
       <button onClick={() => setCreando(true)}>Crear</button>
 
       {creando && (

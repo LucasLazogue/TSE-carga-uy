@@ -1,5 +1,6 @@
 package tse.cargauy.negocio.empresa;
 
+import jakarta.annotation.security.RunAs;
 import jakarta.ejb.ActivationConfigProperty;
 import jakarta.ejb.EJB;
 import jakarta.ejb.MessageDriven;
@@ -8,6 +9,7 @@ import jakarta.jms.Message;
 import jakarta.jms.MessageListener;
 import jakarta.jms.TextMessage;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.MensajesError;
 
@@ -17,6 +19,7 @@ import tse.cargauy.exceptions.MensajesError;
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "jakarta.jms.Queue"),
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge")
 })
+@RunAs(Rol.FUNCIONARIO)
 public class EmpresaQueueMDB implements MessageListener {
 
     @EJB
