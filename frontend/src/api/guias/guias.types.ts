@@ -28,3 +28,12 @@ export type TipoCarga = {
   id: number
   nombre: string
 }
+
+export type FiltroGuias = {
+  busqueda?: string
+  conViaje?: boolean
+  desde?: string
+  hasta?: string
+  pagina?: number
+  tamanio?: number
+}

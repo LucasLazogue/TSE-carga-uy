@@ -16,7 +16,6 @@ export type Viaje = {
 export type ViajeNuevo = Pick<Viaje, 'idGuia' | 'idVehiculo' | 'idChofer'>
 
 export type FiltroViajes = {
-  idEmpresa?: number
   idChofer?: number
   idVehiculo?: number
   estado?: EstadoViaje

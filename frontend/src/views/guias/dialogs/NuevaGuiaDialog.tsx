@@ -40,7 +40,7 @@ function NuevaGuiaDialog({ empresas, close, onCreated }: Props) {
     setError('')
     setGuardando(true)
     try {
-      await guiasApi.create({ ...nueva, idRegistradaPor: session?.id ?? 0 })
+      await guiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 })
       onCreated()
       close()
     } catch (err) {
