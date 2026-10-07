@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useSession } from '@/auth/useSession'
 import AppSidebar from './AppSidebar'
@@ -8,17 +9,19 @@ import UserMenu from './UserMenu'
 function AppShell() {
   const { session, profile } = useSession()
 
-  if (!session || !profile) {
-    return null
-  }
-
   return (
     <SidebarProvider className="flex-col">
       <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
         <SidebarTrigger />
         <Logo />
         <div className="ml-auto">
-          <UserMenu session={session} />
+          {session ? (
+            <UserMenu session={session} />
+          ) : (
+            <Button asChild>
+              <Link to="/ingresar">Ingresar</Link>
+            </Button>
+          )}
         </div>
       </header>
       <div className="flex flex-1">

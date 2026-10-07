@@ -18,7 +18,7 @@ function isActive(pathname: string, path: string) {
   return path === '/' ? pathname === '/' : pathname.startsWith(path)
 }
 
-function AppSidebar({ profile }: { profile: Profile }) {
+function AppSidebar({ profile }: { profile: Profile | null }) {
   const { pathname } = useLocation()
   const { setOpenMobile } = useSidebar()
 
