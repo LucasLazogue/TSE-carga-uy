@@ -1,5 +1,5 @@
 import { http } from '@/api/http'
-import type { Session } from './auth.types'
+import type { AuthConfig, Session } from './auth.types'
 
 // el token viaja en una cookie HttpOnly que setea y borra el backend: este codigo nunca lo ve
 export const authApi = {
@@ -12,5 +12,12 @@ export const authApi = {
     await http.post('/auth/logout')
   },
 
+  getConfig: async () => {
+    const res = await http.get<AuthConfig>('/auth/config')
+    return res.data
+  },
+
   loginUrl: '/api/auth/login?cliente=web',
+
+  mockLoginUrl: (cedula: string) => `/api/auth/login?cliente=web&cedula=${encodeURIComponent(cedula)}`,
 }

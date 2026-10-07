@@ -47,6 +47,10 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     @Inject
     GubUyClient gubUy;
 
+    public boolean isLoginMock() { // TODO mock: borrar
+        return gubUy.isMock();
+    }
+
     public URI getGubUyLoginUrl(String state, String nonce, String cedulaMock) { // TODO mock: sacar cedulaMock
         return gubUy.getAuthorizationUrl(state, nonce, cedulaMock);
     }
