@@ -5,12 +5,12 @@ import java.time.LocalDate;
 import jakarta.persistence.Entity;
 
 @Entity
-public class Chofer extends VinculoEmpresa {
+public class Responsable extends VinculoEmpresa {
 
-    public Chofer() {
+    public Responsable() {
     }
 
-    public Chofer(Ciudadano ciudadano, Empresa empresa, LocalDate fechaDesde) {
+    public Responsable(Ciudadano ciudadano, Empresa empresa, LocalDate fechaDesde) {
         super(ciudadano, empresa, fechaDesde);
     }
 

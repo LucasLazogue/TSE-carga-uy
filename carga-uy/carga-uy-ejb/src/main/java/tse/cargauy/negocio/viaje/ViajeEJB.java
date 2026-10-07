@@ -9,11 +9,9 @@ import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
 import tse.cargauy.dtos.GuiaDto;
-import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
-import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -120,9 +118,8 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         if (permisoDAO.getVigente(vehiculo.getId(), guia.getFecha()) == null) {
             throw new CargaUYException(CodigoError.VIAJE_VEHICULO_SIN_PERMISO, vehiculo.getMatricula(), guia.getFecha().toString());
         }
-        UsuarioDto chofer = usuarioDAO.getById(viajeDto.getIdChofer());
-        if (chofer == null || !chofer.getRoles().contains(Rol.CHOFER)) {
-            throw new CargaUYException(CodigoError.VIAJE_CHOFER_INVALIDO, String.valueOf(viajeDto.getIdChofer()));
+        if (usuarioDAO.getChoferVigente(viajeDto.getIdChofer(), guia.getIdEmpresa(), guia.getFecha()) == null) {
+            throw new CargaUYException(CodigoError.VIAJE_CHOFER_INVALIDO, String.valueOf(viajeDto.getIdChofer()), guia.getFecha().toString());
         }
     }
 
