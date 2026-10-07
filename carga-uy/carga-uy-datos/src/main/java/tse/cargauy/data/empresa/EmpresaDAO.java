@@ -62,9 +62,10 @@ public class EmpresaDAO implements EmpresaDAOLocal {
     }
 
     @Override
-    public void addEmpresa(EmpresaDto empresaDto) {
+    public EmpresaDto addEmpresa(EmpresaDto empresaDto) {
         Empresa empresa = Serializers.toEntity(empresaDto);
         entityManager.persist(empresa);
+        return Serializers.toDto(empresa);
     }
 
     @Override

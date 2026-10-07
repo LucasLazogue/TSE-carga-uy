@@ -2,8 +2,8 @@ package tse.cargauy.negocio.empresa;
 
 import java.time.LocalDate;
 import java.util.List;
-import jakarta.ejb.Stateless;
 import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -16,7 +16,11 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
     EmpresaDAOLocal empresaDAO;
 
     public EmpresaDto getEmpresaById(Long id) {
-        return empresaDAO.getEmpresaById(id);
+        EmpresaDto empresa = empresaDAO.getEmpresaById(id);
+        if (empresa == null) {
+            throw new CargaUYException(CodigoError.EMPRESA_NO_ENCONTRADA, String.valueOf(id));
+        }
+        return empresa;
     }
 
     public List<EmpresaDto> getAll() {
@@ -27,14 +31,14 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         return empresaDAO.findByNombre(nombre);
     }
 
-    public void addEmpresa(EmpresaDto empresaDto) {
+    public EmpresaDto addEmpresa(EmpresaDto empresaDto) {
         validar(empresaDto);
         if (empresaDAO.getEmpresaByNro(empresaDto.getNroEmpresa()) != null) {
             throw new CargaUYException(CodigoError.EMPRESA_NRO_DUPLICADO, String.valueOf(empresaDto.getNroEmpresa()));
         }
 
         empresaDto.setFechaAlta(LocalDate.now());
-        empresaDAO.addEmpresa(empresaDto);
+        return empresaDAO.addEmpresa(empresaDto);
     }
 
     public void updateEmpresa(Long id, EmpresaDto empresaDto) {

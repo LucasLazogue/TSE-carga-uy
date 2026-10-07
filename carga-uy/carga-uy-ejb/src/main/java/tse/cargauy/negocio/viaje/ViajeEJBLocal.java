@@ -8,10 +8,14 @@ import tse.cargauy.dtos.ViajeDto;
 
 @Local
 public interface ViajeEJBLocal {
-    ViajeDto getViajeById(Long id);
-    ViajeDto getByGuia(Long idGuia);
-    PaginaDto<ViajeDto> getAll(FiltroViajes filtro, Paginacion paginacion);
-    ViajeDto asignarViaje(ViajeDto viajeDto);
-    void reasignarViaje(Long id, ViajeDto viajeDto);
-    void deleteViaje(Long id);
+
+    PaginaDto<ViajeDto> listar(Long idEmpresa, FiltroViajes filtro, Paginacion paginacion);
+
+    ViajeDto getViaje(Long idEmpresa, Long id);
+
+    ViajeDto asignarViaje(Long idEmpresa, ViajeDto viajeDto);
+
+    ViajeDto reasignarViaje(Long idEmpresa, Long id, ViajeDto viajeDto);
+
+    void deleteViaje(Long idEmpresa, Long id);
 }

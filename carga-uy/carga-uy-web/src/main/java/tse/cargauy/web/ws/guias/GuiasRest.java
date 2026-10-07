@@ -1,75 +1,56 @@
 package tse.cargauy.web.ws.guias;
 
-import java.util.List;
-
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.GuiaDto;
-import tse.cargauy.dtos.RubroDto;
-import tse.cargauy.dtos.TipoCargaDto;
+import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.negocio.guia.GuiaEJBLocal;
 
 @RequestScoped
-@Path("/guias")
-@Consumes("application/json")
-@Produces("application/json")
+@Path("/empresas/{empresa}/guias")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class GuiasRest {
 
     @EJB
     GuiaEJBLocal guiaEJB;
 
-    public GuiasRest() {
+    @GET
+    public PaginaDto<GuiaDto> getGuias(@PathParam("empresa") Long idEmpresa, @BeanParam GuiasQuery query) {
+        return guiaEJB.listar(idEmpresa, query.filtro(), query.paginacion());
     }
 
     @POST
-    public GuiaDto createGuia(GuiaDto guiaDto) {
-        return guiaEJB.addGuia(guiaDto);
+    public Response createGuia(@PathParam("empresa") Long idEmpresa, GuiaDto guiaDto) {
+        return Response.status(Response.Status.CREATED).entity(guiaEJB.addGuia(idEmpresa, guiaDto)).build();
     }
 
+    @GET
     @Path("/{id}")
+    public GuiaDto getGuia(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id) {
+        return guiaEJB.getGuia(idEmpresa, id);
+    }
+
     @PUT
-    public void updateGuia(@PathParam("id") Long id, GuiaDto guiaDto) {
-        guiaEJB.updateGuia(id, guiaDto);
+    @Path("/{id}")
+    public GuiaDto updateGuia(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id, GuiaDto guiaDto) {
+        return guiaEJB.updateGuia(idEmpresa, id, guiaDto);
     }
 
-    @Path("/{id}")
     @DELETE
-    public void deleteGuia(@PathParam("id") Long id) {
-        guiaEJB.deleteGuia(id);
-    }
-
-    @GET
-    public List<GuiaDto> getGuias(@QueryParam("idEmpresa") Long idEmpresa) {
-        if (idEmpresa == null) {
-            return guiaEJB.getAll();
-        }
-        return guiaEJB.getByEmpresa(idEmpresa);
-    }
-
     @Path("/{id}")
-    @GET
-    public GuiaDto getGuiaById(@PathParam("id") Long id) {
-        return guiaEJB.getGuiaById(id);
-    }
-
-    @Path("/rubros")
-    @GET
-    public List<RubroDto> getRubros() {
-        return guiaEJB.getRubros();
-    }
-
-    @Path("/tipos-carga")
-    @GET
-    public List<TipoCargaDto> getTiposCarga() {
-        return guiaEJB.getTiposCarga();
+    public void deleteGuia(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id) {
+        guiaEJB.deleteGuia(idEmpresa, id);
     }
 }

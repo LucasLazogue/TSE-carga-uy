@@ -5,12 +5,8 @@ import jakarta.ws.rs.QueryParam;
 import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.EstadoViaje;
-import tse.cargauy.web.ws.Parametros;
 
 public class ViajesQuery {
-
-    @QueryParam("idEmpresa")
-    private Long idEmpresa;
 
     @QueryParam("idChofer")
     private Long idChofer;
@@ -19,7 +15,7 @@ public class ViajesQuery {
     private Long idVehiculo;
 
     @QueryParam("estado")
-    private String estado;
+    private EstadoViaje estado;
 
     @QueryParam("pagina")
     @DefaultValue("0")
@@ -30,8 +26,7 @@ public class ViajesQuery {
     private int tamanio;
 
     public FiltroViajes filtro() {
-        return new FiltroViajes(idEmpresa, idChofer, idVehiculo,
-                Parametros.enumeracion(EstadoViaje.class, "estado", estado));
+        return new FiltroViajes(idChofer, idVehiculo, estado);
     }
 
     public Paginacion paginacion() {
