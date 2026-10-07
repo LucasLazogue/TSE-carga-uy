@@ -1,45 +1,46 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
 import { empresasApi } from '@/api/empresas/empresas.api'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { guiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
+import type { Page } from '@/api/page'
 import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
-import { VIAJE_VACIO } from './viajes.constants'
 import { viajesApi } from '@/api/viajes/viajes.api'
-import type { Viaje, ViajeNuevo } from '@/api/viajes/viajes.types'
+import type { EstadoViaje, FiltroViajes, Viaje, ViajeNuevo } from '@/api/viajes/viajes.types'
+import { ESTADOS_VIAJE, VIAJE_VACIO } from './viajes.constants'
 
 function Viajes() {
-  const [lista, setLista] = useState<Viaje[]>([])
+  const [pagina, setPagina] = useState<Page<Viaje> | null>(null)
+  const [filtro, setFiltro] = useState<FiltroViajes>({ pagina: 0 })
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [guias, setGuias] = useState<Guia[]>([])
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
-  const [idEmpresa, setIdEmpresa] = useState(0)
   const [creando, setCreando] = useState(false)
   const [nuevo, setNuevo] = useState<ViajeNuevo>(VIAJE_VACIO)
   const [error, setError] = useState('')
 
-  const guiasSinViaje = guias.filter((g) => g.idViaje === null)
-  const guiaElegida = guias.find((g) => g.id === nuevo.idGuia)
-  const vehiculosDeLaEmpresa = vehiculos.filter((v) => v.idEmpresa === guiaElegida?.idEmpresa)
+  const totalPaginas = pagina ? Math.max(1, Math.ceil(pagina.total / pagina.tamanio)) : 1
 
   useEffect(() => {
     empresasApi.getAll().then(setEmpresas)
-    guiasApi.getAll().then(setGuias)
-    vehiculosApi.getAll().then(setVehiculos)
-    viajesApi.getAll().then(setLista)
+    guiasApi.getAll().then((todas) => setGuias(todas.filter((g) => g.idViaje === null)))
   }, [])
 
-  async function cargar(filtro: number) {
-    setLista(await viajesApi.getAll(filtro || undefined))
+  useEffect(() => {
+    viajesApi.getAll(filtro).then(setPagina)
+  }, [filtro])
+
+  function filtrar(cambio: FiltroViajes) {
+    setFiltro({ ...filtro, ...cambio, pagina: 0 })
   }
 
-  async function buscar(e: FormEvent) {
-    e.preventDefault()
-    await cargar(idEmpresa)
+  async function elegirGuia(idGuia: number) {
+    setNuevo({ ...nuevo, idGuia, idVehiculo: 0 })
+    const guia = guias.find((g) => g.id === idGuia)
+    setVehiculos(guia ? await vehiculosApi.getAll(guia.idEmpresa) : [])
   }
 
   async function guardar(e: FormEvent) {
@@ -49,8 +50,9 @@ function Viajes() {
       await viajesApi.create(nuevo)
       setNuevo(VIAJE_VACIO)
       setCreando(false)
-      setGuias(await guiasApi.getAll())
-      await cargar(idEmpresa)
+      setVehiculos([])
+      setGuias((await guiasApi.getAll()).filter((g) => g.idViaje === null))
+      setFiltro({ ...filtro })
     } catch (err) {
       setError(getErrorMessage(err))
     }
@@ -59,25 +61,30 @@ function Viajes() {
   return (
     <div>
       <h1>Viajes</h1>
-      <form onSubmit={buscar}>
-        <select value={idEmpresa} onChange={(e) => setIdEmpresa(Number(e.target.value))}>
-          <option value={0}>Todas las empresas</option>
+      <div>
+        <select
+          value={filtro.idEmpresa ?? ''}
+          onChange={(e) => filtrar({ idEmpresa: e.target.value ? Number(e.target.value) : undefined })}
+        >
+          <option value="">Todas las empresas</option>
           {empresas.map((e) => (
             <option key={e.id} value={e.id}>
               {e.nombrePublico}
             </option>
           ))}
         </select>
-        <button type="submit">Buscar</button>
-      </form>
-      <button
-        onClick={() => {
-          setIdEmpresa(0)
-          cargar(0)
-        }}
-      >
-        Ver todos
-      </button>
+        <select
+          value={filtro.estado ?? ''}
+          onChange={(e) => filtrar({ estado: (e.target.value || undefined) as EstadoViaje | undefined })}
+        >
+          <option value="">Todos los estados</option>
+          {ESTADOS_VIAJE.map((estado) => (
+            <option key={estado} value={estado}>
+              {estado}
+            </option>
+          ))}
+        </select>
+      </div>
       <button onClick={() => setCreando(true)}>Asignar viaje</button>
 
       {creando && (
@@ -86,12 +93,9 @@ function Viajes() {
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <div>
             <label>Guia </label>
-            <select
-              value={nuevo.idGuia}
-              onChange={(e) => setNuevo({ ...nuevo, idGuia: Number(e.target.value), idVehiculo: 0 })}
-            >
+            <select value={nuevo.idGuia} onChange={(e) => elegirGuia(Number(e.target.value))}>
               <option value={0}>Seleccione una guia</option>
-              {guiasSinViaje.map((g) => (
+              {guias.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.nroGuia} - {g.nombreEmpresa} - {g.fecha}
                 </option>
@@ -105,7 +109,7 @@ function Viajes() {
               onChange={(e) => setNuevo({ ...nuevo, idVehiculo: Number(e.target.value) })}
             >
               <option value={0}>Seleccione un vehiculo</option>
-              {vehiculosDeLaEmpresa.map((v) => (
+              {vehiculos.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.matricula}
                 </option>
@@ -140,7 +144,7 @@ function Viajes() {
           </tr>
         </thead>
         <tbody>
-          {lista.map((v) => (
+          {pagina?.items.map((v) => (
             <tr key={v.id}>
               <td>{v.id}</td>
               <td>{v.nroGuia}</td>
@@ -153,9 +157,24 @@ function Viajes() {
           ))}
         </tbody>
       </table>
-      <p>
-        <Link to="/">Volver al inicio</Link>
-      </p>
+      <div>
+        <button
+          disabled={!filtro.pagina}
+          onClick={() => setFiltro({ ...filtro, pagina: (filtro.pagina ?? 0) - 1 })}
+        >
+          Anterior
+        </button>
+        <span>
+          {' '}
+          Página {(filtro.pagina ?? 0) + 1} de {totalPaginas} ({pagina?.total ?? 0} viajes){' '}
+        </span>
+        <button
+          disabled={(filtro.pagina ?? 0) + 1 >= totalPaginas}
+          onClick={() => setFiltro({ ...filtro, pagina: (filtro.pagina ?? 0) + 1 })}
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   )
 }

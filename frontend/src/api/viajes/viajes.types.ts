@@ -1,6 +1,8 @@
+export type EstadoViaje = 'ASIGNADO' | 'EN_CURSO' | 'FINALIZADO'
+
 export type Viaje = {
   id: number
-  estado: string
+  estado: EstadoViaje
   fechaInicio: string | null
   fechaFin: string | null
   idGuia: number
@@ -12,3 +14,12 @@ export type Viaje = {
 }
 
 export type ViajeNuevo = Pick<Viaje, 'idGuia' | 'idVehiculo' | 'idChofer'>
+
+export type FiltroViajes = {
+  idEmpresa?: number
+  idChofer?: number
+  idVehiculo?: number
+  estado?: EstadoViaje
+  pagina?: number
+  tamanio?: number
+}

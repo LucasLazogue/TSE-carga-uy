@@ -1,6 +1,5 @@
 package tse.cargauy.negocio.viaje;
 
-import java.util.List;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.EJB;
 import tse.cargauy.data.guia.GuiaDAOLocal;
@@ -8,7 +7,10 @@ import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
+import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.GuiaDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
@@ -41,20 +43,8 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return viajeDAO.getByGuia(idGuia);
     }
 
-    public List<ViajeDto> getAll() {
-        return viajeDAO.getAll();
-    }
-
-    public List<ViajeDto> getByEmpresa(Long idEmpresa) {
-        return viajeDAO.getByEmpresa(idEmpresa);
-    }
-
-    public List<ViajeDto> getByChofer(Long idChofer) {
-        return viajeDAO.getByChofer(idChofer);
-    }
-
-    public List<ViajeDto> getByVehiculo(Long idVehiculo) {
-        return viajeDAO.getByVehiculo(idVehiculo);
+    public PaginaDto<ViajeDto> getAll(FiltroViajes filtro, Paginacion paginacion) {
+        return viajeDAO.getAll(filtro, paginacion);
     }
 
     public ViajeDto asignarViaje(ViajeDto viajeDto) {

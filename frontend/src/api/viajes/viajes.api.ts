@@ -1,11 +1,10 @@
 import { http } from '@/api/http'
-import type { Viaje, ViajeNuevo } from './viajes.types'
+import type { Page } from '@/api/page'
+import type { FiltroViajes, Viaje, ViajeNuevo } from './viajes.types'
 
 export const viajesApi = {
-  getAll: async (idEmpresa?: number) => {
-    const res = await http.get<Viaje[]>('/viajes', {
-      params: { idEmpresa },
-    })
+  getAll: async (filtro: FiltroViajes = {}) => {
+    const res = await http.get<Page<Viaje>>('/viajes', { params: filtro })
     return res.data
   },
 
