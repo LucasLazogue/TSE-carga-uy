@@ -33,6 +33,10 @@ RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 jms-queue add --queue-address=queue_tracking --entries=[java:/jms/queue/queue_tracking java:jboss/exported/jms/queue/queue_tracking],\
 stop-embedded-server'
 
+RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
+/subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false),\
+stop-embedded-server'
+
 RUN rm -rf /opt/jboss/wildfly/standalone/configuration/standalone_xml_history
 
 RUN /opt/jboss/wildfly/bin/add-user.sh -a -u admin -p admin123 -g guest

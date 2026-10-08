@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -13,14 +14,18 @@ import java.util.Map;
 import javax.crypto.SecretKey;
 
 import io.jsonwebtoken.Claims;
+import jakarta.annotation.Resource;
 import jakarta.ejb.EJB;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
+import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
+import tse.cargauy.dtos.UsuarioActualDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -44,8 +49,14 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     @EJB
     UsuarioDAOLocal usuarioDAO;
 
+    @EJB
+    EmpresaDAOLocal empresaDAO;
+
     @Inject
     GubUyClient gubUy;
+
+    @Resource
+    SessionContext contexto;
 
     public boolean isLoginMock() { // TODO mock: borrar
         return gubUy.isMock();
@@ -105,6 +116,11 @@ public class UsuarioEJB implements UsuarioEJBLocal {
 
     public UsuarioDto validarToken(String token) {
         return usuario(verificar(token, TIPO_SESION, CodigoError.AUTH_SESION_INVALIDA));
+    }
+
+    public UsuarioActualDto getUsuarioActual() {
+        Long id = Long.valueOf(contexto.getCallerPrincipal().getName());
+        return new UsuarioActualDto(usuarioDAO.getById(id), empresaDAO.getByResponsable(id, LocalDate.now()));
     }
 
     public String crearCodigoMobile(UsuarioDto usuario, String codeChallenge) {

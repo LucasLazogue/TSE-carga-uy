@@ -2,6 +2,7 @@ package tse.cargauy.negocio.viaje;
 
 import java.util.List;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.guia.GuiaDAOLocal;
@@ -16,10 +17,13 @@ import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
 @Stateless
+@RolesAllowed({ Rol.RESPONSABLE, Rol.FUNCIONARIO })
 public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
 
     @EJB
@@ -37,16 +41,23 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
     @EJB
     UsuarioDAOLocal usuarioDAO;
 
+    @EJB
+    EmpresaEJBLocal empresaEJB;
+
     public PaginaDto<ViajeDto> listar(Long idEmpresa, FiltroViajes filtro, Paginacion paginacion) {
+        empresaEJB.validarAcceso(idEmpresa);
         filtro.setIdsEmpresa(List.of(idEmpresa));
         return viajeDAO.getAll(filtro, paginacion);
     }
 
     public ViajeDto getViaje(Long idEmpresa, Long id) {
+        empresaEJB.validarAcceso(idEmpresa);
         return getDeEmpresa(idEmpresa, id);
     }
 
+    @RolesAllowed(Rol.RESPONSABLE)
     public ViajeDto asignarViaje(Long idEmpresa, ViajeDto viajeDto) {
+        empresaEJB.validarAcceso(idEmpresa);
         if (viajeDto.getIdGuia() == null) {
             throw new CargaUYException(CodigoError.VIAJE_GUIA_REQUERIDA);
         }
@@ -62,7 +73,9 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return viajeDAO.addViaje(viajeDto);
     }
 
+    @RolesAllowed(Rol.RESPONSABLE)
     public ViajeDto reasignarViaje(Long idEmpresa, Long id, ViajeDto viajeDto) {
+        empresaEJB.validarAcceso(idEmpresa);
         ViajeDto actual = getModificable(idEmpresa, id);
         validarAsignacion(viajeDto, guiaDAO.getGuiaById(actual.getIdGuia()));
 
@@ -70,7 +83,9 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return viajeDAO.getViajeById(id);
     }
 
+    @RolesAllowed(Rol.RESPONSABLE)
     public void deleteViaje(Long idEmpresa, Long id) {
+        empresaEJB.validarAcceso(idEmpresa);
         getModificable(idEmpresa, id);
 
         viajeDAO.deleteViaje(id);

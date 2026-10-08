@@ -1,5 +1,6 @@
 package tse.cargauy.data.empresa;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +60,20 @@ public class EmpresaDAO implements EmpresaDAOLocal {
             res.add(Serializers.toDto(e));
         }
         return res;
+    }
+
+    @Override
+    public List<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha) {
+        return entityManager.createQuery(
+                        "SELECT r.empresa FROM Responsable r WHERE r.ciudadano.id = :idCiudadano"
+                                + " AND r.fechaDesde <= :fecha AND (r.fechaHasta IS NULL OR r.fechaHasta >= :fecha)"
+                                + " ORDER BY r.empresa.nroEmpresa", Empresa.class)
+                .setParameter("idCiudadano", idCiudadano)
+                .setParameter("fecha", fecha)
+                .getResultList()
+                .stream()
+                .map(Serializers::toDto)
+                .toList();
     }
 
     @Override

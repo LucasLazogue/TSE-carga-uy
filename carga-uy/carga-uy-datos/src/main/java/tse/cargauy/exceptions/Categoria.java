@@ -4,6 +4,7 @@ public enum Categoria {
 
     VALIDACION(400),
     NO_AUTENTICADO(401),
+    PROHIBIDO(403),
     NO_ENCONTRADO(404),
     CONFLICTO(409),
     CONFIGURACION(500),
