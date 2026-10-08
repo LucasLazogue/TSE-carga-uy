@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
 import { empresasApi } from '@/api/empresas/empresas.api'
+import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { VEHICULO_VACIO } from './vehiculos.constants'
 import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
@@ -17,7 +18,7 @@ function Vehiculos() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    empresasApi.getAll().then((lista) => {
+    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
       setEmpresas(lista)
       if (lista.length) {
         elegirEmpresa(lista[0].id)
@@ -26,7 +27,7 @@ function Vehiculos() {
   }, [])
 
   async function cargar(id: number) {
-    setLista(await vehiculosApi.getAll(id))
+    setLista((await vehiculosApi.getAll(id, { tamanio: TAMANIO_MAXIMO })).items)
   }
 
   function elegirEmpresa(id: number) {

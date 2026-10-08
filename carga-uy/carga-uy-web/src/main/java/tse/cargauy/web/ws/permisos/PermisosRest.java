@@ -1,9 +1,8 @@
 package tse.cargauy.web.ws.permisos;
 
-import java.util.List;
-
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -13,8 +12,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.negocio.permiso.PermisoEJBLocal;
+import tse.cargauy.web.ws.PaginacionQuery;
 
 @RequestScoped
 @Path("/permisos")
@@ -46,11 +47,11 @@ public class PermisosRest {
     }
 
     @GET
-    public List<PermisoDto> getPermisos(@QueryParam("idVehiculo") Long idVehiculo) {
+    public PaginaDto<PermisoDto> getPermisos(@QueryParam("idVehiculo") Long idVehiculo, @BeanParam PaginacionQuery paginacion) {
         if (idVehiculo == null) {
-            return permisoEJB.getAll();
+            return permisoEJB.getAll(paginacion.paginacion());
         }
-        return permisoEJB.getByVehiculo(idVehiculo);
+        return permisoEJB.getByVehiculo(idVehiculo, paginacion.paginacion());
     }
 
     @Path("/{id}")

@@ -7,6 +7,7 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { empresasApi } from '@/api/empresas/empresas.api'
+import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { getErrorMessage } from '@/api/errors'
 import { guiasApi } from '@/api/guias/guias.api'
@@ -33,7 +34,7 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    empresasApi.getAll().then(setEmpresas)
+    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then((page) => setEmpresas(page.items))
     guiasApi.getRubros().then(setRubros)
     guiasApi.getTiposCarga().then(setTiposCarga)
   }, [])

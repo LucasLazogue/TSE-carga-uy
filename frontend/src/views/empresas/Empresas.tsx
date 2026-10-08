@@ -4,6 +4,7 @@ import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
 import { EMPRESA_VACIA } from './empresas.constants'
 import { empresasApi } from '@/api/empresas/empresas.api'
+import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa, EmpresaNueva } from '@/api/empresas/empresas.types'
 
 function Empresas() {
@@ -14,7 +15,7 @@ function Empresas() {
   const [error, setError] = useState('')
 
   async function cargar(filtro?: string) {
-    setLista(await empresasApi.getAll(filtro))
+    setLista((await empresasApi.getAll(filtro, { tamanio: TAMANIO_MAXIMO })).items)
   }
 
   async function buscar(e: FormEvent) {

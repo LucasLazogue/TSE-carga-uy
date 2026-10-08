@@ -50,7 +50,7 @@ const OPCIONES_VIAJE: FilterOption[] = [
 ]
 
 async function buscarEmpresas(texto: string) {
-  const empresas = await empresasApi.getAll(texto)
+  const { items: empresas } = await empresasApi.getAll(texto)
   return empresas.map((e) => ({ value: String(e.id), label: e.nombrePublico }))
 }
 
@@ -75,7 +75,7 @@ function Guias() {
       return
     }
     let vigente = true
-    empresasApi.getAll().then((empresas) => {
+    empresasApi.getAll().then(({ items: empresas }) => {
       if (vigente && empresas.length) {
         set('idEmpresa', String(empresas[0].id))
       }
@@ -91,13 +91,16 @@ function Guias() {
     }
     let vigente = true
     guiasApi
-      .getAll(Number(idEmpresa), {
-        busqueda,
-        conViaje: conViaje ? conViaje === 'true' : undefined,
-        desde,
-        hasta,
-        pagina,
-      })
+      .getAll(
+        Number(idEmpresa),
+        {
+          busqueda,
+          conViaje: conViaje ? conViaje === 'true' : undefined,
+          desde,
+          hasta,
+        },
+        { pagina },
+      )
       .then((page) => {
         if (vigente) {
           setResultado(page)

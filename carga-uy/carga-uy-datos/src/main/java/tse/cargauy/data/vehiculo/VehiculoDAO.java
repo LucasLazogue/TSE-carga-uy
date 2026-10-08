@@ -6,6 +6,8 @@ import java.util.List;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.entities.Empresa;
 import tse.cargauy.entities.Vehiculo;
@@ -38,28 +40,38 @@ public class VehiculoDAO implements VehiculoDAOLocal {
     }
 
     @Override
-    public List<VehiculoDto> getAll() {
+    public PaginaDto<VehiculoDto> getAll(Paginacion paginacion) {
         List<VehiculoDto> res = new ArrayList<>();
 
-        List<Vehiculo> vehiculos = entityManager.createQuery("SELECT v FROM Vehiculo v ORDER BY v.matricula", Vehiculo.class).getResultList();
+        List<Vehiculo> vehiculos = entityManager.createQuery("SELECT v FROM Vehiculo v ORDER BY v.matricula", Vehiculo.class)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultList();
         for (Vehiculo v : vehiculos) {
             res.add(Serializers.toDto(v));
         }
-        return res;
+        long total = entityManager.createQuery("SELECT COUNT(v) FROM Vehiculo v", Long.class).getSingleResult();
+        return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     @Override
-    public List<VehiculoDto> getByEmpresa(Long idEmpresa) {
+    public PaginaDto<VehiculoDto> getByEmpresa(Long idEmpresa, Paginacion paginacion) {
         List<VehiculoDto> res = new ArrayList<>();
 
         List<Vehiculo> vehiculos = entityManager.createQuery(
                         "SELECT v FROM Vehiculo v WHERE v.empresa.id = :idEmpresa ORDER BY v.matricula", Vehiculo.class)
                 .setParameter("idEmpresa", idEmpresa)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
                 .getResultList();
         for (Vehiculo v : vehiculos) {
             res.add(Serializers.toDto(v));
         }
-        return res;
+        long total = entityManager.createQuery(
+                        "SELECT COUNT(v) FROM Vehiculo v WHERE v.empresa.id = :idEmpresa", Long.class)
+                .setParameter("idEmpresa", idEmpresa)
+                .getSingleResult();
+        return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     @Override

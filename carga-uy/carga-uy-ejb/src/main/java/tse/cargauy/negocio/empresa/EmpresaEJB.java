@@ -10,6 +10,8 @@ import jakarta.ejb.Stateless;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -38,15 +40,16 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
     }
 
     @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
-    public List<EmpresaDto> getAll() {
+    public PaginaDto<EmpresaDto> getAll(Paginacion paginacion) {
         if (contexto.isCallerInRole(Rol.FUNCIONARIO)) {
-            return empresaDAO.getAll();
+            return empresaDAO.getAll(paginacion);
         }
-        return empresaDAO.getByResponsable(idUsuario(), LocalDate.now());
+        List<EmpresaDto> empresas = empresaDAO.getByResponsable(idUsuario(), LocalDate.now());
+        return new PaginaDto<>(empresas, empresas.size(), 0, paginacion.getTamanio());
     }
 
-    public List<EmpresaDto> findByNombre(String nombre) {
-        return empresaDAO.findByNombre(nombre);
+    public PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion) {
+        return empresaDAO.findByNombre(nombre, paginacion);
     }
 
     @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
