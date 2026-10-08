@@ -4,3 +4,10 @@ export type Page<T> = {
   pagina: number
   tamanio: number
 }
+
+export type Paginacion = {
+  pagina?: number
+  tamanio?: number
+}
+
+export const TAMANIO_MAXIMO = 100

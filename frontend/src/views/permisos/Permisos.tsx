@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
 import { empresasApi } from '@/api/empresas/empresas.api'
+import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
@@ -21,7 +22,7 @@ function Permisos() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    empresasApi.getAll().then((lista) => {
+    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
       setEmpresas(lista)
       if (lista.length) {
         elegirEmpresa(lista[0].id)
@@ -30,12 +31,12 @@ function Permisos() {
   }, [])
 
   async function cargar(id: number) {
-    setLista(id ? await permisosApi.getAll(id) : [])
+    setLista(id ? (await permisosApi.getAll(id, { tamanio: TAMANIO_MAXIMO })).items : [])
   }
 
   async function elegirEmpresa(id: number) {
     setIdEmpresa(id)
-    const delaEmpresa = await vehiculosApi.getAll(id)
+    const { items: delaEmpresa } = await vehiculosApi.getAll(id, { tamanio: TAMANIO_MAXIMO })
     setVehiculos(delaEmpresa)
     elegirVehiculo(delaEmpresa[0]?.id ?? 0)
   }

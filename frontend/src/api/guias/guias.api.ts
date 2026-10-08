@@ -1,10 +1,10 @@
 import { http } from '@/api/http'
-import type { Page } from '@/api/page'
+import type { Page, Paginacion } from '@/api/page'
 import type { FiltroGuias, Guia, GuiaNueva, Rubro, TipoCarga } from './guias.types'
 
 export const guiasApi = {
-  getAll: async (idEmpresa: number, filtro: FiltroGuias = {}) => {
-    const res = await http.get<Page<Guia>>(`/empresas/${idEmpresa}/guias`, { params: filtro })
+  getAll: async (idEmpresa: number, filtro: FiltroGuias = {}, paginacion: Paginacion = {}) => {
+    const res = await http.get<Page<Guia>>(`/empresas/${idEmpresa}/guias`, { params: { ...filtro, ...paginacion } })
     return res.data
   },
 

@@ -1,9 +1,8 @@
 package tse.cargauy.web.ws.empresas;
 
-import java.util.List;
-
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -15,7 +14,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
+import tse.cargauy.web.ws.PaginacionQuery;
 
 @RequestScoped
 @Path("/empresas")
@@ -48,11 +49,11 @@ public class EmpresasRest {
     }
 
     @GET
-    public List<EmpresaDto> getEmpresas(@QueryParam("nombre") String nombre) {
+    public PaginaDto<EmpresaDto> getEmpresas(@QueryParam("nombre") String nombre, @BeanParam PaginacionQuery paginacion) {
         if (nombre == null || nombre.isEmpty()) {
-            return empresaEJB.getAll();
+            return empresaEJB.getAll(paginacion.paginacion());
         }
-        return empresaEJB.findByNombre(nombre);
+        return empresaEJB.findByNombre(nombre, paginacion.paginacion());
     }
 
     @Path("/{id}")

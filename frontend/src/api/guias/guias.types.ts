@@ -34,6 +34,4 @@ export type FiltroGuias = {
   conViaje?: boolean
   desde?: string
   hasta?: string
-  pagina?: number
-  tamanio?: number
 }

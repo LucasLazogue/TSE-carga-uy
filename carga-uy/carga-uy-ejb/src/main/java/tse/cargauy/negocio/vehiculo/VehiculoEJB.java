@@ -1,11 +1,12 @@
 package tse.cargauy.negocio.vehiculo;
 
-import java.util.List;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.EJB;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
@@ -34,13 +35,13 @@ public class VehiculoEJB implements VehiculoEJBLocal, VehiculoEJBRemote {
     }
 
     @RolesAllowed(Rol.FUNCIONARIO)
-    public List<VehiculoDto> getAll() {
-        return vehiculoDAO.getAll();
+    public PaginaDto<VehiculoDto> getAll(Paginacion paginacion) {
+        return vehiculoDAO.getAll(paginacion);
     }
 
-    public List<VehiculoDto> getByEmpresa(Long idEmpresa) {
+    public PaginaDto<VehiculoDto> getByEmpresa(Long idEmpresa, Paginacion paginacion) {
         empresaEJB.validarAcceso(idEmpresa);
-        return vehiculoDAO.getByEmpresa(idEmpresa);
+        return vehiculoDAO.getByEmpresa(idEmpresa, paginacion);
     }
 
     @RolesAllowed(Rol.RESPONSABLE)

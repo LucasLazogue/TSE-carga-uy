@@ -13,6 +13,7 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -102,7 +103,7 @@ public class App {
     }
 
     private static void listEmpresas(EmpresaEJBRemote empresaEJB) {
-        List<EmpresaDto> empresas = empresaEJB.getAll();
+        List<EmpresaDto> empresas = empresaEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         for (EmpresaDto empresa : empresas) {
             System.out.println(empresa);
         }
@@ -111,7 +112,7 @@ public class App {
     private static void findEmpresaByNombre(EmpresaEJBRemote empresaEJB) {
         System.out.print("Ingrese el nombre o razon social a buscar: ");
         String nombre = System.console().readLine();
-        List<EmpresaDto> empresas = empresaEJB.findByNombre(nombre);
+        List<EmpresaDto> empresas = empresaEJB.findByNombre(nombre, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         for (EmpresaDto empresa : empresas) {
             System.out.println(empresa);
         }
@@ -170,7 +171,7 @@ public class App {
     }
 
     private static void listVehiculos(VehiculoEJBRemote vehiculoEJB) {
-        List<VehiculoDto> vehiculos = vehiculoEJB.getAll();
+        List<VehiculoDto> vehiculos = vehiculoEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         for (VehiculoDto vehiculo : vehiculos) {
             System.out.println(vehiculo);
         }
@@ -180,7 +181,7 @@ public class App {
         try {
             System.out.print("Ingrese el id de la empresa: ");
             Long idEmpresa = Long.parseLong(System.console().readLine().trim());
-            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(idEmpresa);
+            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(idEmpresa, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
             for (VehiculoDto vehiculo : vehiculos) {
                 System.out.println(vehiculo);
             }
@@ -217,7 +218,7 @@ public class App {
         try {
             System.out.print("Ingrese el id del vehiculo: ");
             Long idVehiculo = Long.parseLong(System.console().readLine().trim());
-            List<PermisoDto> permisos = permisoEJB.getByVehiculo(idVehiculo);
+            List<PermisoDto> permisos = permisoEJB.getByVehiculo(idVehiculo, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
             for (PermisoDto permiso : permisos) {
                 System.out.println(permiso);
             }

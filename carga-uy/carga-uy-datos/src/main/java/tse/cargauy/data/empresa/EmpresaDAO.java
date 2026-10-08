@@ -8,6 +8,8 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.Empresa;
 
 @Stateless
@@ -38,28 +40,38 @@ public class EmpresaDAO implements EmpresaDAOLocal {
     }
 
     @Override
-    public List<EmpresaDto> getAll() {
+    public PaginaDto<EmpresaDto> getAll(Paginacion paginacion) {
         List<EmpresaDto> res = new ArrayList<>();
 
-        List<Empresa> empresas = entityManager.createQuery("SELECT e FROM Empresa e ORDER BY e.nroEmpresa", Empresa.class).getResultList();
+        List<Empresa> empresas = entityManager.createQuery("SELECT e FROM Empresa e ORDER BY e.nroEmpresa", Empresa.class)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultList();
         for (Empresa e : empresas) {
             res.add(Serializers.toDto(e));
         }
-        return res;
+        long total = entityManager.createQuery("SELECT COUNT(e) FROM Empresa e", Long.class).getSingleResult();
+        return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     @Override
-    public List<EmpresaDto> findByNombre(String nombre) {
+    public PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion) {
         List<EmpresaDto> res = new ArrayList<>();
 
         List<Empresa> empresas = entityManager.createQuery(
                         "SELECT e FROM Empresa e WHERE LOWER(e.nombrePublico) LIKE :nombre OR LOWER(e.razonSocial) LIKE :nombre ORDER BY e.nroEmpresa", Empresa.class)
                 .setParameter("nombre", "%" + nombre.toLowerCase() + "%")
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
                 .getResultList();
         for (Empresa e : empresas) {
             res.add(Serializers.toDto(e));
         }
-        return res;
+        long total = entityManager.createQuery(
+                        "SELECT COUNT(e) FROM Empresa e WHERE LOWER(e.nombrePublico) LIKE :nombre OR LOWER(e.razonSocial) LIKE :nombre", Long.class)
+                .setParameter("nombre", "%" + nombre.toLowerCase() + "%")
+                .getSingleResult();
+        return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     @Override
