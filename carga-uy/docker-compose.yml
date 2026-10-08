@@ -26,5 +26,26 @@ services:
       CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
       CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
 
+  # nodo periferico de tracking: simula la flota y publica sus posiciones en queue_tracking.
+  # en el despliegue va en otra PaaS; aca esta para levantar todo con un solo comando
+  nodo-tracking:
+    build: ../nodo-tracking
+    ports:
+      - "8081:8081"
+    environment:
+      NODO_ID: ${NODO_ID:-tracking-1}
+      NODO_JMS_URL: ${NODO_JMS_URL:-remote+http://carga-uy:8080}
+      NODO_JMS_USUARIO: ${NODO_JMS_USUARIO:-admin}
+      NODO_JMS_CLAVE: ${NODO_JMS_CLAVE:-admin123}
+      NODO_INTERVALO_SEG: ${NODO_INTERVALO_SEG:-10}
+      NODO_ACELERAR: ${NODO_ACELERAR:-1}
+      NODO_VEHICULOS_EXTRA: ${NODO_VEHICULOS_EXTRA:-0}
+      NODO_DUPLICADOS: ${NODO_DUPLICADOS:-0}
+      NODO_DESORDENAR: ${NODO_DESORDENAR:-false}
+      NODO_SIN_COBERTURA: ${NODO_SIN_COBERTURA:-}
+      NODO_LOG_METRICAS_SEG: ${NODO_LOG_METRICAS_SEG:-60}
+    depends_on:
+      - carga-uy
+
 volumes:
   pgdata:

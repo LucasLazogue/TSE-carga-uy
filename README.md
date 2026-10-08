@@ -80,7 +80,8 @@ Una vez desplegada en OpenShift, obtener la URL con
 
 Nodos perifericos (CU-19): pantalla del backoffice en http://localhost:8080/carga-uy/nodos.xhtml y API
 en /api/nodos. Posiciones recibidas del tracking (CU-10):
-/api/posiciones?matricula=X. El simulador del nodo de tracking esta en nodo-tracking (ver su README).
+/api/posiciones?matricula=X. El nodo de tracking, que simula la flota y publica sus posiciones, esta
+en nodo-tracking (ver su README).
 
 ## Ejecutar aplicacion consola
 Desde carga-uy-client ejecutar
