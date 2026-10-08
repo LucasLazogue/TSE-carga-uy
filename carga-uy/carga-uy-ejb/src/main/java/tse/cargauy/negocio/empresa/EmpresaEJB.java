@@ -2,20 +2,34 @@ package tse.cargauy.negocio.empresa;
 
 import java.time.LocalDate;
 import java.util.List;
+import jakarta.annotation.Resource;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
+import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
 @Stateless
+@RolesAllowed(Rol.FUNCIONARIO)
 public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
 
     @EJB
     EmpresaDAOLocal empresaDAO;
 
+    @EJB
+    UsuarioDAOLocal usuarioDAO;
+
+    @Resource
+    SessionContext contexto;
+
+    @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
     public EmpresaDto getEmpresaById(Long id) {
+        validarAcceso(id);
         EmpresaDto empresa = empresaDAO.getEmpresaById(id);
         if (empresa == null) {
             throw new CargaUYException(CodigoError.EMPRESA_NO_ENCONTRADA, String.valueOf(id));
@@ -23,12 +37,24 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         return empresa;
     }
 
+    @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
     public List<EmpresaDto> getAll() {
-        return empresaDAO.getAll();
+        if (contexto.isCallerInRole(Rol.FUNCIONARIO)) {
+            return empresaDAO.getAll();
+        }
+        return empresaDAO.getByResponsable(idUsuario(), LocalDate.now());
     }
 
     public List<EmpresaDto> findByNombre(String nombre) {
         return empresaDAO.findByNombre(nombre);
+    }
+
+    @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
+    public void validarAcceso(Long idEmpresa) {
+        if (!contexto.isCallerInRole(Rol.FUNCIONARIO)
+                && usuarioDAO.getResponsableVigente(idUsuario(), idEmpresa, LocalDate.now()) == null) {
+            throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
+        }
     }
 
     public EmpresaDto addEmpresa(EmpresaDto empresaDto) {
@@ -53,6 +79,10 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
 
     public void deleteEmpresa(Long id) {
         empresaDAO.deleteEmpresa(id);
+    }
+
+    private Long idUsuario() {
+        return Long.valueOf(contexto.getCallerPrincipal().getName());
     }
 
     private void validar(EmpresaDto empresaDto) {

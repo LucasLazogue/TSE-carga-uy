@@ -51,6 +51,18 @@ Para volver al simulado, poner GUBUY_MOCK=true y sacar GUBUY_REDIRECT_URI.
 La sesion es un JWT firmado con CARGAUY_JWT_SECRET. En la web viaja en la cookie HttpOnly
 cargauy_token; el logout es POST /api/auth/logout.
 
+La autorizacion se hace en los EJB con @RolesAllowed. En cada request JwtAuthenticationMechanism
+(Jakarta Security) lee el JWT de la cookie o del header Authorization: Bearer y le pasa al
+contenedor el id del usuario y sus roles; con eso funcionan @RolesAllowed y SessionContext en los
+EJB. Para que WildFly acepte esa identidad sin buscar al usuario en su propio realm, el Dockerfile
+pone integrated-jaspi=false en el dominio de seguridad de undertow. Si se corre WildFly fuera de
+Docker hay que aplicar lo mismo una vez con jboss-cli:
+
+    /subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false)
+
+Sin esa configuracion el mecanismo corre pero WildFly trata los requests como anonimos y todos los
+endpoints protegidos responden 403.
+
 Login mobile: la app abre en el navegador /api/auth/login?cliente=mobile&code_challenge=X, donde X es
 el SHA-256 en base64url de un code_verifier aleatorio. Al terminar vuelve a cargauy://ingreso?code=C
 (configurable con CARGAUY_MOBILE_REDIRECT) y la app hace POST /api/auth/token con

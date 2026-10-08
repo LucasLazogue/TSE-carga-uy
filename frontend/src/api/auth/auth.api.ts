@@ -4,7 +4,7 @@ import type { AuthConfig, Session } from './auth.types'
 // el token viaja en una cookie HttpOnly que setea y borra el backend: este codigo nunca lo ve
 export const authApi = {
   me: async () => {
-    const res = await http.get<Session>('/auth/me')
+    const res = await http.get<Session>('/usuarios/me')
     return res.data
   },
 

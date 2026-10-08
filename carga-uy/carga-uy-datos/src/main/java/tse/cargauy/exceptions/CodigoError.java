@@ -66,7 +66,8 @@ public enum CodigoError {
     NODO_DADO_DE_BAJA(7005, Categoria.CONFLICTO),
 
     PAGINACION_INVALIDA(8001, Categoria.VALIDACION),
-    PARAMETRO_INVALIDO(8002, Categoria.VALIDACION);
+    PARAMETRO_INVALIDO(8002, Categoria.VALIDACION),
+    ACCESO_DENEGADO(8003, Categoria.PROHIBIDO);
 
     private final int codigo;
     private final Categoria categoria;
