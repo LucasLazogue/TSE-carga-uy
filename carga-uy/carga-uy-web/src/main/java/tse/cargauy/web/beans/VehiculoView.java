@@ -40,14 +40,14 @@ public class VehiculoView implements Serializable {
 
     public void getAllVehiculos() {
         idEmpresa = null;
-        vehiculos = vehiculoEJB.getAll();
+        vehiculos = vehiculoEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
     }
 
     public void findVehiculos() {
         if (idEmpresa == null) {
-            vehiculos = vehiculoEJB.getAll();
+            vehiculos = vehiculoEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         } else {
-            vehiculos = vehiculoEJB.getByEmpresa(idEmpresa);
+            vehiculos = vehiculoEJB.getByEmpresa(idEmpresa, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         }
     }
 

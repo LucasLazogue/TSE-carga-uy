@@ -171,7 +171,7 @@ public class App {
     }
 
     private static void listVehiculos(VehiculoEJBRemote vehiculoEJB) {
-        List<VehiculoDto> vehiculos = vehiculoEJB.getAll();
+        List<VehiculoDto> vehiculos = vehiculoEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         for (VehiculoDto vehiculo : vehiculos) {
             System.out.println(vehiculo);
         }
@@ -181,7 +181,7 @@ public class App {
         try {
             System.out.print("Ingrese el id de la empresa: ");
             Long idEmpresa = Long.parseLong(System.console().readLine().trim());
-            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(idEmpresa);
+            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(idEmpresa, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
             for (VehiculoDto vehiculo : vehiculos) {
                 System.out.println(vehiculo);
             }

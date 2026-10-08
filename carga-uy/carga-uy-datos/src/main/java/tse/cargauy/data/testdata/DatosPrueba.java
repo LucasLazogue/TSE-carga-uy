@@ -55,14 +55,14 @@ public class DatosPrueba {
         }
 
         List<EmpresaDto> empresas = empresaDAO.getAll(new Paginacion(0, 3)).getItems();
-        if (vehiculoDAO.getAll().isEmpty() && empresas.size() >= 3) {
+        if (vehiculoDAO.getAll(new Paginacion(0, 1)).getTotal() == 0 && empresas.size() >= 3) {
             vehiculoDAO.addVehiculo(new VehiculoDto("STA1234", "Volvo", "FH 460", 8500, 24000, empresas.get(0).getId()));
             vehiculoDAO.addVehiculo(new VehiculoDto("SBB5678", "Scania", "R 450", 9000, 26000, empresas.get(0).getId()));
             vehiculoDAO.addVehiculo(new VehiculoDto("SCC9012", "Mercedes-Benz", "Actros 2646", 8800, 25000, empresas.get(1).getId()));
             vehiculoDAO.addVehiculo(new VehiculoDto("SDD3456", "Iveco", "Stralis 480", 8200, 23000, empresas.get(2).getId()));
         }
 
-        if (permisoDAO.getAll().isEmpty() && vehiculoDAO.getAll().size() >= 4) {
+        if (permisoDAO.getAll().isEmpty() && vehiculoDAO.getAll(new Paginacion(0, 1)).getTotal() >= 4) {
             Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
             Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
             Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();
