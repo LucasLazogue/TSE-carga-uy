@@ -48,8 +48,8 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         return new PaginaDto<>(empresas, empresas.size(), 0, paginacion.getTamanio());
     }
 
-    public List<EmpresaDto> findByNombre(String nombre) {
-        return empresaDAO.findByNombre(nombre);
+    public PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion) {
+        return empresaDAO.findByNombre(nombre, paginacion);
     }
 
     @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })

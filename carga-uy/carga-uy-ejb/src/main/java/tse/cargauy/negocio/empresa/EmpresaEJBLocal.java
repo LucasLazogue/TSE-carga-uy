@@ -10,7 +10,7 @@ import tse.cargauy.dtos.Paginacion;
 public interface EmpresaEJBLocal {
     EmpresaDto getEmpresaById(Long id);
     PaginaDto<EmpresaDto> getAll(Paginacion paginacion);
-    List<EmpresaDto> findByNombre(String nombre);
+    PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion);
     void validarAcceso(Long idEmpresa);
     EmpresaDto addEmpresa(EmpresaDto empresaDto);
     void updateEmpresa(Long id, EmpresaDto empresaDto);

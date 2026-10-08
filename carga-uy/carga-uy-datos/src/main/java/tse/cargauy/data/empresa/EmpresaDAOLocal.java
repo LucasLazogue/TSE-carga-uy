@@ -12,7 +12,7 @@ public interface EmpresaDAOLocal {
     EmpresaDto getEmpresaById(Long id);
     EmpresaDto getEmpresaByNro(int nroEmpresa);
     PaginaDto<EmpresaDto> getAll(Paginacion paginacion);
-    List<EmpresaDto> findByNombre(String nombre);
+    PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion);
     List<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha);
     EmpresaDto addEmpresa(EmpresaDto empresaDto);
     void updateEmpresa(Long id, EmpresaDto empresaDto);

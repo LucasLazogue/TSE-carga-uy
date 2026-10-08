@@ -37,7 +37,7 @@ public class EmpresaView implements Serializable {
     }
 
     public void findEmpresas() {
-        empresas = empresaEJB.findByNombre(nombre);
+        empresas = empresaEJB.findByNombre(nombre, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
     }
 
     public void createEmpresa() {

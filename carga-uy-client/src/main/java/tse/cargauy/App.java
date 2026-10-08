@@ -112,7 +112,7 @@ public class App {
     private static void findEmpresaByNombre(EmpresaEJBRemote empresaEJB) {
         System.out.print("Ingrese el nombre o razon social a buscar: ");
         String nombre = System.console().readLine();
-        List<EmpresaDto> empresas = empresaEJB.findByNombre(nombre);
+        List<EmpresaDto> empresas = empresaEJB.findByNombre(nombre, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         for (EmpresaDto empresa : empresas) {
             System.out.println(empresa);
         }
