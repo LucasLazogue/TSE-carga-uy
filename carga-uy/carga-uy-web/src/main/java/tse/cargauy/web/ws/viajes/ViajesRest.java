@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.negocio.viaje.ViajeEJBLocal;
+import tse.cargauy.web.ws.PaginacionQuery;
 
 @RequestScoped
 @Path("/empresas/{empresa}/viajes")
@@ -27,8 +28,8 @@ public class ViajesRest {
     ViajeEJBLocal viajeEJB;
 
     @GET
-    public PaginaDto<ViajeDto> getViajes(@PathParam("empresa") Long idEmpresa, @BeanParam ViajesQuery query) {
-        return viajeEJB.listar(idEmpresa, query.filtro(), query.paginacion());
+    public PaginaDto<ViajeDto> getViajes(@PathParam("empresa") Long idEmpresa, @BeanParam ViajesQuery query, @BeanParam PaginacionQuery paginacion) {
+        return viajeEJB.listar(idEmpresa, query.filtro(), paginacion.paginacion());
     }
 
     @POST

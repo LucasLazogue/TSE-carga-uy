@@ -13,6 +13,7 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -102,7 +103,7 @@ public class App {
     }
 
     private static void listEmpresas(EmpresaEJBRemote empresaEJB) {
-        List<EmpresaDto> empresas = empresaEJB.getAll();
+        List<EmpresaDto> empresas = empresaEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         for (EmpresaDto empresa : empresas) {
             System.out.println(empresa);
         }

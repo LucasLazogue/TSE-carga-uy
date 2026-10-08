@@ -10,6 +10,7 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
 @Named
@@ -32,7 +33,7 @@ public class EmpresaView implements Serializable {
 
     public void getAllEmpresas() {
         nombre = null;
-        empresas = empresaEJB.getAll();
+        empresas = empresaEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
     }
 
     public void findEmpresas() {

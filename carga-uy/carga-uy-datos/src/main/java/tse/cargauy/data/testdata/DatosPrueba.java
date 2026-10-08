@@ -14,6 +14,7 @@ import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.GuiaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
@@ -47,13 +48,13 @@ public class DatosPrueba {
     @PostConstruct
     public void init() {
         // solo la primera vez, si no se duplican en cada arranque
-        if (empresaDAO.getAll().isEmpty()) {
+        if (empresaDAO.getAll(new Paginacion(0, 3)).getTotal() == 0) {
             empresaDAO.addEmpresa(new EmpresaDto(1001, "Transportes del Sur", "Transportes del Sur S.A.", "Av. Italia 3456, Montevideo", LocalDate.of(2020, 3, 15)));
             empresaDAO.addEmpresa(new EmpresaDto(1002, "Cargas Norte", "Cargas del Norte S.R.L.", "Ruta 5 Km 480, Rivera", LocalDate.of(2019, 7, 1)));
             empresaDAO.addEmpresa(new EmpresaDto(1003, "LogiEste", "Logistica del Este Ltda.", "Av. Roosevelt 1200, Maldonado", LocalDate.of(2021, 11, 20)));
         }
 
-        List<EmpresaDto> empresas = empresaDAO.getAll();
+        List<EmpresaDto> empresas = empresaDAO.getAll(new Paginacion(0, 3)).getItems();
         if (vehiculoDAO.getAll().isEmpty() && empresas.size() >= 3) {
             vehiculoDAO.addVehiculo(new VehiculoDto("STA1234", "Volvo", "FH 460", 8500, 24000, empresas.get(0).getId()));
             vehiculoDAO.addVehiculo(new VehiculoDto("SBB5678", "Scania", "R 450", 9000, 26000, empresas.get(0).getId()));

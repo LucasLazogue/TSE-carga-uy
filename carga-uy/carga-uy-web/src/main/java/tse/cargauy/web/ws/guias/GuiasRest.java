@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.negocio.guia.GuiaEJBLocal;
+import tse.cargauy.web.ws.PaginacionQuery;
 
 @RequestScoped
 @Path("/empresas/{empresa}/guias")
@@ -27,8 +28,8 @@ public class GuiasRest {
     GuiaEJBLocal guiaEJB;
 
     @GET
-    public PaginaDto<GuiaDto> getGuias(@PathParam("empresa") Long idEmpresa, @BeanParam GuiasQuery query) {
-        return guiaEJB.listar(idEmpresa, query.filtro(), query.paginacion());
+    public PaginaDto<GuiaDto> getGuias(@PathParam("empresa") Long idEmpresa, @BeanParam GuiasQuery query, @BeanParam PaginacionQuery paginacion) {
+        return guiaEJB.listar(idEmpresa, query.filtro(), paginacion.paginacion());
     }
 
     @POST
