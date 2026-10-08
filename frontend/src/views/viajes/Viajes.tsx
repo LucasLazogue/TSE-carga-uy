@@ -5,6 +5,7 @@ import { empresasApi } from '@/api/empresas/empresas.api'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { guiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
+import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Page } from '@/api/page'
 import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
@@ -26,7 +27,7 @@ function Viajes() {
   const totalPaginas = pagina ? Math.max(1, Math.ceil(pagina.total / pagina.tamanio)) : 1
 
   useEffect(() => {
-    empresasApi.getAll().then((lista) => {
+    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
       setEmpresas(lista)
       setIdEmpresa(lista[0]?.id ?? 0)
     })
@@ -35,7 +36,7 @@ function Viajes() {
   useEffect(() => {
     if (idEmpresa) {
       cargarGuiasSinViaje(idEmpresa)
-      vehiculosApi.getAll(idEmpresa).then(setVehiculos)
+      vehiculosApi.getAll(idEmpresa, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
     }
   }, [idEmpresa])
 

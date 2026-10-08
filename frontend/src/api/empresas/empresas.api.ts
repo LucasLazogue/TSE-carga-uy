@@ -1,10 +1,11 @@
 import { http } from '@/api/http'
+import type { Page, Paginacion } from '@/api/page'
 import type { Empresa, EmpresaNueva } from './empresas.types'
 
 export const empresasApi = {
-  getAll: async (nombre?: string) => {
-    const res = await http.get<Empresa[]>('/empresas', {
-      params: { nombre },
+  getAll: async (nombre?: string, paginacion: Paginacion = {}) => {
+    const res = await http.get<Page<Empresa>>('/empresas', {
+      params: { nombre, ...paginacion },
     })
     return res.data
   },
