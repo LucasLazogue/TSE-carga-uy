@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { empresasApi } from '@/api/empresas/empresas.api'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { getErrorMessage } from '@/api/errors'
 import { guiasApi } from '@/api/guias/guias.api'
-import type { GuiaNueva, Rubro, TipoCarga } from '@/api/guias/guias.types'
+import type { Guia, GuiaNueva, Rubro, TipoCarga } from '@/api/guias/guias.types'
 import { useSession } from '@/auth/useSession'
 import { GUIA_VACIA } from '../guias.constants'
 
@@ -17,20 +18,22 @@ const selectClass =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 type Props = {
-  empresas: Empresa[]
+  idEmpresa: number
   close: () => void
-  onCreated: () => void
+  onCreated: (guia: Guia) => void
 }
 
-function NuevaGuiaDialog({ empresas, close, onCreated }: Props) {
+function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
   const { session } = useSession()
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [rubros, setRubros] = useState<Rubro[]>([])
   const [tiposCarga, setTiposCarga] = useState<TipoCarga[]>([])
-  const [nueva, setNueva] = useState<GuiaNueva>(GUIA_VACIA)
+  const [nueva, setNueva] = useState<GuiaNueva>({ ...GUIA_VACIA, idEmpresa })
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    empresasApi.getAll().then(setEmpresas)
     guiasApi.getRubros().then(setRubros)
     guiasApi.getTiposCarga().then(setTiposCarga)
   }, [])
@@ -40,8 +43,7 @@ function NuevaGuiaDialog({ empresas, close, onCreated }: Props) {
     setError('')
     setGuardando(true)
     try {
-      await guiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 })
-      onCreated()
+      onCreated(await guiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 }))
       close()
     } catch (err) {
       setError(getErrorMessage(err))
@@ -67,7 +69,6 @@ function NuevaGuiaDialog({ empresas, close, onCreated }: Props) {
             value={nueva.idEmpresa}
             onChange={(e) => setNueva({ ...nueva, idEmpresa: Number(e.target.value) })}
           >
-            <option value={0}>Seleccione una empresa</option>
             {empresas.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.nombrePublico}

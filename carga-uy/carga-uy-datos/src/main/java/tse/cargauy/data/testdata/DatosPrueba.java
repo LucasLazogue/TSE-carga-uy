@@ -92,6 +92,14 @@ public class DatosPrueba {
             usuarioDAO.addResponsable(carlos.getId(), empresas.get(0).getId(), ingreso);
         }
 
+        UsuarioDto ana = usuarioDAO.getCiudadanoByCedula("22222222");
+        if (ana == null) {
+            ana = usuarioDAO.addCiudadano("22222222", "ana.pereira@example.com");
+        }
+        if (usuarioDAO.getResponsableVigente(ana.getId(), empresas.get(1).getId(), ingreso) == null) {
+            usuarioDAO.addResponsable(ana.getId(), empresas.get(1).getId(), ingreso);
+        }
+
         if (guiaDAO.getRubros().isEmpty()) {
             for (String rubro : List.of("Agropecuario", "Comercio", "Construccion", "Forestal", "Industria", "Logistica")) {
                 guiaDAO.addRubro(rubro);

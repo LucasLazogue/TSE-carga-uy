@@ -7,8 +7,9 @@ import type { Profile } from '@/auth/profile'
 import { useSession } from '@/auth/useSession'
 
 const descriptions: Record<Exclude<Profile, 'CHOFER'>, string> = {
-  CIUDADANO: 'Gestioná la flota, las guías y los viajes de tu empresa.',
+  RESPONSABLE: 'Gestioná la flota, las guías y los viajes de tu empresa.',
   FUNCIONARIO: 'Fiscalizá empresas, vehículos y viajes.',
+  CIUDADANO: 'Validá los permisos de una empresa transportista.',
 }
 
 function Home() {
