@@ -15,6 +15,7 @@ import jakarta.ws.rs.QueryParam;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.negocio.vehiculo.VehiculoEJBLocal;
+import tse.cargauy.web.ws.PaginacionQuery;
 
 @RequestScoped
 @Path("/vehiculos")
