@@ -19,6 +19,4 @@ export type FiltroViajes = {
   idChofer?: number
   idVehiculo?: number
   estado?: EstadoViaje
-  pagina?: number
-  tamanio?: number
 }

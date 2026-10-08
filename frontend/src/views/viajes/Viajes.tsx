@@ -15,7 +15,8 @@ import { ESTADOS_VIAJE, VIAJE_VACIO } from './viajes.constants'
 
 function Viajes() {
   const [pagina, setPagina] = useState<Page<Viaje> | null>(null)
-  const [filtro, setFiltro] = useState<FiltroViajes>({ pagina: 0 })
+  const [filtro, setFiltro] = useState<FiltroViajes>({})
+  const [nroPagina, setNroPagina] = useState(0)
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [idEmpresa, setIdEmpresa] = useState(0)
   const [guias, setGuias] = useState<Guia[]>([])
@@ -42,22 +43,23 @@ function Viajes() {
 
   useEffect(() => {
     if (idEmpresa) {
-      viajesApi.getAll(idEmpresa, filtro).then(setPagina)
+      viajesApi.getAll(idEmpresa, filtro, { pagina: nroPagina }).then(setPagina)
     }
-  }, [idEmpresa, filtro])
+  }, [idEmpresa, filtro, nroPagina])
 
   async function cargarGuiasSinViaje(id: number) {
-    setGuias((await guiasApi.getAll(id, { conViaje: false, tamanio: 100 })).items)
+    setGuias((await guiasApi.getAll(id, { conViaje: false }, { tamanio: TAMANIO_MAXIMO })).items)
   }
 
   function elegirEmpresa(id: number) {
     setIdEmpresa(id)
-    setFiltro({ ...filtro, pagina: 0 })
+    setNroPagina(0)
     setNuevo(VIAJE_VACIO)
   }
 
   function filtrar(cambio: FiltroViajes) {
-    setFiltro({ ...filtro, ...cambio, pagina: 0 })
+    setFiltro({ ...filtro, ...cambio })
+    setNroPagina(0)
   }
 
   async function guardar(e: FormEvent) {
@@ -171,18 +173,18 @@ function Viajes() {
       </table>
       <div>
         <button
-          disabled={!filtro.pagina}
-          onClick={() => setFiltro({ ...filtro, pagina: (filtro.pagina ?? 0) - 1 })}
+          disabled={!nroPagina}
+          onClick={() => setNroPagina(nroPagina - 1)}
         >
           Anterior
         </button>
         <span>
           {' '}
-          Página {(filtro.pagina ?? 0) + 1} de {totalPaginas} ({pagina?.total ?? 0} viajes){' '}
+          Página {nroPagina + 1} de {totalPaginas} ({pagina?.total ?? 0} viajes){' '}
         </span>
         <button
-          disabled={(filtro.pagina ?? 0) + 1 >= totalPaginas}
-          onClick={() => setFiltro({ ...filtro, pagina: (filtro.pagina ?? 0) + 1 })}
+          disabled={nroPagina + 1 >= totalPaginas}
+          onClick={() => setNroPagina(nroPagina + 1)}
         >
           Siguiente
         </button>

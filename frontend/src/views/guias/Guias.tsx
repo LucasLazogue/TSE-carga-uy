@@ -91,13 +91,16 @@ function Guias() {
     }
     let vigente = true
     guiasApi
-      .getAll(Number(idEmpresa), {
-        busqueda,
-        conViaje: conViaje ? conViaje === 'true' : undefined,
-        desde,
-        hasta,
-        pagina,
-      })
+      .getAll(
+        Number(idEmpresa),
+        {
+          busqueda,
+          conViaje: conViaje ? conViaje === 'true' : undefined,
+          desde,
+          hasta,
+        },
+        { pagina },
+      )
       .then((page) => {
         if (vigente) {
           setResultado(page)
