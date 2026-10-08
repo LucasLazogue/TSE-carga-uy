@@ -1,12 +1,13 @@
 package tse.cargauy.negocio.permiso;
 
 import java.time.LocalDate;
-import java.util.List;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.EJB;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.entities.Rol;
@@ -36,13 +37,13 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
     }
 
     @RolesAllowed(Rol.FUNCIONARIO)
-    public List<PermisoDto> getAll() {
-        return permisoDAO.getAll();
+    public PaginaDto<PermisoDto> getAll(Paginacion paginacion) {
+        return permisoDAO.getAll(paginacion);
     }
 
-    public List<PermisoDto> getByVehiculo(Long idVehiculo) {
+    public PaginaDto<PermisoDto> getByVehiculo(Long idVehiculo, Paginacion paginacion) {
         validarAccesoAlVehiculo(idVehiculo);
-        return permisoDAO.getByVehiculo(idVehiculo);
+        return permisoDAO.getByVehiculo(idVehiculo, paginacion);
     }
 
     public PermisoDto getVigente(Long idVehiculo, LocalDate fecha) {
@@ -115,17 +116,13 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
     }
 
     private void validarSuperposicion(PermisoDto permisoDto, Long id) {
-        for (PermisoDto existente : permisoDAO.getByVehiculo(permisoDto.getIdVehiculo())) {
-            if (existente.getId().equals(id)) {
-                continue;
-            }
-            if (!permisoDto.getValidoDesde().isAfter(existente.getValidoHasta())
-                    && !permisoDto.getValidoHasta().isBefore(existente.getValidoDesde())) {
-                throw new CargaUYException(CodigoError.PERMISO_SUPERPUESTO,
-                        existente.getNroPermiso(),
-                        existente.getValidoDesde().toString(),
-                        existente.getValidoHasta().toString());
-            }
+        PermisoDto existente = permisoDAO.getSuperpuesto(permisoDto.getIdVehiculo(),
+                permisoDto.getValidoDesde(), permisoDto.getValidoHasta(), id);
+        if (existente != null) {
+            throw new CargaUYException(CodigoError.PERMISO_SUPERPUESTO,
+                    existente.getNroPermiso(),
+                    existente.getValidoDesde().toString(),
+                    existente.getValidoHasta().toString());
         }
     }
 

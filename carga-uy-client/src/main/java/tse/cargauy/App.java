@@ -218,7 +218,7 @@ public class App {
         try {
             System.out.print("Ingrese el id del vehiculo: ");
             Long idVehiculo = Long.parseLong(System.console().readLine().trim());
-            List<PermisoDto> permisos = permisoEJB.getByVehiculo(idVehiculo);
+            List<PermisoDto> permisos = permisoEJB.getByVehiculo(idVehiculo, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
             for (PermisoDto permiso : permisos) {
                 System.out.println(permiso);
             }

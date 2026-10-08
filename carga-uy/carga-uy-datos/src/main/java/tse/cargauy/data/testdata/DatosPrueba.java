@@ -62,7 +62,7 @@ public class DatosPrueba {
             vehiculoDAO.addVehiculo(new VehiculoDto("SDD3456", "Iveco", "Stralis 480", 8200, 23000, empresas.get(2).getId()));
         }
 
-        if (permisoDAO.getAll().isEmpty() && vehiculoDAO.getAll(new Paginacion(0, 1)).getTotal() >= 4) {
+        if (permisoDAO.getAll(new Paginacion(0, 1)).getTotal() == 0 && vehiculoDAO.getAll(new Paginacion(0, 1)).getTotal() >= 4) {
             Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
             Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
             Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();

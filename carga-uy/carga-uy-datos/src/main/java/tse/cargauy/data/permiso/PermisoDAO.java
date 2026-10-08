@@ -7,6 +7,9 @@ import java.util.List;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.entities.Permiso;
 import tse.cargauy.entities.Vehiculo;
@@ -39,28 +42,55 @@ public class PermisoDAO implements PermisoDAOLocal {
     }
 
     @Override
-    public List<PermisoDto> getAll() {
+    public PaginaDto<PermisoDto> getAll(Paginacion paginacion) {
         List<PermisoDto> res = new ArrayList<>();
 
-        List<Permiso> permisos = entityManager.createQuery("SELECT p FROM Permiso p ORDER BY p.validoDesde DESC", Permiso.class).getResultList();
-        for (Permiso p : permisos) {
-            res.add(Serializers.toDto(p));
-        }
-        return res;
-    }
-
-    @Override
-    public List<PermisoDto> getByVehiculo(Long idVehiculo) {
-        List<PermisoDto> res = new ArrayList<>();
-
-        List<Permiso> permisos = entityManager.createQuery(
-                        "SELECT p FROM Permiso p WHERE p.vehiculo.id = :idVehiculo ORDER BY p.validoDesde DESC", Permiso.class)
-                .setParameter("idVehiculo", idVehiculo)
+        List<Permiso> permisos = entityManager.createQuery("SELECT p FROM Permiso p ORDER BY p.validoDesde DESC, p.id DESC", Permiso.class)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
                 .getResultList();
         for (Permiso p : permisos) {
             res.add(Serializers.toDto(p));
         }
-        return res;
+        long total = entityManager.createQuery("SELECT COUNT(p) FROM Permiso p", Long.class).getSingleResult();
+        return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public PaginaDto<PermisoDto> getByVehiculo(Long idVehiculo, Paginacion paginacion) {
+        List<PermisoDto> res = new ArrayList<>();
+
+        List<Permiso> permisos = entityManager.createQuery(
+                        "SELECT p FROM Permiso p WHERE p.vehiculo.id = :idVehiculo ORDER BY p.validoDesde DESC, p.id DESC", Permiso.class)
+                .setParameter("idVehiculo", idVehiculo)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultList();
+        for (Permiso p : permisos) {
+            res.add(Serializers.toDto(p));
+        }
+        long total = entityManager.createQuery(
+                        "SELECT COUNT(p) FROM Permiso p WHERE p.vehiculo.id = :idVehiculo", Long.class)
+                .setParameter("idVehiculo", idVehiculo)
+                .getSingleResult();
+        return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public PermisoDto getSuperpuesto(Long idVehiculo, LocalDate desde, LocalDate hasta, Long idExcluir) {
+        String excluir = idExcluir == null ? "" : " AND p.id <> :idExcluir";
+        TypedQuery<Permiso> query = entityManager.createQuery(
+                        "SELECT p FROM Permiso p WHERE p.vehiculo.id = :idVehiculo"
+                                + " AND p.validoDesde <= :hasta AND p.validoHasta >= :desde" + excluir
+                                + " ORDER BY p.validoDesde", Permiso.class)
+                .setParameter("idVehiculo", idVehiculo)
+                .setParameter("desde", desde)
+                .setParameter("hasta", hasta);
+        if (idExcluir != null) {
+            query.setParameter("idExcluir", idExcluir);
+        }
+        List<Permiso> permisos = query.setMaxResults(1).getResultList();
+        return permisos.isEmpty() ? null : Serializers.toDto(permisos.get(0));
     }
 
     @Override
