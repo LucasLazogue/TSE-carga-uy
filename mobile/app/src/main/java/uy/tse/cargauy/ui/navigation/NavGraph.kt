@@ -22,7 +22,10 @@ object Rutas {
 @Composable
 fun NavGraph(
     temaOscuro: Boolean,
-    onCambiarTema: (Boolean) -> Unit
+    onCambiarTema: (Boolean) -> Unit,
+    urlServidor: String,
+    onGuardarUrl: (String) -> Unit,
+    onRestaurarUrl: () -> Unit
 ) {
     val navController = rememberNavController()
     val rutaActual by navController.currentBackStackEntryAsState()
@@ -53,7 +56,10 @@ fun NavGraph(
             composable(Rutas.SETTINGS) {
                 SettingsScreen(
                     temaOscuro = temaOscuro,
-                    onCambiarTema = onCambiarTema
+                    onCambiarTema = onCambiarTema,
+                    urlServidor = urlServidor,
+                    onGuardarUrl = onGuardarUrl,
+                    onRestaurarUrl = onRestaurarUrl
                 )
             }
         }

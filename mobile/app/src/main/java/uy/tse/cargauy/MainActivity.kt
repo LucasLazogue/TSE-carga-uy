@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val temaOscuro by preferencias.temaOscuro.collectAsStateWithLifecycle(initialValue = false)
+            val urlServidor by preferencias.urlServidor.collectAsStateWithLifecycle(initialValue = "")
             val scope = rememberCoroutineScope()
 
             CargaUYTheme(darkTheme = temaOscuro) {
@@ -29,6 +30,13 @@ class MainActivity : ComponentActivity() {
                     temaOscuro = temaOscuro,
                     onCambiarTema = { nuevo ->
                         scope.launch { preferencias.guardarTemaOscuro(nuevo) }
+                    },
+                    urlServidor = urlServidor,
+                    onGuardarUrl = { nueva ->
+                        scope.launch { preferencias.guardarUrlServidor(nueva) }
+                    },
+                    onRestaurarUrl = {
+                        scope.launch { preferencias.restaurarUrlServidor() }
                     }
                 )
             }
