@@ -30,7 +30,7 @@ import tse.cargauy.entities.TipoEventoViaje;
 
 class AplicadorEventosEJBTest {
 
-    private static final ZoneId ZONA = ZoneId.of("America/Montevideo");
+    private static final ZoneId ZONA = ZoneId.systemDefault();
     private static final Long CHOFER = 5001L;
 
     private final AplicadorEventosEJB ejb = new AplicadorEventosEJB();

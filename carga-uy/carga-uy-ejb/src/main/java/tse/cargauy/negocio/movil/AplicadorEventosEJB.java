@@ -29,8 +29,8 @@ import tse.cargauy.exceptions.MensajesError;
 @RolesAllowed(Rol.CHOFER)
 public class AplicadorEventosEJB implements AplicadorEventosEJBLocal {
 
-    // los viajes guardan la hora local sin zona
-    private static final ZoneId ZONA = ZoneId.of("America/Montevideo");
+    // los viajes guardan la hora local sin zona; la zona es la del servidor (CARGAUY_ZONA_HORARIA)
+    private static final ZoneId ZONA = ZoneId.systemDefault();
     private static final Duration TOLERANCIA_FUTURO = Duration.ofMinutes(5);
 
     @EJB

@@ -5,6 +5,8 @@ services:
       POSTGRES_DB: cargauy
       POSTGRES_USER: cargauy
       POSTGRES_PASSWORD: cargauy
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    command: ["postgres", "-c", "timezone=${CARGAUY_ZONA_HORARIA:-America/Montevideo}", "-c", "log_timezone=${CARGAUY_ZONA_HORARIA:-America/Montevideo}"]
     ports:
       - "5433:5432"
     volumes:
@@ -17,6 +19,8 @@ services:
       - "8080:8080"
       - "9990:9990"
     environment:
+      # la JVM toma TZ como zona por defecto: la usan LocalDate.now() y la hora de los logs
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
       GUBUY_URL: ${GUBUY_URL:-https://auth-testing.iduruguay.gub.uy/oidc/v1}
       GUBUY_CLIENT_ID: ${GUBUY_CLIENT_ID:-}
       GUBUY_CLIENT_SECRET: ${GUBUY_CLIENT_SECRET:-}
@@ -33,6 +37,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
       NODO_ID: ${NODO_ID:-tracking-1}
       NODO_JMS_URL: ${NODO_JMS_URL:-remote+http://carga-uy:8080}
       NODO_JMS_USUARIO: ${NODO_JMS_USUARIO:-admin}
