@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -31,7 +32,8 @@ fun SettingsScreen(
     onCambiarTema: (Boolean) -> Unit,
     urlServidor: String,
     onGuardarUrl: (String) -> Unit,
-    onRestaurarUrl: () -> Unit
+    onRestaurarUrl: () -> Unit,
+    onCerrarSesion: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier.padding(Spacing.md),
@@ -59,6 +61,16 @@ fun SettingsScreen(
                 onGuardarUrl = onGuardarUrl,
                 onRestaurarUrl = onRestaurarUrl
             )
+        }
+
+        // null cuando no hay sesion (por ejemplo, si se entra a Configuracion desde el login)
+        if (onCerrarSesion != null) {
+            OutlinedButton(
+                onClick = onCerrarSesion,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cerrar sesión")
+            }
         }
     }
 }

@@ -47,6 +47,19 @@ fun Descripcion(
 }
 
 @Composable
+fun TextoError(
+    texto: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = texto,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error,
+        modifier = modifier
+    )
+}
+
+@Composable
 fun Contenido(
     texto: String,
     modifier: Modifier = Modifier
