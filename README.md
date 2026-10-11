@@ -115,3 +115,7 @@ Crear un archivo .env.local (no se commitea) con la URL de OpenShift:
 - VITE_API_TARGET=https://URL_DE_LA_RUTA/carga-uy
 
 Reiniciar npm run dev para que tome el cambio.
+
+## Ejecutar app mobile
+Ver mobile/README.md. El celular o emulador llega al backend por la IP de la maquina, no por
+localhost, asi que hay que poner esa IP en GUBUY_REDIRECT_URI (carga-uy/.env) y en la app.

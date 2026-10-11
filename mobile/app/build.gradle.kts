@@ -72,6 +72,12 @@ kotlin {
     }
 }
 
+// Room guarda aca el esquema de cada version de la base (1.json, 2.json...), que se commitea:
+// asi se ve que cambio entre versiones y contra que se escribe cada migracion
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)

@@ -41,6 +41,9 @@ class SesionRepository(
     // lo que mira la navegacion: el chofer ingreso en este celular y no cerro sesion (ni el central la rechazo)
     val haySesion: Flow<Boolean> = token.map { it != null }
 
+    // el usuario logueado, sacado del token: cada evento y viaje guardado queda a su nombre
+    val idUsuario: Flow<Long?> = token.map { it?.let(::idUsuarioDelToken) }
+
     // true desde el momento en que el token vence, para avisarle al chofer que al volver la señal
     // va a tener que ingresar de nuevo
     val vencida: Flow<Boolean> = vencimiento(dataStore.data.map { prefs -> prefs[expiraKey] }, ahora)

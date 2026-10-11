@@ -18,6 +18,7 @@ import uy.tse.cargauy.data.auth.Pkce
 import uy.tse.cargauy.data.remote.ApiClient
 import uy.tse.cargauy.data.remote.AuthApi
 import uy.tse.cargauy.data.remote.mensajeDeError
+import uy.tse.cargauy.sync.Sincronizacion
 import uy.tse.cargauy.ui.UiState
 
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
@@ -34,7 +35,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     // arma la url del login y guarda el verifier para el canje; null si falta la url del servidor
-    suspend fun urlLogin(): String? {
+    // cedulaPrueba: solo para el login simulado en debug; vacia entra como el chofer 55555555
+    suspend fun urlLogin(cedulaPrueba: String = ""): String? {
         val urlServidor = app.preferencias.urlServidor.first()
         if (urlServidor.isBlank()) {
             _estado.value = UiState.Error("Falta la URL del servidor: configurala con el engranaje de arriba.")
@@ -43,8 +45,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         val verifier = Pkce.nuevoVerifier()
         app.sesion.guardarVerifier(verifier)
         _estado.value = null
-        // sin cedula: el login simulado entra por defecto como el chofer 55555555
-        return "${urlServidor}auth/login?cliente=mobile&code_challenge=${Pkce.challenge(verifier)}"
+        val url = "${urlServidor}auth/login?cliente=mobile&code_challenge=${Pkce.challenge(verifier)}"
+        // TODO mock: sacar con gub.uy real (el central ignora la cedula si GUBUY_MOCK=false)
+        return if (cedulaPrueba.isBlank()) url else "$url&cedula=${cedulaPrueba.trim()}"
     }
 
     // la vuelta del login: cargauy://ingreso?code=... si salio bien, cargauy://ingreso?error=4002 si no
@@ -67,6 +70,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 val api = ApiClient.crear(app.preferencias.urlServidor.first(), app.sesion).create(AuthApi::class.java)
                 val respuesta = api.token("authorization_code", code, verifier)
                 app.sesion.guardarToken(respuesta.accessToken, respuesta.expiresIn)
+                // si quedaron eventos sin enviar (por ejemplo, la sesion vencio sin señal), se envian ahora
+                Sincronizacion.programar(app)
                 _estado.value = null
             } catch (e: HttpException) {
                 _estado.value = UiState.Error(mensajeDeError(e))
