@@ -11,7 +11,7 @@
           <mxGeometry height="60" width="230" x="40" y="340" as="geometry" />
         </mxCell>
         <mxCell id="n3LUVrwLm8043RZZN8cL-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=14;fillColor=none;strokeColor=#000000;spacingTop=4;" value="«subsystem»&lt;div&gt;&lt;b&gt;Componente Central (carga.uy)&lt;/b&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="660" width="1120" x="380" y="200" as="geometry" />
+          <mxGeometry height="660" width="1170" x="380" y="200" as="geometry" />
         </mxCell>
         <mxCell id="n3LUVrwLm8043RZZN8cL-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="«subsystem»&lt;br&gt;API REST" vertex="1">
           <mxGeometry height="60" width="160" x="405" y="260" as="geometry" />
@@ -22,7 +22,7 @@
         <mxCell id="n3LUVrwLm8043RZZN8cL-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="&amp;laquo;subsystem&amp;raquo;&lt;br&gt;Backoffice&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;autoridades y administradores&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="340" x="945" y="260" as="geometry" />
         </mxCell>
-        <mxCell id="n3LUVrwLm8043RZZN8cL-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="&amp;laquo;subsystem&amp;raquo;&lt;br&gt;Servicios de Negocio&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;autorización, empresas, vehículos, viajes y casos&lt;/font&gt;" vertex="1">
+        <mxCell id="n3LUVrwLm8043RZZN8cL-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="&amp;laquo;subsystem&amp;raquo;&lt;br&gt;Servicios de Negocio&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;autenticación interna, autorización, empresas, vehículos, viajes, casos, parámetros de reglas y auditoría&lt;/font&gt;" vertex="1">
           <mxGeometry height="60" width="700" x="405" y="380" as="geometry" />
         </mxCell>
         <mxCell id="n3LUVrwLm8043RZZN8cL-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="&amp;laquo;subsystem&amp;raquo;&lt;br&gt;Generación de Reportes" vertex="1">
@@ -37,6 +37,26 @@
         <mxCell id="by3PDV6bz-CpY_rbotGv-12" connectable="0" parent="by3PDV6bz-CpY_rbotGv-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="consume" vertex="1">
           <mxGeometry relative="1" x="-0.1151" y="-3" as="geometry">
             <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="obs-plataforma" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="&amp;laquo;subsystem&amp;raquo;&lt;br&gt;Plataforma de Observabilidad&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;colector, almacenamiento y visualización&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="140" x="1420" y="960" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-e4" edge="1" parent="1" source="n3LUVrwLm8043RZZN8cL-1" target="obs-plataforma" style="endArrow=open;endSize=9;html=1;rounded=0;fontSize=10;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;exitX=0.9103;exitY=1;exitDx=0;exitDy=0;entryX=0.1786;entryY=0;entryDx=0;entryDy=0;" value="trazas, logs y métricas">
+          <mxGeometry x="-0.4" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-e5" edge="1" parent="1" source="obs-plataforma" target="n3LUVrwLm8043RZZN8cL-1" style="endArrow=open;endSize=9;html=1;rounded=0;fontSize=10;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;exitX=0.8214;exitY=0;exitDx=0;exitDy=0;entryX=0.9872;entryY=1;entryDx=0;entryDy=0;" value="consulta /health">
+          <mxGeometry x="-0.4" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-e2" edge="1" parent="1" source="n3LUVrwLm8043RZZN8cL-28" target="obs-plataforma" style="endArrow=open;endSize=9;html=1;rounded=0;fontSize=10;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="obs-e3" edge="1" parent="1" source="n3LUVrwLm8043RZZN8cL-27" target="obs-plataforma" style="endArrow=open;endSize=9;html=1;rounded=0;fontSize=10;labelBackgroundColor=#FFFFFF;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" value="telemetría de los nodos periféricos">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1027.5" y="1065" />
+              <mxPoint x="1490" y="1065" />
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="n3LUVrwLm8043RZZN8cL-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" value="&amp;laquo;subsystem&amp;raquo;&lt;br&gt;Mensajería" vertex="1">
