@@ -1,0 +1,24 @@
+name: Informe
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['docs/informe/**']
+  push:
+    branches: [main]
+    paths: ['docs/informe/**']
+
+jobs:
+  latex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # latexmk corre pdflatex y biber las veces que haga falta (bibliografia y tabla de contenido)
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: docs/informe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: informe
+          path: docs/informe/main.pdf
