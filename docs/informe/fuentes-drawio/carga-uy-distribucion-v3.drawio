@@ -1,0 +1,97 @@
+<mxfile host="Electron">
+  <diagram id="implementacion" name="Implementacion">
+    <mxGraphModel dx="981" dy="596" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="840" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="titulo" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=14;whiteSpace=wrap;" value="&lt;b&gt;carga.uy: diagrama de distribución (Escenario 1)&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot;&gt;Frontoffices en Vercel; el resto del Componente Central en Elastic Cloud. Nombres según el diagrama de arquitectura. Borde punteado = a decidir por el grupo.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="44" width="960" x="20" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="c_disp" parent="1" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fillColor=none;strokeColor=#999999;" value="«device»&lt;br&gt;Dispositivo del chofer" vertex="1">
+          <mxGeometry height="160" width="300" x="20" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="app" parent="c_disp" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#ffffff;strokeColor=#666666;" value="&lt;b&gt;«subsystem» Componente Móvil&lt;/b&gt;&lt;br&gt;Android&lt;br&gt;«subsystem» Persistencia local: Guía, estado del viaje, eventos pendientes" vertex="1">
+          <mxGeometry height="95" width="260" x="20" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c_pc" parent="1" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fillColor=none;strokeColor=#999999;" value="«device»&lt;br&gt;PC del usuario" vertex="1">
+          <mxGeometry height="160" width="300" x="350" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="nav" parent="c_pc" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;verticalAlign=middle;align=center;fillColor=#ffffff;strokeColor=#666666;" value="«executionEnvironment»&lt;br&gt;&lt;b&gt;Navegador&lt;/b&gt;&lt;br&gt;público general, responsable, funcionario,&lt;br&gt;administrador, autoridad" vertex="1">
+          <mxGeometry height="95" width="260" x="20" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c_vercel" parent="1" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fillColor=none;strokeColor=#999999;" value="«PaaS»&lt;br&gt;Vercel" vertex="1">
+          <mxGeometry height="160" width="300" x="680" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="spa" parent="c_vercel" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#ffffff;strokeColor=#666666;" value="&lt;b&gt;«subsystem» Frontoffice Ciudadanos&lt;br&gt;«subsystem» Frontoffice Funcionarios&lt;/b&gt;&lt;br&gt;React, build estático de Vite + rewrite de /api" vertex="1">
+          <mxGeometry height="95" width="260" x="20" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c_elastic" parent="1" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;container=1;collapsible=0;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontStyle=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="«PaaS» ANTEL Elastic Cloud &lt;span style=&quot;font-weight:normal&quot;&gt;(«subsystem» Componente Central)&lt;/span&gt;" vertex="1">
+          <mxGeometry height="210" width="960" x="20" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="broker" parent="c_elastic" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;verticalAlign=middle;align=center;fillColor=#ffffff;strokeColor=#666666;dashed=1;" value="«executionEnvironment»&lt;br&gt;&lt;b&gt;Mensajería&lt;/b&gt;&lt;br&gt;broker&lt;br&gt;a definir" vertex="1">
+          <mxGeometry height="140" width="150" x="20" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="wildfly" parent="c_elastic" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;verticalAlign=middle;align=center;fillColor=#ffffff;strokeColor=#666666;spacing=8;" value="«executionEnvironment»&lt;br&gt;&lt;b&gt;WildFly 41 · carga-uy.ear&lt;/b&gt; &lt;font color=&quot;#666666&quot;&gt;(un nodo, imagen de carga-uy/Dockerfile)&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;Presentación:&lt;/b&gt; API REST, Backoffice&lt;br&gt;&lt;b&gt;Servicios:&lt;/b&gt; Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización&lt;br&gt;&lt;b&gt;Adaptadores:&lt;/b&gt; gub.uy, PDI, Notificaciones, Balanzas" vertex="1">
+          <mxGeometry height="140" width="510" x="220" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="postgres" parent="c_elastic" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#ffffff;strokeColor=#666666;" value="&lt;b&gt;PostgreSQL 17&lt;/b&gt;&lt;br&gt;«subsystem» Persistencia" vertex="1">
+          <mxGeometry height="140" width="160" x="780" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c_paas" parent="1" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;container=1;collapsible=0;verticalAlign=bottom;align=left;spacingLeft=10;spacingBottom=6;fontStyle=1;fillColor=none;strokeColor=#999999;dashed=1;" value="«PaaS / IaaS» periférica &lt;span style=&quot;font-weight:normal&quot;&gt;(plataforma a definir)&lt;/span&gt;" vertex="1">
+          <mxGeometry height="170" width="590" x="20" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="tracking" parent="c_paas" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#e1d5e7;strokeColor=#9673a6;" value="&lt;b&gt;«subsystem»&lt;br&gt;Nodo Periférico Tracking&lt;/b&gt;" vertex="1">
+          <mxGeometry height="95" width="170" x="20" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pdi" parent="c_paas" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;b&gt;«external»&lt;br&gt;PDI (suplantador)&lt;/b&gt;&lt;br&gt;SOAP" vertex="1">
+          <mxGeometry height="95" width="170" x="210" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="balanzas" parent="c_paas" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#e1d5e7;strokeColor=#9673a6;" value="&lt;b&gt;«subsystem»&lt;br&gt;Nodo Periférico Balanzas&lt;/b&gt;" vertex="1">
+          <mxGeometry height="95" width="170" x="400" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ext" parent="1" style="shape=cube;size=10;darkOpacity=0.05;darkOpacity2=0.1;whiteSpace=wrap;html=1;container=1;collapsible=0;verticalAlign=bottom;align=left;spacingLeft=10;spacingBottom=6;fontStyle=1;fillColor=none;strokeColor=#999999;" value="Sistemas externos" vertex="1">
+          <mxGeometry height="170" width="340" x="640" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="gubuy" parent="c_ext" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;b&gt;«external»&lt;br&gt;Usuario gub.uy&lt;/b&gt;&lt;br&gt;(ID Uruguay)" vertex="1">
+          <mxGeometry height="95" width="140" x="20" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="correo" parent="c_ext" style="shape=module;jettyWidth=10;jettyHeight=4;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;spacingLeft=14;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;b&gt;«external»&lt;br&gt;Servicio de correo&lt;/b&gt;" vertex="1">
+          <mxGeometry height="95" width="140" x="180" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="e_app" edge="1" parent="1" source="app" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="wildfly" value="REST / HTTPS + Bearer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nav" edge="1" parent="1" source="nav" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="wildfly" value="HTTPS (backoffice)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_nav_spa" edge="1" parent="1" source="nav" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="spa" value="HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_spa" edge="1" parent="1" source="spa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="wildfly" value="HTTPS (/api)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_broker" edge="1" parent="1" source="broker" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="wildfly" value="consume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_jdbc" edge="1" parent="1" source="wildfly" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="postgres" value="JDBC">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tracking" edge="1" parent="1" source="tracking" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="broker" value="asincrónico / mensajería">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pdi" edge="1" parent="1" source="wildfly" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.12;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="pdi" value="SOAP / HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_balanzas" edge="1" parent="1" source="wildfly" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="balanzas" value="request-response / HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gubuy" edge="1" parent="1" source="wildfly" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="gubuy" value="OpenID Connect / HTTPS">
+          <mxGeometry x="0.7" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_correo" edge="1" parent="1" source="wildfly" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;exitX=0.97;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#ffffff;fontColor=#555555;" target="correo" value="SMTP">
+          <mxGeometry x="0.7" relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

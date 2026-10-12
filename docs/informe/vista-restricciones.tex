@@ -1,0 +1,55 @@
+\section{Vista de Restricciones}\label{sec:vista-de-restricciones}
+
+La Vista de Restricciones describe restricciones que deben respetarse tanto en el proceso de desarrollo como en el producto \cite{Perovich2003}. Las restricciones de \solucion surgen de la letra del laboratorio \cite{LINS2026} y se agrupan en comunicación e integración, seguridad y protección de datos, y despliegue y operación. Se conservan los identificadores R1 a R17, a los que hacen referencia otras secciones del documento.
+
+\begin{longtable}{|p{1.2cm}|p{14.3cm}|}
+    \caption{Restricciones}\label{tab:restricciones}\\
+    \hline
+    \textbf{Id} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Id} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \multicolumn{2}{|l|}{\textit{Comunicación e integración}} \\
+    \hline
+    R1 & La comunicación entre el componente central y la Plataforma de Interoperabilidad debe realizarse mediante servicios web SOAP. \\
+    \hline
+    R2 & La comunicación entre el componente móvil y el componente central debe realizarse mediante servicios web REST. \\
+    \hline
+    R3 & La integración con los nodos de balanzas debe ser sincrónica, de tipo solicitud--respuesta. \\
+    \hline
+    R4 & La integración con tracking debe ser asincrónica y unidireccional, apoyada en un mecanismo de mensajería. Se deben justificar la tecnología, el particionamiento y la política de entrega. \\
+    \hline
+    R5 & Los servicios no públicos de la PDI deben sustituirse por servicios que respeten, en la medida de lo posible, sus interfaces. \\
+    \hline
+    R6 & El procesamiento de eventos debe ser idempotente y admitir eventos duplicados o fuera de orden. \\
+    \hline
+    \multicolumn{2}{|l|}{\textit{Seguridad y protección de datos}} \\
+    \hline
+    R7 & Las contraseñas deben almacenarse mediante funciones hash con \textit{salt}. \\
+    \hline
+    R8 & Las interacciones con componentes periféricos, plataformas y el componente móvil deben utilizar HTTPS. \\
+    \hline
+    R9 & La autorización debe aplicarse en la capa de servicios y no solamente en la interfaz de usuario. \\
+    \hline
+    R10 & Las acciones de fiscalización deben registrarse en una pista de auditoría de solo agregado que no pueda modificarse ni eliminarse desde la aplicación. \\
+    \hline
+    R11 & Las credenciales, claves y certificados no deben almacenarse en el repositorio de código fuente. \\
+    \hline
+    R12 & La información pública debe presentarse agregada, sin permitir identificar a una empresa, vehículo o chofer particular, y se debe justificar el umbral de agregación. \\
+    \hline
+    \multicolumn{2}{|l|}{\textit{Despliegue y operación}} \\
+    \hline
+    R13 & Todos los componentes deben distribuirse contenerizados y el entorno completo debe iniciarse mediante un único comando documentado. \\
+    \hline
+    R14 & El componente central debe ejecutarse en la solución Elastic Cloud de ANTEL. \\
+    \hline
+    R15 & Los componentes periféricos deben ejecutarse en otras soluciones PaaS o IaaS. \\
+    \hline
+    R16 & El repositorio del grupo en el GitLab de FING debe contar con integración continua que ejecute compilación, pruebas automatizadas y análisis estático ante cada modificación. \\
+    \hline
+    R17 & El pipeline de integración continua debe estar en estado exitoso al momento de la entrega final. \\
+    \hline
+\end{longtable}

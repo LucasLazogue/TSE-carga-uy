@@ -1,0 +1,300 @@
+\section{Vista de Decisiones de Arquitectura}\label{sec:vista-de-decisiones-de-arquitectura}
+
+La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión, justificación y decisiones relacionadas.
+
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA01: Arquitectura en capas del componente central}
+    \label{tab:da01}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA01 \\
+        \hline
+            \textbf{Nombre} & Arquitectura en capas del componente central \\
+        \hline
+            \textbf{Categorías} & Componente central; mantenibilidad. \\
+        \hline
+            \textbf{Problema} & El componente central concentra la presentación para cuatro tipos de usuarios y la API del componente móvil, la lógica de negocio y de fiscalización, la persistencia y la integración con varios sistemas externos y nodos periféricos. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Organizar el componente central en cuatro capas: presentación (API REST, frontoffices y backoffice), servicios y procesamiento (Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización), persistencia, y adaptadores e infraestructura, que aíslan cada integración externa (Figura \ref{fig:vista_logica}). \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA02, DA05 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA02: Mensajería embebida en el servidor de aplicaciones}
+    \label{tab:da02}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA02 \\
+        \hline
+            \textbf{Nombre} & Mensajería embebida en el servidor de aplicaciones \\
+        \hline
+            \textbf{Categorías} & Mensajería; integración con tracking; R4; AC08, AC15, AC17. \\
+        \hline
+            \textbf{Problema} & La recepción de los eventos de tracking debe estar desacoplada de su procesamiento mediante un mecanismo de mensajería asincrónica (R4). La letra pide justificar la tecnología elegida, la estrategia de particionamiento o distribución de los mensajes y la política de entrega. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Usar el broker embebido en el servidor de aplicaciones (ActiveMQ Artemis de WildFly), con la cola \texttt{queue\_tracking} consumida por un componente de recepción (Sección \ref{sec:refinamiento-ingesta}). \pendiente{definir el particionamiento y la política de entrega. Hoy los consumidores compiten por los mensajes, y un mensaje que falla se reintenta 10 veces sin espera (valores por defecto del broker) antes de pasar a la cola de mensajes muertos.} \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA01, DA07 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA03: Sesión sin estado en el servidor}
+    \label{tab:da03}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA03 \\
+        \hline
+            \textbf{Nombre} & Sesión sin estado en el servidor \\
+        \hline
+            \textbf{Categorías} & Seguridad; escalabilidad; AC07; CU-01. \\
+        \hline
+            \textbf{Problema} & El componente central debe escalar horizontalmente sin guardar estado local en las instancias (AC07). El ingreso con Usuario gub.uy necesita conservar \texttt{state}, \texttt{nonce} y \texttt{code\_challenge} entre el inicio del ingreso y el \textit{callback}. \\
+        \hline
+            \textbf{Alternativas} & Mantener ese estado en la \texttt{HttpSession} de la instancia y firmar el JWT de sesión con código propio, que fue la implementación inicial del grupo. \\
+        \hline
+            \textbf{Decisión} & La sesión es un JWT firmado (HS256) con la biblioteca JJWT, que viaja en una cookie \textit{HttpOnly} en la web y como token \textit{Bearer} en el móvil. El estado del ingreso con gub.uy viaja en una cookie firmada en lugar de quedar en la \texttt{HttpSession}. El secreto se configura por entorno y debe tener al menos 32 bytes. \\
+        \hline
+            \textbf{Justificación} & Hace la autenticación independiente de la instancia y saca la criptografía propia del código: el \textit{callback} de gub.uy puede llegar a cualquier instancia del componente central. \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA04, DA09 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA04: Ingreso desde el móvil con \textit{authorization code} y PKCE}
+    \label{tab:da04}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA04 \\
+        \hline
+            \textbf{Nombre} & Ingreso desde el móvil con \textit{authorization code} y PKCE \\
+        \hline
+            \textbf{Categorías} & Seguridad; componente móvil; CU-01. \\
+        \hline
+            \textbf{Problema} & La aplicación móvil debe autenticar al chofer mediante Usuario gub.uy (CU-01) y obtener un token para llamar a la API REST (R2). \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & La aplicación abre el ingreso en el navegador con un \texttt{code\_challenge}, recibe un código de un solo uso por el esquema \texttt{cargauy://ingreso} y lo canjea, junto con el \texttt{code\_verifier}, por el token de sesión. \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA03 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA05: Tecnologías de presentación y ubicación de los frontoffices}
+    \label{tab:da05}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA05 \\
+        \hline
+            \textbf{Nombre} & Tecnologías de presentación y ubicación de los frontoffices \\
+        \hline
+            \textbf{Categorías} & Presentación; distribución; R14. \\
+        \hline
+            \textbf{Problema} & La plataforma tiene un frontoffice para ciudadanos, otro para funcionarios y un backoffice para autoridades y administradores, todos web. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Backoffice en JSF dentro del componente central; frontoffices en React, servidos como sitio estático desde Vercel (Figura \ref{fig:vista_distrib}). \pendiente{confirmar con el tutor el uso de Vercel frente a R14.} \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA01 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA06: Componente móvil nativo para Android}
+    \label{tab:da06}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA06 \\
+        \hline
+            \textbf{Nombre} & Componente móvil nativo para Android \\
+        \hline
+            \textbf{Categorías} & Componente móvil; AC18, AC19, AC20. \\
+        \hline
+            \textbf{Problema} & El chofer debe poder consultar la Guía y registrar los eventos del viaje sin conectividad, y la sincronización posterior debe ser idempotente. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Aplicación nativa para Android en Kotlin con Jetpack Compose, persistencia local con Room y un identificador UUID generado en el dispositivo para cada evento pendiente. \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA04 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA07: Idempotencia de la ingesta mediante una restricción de unicidad}
+    \label{tab:da07}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA07 \\
+        \hline
+            \textbf{Nombre} & Idempotencia de la ingesta mediante una restricción de unicidad \\
+        \hline
+            \textbf{Categorías} & Ingesta de eventos; R6; AC15. \\
+        \hline
+            \textbf{Problema} & Un mismo evento de tracking puede recibirse más de una vez (reentregas del broker o reenvíos del nodo) y la cola tiene varios consumidores en paralelo. Un evento duplicado no debe alterar el estado del viaje ni generar casos adicionales. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Una restricción de unicidad en la base sobre el par (nodo, identificador del evento). El registro se hace con \textit{flush} en una transacción propia, de modo que un duplicado se detecta dentro del método y se descarta sin deshacer la transacción del consumidor. \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA02, DA08 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA08: Registro de nodos periféricos con estados}
+    \label{tab:da08}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA08 \\
+        \hline
+            \textbf{Nombre} & Registro de nodos periféricos con estados \\
+        \hline
+            \textbf{Categorías} & Servicios de negocio; CU-19; CU-10. \\
+        \hline
+            \textbf{Problema} & Los administradores deben poder gestionar los nodos periféricos (CU-19), y la ingesta de tracking solo debe aceptar eventos de un nodo registrado y habilitado, que es la precondición del CU-10. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Un registro de nodos con tipo (balanzas o tracking), punto de acceso y estado (deshabilitado, habilitado o baja). Todo nodo nuevo arranca deshabilitado, cambiar el punto de acceso lo vuelve a deshabilitar y la baja es lógica. \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA07 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA09: Autorización declarativa en la capa de servicios}
+    \label{tab:da09}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA09 \\
+        \hline
+            \textbf{Nombre} & Autorización declarativa en la capa de servicios \\
+        \hline
+            \textbf{Categorías} & Seguridad; servicios de negocio; R9; AC03. \\
+        \hline
+            \textbf{Problema} & La autorización debe aplicarse en la capa de servicios y no solo en la interfaz de usuario (R9). Además, un responsable o un chofer solo debe acceder a los datos de su propia empresa. \\
+        \hline
+            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+        \hline
+            \textbf{Decisión} & Cada request se autentica con un mecanismo de Jakarta Security que valida el JWT de la cookie o del encabezado \texttt{Authorization} y le informa al contenedor el usuario y sus roles. Los EJB declaran los roles permitidos con \texttt{@RolesAllowed} y verifican además que el usuario tenga acceso a la empresa sobre la que opera. \\
+        \hline
+            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA03 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA10: Consulta a balanzas al finalizar el viaje}
+    \label{tab:da10}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA10 \\
+        \hline
+            \textbf{Nombre} & Consulta a balanzas al finalizar el viaje \\
+        \hline
+            \textbf{Categorías} & Integración; fiscalización automática; R3. \\
+        \hline
+            \textbf{Problema} & La regla de exceso de carga necesita los pesajes del vehículo, pero el nodo de balanzas no los envía por iniciativa propia: hay que definir en qué momento se le consultan (CU-11). \\
+        \hline
+            \textbf{Alternativas} & Consultar con cada evento de posición; consultar periódicamente durante el viaje; que el nodo de balanzas notifique cada pesaje; consultar al finalizar el viaje. \\
+        \hline
+            \textbf{Decisión} & La integración con el Sistema de Balanzas es una consulta iniciada por el componente central, como exige la letra. El Motor de Fiscalización consulta los pesajes cuando procesa el fin de un viaje, por el vehículo y cada fecha del viaje. \\
+        \hline
+            \textbf{Justificación} & Se descartó que el nodo de balanzas notificara cada pesaje porque la letra define la integración como solicitud--respuesta (R3): el componente central pide los pesajes de un vehículo en una fecha y el nodo devuelve todas las pesadas de ese vehículo en esa fecha. Consultar con cada posición o periódicamente repetiría la misma consulta muchas veces, porque cada respuesta trae las pesadas de todo el día. Al finalizar el viaje ya se conocen el vehículo y las fechas, y alcanza con una consulta por fecha. Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma. \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA01, DA08 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Decisiones Pendientes}
+
+La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y justificar, junto con otras decisiones que surgieron durante el desarrollo, que todavía no tienen una definición del grupo.
+
+\begin{longtable}{|p{4.6cm}|p{7.4cm}|p{3.5cm}|}
+    \caption{Decisiones pendientes}\label{tab:decisiones-pendientes}\\
+    \hline
+    \textbf{Tema} & \textbf{Qué se necesita definir} & \textbf{Dónde impacta} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Tema} & \textbf{Qué se necesita definir} & \textbf{Dónde impacta} \\
+    \hline
+    \endhead
+    Volumen de tracking & Cantidad de vehículos reportando en forma concurrente, frecuencia de reporte y picos de al menos tres veces ese volumen. & AC08, prueba de performance, generador de carga. \\
+    \hline
+    Mensajería & Tecnología, estrategia de particionamiento o distribución de los mensajes, y política de entrega. & DA02, R4. \\
+    \hline
+    Saturación & Comportamiento ante saturación: encolado, descarte selectivo o reducción de frecuencia. & AC17. \\
+    \hline
+    Reintentos y cola de mensajes muertos & Espera entre reintentos, cantidad de intentos y qué se hace con los mensajes que terminan en la cola de mensajes muertos. & DA02, AC12. \\
+    \hline
+    Criterio de desvío de ruta & Cuánto debe apartarse la ruta del recorrido esperado para considerarse desvío. & CU-11. \\
+    \hline
+    Umbral de agregación & Umbral mínimo de agregación de la información pública. & AC06, R12. \\
+    \hline
+    Resiliencia de las integraciones & Tiempo de espera, cantidad de reintentos y condición de corte ante fallas sostenidas. & AC13. \\
+    \hline
+    Conflictos del móvil & Política de resolución de conflictos cuando un viaje cambió mientras el dispositivo estaba sin conexión. & AC20, CU-09. \\
+    \hline
+    Nodo de tracking & Si el generador de carga (la flota simulada) se separa del nodo de tracking, que solo reenvía los eventos al broker. & Vista de Distribución, R15. \\
+    \hline
+    Modelado de los eventos & Si los eventos de posición y los eventos de viaje se persisten con herencia de una clase Evento o por separado. & Modelo conceptual, Persistencia. \\
+    \hline
+\end{longtable}

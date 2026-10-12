@@ -1,0 +1,108 @@
+\section{Introducción}
+
+Este documento presenta la arquitectura de la plataforma \enquote{\solucion}, planteada como laboratorio de la edición \edicion de los cursos Taller de Sistemas Empresariales y Taller de Sistemas de Información Java EE de la Facultad de Ingeniería, Universidad de la República \cite{LINS2026}.
+
+\subsection{Motivación}
+
+Todas las actividades económicas dependen de cadenas de distribución: tanto en la llegada de materias primas a centros industriales como en la distribución de todo tipo de productos para llegar a los consumidores finales. En Uruguay a nivel interno la mayoría del transporte de dichas cadenas de distribución se realiza a través del transporte carretero. El Estado como regulador de todas las actividades también regula el Transporte de Carga a través de la Dirección Nacional de Transporte\footnote{\raggedright\url{https://www.gub.uy/ministerio-transporte-obras-publicas/institucional/estructura-del-organismo/direccion-nacional-transporte}} del Ministerio de Transporte y Obras Públicas\footnote{\raggedright\url{https://www.gub.uy/ministerio-transporte-obras-publicas/}}. Hay muchas normativas relacionadas a la regulación del transporte de carga\footnote{\raggedright\url{https://www.gub.uy/ministerio-transporte-obras-publicas/politicas-y-gestion/transporte-carga}} que se han ido actualizando con el avance de la tecnología y los avances en gobierno electrónico.
+
+El Estado necesita contar con información sobre la actividad del transporte de carga para objetivos de recaudación, la fiscalización de la actividad y la planificación de la infraestructura necesaria a futuro. Para esto existe un registro de las empresas transportistas, que a su vez tienen que registrar y sacar permisos para sus vehículos (así como hacerle periódicamente una Inspección Técnica Vehicular). Cada vez que un vehículo realiza un viaje con carga se genera un documento llamado “Guía” que indica toda la información de la carga y el viaje a realizarse. A su vez para poder hacer seguimiento de dichos viajes se tiene que los GPS de los vehículos de carga transmiten su información de posición a un sistema central. También durante la realización de viajes los vehículos de carga pasan por balanzas que están ubicadas en los peajes de las rutas nacionales.
+
+Toda esta operativa requiere que se esté fiscalizando tanto la habilitación de los vehículos como los viajes que realizan (por ejemplo que no excedan su capacidad de carga). Por esto, dentro del MTOP hay funcionarios que realizan tareas de administración de estos sistemas y pueden gestionar a los demás usuarios que tendrán acceso a ellos; funcionarios que realizan tareas operativas de fiscalización y autoridades que reciben informes cuantitativos agregados de la información operativa. Este sistema también brinda información agregada al público en general y brinda servicios de consulta a empresas que requieren los servicios de transporte de carga y quieren validar las autorizaciones de las empresas que contratan.
+
+El volumen de información que maneja esta operativa no es menor: los dispositivos GPS de la flota reportan su posición de forma continua mientras los viajes están en curso. Además, las balanzas de los peajes registran pesajes en forma permanente. Cruzar esa información con los datos declarados por las empresas (capacidad de carga de cada vehículo, vigencia de permisos e ITV, origen y destino de cada Guía) es lo que permite detectar incumplimientos sin depender de un control manual exhaustivo. Actualmente, esta detección es mayormente reactiva; se busca que la plataforma la realice de forma automática y que los funcionarios se concentren en la resolución de los casos detectados.
+
+Para colaborar en esto se propone la construcción de una plataforma que brinde soporte a todo el ciclo de la gestión de transporte de carga. Los principales objetivos son:
+
+\begin{itemize}
+    \item Posibilitar que las Empresas transportistas puedan registrarse y registrar sus vehículos.
+    \item Posibilitar que los funcionarios del MTOP puedan monitorear datos de las empresas y los vehículos.
+    \item Posibilitar que otras empresas (clientes) puedan validar las autorizaciones de las empresas transportistas.
+    \item Brindar información gerencial a las autoridades del MTOP.
+    \item Brindar información estadística al público en general.
+    \item Detectar automáticamente incumplimientos a la normativa de transporte de carga y dar soporte a su tramitación.
+\end{itemize}
+
+Para cumplir con estos cometidos se apunta a que la plataforma a desarrollar se apoye en algunas soluciones existentes:
+
+\begin{itemize}
+    \item servicios ofrecidos por organismos públicos a través de la Plataforma de Interoperabilidad (PDI)\footnote{\raggedright\url{https://www.gub.uy/agencia-gobierno-electronico-sociedad-informacion-conocimiento/tematica/catalogo-plataforma-interoperabilidad}}, que brindan acceso a información de trámites, personas y empresas, entre otros;
+    \item Proveedores de Identidad (Usuario Gub.uy) para realizar la autenticación.
+\end{itemize}
+
+\subsection{Objetivo del Documento}
+
+El objetivo de este Documento de Arquitectura de Software es brindar una visión comprensible de la arquitectura de \solucion, sus componentes, restricciones, atributos de calidad, escenarios de distribución y principales decisiones de arquitectura.
+
+\subsection{Representación de la Arquitectura}
+
+La arquitectura se representa mediante vistas que permiten razonar sobre sus elementos significativos e identificar riesgos \cite{Kruchten1995,Perovich2003}:
+
+\begin{itemize}
+    \item \textbf{Vista Conceptual:} presenta el contexto, los conceptos principales y los sistemas relacionados.
+    \item \textbf{Vista de Casos de Uso:} describe las funcionalidades y los escenarios críticos.
+    \item \textbf{Vista de Restricciones:} identifica las condiciones tecnológicas, normativas y operativas obligatorias.
+    \item \textbf{Vista de Atributos de Calidad:} presenta los requerimientos no funcionales verificables.
+    \item \textbf{Vista Lógica:} describe los componentes lógicos, sus responsabilidades y dependencias.
+    \item \textbf{Vista de Distribución:} muestra la disposición física de los componentes y sus conexiones.
+    \item \textbf{Vista de Implementación:} documenta las tecnologías y la organización de los componentes ejecutables.
+    \item \textbf{Vista de Decisiones:} registra las decisiones arquitectónicas, alternativas y consecuencias.
+\end{itemize}
+
+\subsection{Partes Interesadas (i.e. \textit{stakeholders})}
+
+Las partes interesadas en la plataforma \solucion son:
+
+\begin{enumerate}
+    \item \textbf{Empresa transportista:} administra su perfil, sus vehículos, permisos, guías e infracciones a través de su ciudadano responsable.
+    \item \textbf{Chofer:} consulta el viaje asignado y registra los eventos del viaje, aun sin conectividad.
+    \item \textbf{Funcionario del MTOP:} fiscaliza permisos, vehículos, viajes, pesajes e infracciones, y resuelve los casos de fiscalización.
+    \item \textbf{Autoridad del MTOP:} consulta indicadores, reportes e información agregada.
+    \item \textbf{Administrador:} gestiona usuarios, roles, nodos periféricos y parámetros de las reglas de fiscalización.
+    \item \textbf{Público general y empresas clientes:} consultan información pública agregada y validan los permisos de las empresas transportistas.
+    \item \textbf{Equipo de desarrollo:} construye, despliega y mantiene la plataforma.
+\end{enumerate}
+
+La Tabla \ref{tab:partes-interesadas} indica a qué parte interesada está orientada cada una de las vistas de la arquitectura.
+
+\begin{table}[!h]
+    \centering
+    \caption{Partes Interesadas y Vistas}
+    \label{tab:partes-interesadas}
+    \begin{tabular}{|p{5.2cm}|p{0.5cm}|p{0.5cm}|p{0.5cm}|p{0.5cm}|p{0.5cm}|p{0.5cm}|p{0.5cm}|p{0.5cm}|}
+        \hline
+            & \rotatebox{90}{Vista Conceptual} & \rotatebox{90}{Vista de Casos de Uso} & \rotatebox{90}{Vista de Restricciones} & \rotatebox{90}{Vista de Atributos de Calidad} & \rotatebox{90}{Vista Lógica} & \rotatebox{90}{Vista de Distribución} & \rotatebox{90}{Vista de Implementación} & \rotatebox{90}{Vista de Decisiones} \\
+        \hline
+            Empresa transportista & \cmark & \cmark & & & & & & \\
+        \hline
+            Chofer & & \cmark & & & & & & \\
+        \hline
+            Funcionario del MTOP & \cmark & \cmark & \cmark & & & & & \\
+        \hline
+            Autoridad del MTOP & \cmark & \cmark & & \cmark & & & & \\
+        \hline
+            Administrador & & \cmark & \cmark & \cmark & & \cmark & & \\
+        \hline
+            Público general y empresas clientes & & \cmark & & & & & & \\
+        \hline
+            Equipo de desarrollo & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Organización del Documento}
+
+El resto del documento se organiza en ocho secciones, cada una de las cuales describe una de las vistas que representan la arquitectura:
+
+\begin{itemize}
+    \item Sección \ref{sec:vista-conceptual}: Vista Conceptual.
+    \item Sección \ref{sec:vista-casos-de-uso}: Vista de Casos de Uso.
+    \item Sección \ref{sec:vista-de-restricciones}: Vista de Restricciones.
+    \item Sección \ref{sec:vista-calidad-de-servicio}: Vista de Atributos de Calidad.
+    \item Sección \ref{sec:vista-logica}: Vista Lógica.
+    \item Sección \ref{sec:vista-de-distribucion}: Vista de Distribución.
+    \item Sección \ref{sec:vista-de-implementacion}: Vista de Implementación.
+    \item Sección \ref{sec:vista-de-decisiones-de-arquitectura}: Vista de Decisiones de Arquitectura.
+\end{itemize}
