@@ -18,7 +18,7 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \endhead
     \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, Java 24. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. & API REST, Backoffice, Servicios de Negocio, Ingesta de Eventos, Adaptador gub.uy y acceso a la Persistencia. \\
     \hline
-    Frontend web & React 19 con TypeScript, Tailwind CSS 4 y componentes shadcn/ui, construido con Vite 8. & Frontoffice de Ciudadanos y Frontoffice de Funcionarios. \\
+    Frontend web & React 19 con TypeScript, Tailwind CSS 4 y componentes shadcn/ui, construido con Vite 8. & Frontoffice, un único artefacto para el público, los ciudadanos y los funcionarios. \\
     \hline
     Aplicación móvil & Android (\textit{compileSdk} 37, \textit{minSdk} 26), Kotlin 2.4, Jetpack Compose y Room 2.8 para la persistencia local. & Componente Móvil y su persistencia local. \\
     \hline

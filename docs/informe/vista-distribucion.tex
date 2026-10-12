@@ -17,9 +17,9 @@ La Figura \ref{fig:vista_distrib} muestra la distribución prevista para el prot
 
 \textbf{Dispositivo del chofer.} Corre el Componente Móvil (Android) con su persistencia local, que conserva la Guía, el estado del viaje y los eventos pendientes. Se comunica con el componente central mediante REST sobre HTTPS, con un token \textit{Bearer} (R2).
 
-\textbf{PC del usuario.} El navegador accede a los frontoffices y, para el backoffice, directamente al componente central.
+\textbf{PC del usuario.} El navegador accede al frontoffice y, para el backoffice, directamente al componente central.
 
-\textbf{Vercel.} Sirve los frontoffices de ciudadanos y de funcionarios, construidos en React como sitio estático, y redirige las llamadas a \texttt{/api} hacia el componente central.
+\textbf{Vercel.} Sirve el frontoffice, construido en React como sitio estático, y redirige las llamadas a \texttt{/api} hacia el componente central.
 
 \textbf{ANTEL Elastic Cloud (componente central).} Corre el servidor de aplicaciones WildFly con la aplicación empaquetada como EAR (presentación: API REST y backoffice; servicios: Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización; adaptadores: gub.uy, PDI, notificaciones y balanzas), la base de datos PostgreSQL y la mensajería (R14).
 
