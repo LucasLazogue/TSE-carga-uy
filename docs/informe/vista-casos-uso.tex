@@ -251,7 +251,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Un vehículo sin viaje en curso al generarse el evento dispara la regla \emph{viaje sin Guía}.
-    \item Ante saturación, los eventos permanecen encolados y pueden agregarse consumidores.
+    \item Ante saturación, los eventos permanecen encolados y el broker los guarda en disco cuando se llena su memoria; se procesan más tarde, sin pérdida (AC17).
     \item Si el nodo no responde, el componente central continúa funcionando.
     \item Los eventos tardíos se incorporan a la ruta histórica y vuelven a evaluar las reglas.
 \end{itemize} \\ \hline

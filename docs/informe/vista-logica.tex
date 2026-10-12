@@ -21,7 +21,7 @@ El Componente Móvil cuenta con su propia persistencia local, donde mantiene la 
 
 \subsection{Refinamiento 1: Ingesta de Eventos y nodos periféricos}\label{sec:refinamiento-ingesta}
 
-Este refinamiento detalla los subsistemas Mensajería e Ingesta de Eventos, que realizan el CU-10, y el registro de nodos periféricos de los Servicios de Negocio, que realiza el CU-19. La Figura \ref{fig:refinamiento-ingesta} muestra sus componentes, con el clasificador \enquote{component}, y las dependencias entre ellos y con los demás subsistemas de la Figura \ref{fig:vista_logica}. La Tabla \ref{tab:refinamiento-ingesta} describe la responsabilidad de cada componente. Ambas corresponden a lo implementado; el Motor de Fiscalización figura como previsto.
+Este refinamiento detalla los subsistemas Mensajería e Ingesta de Eventos, que realizan el CU-10, y el registro de nodos periféricos de los Servicios de Negocio, que realiza el CU-19. La Figura \ref{fig:refinamiento-ingesta} muestra sus componentes, con el clasificador \enquote{component}, y las dependencias entre ellos y con los demás subsistemas de la Figura \ref{fig:vista_logica}. La Tabla \ref{tab:refinamiento-ingesta} describe la responsabilidad de cada componente.
 
 \begin{figure}[H]
     \centering
@@ -45,7 +45,7 @@ Este refinamiento detalla los subsistemas Mensajería e Ingesta de Eventos, que 
         \hline
         Control de admisión & Acepta solo los eventos de un nodo de tracking registrado y habilitado, que es la precondición del CU-10. \\
         \hline
-        Registro de posiciones & Asocia el evento al vehículo por su matrícula y lo almacena. Un evento repetido del mismo nodo choca contra una restricción de unicidad sobre el par (nodo, identificador del evento) y se descarta, lo que hace idempotente la ingesta (R6, AC15). \\
+        Registro de posiciones & Asocia el evento al vehículo por su matrícula y al viaje que el vehículo tenía en curso cuando se generó la posición (CU-10), y lo almacena. Un evento repetido del mismo nodo choca contra una restricción de unicidad sobre el par (nodo, identificador del evento) y se descarta, lo que hace idempotente la ingesta (R6, AC15). \\
         \hline
         Consulta de rutas & Devuelve las posiciones de un vehículo ordenadas por su momento de generación y no por el orden de llegada (AC16). \\
         \hline
