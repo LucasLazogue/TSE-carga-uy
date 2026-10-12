@@ -25,6 +25,8 @@ Los conceptos centrales son Usuario (Ciudadano, Funcionario, Administrador y Aut
 
 Los usuarios que se autentican con el mecanismo interno (autoridades y administradores) se agrupan bajo Usuario Backoffice, que es el único que guarda credenciales propias; funcionarios y ciudadanos se autentican con Usuario gub.uy.
 
+Usuario gub.uy solo acredita la identidad de la persona (cédula y correo); no informa qué rol tiene en carga.uy. Cada persona tiene un único usuario, identificado por su cédula, que se crea en su primer ingreso. El rol Funcionario lo asigna un administrador desde el backoffice (CU-18): si la persona ya ingresó, se le agrega el rol; si todavía no, queda registrada por su cédula y tiene el rol desde su primer ingreso.
+
 \pendiente{en el monitoreo el tutor sugirió evaluar que la balanza tenga la ubicación y que Peaje y Balanza queden en relación 1 a 1, y dejar el modelo de dominio en pausa. Decidir si se aplica antes de la entrega.}
 
 \begin{sidewaysfigure}
