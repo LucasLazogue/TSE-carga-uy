@@ -209,23 +209,26 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \hline
 \textbf{\underline{Actor principal:}} Chofer. \\ \hline
 \textbf{\underline{Descripción:}} Sincroniza los eventos registrados sin conexión, evita duplicados y trata los conflictos producidos si el viaje cambió mientras el dispositivo estaba fuera de línea. \\ \hline
-\textbf{\underline{Precondiciones:}} Existen eventos pendientes, se recuperó la conectividad y la sesión está vigente o pudo renovarse. \\ \hline
+\textbf{\underline{Precondiciones:}} Existen eventos pendientes del chofer, hay conectividad con el componente central y la sesión está vigente. \\ \hline
 \textbf{\underline{Flujo principal:}}\par
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item La aplicación ordena y envía los eventos pendientes con sus identificadores.
-    \item El componente central verifica si cada identificador ya fue procesado.
-    \item Aplica los eventos nuevos respetando la máquina de estados.
-    \item Descarta los eventos conocidos sin repetir sus efectos.
-    \item Responde con el resultado y la versión actual del viaje.
-    \item La aplicación elimina de la cola los eventos confirmados.
+    \item La aplicación envía los eventos pendientes, cada uno con su identificador generado en el dispositivo, el viaje, el tipo y la hora en que se registró.
+    \item El componente central los ordena por hora de registro y procesa cada uno en su propia transacción.
+    \item Si el identificador ya fue registrado, el evento es \emph{duplicado} y no se repiten sus efectos.
+    \item Si no, verifica que el viaje exista y sea del chofer, que la fecha sea válida y que la transición respete la máquina de estados, y aplica el evento (\emph{aplicado}).
+    \item Registra el evento con su resultado y, si no se aplicó, el motivo.
+    \item Responde con el resultado de cada evento y el viaje actual del chofer.
+    \item La aplicación marca cada evento con su resultado, que deja de estar pendiente, y reemplaza el viaje local por el que devolvió el componente central.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item Los eventos de un viaje cancelado o reasignado se conservan como evidencia y se marca el conflicto.
-    \item Los eventos no confirmados se reenvían si la sincronización se interrumpe.
-    \item Ante recuperaciones simultáneas de conectividad, los eventos permanecen pendientes hasta poder procesarse.
+    \item Si el viaje fue eliminado o reasignado desde el frontoffice mientras el dispositivo estaba sin conexión, el evento queda en \emph{conflicto}: se registra como evidencia y no modifica ningún viaje.
+    \item Si la fecha del evento no es válida o la transición no corresponde al estado del viaje, el evento queda \emph{rechazado} y se registra con el motivo.
+    \item La aplicación muestra al chofer los eventos en conflicto o rechazados, con el motivo, y no los reenvía.
+    \item Si el envío se interrumpe o el componente central no responde, los eventos siguen pendientes y se reenvían más tarde; los que ya se habían procesado vuelven como \emph{duplicados}.
+    \item Si la sesión venció, la aplicación vuelve al ingreso (CU-01) y los eventos quedan guardados hasta que el chofer ingrese de nuevo.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} Cada evento produce un único efecto; no existen duplicados y los conflictos quedan marcados sin pérdida de información. \\ \hline
+\textbf{\underline{Postcondiciones:}} Cada evento queda registrado una sola vez con su resultado (aplicado, conflicto o rechazado), sin pérdida de información. El estado del viaje cambia solo por eventos aplicados. \\ \hline
 \end{tabular}
 \end{table}
 
