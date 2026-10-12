@@ -22,11 +22,22 @@ type Props<T> = {
   empty?: string
   page?: Omit<Page<T>, 'items'>
   onPageChange?: (pagina: number) => void
+  selected?: Key | null
+  onSelect?: (item: T | null) => void
 }
 
 const deshabilitado = 'pointer-events-none opacity-50'
 
-function Grid<T>({ columns, items, rowKey, empty = 'No hay resultados.', page, onPageChange }: Props<T>) {
+function Grid<T>({
+  columns,
+  items,
+  rowKey,
+  empty = 'No hay resultados.',
+  page,
+  onPageChange,
+  selected,
+  onSelect,
+}: Props<T>) {
   const totalPaginas = page ? Math.max(1, Math.ceil(page.total / page.tamanio)) : 1
 
   function irA(pagina: number) {
@@ -58,7 +69,12 @@ function Grid<T>({ columns, items, rowKey, empty = 'No hay resultados.', page, o
               </TableRow>
             ) : (
               items.map((item) => (
-                <TableRow key={rowKey(item)}>
+                <TableRow
+                  key={rowKey(item)}
+                  data-state={selected === rowKey(item) ? 'selected' : undefined}
+                  className={onSelect ? 'cursor-pointer' : undefined}
+                  onClick={onSelect && (() => onSelect(selected === rowKey(item) ? null : item))}
+                >
                   {columns.map((c) => (
                     <TableCell key={c.header} className={c.className}>
                       {c.cell(item)}

@@ -12,6 +12,7 @@ import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
+import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -58,6 +59,13 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
                 && usuarioDAO.getResponsableVigente(idUsuario(), idEmpresa, LocalDate.now()) == null) {
             throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
         }
+    }
+
+    // choferes vigentes a la fecha, para elegir a quien asignarle un viaje
+    @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
+    public PaginaDto<UsuarioDto> getChoferes(Long idEmpresa, String cedula, LocalDate fecha, Paginacion paginacion) {
+        validarAcceso(idEmpresa);
+        return usuarioDAO.getChoferes(idEmpresa, cedula, fecha == null ? LocalDate.now() : fecha, paginacion);
     }
 
     public EmpresaDto addEmpresa(EmpresaDto empresaDto) {

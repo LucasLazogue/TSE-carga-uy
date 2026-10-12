@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, Truck } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -16,6 +16,7 @@ import { guiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
 import type { Page } from '@/api/page'
 import { useListParams } from '@/hooks/useListParams'
+import AsignarViajeDialog from './dialogs/AsignarViajeDialog'
 import NuevaGuiaDialog from './dialogs/NuevaGuiaDialog'
 
 function fecha(iso: string) {
@@ -38,7 +39,7 @@ const columnas: GridColumn<Guia>[] = [
   {
     header: 'Viaje',
     cell: (g) =>
-      g.idViaje === null ? <Badge variant="outline">Sin asignar</Badge> : <Badge variant="secondary">Asignado</Badge>,
+      g.idViaje == null ? <Badge variant="outline">Sin asignar</Badge> : <Badge variant="secondary">Asignado</Badge>,
   },
 ]
 
@@ -67,8 +68,11 @@ function Guias() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Guia> | null>(null)
   const [version, setVersion] = useState(0)
+  const [idSeleccionada, setIdSeleccionada] = useState<number | null>(null)
   const { open } = useDialogs()
   const { busqueda, idEmpresa, conViaje, desde, hasta } = values
+  // se busca en la pagina actual, asi al recargar o cambiar de pagina queda al dia
+  const seleccionada = resultado?.items.find((g) => g.id === idSeleccionada)
 
   useEffect(() => {
     if (idEmpresa) {
@@ -123,6 +127,13 @@ function Guias() {
     setVersion((v) => v + 1)
   }
 
+  function asignarViaje(guia: Guia) {
+    open({
+      title: 'Asignar viaje',
+      content: (close) => <AsignarViajeDialog guia={guia} close={close} onAssigned={recargar} />,
+    })
+  }
+
   function nuevaGuia() {
     if (!idEmpresa) {
       return
@@ -140,10 +151,18 @@ function Guias() {
         title="Guías"
         description="Guías de carga registradas por la empresa."
         actions={
-          <Button onClick={nuevaGuia} disabled={!idEmpresa}>
-            <Plus />
-            Nueva guía
-          </Button>
+          <>
+            {seleccionada && seleccionada.idViaje == null && (
+              <Button variant="outline" onClick={() => asignarViaje(seleccionada)}>
+                <Truck />
+                Asignar viaje
+              </Button>
+            )}
+            <Button onClick={nuevaGuia} disabled={!idEmpresa}>
+              <Plus />
+              Nueva guía
+            </Button>
+          </>
         }
       />
       <DataToolbar
@@ -171,6 +190,8 @@ function Guias() {
         empty="No hay guías registradas."
         page={resultado ?? undefined}
         onPageChange={setPagina}
+        selected={seleccionada?.id}
+        onSelect={(g) => setIdSeleccionada(g?.id ?? null)}
       />
     </div>
   )

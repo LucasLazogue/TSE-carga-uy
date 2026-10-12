@@ -14,7 +14,7 @@ export type Guia = {
   nombreRubro: string
   idTipoCarga: number
   nombreTipoCarga: string
-  idViaje: number | null
+  idViaje?: number | null
 }
 
 export type GuiaNueva = Omit<Guia, 'id' | 'nroGuia' | 'nombreEmpresa' | 'nombreRubro' | 'nombreTipoCarga' | 'idViaje'>

@@ -7,6 +7,8 @@ import java.util.List;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Chofer;
 import tse.cargauy.entities.Ciudadano;
@@ -74,6 +76,30 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     @Override
     public Long getResponsableVigente(Long idCiudadano, Long idEmpresa, LocalDate fecha) {
         return getVigente(Responsable.class, idCiudadano, idEmpresa, fecha);
+    }
+
+    @Override
+    public PaginaDto<UsuarioDto> getChoferes(Long idEmpresa, String cedula, LocalDate fecha, Paginacion paginacion) {
+        String desde = " FROM Chofer c WHERE c.empresa.id = :idEmpresa AND c.ciudadano.cedula LIKE :cedula"
+                + " AND c.fechaDesde <= :fecha AND (c.fechaHasta IS NULL OR c.fechaHasta >= :fecha)";
+        String patron = (cedula == null ? "" : cedula.replaceAll("\\D", "")) + "%";
+
+        List<UsuarioDto> choferes = entityManager.createQuery(
+                        "SELECT c.ciudadano" + desde + " ORDER BY c.ciudadano.cedula", Ciudadano.class)
+                .setParameter("idEmpresa", idEmpresa)
+                .setParameter("cedula", patron)
+                .setParameter("fecha", fecha)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultStream()
+                .map(Serializers::toDto)
+                .toList();
+        long total = entityManager.createQuery("SELECT COUNT(c)" + desde, Long.class)
+                .setParameter("idEmpresa", idEmpresa)
+                .setParameter("cedula", patron)
+                .setParameter("fecha", fecha)
+                .getSingleResult();
+        return new PaginaDto<>(choferes, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     @Override
