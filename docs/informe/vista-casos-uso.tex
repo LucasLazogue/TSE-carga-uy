@@ -109,6 +109,32 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
     \item Parametrización, sin redespliegue, de los umbrales de exceso de carga y desvío de ruta.
 \end{enumerate}
 
+\subsection{Requerimientos Opcionales}
+
+El grupo decidió repartir entre sus integrantes los doce requerimientos opcionales de la letra. Como la letra exige al menos cuatro puntos, se definió un conjunto mínimo comprometido, con un requerimiento por integrante, elegido porque además resuelve aspectos de la arquitectura. El resto se implementa como adicional.
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{Requerimientos opcionales comprometidos}
+    \label{tab:opcionales}
+    \begin{tabular}{|p{9.6cm}|p{1.4cm}|p{4.2cm}|}
+        \hline
+        \textbf{Opcional} & \textbf{Puntos} & \textbf{Vistas afectadas} \\
+        \hline
+        8. LDAP como mecanismo interno de autenticación del backoffice & 1 & Lógica, Distribución \\
+        \hline
+        4. Despliegue del componente central en un orquestador de contenedores con escalado horizontal & 2 & Distribución, Implementación \\
+        \hline
+        10. Base de datos NoSQL o de series temporales para los eventos de posición & 1 & Lógica, Distribución, Implementación \\
+        \hline
+        11. Base de datos con soporte geoespacial para las rutas y el cálculo de desvíos & 1 & Lógica, Distribución, Implementación \\
+        \hline
+        \textbf{Total comprometido} & \textbf{5} & \\
+        \hline
+    \end{tabular}
+\end{table}
+
 \subsection{Fiscalización Automática}
 
 La plataforma debe detectar como mínimo:
