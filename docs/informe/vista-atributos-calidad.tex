@@ -65,7 +65,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC19 & Idempotencia & Al recuperar la conectividad, la sincronización es idempotente: cada evento lleva un identificador generado en el dispositivo y su reenvío no produce duplicados. \\
     \hline
-    AC20 & Consistencia & Los conflictos entre cambios hechos desde el frontoffice y eventos registrados sin conexión se resuelven con la política que se esboza en el CU-09 (Sección \ref{sec:cu-09}). \pendiente{completar y justificar la política de resolución de conflictos.} \\
+    AC20 & Consistencia & Ante un cambio hecho desde el frontoffice mientras el dispositivo estaba sin conexión, prevalece el componente central. El frontoffice solo modifica o elimina viajes que todavía no comenzaron, así que un evento sobre un viaje eliminado o reasignado queda en conflicto y no se aplica. Cada evento se procesa por separado y se registra con su resultado, sin pérdida de información, y la aplicación adopta el estado del viaje que devuelve el componente central (CU-09, Sección \ref{sec:cu-09}). Prevalece el componente central porque la asignación de los viajes la decide el responsable de la empresa. \\
     \hline
     \multicolumn{3}{|l|}{\textit{Observabilidad}} \\
     \hline
