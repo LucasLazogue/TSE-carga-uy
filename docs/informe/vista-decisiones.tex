@@ -162,23 +162,23 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
 \begin{table}[H]
     \small
     \centering
-    \caption{DA07: Idempotencia de la ingesta mediante una restricción de unicidad}
+    \caption{DA07: Posiciones en MongoDB con idempotencia por índice único}
     \label{tab:da07}
     \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
         \hline
             \textbf{Identificador} & DA07 \\
         \hline
-            \textbf{Nombre} & Idempotencia de la ingesta mediante una restricción de unicidad \\
+            \textbf{Nombre} & Posiciones en MongoDB con idempotencia por índice único \\
         \hline
-            \textbf{Categorías} & Ingesta de eventos; R6; AC15. \\
+            \textbf{Categorías} & Ingesta de eventos; opcional 10; R6; AC08, AC15, AC16. \\
         \hline
-            \textbf{Problema} & Un mismo evento de tracking puede recibirse más de una vez (reentregas del broker o reenvíos del nodo) y la cola tiene varios consumidores en paralelo. Un evento duplicado no debe alterar el estado del viaje ni generar casos adicionales. \\
+            \textbf{Problema} & Las posiciones son el dato de mayor volumen y solo se agregan. Además, un mismo evento de tracking puede recibirse más de una vez (reentregas del broker o reenvíos del nodo) y la cola tiene varios consumidores en paralelo. Un evento duplicado no debe alterar el estado del viaje ni generar casos adicionales. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & Guardar las posiciones en PostgreSQL con una restricción de unicidad; usar una colección de series temporales de MongoDB. \\
         \hline
-            \textbf{Decisión} & Una restricción de unicidad en la base sobre el par (nodo, identificador del evento). El registro se hace con \textit{flush} en una transacción propia, de modo que un duplicado se detecta dentro del método y se descarta sin deshacer la transacción del consumidor. \\
+            \textbf{Decisión} & Guardar las posiciones en una colección normal de MongoDB, con un índice único sobre el par (nodo, identificador del evento) e índices por viaje y por matrícula con el momento de generación. Un evento que viola el índice único se descarta como duplicado. Las posiciones referencian el vehículo, el viaje y el nodo por su identificador, sin claves foráneas. \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & Separar las posiciones descarga a PostgreSQL del dato de mayor volumen. Se descartan las colecciones de series temporales porque no admiten índices únicos ni permiten asociar después una posición a su viaje. MongoDB no participa de la transacción del consumidor: si esta se deshace, la reentrega choca con el índice y se trata como duplicado. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA02, DA08 \\
         \hline
