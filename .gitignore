@@ -4,3 +4,6 @@
 target/
 .env
 .vscode/
+
+docs/informe/build/
+docs/informe/*.pdf

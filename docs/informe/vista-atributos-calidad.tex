@@ -1,0 +1,81 @@
+\section{Vista de Atributos de Calidad}\label{sec:vista-calidad-de-servicio}
+
+La Vista de Atributos de Calidad se centra en los requerimientos de atributos de calidad de la plataforma. Los atributos de calidad son propiedades medibles o comprobables de un sistema, que indican qué tan bien el sistema satisface las necesidades de las partes interesadas \cite{Bass2012}. Los requerimientos de esta sección surgen de la letra del laboratorio \cite{LINS2026} y se verifican mediante pruebas automatizadas, la prueba de performance y los mecanismos de observabilidad.
+
+\begin{longtable}{|p{1.3cm}|p{2.7cm}|p{11.5cm}|}
+    \caption{Atributos de Calidad}\label{tab:calidad}\\
+    \hline
+    \textbf{Id} & \textbf{Tipo} & \textbf{Descripción} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Id} & \textbf{Tipo} & \textbf{Descripción} \\
+    \hline
+    \endhead
+    \multicolumn{3}{|l|}{\textit{Seguridad}} \\
+    \hline
+    AC01 & Seguridad & Las contraseñas de los usuarios con autenticación interna se almacenan mediante funciones hash con \textit{salt} (R7). \\
+    \hline
+    AC02 & Seguridad & Las comunicaciones con los componentes periféricos, las plataformas externas y el componente móvil utilizan HTTPS (R8). \\
+    \hline
+    AC03 & Seguridad & La autorización se controla en la capa de servicios, con permisos asociados a roles (R9). \\
+    \hline
+    AC04 & Seguridad & La pista de auditoría permite reconstruir el usuario, la acción, el fundamento y la marca de tiempo de cada acción de fiscalización, y no puede modificarse ni eliminarse desde la aplicación (R10). \\
+    \hline
+    AC05 & Seguridad & Las credenciales, claves y certificados se administran fuera del repositorio de código y de las imágenes de contenedor (R11). \\
+    \hline
+    AC06 & Privacidad & La información pública se publica agregada, respetando la normativa de protección de datos personales, con un umbral mínimo de agregación de \pendiente{definir y justificar el umbral (R12)}. \\
+    \hline
+    \multicolumn{3}{|l|}{\textit{Escalabilidad y performance}} \\
+    \hline
+    AC07 & Escalabilidad & El componente central escala horizontalmente en la capa web o de aplicaciones, sin estado de sesión almacenado localmente en las instancias. \\
+    \hline
+    AC08 & Performance & La plataforma sostiene, sin pérdida de eventos, un volumen de ingesta de tracking de \pendiente{estimar y justificar: cantidad de vehículos reportando en forma concurrente y frecuencia de reporte}, y picos de al menos tres veces ese volumen. \\
+    \hline
+    AC09 & Performance & El percentil 95 del tiempo de respuesta de las consultas del frontoffice es menor a 500 ms. \\
+    \hline
+    AC10 & Performance & Los tiempos de respuesta no se degradan a lo largo de la prueba de performance. \\
+    \hline
+    AC11 & Performance & La prueba de performance determina el punto de quiebre e identifica los cuellos de botella con evidencia de los mecanismos de observabilidad. \\
+    \hline
+    \multicolumn{3}{|l|}{\textit{Resiliencia e idempotencia}} \\
+    \hline
+    AC12 & Resiliencia & La indisponibilidad de un sistema externo o de un nodo periférico no provoca la indisponibilidad del componente central. \\
+    \hline
+    AC13 & Resiliencia & Las integraciones aplican tiempos de espera, reintentos y corte ante fallas sostenidas, con \pendiente{definir el tiempo de espera, la cantidad de reintentos y la condición de corte}, y un comportamiento degradado definido para las funcionalidades afectadas. \\
+    \hline
+    AC14 & Resiliencia & Las pruebas incluyen un escenario con el Sistema de Balanzas indisponible y otro con la PDI sin responder. \\
+    \hline
+    AC15 & Idempotencia & Un evento recibido más de una vez no altera dos veces el estado del viaje ni genera casos de fiscalización adicionales. \\
+    \hline
+    AC16 & Consistencia & El orden de la ruta se reconstruye a partir del momento de generación de cada evento y no del orden de llegada. \\
+    \hline
+    AC17 & Resiliencia & Ante una situación de saturación, la plataforma \pendiente{definir y justificar el comportamiento: encolado, descarte selectivo o reducción de frecuencia}. \\
+    \hline
+    \multicolumn{3}{|l|}{\textit{Operación sin conectividad}} \\
+    \hline
+    AC18 & Disponibilidad & La aplicación móvil es utilizable sin conexión: conserva localmente la Guía descargada y los eventos pendientes. \\
+    \hline
+    AC19 & Idempotencia & Al recuperar la conectividad, la sincronización es idempotente: cada evento lleva un identificador generado en el dispositivo y su reenvío no produce duplicados. \\
+    \hline
+    AC20 & Consistencia & Los conflictos entre cambios hechos desde el frontoffice y eventos registrados sin conexión se resuelven con la política que se esboza en el CU-09 (Sección \ref{sec:cu-09}). \pendiente{completar y justificar la política de resolución de conflictos.} \\
+    \hline
+    \multicolumn{3}{|l|}{\textit{Observabilidad}} \\
+    \hline
+    AC21 & Observabilidad & Los componentes emiten logs estructurados que incluyen un identificador de correlación. \\
+    \hline
+    AC22 & Observabilidad & El componente central expone métricas de eventos procesados, latencia de procesamiento, tamaño de las colas y errores por tipo, y endpoints de verificación de estado. \\
+    \hline
+    AC23 & Observabilidad & Al menos un flujo que atraviesa el componente móvil, el componente central y un nodo periférico se traza de forma distribuida. \\
+    \hline
+    AC24 & Observabilidad & El informe de la prueba de performance se apoya en la evidencia obtenida de logs, métricas y trazas. \\
+    \hline
+    \multicolumn{3}{|l|}{\textit{Pruebas y calidad del código}} \\
+    \hline
+    AC25 & Mantenibilidad & Las pruebas automatizadas cubren aproximadamente el 80~\% de la lógica, con al menos una prueba por servicio. \\
+    \hline
+    AC26 & Corrección & Las pruebas cubren el ciclo de vida de los casos de fiscalización, verifican que no sean posibles transiciones de estado no previstas y comprueban la idempotencia del procesamiento de tracking y de la sincronización móvil. \\
+    \hline
+    AC27 & Mantenibilidad & El pipeline de integración continua ejecuta un análisis estático de calidad de código. \\
+    \hline
+\end{longtable}
