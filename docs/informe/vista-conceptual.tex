@@ -31,7 +31,6 @@ Responsable y Chofer no son tipos de usuario, sino vínculos entre un Ciudadano 
 
 Evento es un concepto abstracto: reúne los hechos que se registran con fecha y hora de generación y de recepción, y con un identificador de origen que permite descartar duplicados. En la implementación, los eventos de posición y los de viaje se persisten como entidades separadas, sin una clase Evento común. Los eventos de posición llegan en alto volumen desde los nodos de tracking; los de viaje los registra el chofer desde el móvil y cambian el estado del viaje. El incidente se persiste como un evento de viaje de tipo incidente.
 
-\pendiente{en el monitoreo el tutor sugirió evaluar que la balanza tenga la ubicación y que Peaje y Balanza queden en relación 1 a 1, y dejar el modelo de dominio en pausa. Decidir si se aplica antes de la entrega.}
 
 \begin{sidewaysfigure}
     \centering

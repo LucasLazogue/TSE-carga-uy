@@ -43,11 +43,11 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
         \hline
         CU-07 Registrar Guía y asignar el viaje & Frontoffice, Servicios de Negocio y Persistencia. \\
         \hline
-        CU-09 Sincronizar los eventos del componente móvil & Componente Móvil y su persistencia local, API REST, Servicios de Negocio y Persistencia. \\
+        CU-09 Sincronizar los eventos del componente móvil & Componente Móvil y su persistencia local, API REST, Servicios de Negocio, Persistencia y Motor de Fiscalización, cuando el evento es el fin del viaje. \\
         \hline
         CU-10 Ingerir y procesar eventos de tracking & Nodo Periférico Tracking, Mensajería, Ingesta de Eventos, Persistencia y Motor de Fiscalización. \\
         \hline
-        CU-11 Detectar un incumplimiento y generar el caso & Ingesta de Eventos, Motor de Fiscalización, Adaptador Balanzas, Nodo Periférico Balanzas, Persistencia, Notificaciones y Servicio de correo. \\
+        CU-11 Detectar un incumplimiento y generar el caso & Ingesta de Eventos o Servicios de Negocio (fin del viaje registrado desde el Componente Móvil), Motor de Fiscalización, Almacén de Posiciones, Adaptador Balanzas, Nodo Periférico Balanzas, Persistencia, Notificaciones y Servicio de correo. \\
         \hline
         CU-16 Consultar reportes gerenciales y exportarlos & Backoffice, Generación de Reportes y Persistencia. \\
         \hline
@@ -56,7 +56,7 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
     \end{tabular}
 \end{table}
 
-\pendiente{explicar el criterio con el que se eligieron los casos críticos. La plantilla propone dos: que intervenga el mayor número posible de componentes de la arquitectura y que intervengan los componentes críticos o más complejos.}
+Se eligieron como críticos los casos de uso que hacen intervenir la mayor cantidad de componentes de la arquitectura, más el ingreso mediante Usuario gub.uy (CU-01).
 
 \FloatBarrier
 
@@ -220,7 +220,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
     \item Se rechaza si la capacidad del vehículo es insuficiente o existe un solapamiento.
     \item Un origen o destino no georreferenciable debe corregirse.
     \item Si el servicio de rutas no responde, la Guía se registra igual y el recorrido esperado queda pendiente hasta que se pueda obtener.
-    \item Una cancelación previa al inicio deja el viaje en estado \emph{cancelado}.
+    \item Mientras el viaje no comenzó, el responsable puede eliminarlo o reasignarlo a otro vehículo o chofer.
 \end{itemize} \\ \hline
 \textbf{\underline{Postcondiciones:}} Existe una Guía con viaje, vehículo, chofer y recorrido esperado. El viaje queda disponible para el chofer y sirve como referencia para tracking y pesajes. \\ \hline
 \end{tabular}
@@ -243,6 +243,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
     \item El componente central los ordena por hora de registro y procesa cada uno en su propia transacción.
     \item Si el identificador ya fue registrado, el evento es \emph{duplicado} y no se repiten sus efectos.
     \item Si no, verifica que el viaje exista y sea del chofer, que la fecha sea válida y que la transición respete la máquina de estados, y aplica el evento (\emph{aplicado}).
+    \item Si el evento aplicado es el fin del viaje, dispara de forma asincrónica la evaluación del Motor de Fiscalización (CU-11).
     \item Registra el evento con su resultado y, si no se aplicó, el motivo.
     \item Responde con el resultado de cada evento y el viaje actual del chofer.
     \item La aplicación marca cada evento con su resultado, que deja de estar pendiente, y reemplaza el viaje local por el que devolvió el componente central.

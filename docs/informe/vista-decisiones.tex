@@ -1,6 +1,6 @@
 \section{Vista de Decisiones de Arquitectura}\label{sec:vista-de-decisiones-de-arquitectura}
 
-La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión y justificación.
+La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión, justificación y decisiones relacionadas.
 
 
 \begin{table}[H]
@@ -24,6 +24,8 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
+            \textbf{Decisiones Relacionadas} & DA02, DA05 \\
+        \hline
     \end{tabular}
 \end{table}
 
@@ -44,9 +46,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
         \hline
-            \textbf{Decisión} & Usar el broker embebido en el servidor de aplicaciones (ActiveMQ Artemis de WildFly), con la cola \texttt{queue\_tracking} consumida por un componente de recepción (Sección \ref{sec:refinamiento-ingesta}). \pendiente{definir el particionamiento y la política de entrega. Hoy los consumidores compiten por los mensajes, y un mensaje que falla se reintenta 10 veces sin espera (valores por defecto del broker) antes de pasar a la cola de mensajes muertos.} \\
+            \textbf{Decisión} & Usar el broker embebido en el servidor de aplicaciones (ActiveMQ Artemis de WildFly), con la cola \texttt{queue\_tracking} consumida por un componente de recepción (Sección \ref{sec:refinamiento-ingesta}). \pendiente{definir el particionamiento y la política de entrega, incluidos los reintentos y el destino de los mensajes que terminan en la cola de mensajes muertos.} \\
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA01, DA07 \\
         \hline
     \end{tabular}
 \end{table}
@@ -72,6 +76,8 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & Hace la autenticación independiente de la instancia y saca la criptografía propia del código: el \textit{callback} de gub.uy puede llegar a cualquier instancia del componente central. \\
         \hline
+            \textbf{Decisiones Relacionadas} & DA04, DA09 \\
+        \hline
     \end{tabular}
 \end{table}
 
@@ -92,9 +98,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
         \hline
-            \textbf{Decisión} & La aplicación abre el ingreso en el navegador con un \texttt{code\_challenge}, recibe un código de un solo uso por el esquema \texttt{cargauy://ingreso} y lo canjea, junto con el \texttt{code\_verifier}, por el token de sesión. \\
+            \textbf{Decisión} & La aplicación abre el ingreso en el navegador con un \texttt{code\_challenge}, recibe un código de un solo uso por el esquema \texttt{cargauy://ingreso} y lo canjea, junto con el \texttt{code\_verifier}, por el token de sesión. En Android, el ingreso se abre con Custom Tabs. \\
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA03 \\
         \hline
     \end{tabular}
 \end{table}
@@ -120,6 +128,8 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
+            \textbf{Decisiones Relacionadas} & DA01 \\
+        \hline
     \end{tabular}
 \end{table}
 
@@ -140,9 +150,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
         \hline
-            \textbf{Decisión} & Aplicación nativa para Android en Kotlin con Jetpack Compose, persistencia local con Room y un identificador UUID generado en el dispositivo para cada evento pendiente. \\
+            \textbf{Decisión} & Aplicación nativa para Android en Kotlin con Jetpack Compose, persistencia local con Room y un identificador UUID generado en el dispositivo para cada evento pendiente. La sincronización corre en segundo plano con WorkManager, que espera a tener conexión y reintenta con esperas crecientes, y las llamadas a la API REST usan Retrofit con OkHttp. \\
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA04 \\
         \hline
     \end{tabular}
 \end{table}
@@ -164,9 +176,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & Guardar las posiciones en PostgreSQL con una restricción de unicidad; usar una colección de series temporales de MongoDB. \\
         \hline
-            \textbf{Decisión} & Guardar las posiciones en una colección normal de MongoDB, con un índice único sobre el par (nodo, identificador del evento) e índices por viaje y por matrícula con el momento de generación. Un evento que viola el índice único se descarta como duplicado. Las posiciones referencian el vehículo, el viaje y el nodo por su identificador, sin claves foráneas. \\
+            \textbf{Decisión} & Guardar las posiciones en una colección normal de MongoDB, con un índice único sobre el par (nodo, identificador del evento) e índices por viaje y por matrícula con el momento de generación. Un evento que viola el índice único se descarta como duplicado. \pendiente{definir qué pasa con los pasos siguientes (asociación al viaje y disparo del Motor de Fiscalización) cuando la posición ya estaba guardada porque un intento anterior falló después de guardarla.} Las posiciones referencian el vehículo, el viaje y el nodo por su identificador, sin claves foráneas. \\
         \hline
-            \textbf{Justificación} & Las posiciones son lo que más crece en la plataforma, así que guardarlas aparte evita que PostgreSQL se vuelva lento. Usamos una colección normal de MongoDB y no una de series temporales, porque esas no permiten evitar duplicados ni modificar una posición después para asociarla a su viaje. Si una posición se procesa mal y llega de nuevo, MongoDB ve que ya está guardada y no la repite. \\
+            \textbf{Justificación} & Las posiciones son el dato que más crece en la plataforma, y guardarlas aparte evita que degraden a PostgreSQL. Se usa una colección normal de MongoDB y no una de series temporales, porque estas no admiten índices únicos para descartar duplicados ni permiten modificar una posición después para asociarla a su viaje. Si una posición llega de nuevo, el índice único la identifica como duplicada y no se guarda dos veces. \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA02, DA08 \\
         \hline
     \end{tabular}
 \end{table}
@@ -192,6 +206,8 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
+            \textbf{Decisiones Relacionadas} & DA07 \\
+        \hline
     \end{tabular}
 \end{table}
 
@@ -216,6 +232,8 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
+            \textbf{Decisiones Relacionadas} & DA03 \\
+        \hline
     \end{tabular}
 \end{table}
 
@@ -239,6 +257,8 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
             \textbf{Decisión} & La integración con el Sistema de Balanzas es una consulta iniciada por el componente central, como exige la letra. El Motor de Fiscalización consulta los pesajes cuando procesa el fin de un viaje, por el vehículo y cada fecha del viaje. \\
         \hline
             \textbf{Justificación} & Se descartó que el nodo de balanzas notificara cada pesaje porque la letra define la integración como solicitud--respuesta (R3): el componente central pide los pesajes de un vehículo en una fecha y el nodo devuelve todas las pesadas de ese vehículo en esa fecha. Consultar con cada posición o periódicamente repetiría la misma consulta muchas veces, porque cada respuesta trae las pesadas de todo el día. Al finalizar el viaje ya se conocen el vehículo y las fechas, y alcanza con una consulta por fecha. Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma. \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA01, DA08 \\
         \hline
     \end{tabular}
 \end{table}
@@ -272,5 +292,27 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     Umbral de agregación & Umbral mínimo de agregación de la información pública. & AC06, R12. \\
     \hline
     Nodo de tracking & Si el generador de carga (la flota simulada) se separa del nodo de tracking, que solo reenvía los eventos al broker. & Vista de Distribución, R15. \\
+    \hline
+    Ubicación del frontoffice & Si el frontoffice se sirve desde Vercel o desde Elastic Cloud. & DA05, R14, Vista de Distribución. \\
+    \hline
+    Escalado y orquestador & Dónde corre el orquestador del opcional 4 y cómo escalan con varias réplicas la sesión del backoffice JSF y la mensajería embebida. & AC07, R14, DA02, Vista de Distribución. \\
+    \hline
+    Tecnología del backoffice & Si el backoffice queda en JSF o pasa a React. & DA05, AC07. \\
+    \hline
+    Plataforma de los periféricos & Qué PaaS o IaaS ejecuta los nodos periféricos y el suplantador de la PDI. & R15, Vista de Distribución. \\
+    \hline
+    Observabilidad & Tecnología de logs, métricas y trazas, y plataforma en la que se ejecuta. & AC21 a AC24, Vista de Distribución. \\
+    \hline
+    Conexión segura con el nodo de tracking & Cómo se protege con TLS la conexión del nodo de tracking con la mensajería. & R8, DA02. \\
+    \hline
+    Pista de auditoría & Mecanismo que garantiza que sea de solo agregado. & R10, AC04. \\
+    \hline
+    Fotografías de los incidentes & Dónde se guardan y cómo se envían desde el móvil al recuperar la conexión. & CU-09, Persistencia. \\
+    \hline
+    Plazo de descargo & Duración del plazo y qué pasa cuando vence sin descargo. & CU-11, parametrización de reglas. \\
+    \hline
+    Viaje sin fin registrado & Cómo se evalúa el exceso de carga si el chofer nunca registra el fin del viaje, y cómo se cubre la regla de viaje sin Guía por pesaje. & DA10, CU-11. \\
+    \hline
+    Prueba de performance & Herramienta y entorno en el que se ejecuta. & AC09 a AC11. \\
     \hline
 \end{longtable}

@@ -62,6 +62,19 @@ Este refinamiento detalla los subsistemas Mensajería e Ingesta de Eventos, que 
 
 En esta sección se incluyen diagramas de secuencia UML, a nivel de componentes, vinculados a los casos de uso críticos que se consideró necesario especificar con mayor detalle.
 
+\subsubsection{CU-09 Sincronizar los eventos del componente móvil}\label{sec:interaccion-cu09}
+
+La Figura \ref{fig:secuencia-cu09} muestra la interacción para el CU-09. El Componente Móvil envía a la API REST los eventos pendientes, cada uno con el identificador que generó el dispositivo. Los Servicios de Negocio los ordenan por hora de registro y procesan cada uno en su propia transacción: un identificador ya registrado es un \emph{duplicado}; un viaje que no existe o no es del chofer deja el evento en \emph{conflicto}; una fecha o una transición inválidas lo dejan \emph{rechazado}; en otro caso el evento se aplica y cambia el estado del viaje. Cada evento se registra con su resultado. Si el evento aplicado es el fin del viaje, se dispara de forma asincrónica el Motor de Fiscalización (Sección \ref{sec:interaccion-cu11}). La respuesta trae el resultado de cada evento y el viaje actual del chofer, que la aplicación guarda en su persistencia local. Si la sesión venció, la API responde que no está autorizado y los eventos quedan pendientes hasta un nuevo ingreso.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/secuencia-cu09.pdf}
+    \caption{Diagrama de secuencia del CU-09}
+    \label{fig:secuencia-cu09}
+\end{figure}
+
+\FloatBarrier
+
 \subsubsection{CU-10 Ingerir y procesar eventos de tracking}\label{sec:interaccion-cu10}
 
 La Figura \ref{fig:secuencia-cu10} muestra la interacción para el CU-10, de acuerdo con el refinamiento de la Sección \ref{sec:refinamiento-ingesta}. El nodo periférico de tracking publica el evento en la Mensajería, que lo entrega a la Ingesta de Eventos de forma asincrónica. Un mensaje mal formado se descarta sin reintento. La ingesta solo continúa si el evento proviene de un nodo de tracking registrado y habilitado; en ese caso obtiene el vehículo por su matrícula y registra el evento. Si el par (nodo, identificador del evento) ya estaba registrado, el índice único del Almacén de Posiciones lo rechaza y el evento se descarta como duplicado. Si es nuevo, se asocia al viaje que estaba en curso cuando se generó (Sección \ref{sec:cu-10}), se dispara el Motor de Fiscalización (Sección \ref{sec:interaccion-cu11}) y se actualizan las métricas. El orden de la ruta se reconstruye al consultarla, por el momento de generación de cada evento.
