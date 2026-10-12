@@ -14,7 +14,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \endhead
     \multicolumn{3}{|l|}{\textit{Seguridad}} \\
     \hline
-    AC01 & Seguridad & Las contraseñas de los usuarios con autenticación interna se almacenan mediante funciones hash con \textit{salt} (R7). \\
+    AC01 & Seguridad & Las contraseñas de los usuarios del backoffice las guarda el directorio LDAP con hash y \textit{salt} (R7); el componente central no las almacena. El directorio solo se accede por LDAPS. \\
     \hline
     AC02 & Seguridad & Las comunicaciones con los componentes periféricos, las plataformas externas y el componente móvil utilizan HTTPS (R8). \\
     \hline

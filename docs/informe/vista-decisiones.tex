@@ -72,7 +72,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & Mantener ese estado en la \texttt{HttpSession} de la instancia y firmar el JWT de sesión con código propio, que fue la implementación inicial del grupo. \\
         \hline
-            \textbf{Decisión} & La sesión es un JWT firmado (HS256) con la biblioteca JJWT, que viaja en una cookie \textit{HttpOnly} en la web y como token \textit{Bearer} en el móvil. El estado del ingreso con gub.uy viaja en una cookie firmada en lugar de quedar en la \texttt{HttpSession}. El secreto se configura por entorno y debe tener al menos 32 bytes. \\
+            \textbf{Decisión} & La sesión es un JWT firmado (HS256) con la biblioteca JJWT, que viaja en una cookie \textit{HttpOnly} en la web y como token \textit{Bearer} en el móvil. El estado del ingreso con gub.uy viaja en una cookie firmada en lugar de quedar en la \texttt{HttpSession}. El secreto se configura por entorno y debe tener al menos 32 bytes. El JWT se emite también tras el ingreso al backoffice, que valida las credenciales contra el directorio LDAP. \\
         \hline
             \textbf{Justificación} & Hace la autenticación independiente de la instancia y saca la criptografía propia del código: el \textit{callback} de gub.uy puede llegar a cualquier instancia del componente central. \\
         \hline
