@@ -3,6 +3,8 @@ package tse.cargauy.data.usuario;
 import java.time.LocalDate;
 import java.util.List;
 import jakarta.ejb.Local;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.UsuarioDto;
 
 @Local
@@ -16,6 +18,7 @@ public interface UsuarioDAOLocal {
     void addResponsable(Long idCiudadano, Long idEmpresa, LocalDate fechaDesde);
     Long getChoferVigente(Long idCiudadano, Long idEmpresa, LocalDate fecha);
     Long getResponsableVigente(Long idCiudadano, Long idEmpresa, LocalDate fecha);
+    PaginaDto<UsuarioDto> getChoferes(Long idEmpresa, String cedula, LocalDate fecha, Paginacion paginacion);
     List<String> getRoles();
     void addRol(String nombre);
 }
