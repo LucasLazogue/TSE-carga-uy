@@ -38,7 +38,7 @@ const columnas: GridColumn<Guia>[] = [
   {
     header: 'Viaje',
     cell: (g) =>
-      g.idViaje === null ? <Badge variant="outline">Sin asignar</Badge> : <Badge variant="secondary">Asignado</Badge>,
+      g.idViaje == null ? <Badge variant="outline">Sin asignar</Badge> : <Badge variant="secondary">Asignado</Badge>,
   },
 ]
 
