@@ -39,7 +39,7 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
         \hline
         \textbf{Caso de uso} & \textbf{Componentes} \\
         \hline
-        CU-01 Autenticarse mediante Usuario gub.uy & Frontoffice, API REST, Servicios de Negocio, Adaptador gub.uy, Persistencia y Usuario gub.uy. \\
+        CU-01 Autenticarse mediante Usuario gub.uy & Frontoffice, API REST, Servicios de Negocio, Adaptador gub.uy, Adaptador PDI, Persistencia, Usuario gub.uy y PDI (suplantador). \\
         \hline
         CU-07 Registrar Guía y asignar el viaje & Frontoffice, Servicios de Negocio y Persistencia. \\
         \hline
@@ -105,7 +105,7 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
     \item Autenticación mediante un mecanismo interno y autorización basada en roles.
     \item Tablero para autoridades con cantidad de empresas y vehículos habilitados, viajes por período, volumen transportado por rubro, infracciones por tipo y tasa de confirmación.
     \item Filtrado de reportes por tipo de carga, ubicación y período, con exportación en al menos dos formatos.
-    \item Gestión de usuarios, roles y nodos periféricos.
+    \item Gestión de usuarios y roles, incluida la asignación del rol Funcionario por cédula, y de nodos periféricos.
     \item Parametrización, sin redespliegue, de los umbrales de exceso de carga y desvío de ruta.
 \end{enumerate}
 
@@ -137,7 +137,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \begin{tabular}{|p{15.8cm}|}
 \hline
 \textbf{\underline{Actor principal:}} Ciudadano (responsable o chofer) o Funcionario MTOP. \\ \hline
-\textbf{\underline{Actor secundario:}} Usuario gub.uy (ID Uruguay). \\ \hline
+\textbf{\underline{Actor secundario:}} Usuario gub.uy (ID Uruguay) y Plataforma de Interoperabilidad (PDI). \\ \hline
 \textbf{\underline{Canales:}} Frontoffice web y componente móvil. \\ \hline
 \textbf{\underline{Descripción:}} Permite que el usuario se identifique mediante Usuario gub.uy. Una vez autenticado, carga.uy crea la sesión y determina los permisos que le corresponden. \\ \hline
 \textbf{\underline{Precondición:}} El usuario posee un Usuario gub.uy vigente. \\ \hline
@@ -154,13 +154,15 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item Si no existe perfil local, se crea antes de establecer la sesión.
+    \item Si no existe perfil local, se crea con la cédula y el correo (CU-02) y se consultan a la PDI el nombre y la fecha de nacimiento.
+    \item Si el perfil existe pero no tiene los datos de la PDI, se vuelven a consultar.
+    \item Si la PDI no responde, la sesión se establece igual y el perfil queda sin esos datos, que se completan en el próximo ingreso (AC13).
     \item Un ciudadano sin empresa asociada accede solamente a funciones públicas.
     \item Una autenticación cancelada, fallida, inválida o vencida no crea sesión.
     \item Si gub.uy no responde, las funcionalidades públicas siguen disponibles.
     \item En el móvil, una sesión previa válida permite operar sin conexión.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} Existe una sesión con identidad, roles y permisos resueltos, o no existe sesión. El evento queda registrado y no se almacenan credenciales del usuario. \\ \hline
+\textbf{\underline{Postcondiciones:}} Existe una sesión con identidad, roles y permisos resueltos, o no existe sesión. El evento queda registrado y no se almacenan credenciales del usuario. Si se creó un perfil, tiene los datos de la PDI o queda pendiente de completarlos. \\ \hline
 \end{tabular}
 \end{table}
 

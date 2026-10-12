@@ -94,7 +94,7 @@
         <mxCell id="QStlOJ_LeDeqKA9_KmuQ-30" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="CU-17&lt;br&gt;Parametrizar las reglas&lt;br&gt;de fiscalización" vertex="1">
           <mxGeometry height="78" width="195" x="1230" y="725" as="geometry" />
         </mxCell>
-        <mxCell id="QStlOJ_LeDeqKA9_KmuQ-31" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="CU-18&lt;br&gt;Gestionar usuarios y&lt;br&gt;roles del backoffice" vertex="1">
+        <mxCell id="QStlOJ_LeDeqKA9_KmuQ-31" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="CU-18&lt;br&gt;Gestionar usuarios&lt;br&gt;y roles" vertex="1">
           <mxGeometry height="78" width="195" x="1230" y="815" as="geometry" />
         </mxCell>
         <mxCell id="QStlOJ_LeDeqKA9_KmuQ-32" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=3;" value="CU-19&lt;br&gt;Gestionar nodos&lt;br&gt;periféricos" vertex="1">
