@@ -207,18 +207,19 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item El responsable selecciona “nueva Guía”.
     \item Ingresa rubro, volumen y tipo de carga, fecha, origen y destino.
-    \item El sistema valida los datos y calcula el recorrido esperado.
+    \item El sistema valida los datos, obtiene el recorrido esperado entre el origen y el destino de un servicio externo de rutas y lo guarda como una línea geográfica en PostGIS (opcional 11).
     \item Genera una Guía única en estado \emph{registrada}.
     \item El responsable selecciona un vehículo habilitado y un chofer.
     \item El sistema valida que no existan viajes solapados.
-    \item Crea el viaje en estado \emph{asignado} y lo publica en el móvil.
-    \item Notifica al chofer.
+    \item Crea el viaje en estado \emph{asignado}.
+    \item El chofer recibe el viaje la próxima vez que la aplicación consulta su viaje asignado.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Se rechaza la asignación si el Permiso o la ITV no están vigentes.
     \item Se rechaza si la capacidad del vehículo es insuficiente o existe un solapamiento.
     \item Un origen o destino no georreferenciable debe corregirse.
+    \item Si el servicio de rutas no responde, la Guía se registra igual y el recorrido esperado queda pendiente hasta que se pueda obtener.
     \item Una cancelación previa al inicio deja el viaje en estado \emph{cancelado}.
 \end{itemize} \\ \hline
 \textbf{\underline{Postcondiciones:}} Existe una Guía con viaje, vehículo, chofer y recorrido esperado. El viaje queda disponible para el chofer y sirve como referencia para tracking y pesajes. \\ \hline
@@ -314,7 +315,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item Si el evento es el fin de un viaje, consulta a Balanzas los pesajes del vehículo y evalúa el exceso de carga.
     \item Verifica la vigencia del Permiso y la ITV.
     \item Detecta actividad de vehículos sin Guía.
-    \item Compara la ruta con el recorrido y los umbrales configurados.
+    \item Compara las posiciones del viaje con el recorrido esperado y los umbrales configurados: las posiciones se leen del Almacén de Posiciones y PostGIS calcula su distancia al recorrido (opcional 11).
     \item Comprueba que el hecho no haya generado otro caso.
     \item Crea el caso en estado \emph{detectada} y almacena la evidencia.
     \item Lo publica y solicita la notificación a la empresa; al confirmarse el envío, el caso pasa a \emph{notificada} e inicia el plazo de descargo.
