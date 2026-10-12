@@ -1,0 +1,80 @@
+\documentclass[12pt]{extarticle}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{csquotes}
+\usepackage{authblk}
+\usepackage{color}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{rotating}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tikz}
+\geometry{a4paper, total={170mm,257mm}, left=15mm, top=20mm,}
+\setlength{\emergencystretch}{2em}
+\usepackage[sorting=none]{biblatex}
+
+\usepackage{pifont}
+\usepackage{hyperref}
+\Urlmuskip=0mu plus 1mu\relax
+\newcommand*\cmark{\ding{51}}
+
+% Lo marcado con \pendiente lo tiene que completar o confirmar el grupo antes de entregar:
+% decisiones de diseno, su justificacion y los valores que la letra pide definir y justificar.
+\newcommand{\pendiente}[1]{\textcolor{red}{\textbf{[Pendiente:} #1\textbf{]}}}
+
+\newcommand{\sectionbreak}{\clearpage}
+
+\newcommand{\solucion}{carga.uy }
+\newcommand{\edicion}{2026 }
+\newcommand{\proposito}{Esta plataforma brinda soporte al ciclo completo de gestión, seguimiento y fiscalización del transporte de carga carretero en Uruguay. }
+
+\addbibresource{references.bib}
+\title{\vspace{2cm} \huge{Documento de Arquitectura de Software} \\ \LARGE{Grupo 01 - 2026} \vspace{2cm} \\  \Large {Taller de Sistemas Empresariales \\ Taller de Sistemas de Información Java EE} \vspace{2cm}}
+
+\author{
+    Lucas Lazogue
+    \and
+    Kevin Martinez
+    \and
+    Eric Tift
+    \and
+    Andres Murara
+}
+
+\date{\vspace{1cm}}
+
+\titlespacing\section{0pt}{6pt plus 4pt minus 2pt}{4pt plus 2pt minus 2pt}
+
+\titlespacing\subsection{0pt}{6pt plus 4pt minus 2pt}{4pt plus 2pt minus 2pt}
+
+\begin{document}
+\raggedbottom
+
+\maketitle
+
+\newpage
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\renewcommand{\contentsname}{Tabla de Contenido}
+\tableofcontents
+\newpage
+
+\input{introduccion}
+\input{vista-conceptual}
+\input{vista-casos-uso}
+\input{vista-restricciones}
+\input{vista-atributos-calidad}
+\input{vista-logica}
+\input{vista-distribucion}
+\input{vista-implementacion}
+\input{vista-decisiones}
+\AtNextBibliography{\small}
+\printbibliography
+
+\end{document}

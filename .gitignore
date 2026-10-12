@@ -4,3 +4,7 @@
 target/
 .env
 .vscode/
+
+# informe LaTeX: salida de la compilacion
+docs/informe/build/
+docs/informe/*.pdf
