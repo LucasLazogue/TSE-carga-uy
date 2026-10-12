@@ -1,6 +1,6 @@
 \section{Vista de Decisiones de Arquitectura}\label{sec:vista-de-decisiones-de-arquitectura}
 
-La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión, justificación y decisiones relacionadas.
+La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión y justificación.
 
 
 \begin{table}[H]
@@ -23,8 +23,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
             \textbf{Decisión} & Organizar el componente central en cuatro capas: presentación (API REST, frontoffice y backoffice), servicios y procesamiento (Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización), persistencia, y adaptadores e infraestructura, que aíslan cada integración externa (Figura \ref{fig:vista_logica}). \\
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
-        \hline
-            \textbf{Decisiones Relacionadas} & DA02, DA05 \\
         \hline
     \end{tabular}
 \end{table}
@@ -50,8 +48,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
-            \textbf{Decisiones Relacionadas} & DA01, DA07 \\
-        \hline
     \end{tabular}
 \end{table}
 
@@ -75,8 +71,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
             \textbf{Decisión} & La sesión es un JWT firmado (HS256) con la biblioteca JJWT, que viaja en una cookie \textit{HttpOnly} en la web y como token \textit{Bearer} en el móvil. El estado del ingreso con gub.uy viaja en una cookie firmada en lugar de quedar en la \texttt{HttpSession}. El secreto se configura por entorno y debe tener al menos 32 bytes. El JWT se emite también tras el ingreso al backoffice, que valida las credenciales contra el directorio LDAP. \\
         \hline
             \textbf{Justificación} & Hace la autenticación independiente de la instancia y saca la criptografía propia del código: el \textit{callback} de gub.uy puede llegar a cualquier instancia del componente central. \\
-        \hline
-            \textbf{Decisiones Relacionadas} & DA04, DA09 \\
         \hline
     \end{tabular}
 \end{table}
@@ -102,8 +96,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
-            \textbf{Decisiones Relacionadas} & DA03 \\
-        \hline
     \end{tabular}
 \end{table}
 
@@ -127,8 +119,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
             \textbf{Decisión} & Backoffice en JSF dentro del componente central; frontoffice en React, servido como sitio estático desde Vercel (Figura \ref{fig:vista_distrib}). \pendiente{confirmar con el tutor el uso de Vercel frente a R14.} \\
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
-        \hline
-            \textbf{Decisiones Relacionadas} & DA01 \\
         \hline
     \end{tabular}
 \end{table}
@@ -154,8 +144,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
-            \textbf{Decisiones Relacionadas} & DA04 \\
-        \hline
     \end{tabular}
 \end{table}
 
@@ -178,9 +166,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Decisión} & Guardar las posiciones en una colección normal de MongoDB, con un índice único sobre el par (nodo, identificador del evento) e índices por viaje y por matrícula con el momento de generación. Un evento que viola el índice único se descarta como duplicado. Las posiciones referencian el vehículo, el viaje y el nodo por su identificador, sin claves foráneas. \\
         \hline
-            \textbf{Justificación} & Separar las posiciones descarga a PostgreSQL del dato de mayor volumen. Se descartan las colecciones de series temporales porque no admiten índices únicos ni permiten asociar después una posición a su viaje. MongoDB no participa de la transacción del consumidor: si esta se deshace, la reentrega choca con el índice y se trata como duplicado. \\
-        \hline
-            \textbf{Decisiones Relacionadas} & DA02, DA08 \\
+            \textbf{Justificación} & Las posiciones son lo que más crece en la plataforma, así que guardarlas aparte evita que PostgreSQL se vuelva lento. Usamos una colección normal de MongoDB y no una de series temporales, porque esas no permiten evitar duplicados ni modificar una posición después para asociarla a su viaje. Si una posición se procesa mal y llega de nuevo, MongoDB ve que ya está guardada y no la repite. \\
         \hline
     \end{tabular}
 \end{table}
@@ -206,8 +192,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
-            \textbf{Decisiones Relacionadas} & DA07 \\
-        \hline
     \end{tabular}
 \end{table}
 
@@ -232,8 +216,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
-            \textbf{Decisiones Relacionadas} & DA03 \\
-        \hline
     \end{tabular}
 \end{table}
 
@@ -257,8 +239,6 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
             \textbf{Decisión} & La integración con el Sistema de Balanzas es una consulta iniciada por el componente central, como exige la letra. El Motor de Fiscalización consulta los pesajes cuando procesa el fin de un viaje, por el vehículo y cada fecha del viaje. \\
         \hline
             \textbf{Justificación} & Se descartó que el nodo de balanzas notificara cada pesaje porque la letra define la integración como solicitud--respuesta (R3): el componente central pide los pesajes de un vehículo en una fecha y el nodo devuelve todas las pesadas de ese vehículo en esa fecha. Consultar con cada posición o periódicamente repetiría la misma consulta muchas veces, porque cada respuesta trae las pesadas de todo el día. Al finalizar el viaje ya se conocen el vehículo y las fechas, y alcanza con una consulta por fecha. Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma. \\
-        \hline
-            \textbf{Decisiones Relacionadas} & DA01, DA08 \\
         \hline
     \end{tabular}
 \end{table}
