@@ -263,7 +263,11 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \hline
     Reintentos y cola de mensajes muertos & Espera entre reintentos, cantidad de intentos y qué se hace con los mensajes que terminan en la cola de mensajes muertos. & DA02, AC12. \\
     \hline
-    Criterio de desvío de ruta & Cuánto debe apartarse la ruta del recorrido esperado para considerarse desvío. & CU-11. \\
+    Servicio de rutas y geocodificación & Qué servicio externo se usa para ubicar el origen y el destino y obtener el recorrido esperado, con sus límites de uso. & CU-07, Vista Lógica, Distribución. \\
+    \hline
+    Criterio de desvío de ruta & Distancia máxima al recorrido esperado, tiempo fuera de él y cantidad mínima de posiciones, con sus valores por defecto. & CU-11, parametrización de reglas. \\
+    \hline
+    Momento de evaluación del desvío & Si el desvío se evalúa al finalizar el viaje o con cada posición recibida. & CU-11, Motor de Fiscalización. \\
     \hline
     Umbral de agregación & Umbral mínimo de agregación de la información pública. & AC06, R12. \\
     \hline
