@@ -286,7 +286,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item Compara la ruta con el recorrido y los umbrales configurados.
     \item Comprueba que el hecho no haya generado otro caso.
     \item Crea el caso en estado \emph{detectada} y almacena la evidencia.
-    \item Lo publica, notifica a la empresa e inicia el plazo de descargo.
+    \item Lo publica y solicita la notificación a la empresa; al confirmarse el envío, el caso pasa a \emph{notificada} e inicia el plazo de descargo.
     \item Registra la creación en la pista de auditoría.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
@@ -296,7 +296,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item No se determina un desvío con posiciones insuficientes.
     \item Una falla del correo no bloquea el caso y provoca un reintento.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} Existe un caso con evidencia en estado \emph{notificada}, sin duplicados y con su creación auditada. \\ \hline
+\textbf{\underline{Postcondiciones:}} Existe un caso con evidencia, en estado \emph{notificada} o en \emph{detectada} hasta que se confirme el envío, sin duplicados y con su creación auditada. \\ \hline
 \end{tabular}
 \end{table}
 
