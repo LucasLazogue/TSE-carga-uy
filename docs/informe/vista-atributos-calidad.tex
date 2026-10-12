@@ -42,7 +42,13 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC12 & Resiliencia & La indisponibilidad de un sistema externo o de un nodo periférico no provoca la indisponibilidad del componente central. \\
     \hline
-    AC13 & Resiliencia & Las integraciones aplican tiempos de espera, reintentos y corte ante fallas sostenidas, con \pendiente{definir el tiempo de espera, la cantidad de reintentos y la condición de corte}, y un comportamiento degradado definido para las funcionalidades afectadas. \\
+    AC13 & Resiliencia & Las integraciones con sistemas externos y nodos periféricos aplican un tiempo de espera, reintentos y un corte ante fallas sostenidas, con un comportamiento degradado definido:
+    \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
+        \item \textbf{Balanzas:} espera de 5 s, 2 reintentos a 1 s y 2 s, y corte por 60 s tras 5 fallas en 10 llamadas. La evaluación de exceso de carga queda pendiente y el resto de las reglas se evalúa igual.
+        \item \textbf{PDI:} espera de 3 s, 1 reintento a 1 s, y corte por 30 s tras 5 fallas en 10 llamadas. El perfil del ciudadano se crea sin los datos de la PDI, que se completan en su próximo ingreso.
+        \item \textbf{Usuario gub.uy:} espera de 5 s, sin reintentos. El ingreso falla con un mensaje y las sesiones ya iniciadas siguen funcionando.
+        \item \textbf{Correo:} espera de 5 s y 3 reintentos a 1, 5 y 30 min. El caso avanza igual y la notificación se reintenta.
+    \end{itemize} \\
     \hline
     AC14 & Resiliencia & Las pruebas incluyen un escenario con el Sistema de Balanzas indisponible y otro con la PDI sin responder. \\
     \hline
