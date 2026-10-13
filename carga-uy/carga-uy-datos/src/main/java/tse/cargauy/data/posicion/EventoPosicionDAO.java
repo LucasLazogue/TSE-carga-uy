@@ -1,43 +1,39 @@
 package tse.cargauy.data.posicion;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoWriteException;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
+
+import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceException;
 import tse.cargauy.dtos.EventoPosicionDto;
-import tse.cargauy.entities.EventoPosicion;
-import tse.cargauy.entities.NodoPeriferico;
-import tse.cargauy.entities.Vehiculo;
 
 @Stateless
 public class EventoPosicionDAO implements EventoPosicionDAOLocal {
 
-    // clase 23 del estandar SQL: violacion de una restriccion de integridad (23505 es la de unicidad en PostgreSQL)
-    private static final String VIOLACION_INTEGRIDAD = "23";
+    @EJB
+    AlmacenPosiciones almacen;
 
-    @PersistenceContext(unitName = "carga-uy")
-    private EntityManager entityManager;
-
-    // transaccion propia: si el evento es repetido se deshace solo este insert y no la transaccion del consumidor,
-    // que si no volveria a recibir el mismo mensaje una y otra vez
+    // MongoDB no participa de la transaccion del consumidor: si despues falla otro paso y el broker reentrega el
+    // mensaje, la posicion ya esta guardada y el indice unico la rechaza. Por eso un duplicado no es un error (DA07)
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public boolean registrar(EventoPosicionDto eventoDto) {
-        NodoPeriferico nodo = entityManager.find(NodoPeriferico.class, eventoDto.getIdNodo());
-        Vehiculo vehiculo = eventoDto.getIdVehiculo() == null ? null : entityManager.find(Vehiculo.class, eventoDto.getIdVehiculo());
+        Document documento = Serializers.toDocument(eventoDto).append("procesada", false);
         try {
-            entityManager.persist(Serializers.toEntity(eventoDto, nodo, vehiculo));
-            // sin flush el insert recien se manda al confirmar, fuera de este metodo, y el duplicado no se podria reconocer aca
-            entityManager.flush();
+            almacen.posiciones().insertOne(documento);
             return true;
-        } catch (PersistenceException e) {
-            if (esViolacionDeIntegridad(e)) {
+        } catch (MongoWriteException e) {
+            if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
                 return false;
             }
             throw e;
@@ -45,22 +41,31 @@ public class EventoPosicionDAO implements EventoPosicionDAOLocal {
     }
 
     @Override
+    public EventoPosicionDto get(Long idNodo, String idEvento) {
+        Document d = almacen.posiciones().find(origen(idNodo, idEvento)).first();
+        return d == null ? null : Serializers.toDto(d);
+    }
+
+    // se llama cuando la transaccion del consumidor ya se confirmo, asi que no hay transaccion a la que unirse
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void marcarProcesada(Long idNodo, String idEvento) {
+        almacen.posiciones().updateOne(origen(idNodo, idEvento), Updates.set("procesada", true));
+    }
+
+    @Override
     public List<EventoPosicionDto> getRuta(String matricula) {
         List<EventoPosicionDto> res = new ArrayList<>();
-        for (EventoPosicion e : entityManager.createNamedQuery(EventoPosicion.RUTA_POR_MATRICULA, EventoPosicion.class)
-                .setParameter("matricula", matricula)
-                .getResultList()) {
-            res.add(Serializers.toDto(e));
+        for (Document d : almacen.posiciones()
+                .find(Filters.eq("matricula", matricula))
+                .sort(Sorts.ascending("timestampGeneracion"))) {
+            res.add(Serializers.toDto(d));
         }
         return res;
     }
 
-    private static boolean esViolacionDeIntegridad(Throwable e) {
-        for (Throwable t = e; t != null; t = t.getCause()) {
-            if (t instanceof SQLException sql && sql.getSQLState() != null && sql.getSQLState().startsWith(VIOLACION_INTEGRIDAD)) {
-                return true;
-            }
-        }
-        return false;
+    // los mismos campos del indice unico
+    private static Bson origen(Long idNodo, String idEvento) {
+        return Filters.and(Filters.eq("idNodo", idNodo), Filters.eq("idEvento", idEvento));
     }
 }

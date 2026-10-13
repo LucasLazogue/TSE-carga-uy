@@ -5,6 +5,8 @@ import java.util.List;
 
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import tse.cargauy.data.nodo.NodoPerifericoDAOLocal;
 import tse.cargauy.data.posicion.EventoPosicionDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
@@ -27,6 +29,9 @@ public class IngestaTrackingEJB implements IngestaTrackingEJBLocal {
     @EJB
     EventoPosicionDAOLocal eventoDAO;
 
+    @Inject
+    Event<PosicionProcesada> procesadas;
+
     public ResultadoIngesta procesar(EventoPosicionDto eventoDto) {
         NodoPerifericoDto nodo = nodoDAO.getByIdentificador(eventoDto.getNodo());
         if (nodo == null) {
@@ -41,7 +46,23 @@ public class IngestaTrackingEJB implements IngestaTrackingEJBLocal {
         VehiculoDto vehiculo = vehiculoDAO.getVehiculoByMatricula(eventoDto.getMatricula());
         eventoDto.setIdVehiculo(vehiculo == null ? null : vehiculo.getId());
         eventoDto.setTimestampRecepcion(Instant.now());
-        return eventoDAO.registrar(eventoDto) ? ResultadoIngesta.REGISTRADO : ResultadoIngesta.DUPLICADO;
+        if (eventoDAO.registrar(eventoDto)) {
+            terminar(eventoDto);
+            return ResultadoIngesta.REGISTRADO;
+        }
+        // ya estaba guardada (DA07). Si quedo sin procesar, un intento anterior fallo despues de guardarla, o la esta
+        // procesando otro consumidor: se repiten los pasos siguientes sobre la guardada, que se pueden repetir
+        EventoPosicionDto guardada = eventoDAO.get(eventoDto.getIdNodo(), eventoDto.getIdEvento());
+        if (guardada == null || guardada.isProcesada()) {
+            return ResultadoIngesta.DUPLICADO;
+        }
+        terminar(guardada);
+        return ResultadoIngesta.COMPLETADO;
+    }
+
+    // los pasos que van despues de guardar la posicion. Por ahora solo la marca de procesada
+    private void terminar(EventoPosicionDto posicion) {
+        procesadas.fire(new PosicionProcesada(posicion.getIdNodo(), posicion.getIdEvento()));
     }
 
     public List<EventoPosicionDto> getRuta(String matricula) {

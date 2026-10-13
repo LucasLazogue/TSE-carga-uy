@@ -18,6 +18,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <mongodb.version>5.13.0</mongodb.version>
   </properties>
 
   <dependencyManagement>
@@ -36,6 +37,12 @@
     <dependency>
       <groupId>jakarta.platform</groupId>
       <artifactId>jakarta.jakartaee-api</artifactId>
+    </dependency>
+    <!-- Almacen de Posiciones (DA07): va en lib/ del EAR -->
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-sync</artifactId>
+      <version>${mongodb.version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>

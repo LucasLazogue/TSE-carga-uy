@@ -12,6 +12,18 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  # Almacen de Posiciones (DA07, opcional 10)
+  mongo:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: cargauy
+      MONGO_INITDB_ROOT_PASSWORD: cargauy
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodata:/data/db
+
   carga-uy:
     build: .
     hostname: localhost
@@ -29,6 +41,10 @@ services:
       CARGAUY_FRONTEND_URL: ${CARGAUY_FRONTEND_URL:-http://localhost:5173}
       CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
       CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
+      MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}
+      MONGO_DB: ${MONGO_DB:-cargauy}
+    depends_on:
+      - mongo
 
   # nodo periferico de tracking: simula la flota y publica sus posiciones en queue_tracking.
   # en el despliegue va en otra PaaS; aca esta para levantar todo con un solo comando
@@ -54,3 +70,4 @@ services:
 
 volumes:
   pgdata:
+  mongodata:

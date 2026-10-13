@@ -65,7 +65,10 @@ Por ejemplo, desde `carga-uy`:
 - Qué hizo la ingesta con cada evento: `docker compose logs carga-uy | grep ingesta`
 
 Al detenerlo (`docker compose stop nodo-tracking`) publica lo pendiente e imprime las métricas
-finales. `generados` tiene que coincidir con las filas nuevas de `eventoposicion`.
+finales. `generados` tiene que coincidir con los documentos nuevos de la colección `posiciones` de
+MongoDB (desde `carga-uy`):
+
+    docker compose exec mongo mongosh -u cargauy -p cargauy --quiet --eval 'db.getSiblingDB("cargauy").posiciones.countDocuments()'
 
 ### Tests
 
