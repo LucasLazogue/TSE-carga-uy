@@ -80,7 +80,8 @@ Una vez desplegada en OpenShift, obtener la URL con
 
 Nodos perifericos (CU-19): pantalla del backoffice en http://localhost:8080/carga-uy/nodos.xhtml y API
 en /api/nodos. Posiciones recibidas del tracking (CU-10):
-/api/posiciones?matricula=X. El simulador del nodo de tracking esta en nodo-tracking (ver su README).
+/api/posiciones?matricula=X. El nodo de tracking, que simula la flota y publica sus posiciones, esta
+en nodo-tracking (ver su README).
 
 ## Ejecutar aplicacion consola
 Desde carga-uy-client ejecutar
@@ -114,3 +115,7 @@ Crear un archivo .env.local (no se commitea) con la URL de OpenShift:
 - VITE_API_TARGET=https://URL_DE_LA_RUTA/carga-uy
 
 Reiniciar npm run dev para que tome el cambio.
+
+## Ejecutar app mobile
+Ver mobile/README.md. El celular o emulador llega al backend por la IP de la maquina, no por
+localhost, asi que hay que poner esa IP en GUBUY_REDIRECT_URI (carga-uy/.env) y en la app.

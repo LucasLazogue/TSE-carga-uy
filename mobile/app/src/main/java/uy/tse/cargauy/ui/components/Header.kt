@@ -12,6 +12,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 
+import uy.tse.cargauy.ui.theme.LocalColoresBarra
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Header(
@@ -19,6 +21,8 @@ fun Header(
     onVolver: (() -> Unit)? = null,
     onSettings: (() -> Unit)? = null,
 ) {
+    val barra = LocalColoresBarra.current
+
     TopAppBar(
         title = {
             Text(
@@ -47,10 +51,10 @@ fun Header(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-            actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+            containerColor = barra.fondo,
+            titleContentColor = barra.contenido,
+            navigationIconContentColor = barra.contenido,
+            actionIconContentColor = barra.contenido,
         ),
     )
 }

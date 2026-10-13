@@ -1,5 +1,6 @@
 package tse.cargauy.data.viaje;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,7 @@ import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.Chofer;
 import tse.cargauy.entities.Empresa_;
+import tse.cargauy.entities.EstadoViaje;
 import tse.cargauy.entities.Guia;
 import tse.cargauy.entities.Guia_;
 import tse.cargauy.entities.Usuario_;
@@ -125,6 +127,41 @@ public class ViajeDAO implements ViajeDAOLocal {
             viaje.getGuia().setViaje(null);
             entityManager.remove(viaje);
         }
+    }
+
+    @Override
+    public ViajeDto getActualDelChofer(Long idCiudadano) {
+        Viaje viaje = primeroDelChofer(idCiudadano, EstadoViaje.EN_CURSO);
+        if (viaje == null) {
+            viaje = primeroDelChofer(idCiudadano, EstadoViaje.ASIGNADO);
+        }
+        return viaje == null ? null : Serializers.toDto(viaje);
+    }
+
+    // la fecha llega del evento del celular, no es la de ahora: el viaje empezo cuando el chofer toco el boton
+    @Override
+    public void cambiarEstado(Long id, EstadoViaje estado, LocalDateTime fecha) {
+        Viaje viaje = entityManager.find(Viaje.class, id);
+        if (viaje != null) {
+            if (estado == EstadoViaje.EN_CURSO) {
+                viaje.setFechaInicio(fecha);
+            } else if (estado == EstadoViaje.FINALIZADO) {
+                viaje.setFechaFin(fecha);
+            }
+            viaje.setEstado(estado);
+        }
+    }
+
+    // fecha de guia ascendente: getAll ordena al reves (lo que quiere el listado) y le daria al chofer el viaje mas lejano
+    private Viaje primeroDelChofer(Long idCiudadano, EstadoViaje estado) {
+        List<Viaje> viajes = entityManager.createQuery(
+                        "SELECT v FROM Viaje v WHERE v.chofer.ciudadano.id = :idCiudadano AND v.estado = :estado"
+                                + " ORDER BY v.guia.fecha, v.id", Viaje.class)
+                .setParameter("idCiudadano", idCiudadano)
+                .setParameter("estado", estado)
+                .setMaxResults(1)
+                .getResultList();
+        return viajes.isEmpty() ? null : viajes.get(0);
     }
 
     private Chofer getChofer(Long idCiudadano, Guia guia) {
