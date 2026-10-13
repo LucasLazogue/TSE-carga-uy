@@ -14,6 +14,8 @@ public class EventoPosicionDto implements Serializable {
     private Long idNodo;
     private String matricula;
     private Long idVehiculo;
+    // el viaje que el vehiculo tenia en curso cuando se genero la posicion; null si no tenia
+    private Long idViaje;
     private double latitud;
     private double longitud;
     private Instant timestampGeneracion;
@@ -70,6 +72,14 @@ public class EventoPosicionDto implements Serializable {
 
     public void setIdVehiculo(Long idVehiculo) {
         this.idVehiculo = idVehiculo;
+    }
+
+    public Long getIdViaje() {
+        return idViaje;
+    }
+
+    public void setIdViaje(Long idViaje) {
+        this.idViaje = idViaje;
     }
 
     public double getLatitud() {

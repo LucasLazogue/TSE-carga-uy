@@ -27,6 +27,8 @@ import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
 import tse.cargauy.entities.ResultadoEvento;
 import tse.cargauy.entities.TipoEventoViaje;
+import tse.cargauy.negocio.EventoFalso;
+import tse.cargauy.negocio.viaje.ViajeIniciadoOFinalizado;
 
 class AplicadorEventosEJBTest {
 
@@ -37,9 +39,11 @@ class AplicadorEventosEJBTest {
     private final List<String> registrados = new ArrayList<>();
     private final ViajeDto viaje = new ViajeDto(1L, 1L, CHOFER);
     private LocalDateTime fechaCambio;
+    private final EventoFalso<ViajeIniciadoOFinalizado> inicioOFin = new EventoFalso<>();
 
     @BeforeEach
     void preparar() {
+        ejb.inicioOFin = inicioOFin;
         viaje.setId(2L);
         viaje.setEstado(EstadoViaje.ASIGNADO);
         ejb.eventoDAO = new EventoViajeDAO() {
@@ -165,5 +169,24 @@ class AplicadorEventosEJBTest {
 
         assertEquals(ResultadoEvento.RECHAZADO, resultado.getResultado());
         assertEquals(EstadoViaje.ASIGNADO, viaje.getEstado());
+    }
+
+    // el inicio y el fin pueden llegar tarde: con la hora nueva se reasocian las posiciones del vehiculo (CU-10)
+    @Test
+    void inicioYFinAvisanParaReasociarLasPosiciones() {
+        ejb.aplicar(evento("e1", TipoEventoViaje.INICIO), CHOFER);
+        ejb.aplicar(evento("e2", TipoEventoViaje.FIN), CHOFER);
+
+        assertEquals(List.of(new ViajeIniciadoOFinalizado(2L), new ViajeIniciadoOFinalizado(2L)), inicioOFin.disparados);
+    }
+
+    @Test
+    void unEventoQueNoCambiaElHorarioNoAvisa() {
+        viaje.setEstado(EstadoViaje.EN_CURSO);
+
+        ejb.aplicar(evento("e1", TipoEventoViaje.INCIDENTE), CHOFER);
+        ejb.aplicar(evento("e2", TipoEventoViaje.INICIO), CHOFER);
+
+        assertTrue(inicioOFin.disparados.isEmpty());
     }
 }

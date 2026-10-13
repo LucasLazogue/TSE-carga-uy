@@ -1,6 +1,8 @@
 package tse.cargauy.data.posicion;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.Document;
@@ -51,6 +53,18 @@ public class EventoPosicionDAO implements EventoPosicionDAOLocal {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void marcarProcesada(Long idNodo, String idEvento) {
         almacen.posiciones().updateOne(origen(idNodo, idEvento), Updates.set("procesada", true));
+    }
+
+    // tambien se llama con la transaccion que cambio el viaje ya confirmada
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void asociarAViaje(String matricula, Long idVehiculo, Instant desde, Instant hasta, Long idViaje) {
+        Bson tramo = Filters.and(Filters.eq("matricula", matricula), Filters.gte("timestampGeneracion", Date.from(desde)));
+        if (hasta != null) {
+            tramo = Filters.and(tramo, Filters.lt("timestampGeneracion", Date.from(hasta)));
+        }
+        almacen.posiciones().updateMany(tramo,
+                Updates.combine(Updates.set("idViaje", idViaje), Updates.set("idVehiculo", idVehiculo)));
     }
 
     @Override

@@ -68,6 +68,8 @@ public class AlmacenPosiciones {
                 new IndexOptions().unique(true).name("uk_posicion_origen"));
         posiciones.createIndex(Indexes.ascending("matricula", "timestampGeneracion"),
                 new IndexOptions().name("ix_posicion_matricula"));
+        posiciones.createIndex(Indexes.ascending("idViaje", "timestampGeneracion"),
+                new IndexOptions().name("ix_posicion_viaje"));
         conIndices = true;
     }
 

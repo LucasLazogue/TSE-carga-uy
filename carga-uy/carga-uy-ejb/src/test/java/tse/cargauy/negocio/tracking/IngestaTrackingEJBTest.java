@@ -5,40 +5,44 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.annotation.Annotation;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletionStage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.NotificationOptions;
-import jakarta.enterprise.util.TypeLiteral;
-
 import tse.cargauy.data.nodo.NodoPerifericoDAO;
 import tse.cargauy.data.posicion.EventoPosicionDAO;
 import tse.cargauy.data.vehiculo.VehiculoDAO;
+import tse.cargauy.data.viaje.ViajeDAO;
 import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.NodoPerifericoDto;
 import tse.cargauy.dtos.VehiculoDto;
+import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoNodo;
 import tse.cargauy.entities.TipoNodo;
+import tse.cargauy.negocio.EventoFalso;
 
 class IngestaTrackingEJBTest {
+
+    private static final ZoneId ZONA = ZoneId.systemDefault();
+    private static final Instant GENERADA = Instant.parse("2026-10-06T12:00:00Z");
 
     private final IngestaTrackingEJB ejb = new IngestaTrackingEJB();
     private final Map<String, NodoPerifericoDto> nodos = new HashMap<>();
     // lo que guardaria MongoDB, por los campos del indice unico: nodo + id del evento
     private final Map<String, EventoPosicionDto> porClave = new HashMap<>();
     private final List<EventoPosicionDto> guardados = new ArrayList<>();
-    private final List<PosicionProcesada> terminadas = new ArrayList<>();
+    private final EventoFalso<PosicionProcesada> terminadas = new EventoFalso<>();
+    private final List<LocalDateTime> consultasDeViaje = new ArrayList<>();
+    private ViajeDto viajeEnCurso;
 
     @BeforeEach
     void preparar() {
@@ -61,6 +65,13 @@ class IngestaTrackingEJBTest {
                 return vehiculo;
             }
         };
+        ejb.viajeDAO = new ViajeDAO() {
+            @Override
+            public ViajeDto getEnCursoDelVehiculo(Long idVehiculo, LocalDateTime momento) {
+                consultasDeViaje.add(momento);
+                return idVehiculo.equals(11L) ? viajeEnCurso : null;
+            }
+        };
         ejb.eventoDAO = new EventoPosicionDAO() {
             @Override
             public boolean registrar(EventoPosicionDto evento) {
@@ -76,7 +87,7 @@ class IngestaTrackingEJBTest {
                 return porClave.get(clave(idNodo, idEvento));
             }
         };
-        ejb.procesadas = new EventoFalso();
+        ejb.procesadas = terminadas;
     }
 
     @Test
@@ -90,32 +101,67 @@ class IngestaTrackingEJBTest {
     }
 
     @Test
+    void asociaLaPosicionAlViajeEnCurso() {
+        viajeEnCurso = viaje(21L);
+
+        ejb.procesar(evento("ev-1", "tracking-1", "STA1234"));
+
+        assertEquals(21L, guardados.get(0).getIdViaje());
+    }
+
+    // una posicion que llega tarde es del viaje que estaba en curso cuando se genero, no del de ahora
+    @Test
+    void buscaElViajeALaHoraEnQueSeGeneroLaPosicion() {
+        ejb.procesar(evento("ev-1", "tracking-1", "STA1234"));
+
+        assertEquals(List.of(LocalDateTime.ofInstant(GENERADA, ZONA)), consultasDeViaje);
+    }
+
+    @Test
+    void sinViajeEnCursoSeGuardaSinViaje() {
+        assertEquals(ResultadoIngesta.REGISTRADO, ejb.procesar(evento("ev-1", "tracking-1", "STA1234")));
+
+        assertNull(guardados.get(0).getIdViaje());
+    }
+
+    @Test
+    void unaMatriculaDesconocidaSeGuardaConLaMatriculaYSinVehiculoNiViaje() {
+        assertEquals(ResultadoIngesta.REGISTRADO, ejb.procesar(evento("ev-1", "tracking-1", "XXX0000")));
+
+        EventoPosicionDto guardado = guardados.get(0);
+        assertEquals("XXX0000", guardado.getMatricula());
+        assertNull(guardado.getIdVehiculo());
+        assertNull(guardado.getIdViaje());
+        assertTrue(consultasDeViaje.isEmpty());
+    }
+
+    @Test
     void alTerminarAvisaQueLaPosicionSePuedeMarcarComoProcesada() {
         ejb.procesar(evento("ev-1", "tracking-1", "STA1234"));
 
-        assertEquals(List.of(new PosicionProcesada(3L, "ev-1")), terminadas);
+        assertEquals(List.of(new PosicionProcesada(3L, "ev-1")), terminadas.disparados);
     }
 
     @Test
     void unDuplicadoDeUnaPosicionYaProcesadaSeDescarta() {
         ejb.procesar(evento("ev-1", "tracking-1", "STA1234"));
         porClave.get(clave(3L, "ev-1")).setProcesada(true);
-        terminadas.clear();
+        terminadas.disparados.clear();
 
         assertEquals(ResultadoIngesta.DUPLICADO, ejb.procesar(evento("ev-1", "tracking-1", "STA1234")));
         assertEquals(1, guardados.size());
-        assertTrue(terminadas.isEmpty());
+        assertTrue(terminadas.disparados.isEmpty());
     }
 
     // un intento anterior la guardo y fallo despues: el reenvio no la guarda de nuevo, pero termina de procesarla
     @Test
     void unDuplicadoDeUnaPosicionQueQuedoSinProcesarSeCompleta() {
         ejb.procesar(evento("ev-1", "tracking-1", "STA1234"));
-        terminadas.clear();
+        terminadas.disparados.clear();
 
         assertEquals(ResultadoIngesta.COMPLETADO, ejb.procesar(evento("ev-1", "tracking-1", "STA1234")));
         assertEquals(1, guardados.size());
-        assertEquals(List.of(new PosicionProcesada(3L, "ev-1")), terminadas);
+        assertEquals(List.of(new PosicionProcesada(3L, "ev-1")), terminadas.disparados);
     }
 
     // el id del evento lo genera cada nodo: dos nodos pueden repetirlo sin que sea el mismo evento
@@ -128,17 +174,10 @@ class IngestaTrackingEJBTest {
     }
 
     @Test
-    void unaMatriculaDesconocidaSeGuardaSinVehiculo() {
-        assertEquals(ResultadoIngesta.REGISTRADO, ejb.procesar(evento("ev-1", "tracking-1", "XXX0000")));
-
-        assertNull(guardados.get(0).getIdVehiculo());
-    }
-
-    @Test
     void descartaLosEventosDeUnNodoQueNoEstaRegistrado() {
         assertEquals(ResultadoIngesta.NODO_DESCONOCIDO, ejb.procesar(evento("ev-1", "tracking-9", "STA1234")));
         assertTrue(guardados.isEmpty());
-        assertTrue(terminadas.isEmpty());
+        assertTrue(terminadas.disparados.isEmpty());
     }
 
     @ParameterizedTest
@@ -152,6 +191,12 @@ class IngestaTrackingEJBTest {
 
     private static String clave(Long idNodo, String idEvento) {
         return idNodo + "|" + idEvento;
+    }
+
+    private static ViajeDto viaje(Long id) {
+        ViajeDto viaje = new ViajeDto();
+        viaje.setId(id);
+        return viaje;
     }
 
     private void nodo(Long id, String identificador, TipoNodo tipo, EstadoNodo estado) {
@@ -168,40 +213,7 @@ class IngestaTrackingEJBTest {
         evento.setMatricula(matricula);
         evento.setLatitud(-34.9);
         evento.setLongitud(-56.1);
-        evento.setTimestampGeneracion(Instant.parse("2026-10-06T12:00:00Z"));
+        evento.setTimestampGeneracion(GENERADA);
         return evento;
-    }
-
-    // junta lo que la ingesta dispara; en el servidor lo recibe MarcadorPosiciones al confirmarse la transaccion
-    private class EventoFalso implements Event<PosicionProcesada> {
-        @Override
-        public void fire(PosicionProcesada posicion) {
-            terminadas.add(posicion);
-        }
-
-        @Override
-        public <U extends PosicionProcesada> CompletionStage<U> fireAsync(U posicion) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <U extends PosicionProcesada> CompletionStage<U> fireAsync(U posicion, NotificationOptions opciones) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Event<PosicionProcesada> select(Annotation... calificadores) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <U extends PosicionProcesada> Event<U> select(Class<U> subtipo, Annotation... calificadores) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <U extends PosicionProcesada> Event<U> select(TypeLiteral<U> subtipo, Annotation... calificadores) {
-            throw new UnsupportedOperationException();
-        }
     }
 }

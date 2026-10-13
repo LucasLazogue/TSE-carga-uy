@@ -16,6 +16,7 @@ public class Serializers {
         dto.setIdNodo(d.getLong("idNodo"));
         dto.setMatricula(d.getString("matricula"));
         dto.setIdVehiculo(d.getLong("idVehiculo"));
+        dto.setIdViaje(d.getLong("idViaje"));
         dto.setLatitud(d.getDouble("latitud"));
         dto.setLongitud(d.getDouble("longitud"));
         dto.setTimestampGeneracion(d.getDate("timestampGeneracion").toInstant());
@@ -31,6 +32,7 @@ public class Serializers {
                 .append("nodo", dto.getNodo())
                 .append("matricula", dto.getMatricula())
                 .append("idVehiculo", dto.getIdVehiculo())
+                .append("idViaje", dto.getIdViaje())
                 .append("latitud", dto.getLatitud())
                 .append("longitud", dto.getLongitud())
                 .append("timestampGeneracion", Date.from(dto.getTimestampGeneracion()))
