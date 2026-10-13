@@ -31,8 +31,10 @@
       <critical-analyzer-policy>HALT</critical-analyzer-policy>
 
       <acceptors>
-         <!-- red interna del componente central: lo usan las instancias de WildFly -->
-         <acceptor name="central">tcp://0.0.0.0:61616?protocols=CORE</acceptor>
+         <!-- red interna del componente central: lo usan las instancias de WildFly. Escucha en el nombre del
+              servicio y no en 0.0.0.0, porque el broker les anuncia a los clientes esta direccion para reconectarse
+              (la usa, por ejemplo, la recuperacion de transacciones XA de WildFly) -->
+         <acceptor name="central">tcp://artemis:61616?protocols=CORE</acceptor>
          <!-- los nodos perifericos corren en otra plataforma: se conectan con TLS (R8) -->
          <acceptor name="nodos">tcp://0.0.0.0:61617?protocols=CORE;sslEnabled=true;keyStorePath=/var/lib/artemis-instance/etc/artemis.p12;keyStorePassword=cargauy-dev</acceptor>
       </acceptors>
