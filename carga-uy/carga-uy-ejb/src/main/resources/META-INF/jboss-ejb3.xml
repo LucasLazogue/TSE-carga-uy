@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- el MDB de la ingesta consume del broker de su propio contenedor (DA02), con el adaptador de recursos que
+     configura el Dockerfile; los demas MDB siguen con el broker embebido de WildFly -->
+<jboss:ejb-jar xmlns:jboss="urn:jboss:jakartaee:1.0"
+               xmlns="https://jakarta.ee/xml/ns/jakartaee"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns:mdb="urn:resource-adapter-binding"
+               xsi:schemaLocation="urn:jboss:jakartaee:1.0 https://www.jboss.org/schema/jbossas/jboss-ejb3-4_0.xsd https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/ejb-jar_4_0.xsd"
+               version="4.0"
+               impl-version="2.0">
+    <assembly-descriptor>
+        <mdb:resource-adapter-binding>
+            <ejb-name>IngestaTrackingMDB</ejb-name>
+            <mdb:resource-adapter-name>artemis</mdb:resource-adapter-name>
+        </mdb:resource-adapter-binding>
+    </assembly-descriptor>
+</jboss:ejb-jar>

@@ -1,0 +1,9 @@
+# queue_tracking no esta en el broker embebido sino en el de su propio contenedor (DA02), que comparten todas las
+# instancias del componente central. El pooled-connection-factory es el adaptador de recursos con el que el MDB de
+# la ingesta consume de ese broker (ver carga-uy-ejb/src/main/resources/META-INF/jboss-ejb3.xml)
+embed-server --server-config=standalone-full.xml
+/socket-binding-group=standard-sockets/remote-destination-outbound-socket-binding=artemis:add(host="${env.ARTEMIS_HOST:artemis}", port="${env.ARTEMIS_PORT:61616}")
+/subsystem=messaging-activemq/remote-connector=artemis:add(socket-binding=artemis)
+/subsystem=messaging-activemq/pooled-connection-factory=artemis:add(connectors=[artemis], entries=[java:/jms/ArtemisCF], enable-amq1-prefix=false, user="${env.ARTEMIS_USUARIO:central}", password="${env.ARTEMIS_CLAVE:central123}")
+/subsystem=messaging-activemq/external-jms-queue=queue_tracking:add(entries=[java:/jms/queue/queue_tracking], enable-amq1-prefix=false)
+stop-embedded-server

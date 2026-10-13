@@ -1,12 +1,6 @@
 package tse.cargauy.nodotracking;
 
-import java.net.URI;
 import java.util.List;
-import java.util.Properties;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
 
@@ -14,8 +8,11 @@ import jakarta.jms.JMSContext;
 import jakarta.jms.JMSRuntimeException;
 import jakarta.jms.Queue;
 
-// publica en queue_tracking del componente central con el cliente JMS remoto de WildFly
+// publica en queue_tracking del broker del componente central (DA02), que esta en su propio contenedor: el nodo se
+// conecta directo al broker, con TLS (R8), y no a una instancia de WildFly
 public class PublicadorJms implements Publicador, AutoCloseable {
+
+    private static final String COLA = "queue_tracking";
 
     private final Config config;
     private ActiveMQJMSConnectionFactory fabrica;
@@ -57,40 +54,16 @@ public class PublicadorJms implements Publicador, AutoCloseable {
         if (principal != null) {
             return; // ya conectado
         }
-        Properties props = new Properties();
-        props.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-        props.put(Context.PROVIDER_URL, config.jmsUrl());
-        props.put(Context.SECURITY_PRINCIPAL, config.jmsUsuario());
-        props.put(Context.SECURITY_CREDENTIALS, config.jmsClave());
-        
-        InitialContext ctx = null;
         try {
-            ctx = new InitialContext(props);
-            cola = (Queue) ctx.lookup("jms/queue/queue_tracking");
-            fabrica = new ActiveMQJMSConnectionFactory(urlBroker());
+            fabrica = new ActiveMQJMSConnectionFactory(config.jmsUrl());
             principal = fabrica.createContext(config.jmsUsuario(), config.jmsClave());
             // el cliente avisa cuando se cae la conexion: sin esto /health diria UP hasta que falle un envio
             principal.setExceptionListener(e -> desconectar());
-        } catch (NamingException | JMSRuntimeException e) {
+            cola = principal.createQueue(COLA);
+        } catch (JMSRuntimeException e) {
             desconectar();
             throw new PublicadorException("No se pudo conectar al broker", e);
-        } finally {
-            if (ctx != null) {
-                try {
-                    ctx.close();
-                } catch (NamingException ignorada) {
-                    // nada que hacer
-                }
-            }
         }
-    }
-
-    // el RemoteConnectionFactory del JNDI apunta al host que anuncia WildFly (localhost en el compose), que desde
-    // otro contenedor o PaaS no es el central. por eso el factory se arma con el mismo host y puerto de NODO_JMS_URL
-    private String urlBroker() {
-        URI destino = URI.create(config.jmsUrl());
-        int puerto = destino.getPort() == -1 ? 8080 : destino.getPort();
-        return "tcp://" + destino.getHost() + ":" + puerto + "?httpUpgradeEnabled=true&httpUpgradeEndpoint=http-acceptor";
     }
 
     // se llama despues de un error: el proximo publicar vuelve a conectar

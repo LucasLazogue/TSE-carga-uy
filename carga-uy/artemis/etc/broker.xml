@@ -1,0 +1,142 @@
+<?xml version='1.0'?>
+<!--
+  Broker de mensajeria de carga.uy (DA02). Corre en su propio contenedor y no dentro de WildFly: todas las
+  instancias del componente central consumen la misma cola, y los mensajes quedan en un volumen aunque se
+  recree un contenedor.
+-->
+<configuration xmlns="urn:activemq"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+
+   <core xmlns="urn:activemq:core">
+
+      <name>carga-uy</name>
+
+      <persistence-enabled>true</persistence-enabled>
+      <journal-type>NIO</journal-type>
+      <paging-directory>data/paging</paging-directory>
+      <bindings-directory>data/bindings</bindings-directory>
+      <journal-directory>data/journal</journal-directory>
+      <large-messages-directory>data/large-messages</large-messages-directory>
+      <journal-datasync>true</journal-datasync>
+      <journal-min-files>2</journal-min-files>
+      <journal-pool-files>10</journal-pool-files>
+      <journal-file-size>10M</journal-file-size>
+
+      <disk-scan-period>5000</disk-scan-period>
+      <max-disk-usage>90</max-disk-usage>
+      <critical-analyzer>true</critical-analyzer>
+      <critical-analyzer-timeout>120000</critical-analyzer-timeout>
+      <critical-analyzer-check-period>60000</critical-analyzer-check-period>
+      <critical-analyzer-policy>HALT</critical-analyzer-policy>
+
+      <acceptors>
+         <!-- red interna del componente central: lo usan las instancias de WildFly. Escucha en el nombre del
+              servicio y no en 0.0.0.0, porque el broker les anuncia a los clientes esta direccion para reconectarse
+              (la usa, por ejemplo, la recuperacion de transacciones XA de WildFly) -->
+         <acceptor name="central">tcp://artemis:61616?protocols=CORE</acceptor>
+         <!-- los nodos perifericos corren en otra plataforma: se conectan con TLS (R8) -->
+         <acceptor name="nodos">tcp://0.0.0.0:61617?protocols=CORE;sslEnabled=true;keyStorePath=/var/lib/artemis-instance/etc/artemis.p12;keyStorePassword=cargauy-dev</acceptor>
+      </acceptors>
+
+      <security-settings>
+         <!-- un nodo solo puede publicar posiciones, y el componente central solo consumirlas -->
+         <security-setting match="queue_tracking">
+            <permission type="send" roles="nodo-tracking,amq"/>
+            <permission type="consume" roles="central,amq"/>
+            <permission type="browse" roles="central,amq"/>
+            <permission type="manage" roles="amq"/>
+         </security-setting>
+         <!-- los mensajes que no se pudieron procesar los revisa y reprocesa un administrador -->
+         <security-setting match="DLQ">
+            <permission type="consume" roles="amq"/>
+            <permission type="browse" roles="amq"/>
+            <permission type="send" roles="central,amq"/>
+         </security-setting>
+         <security-setting match="#">
+            <permission type="createNonDurableQueue" roles="amq"/>
+            <permission type="deleteNonDurableQueue" roles="amq"/>
+            <permission type="createDurableQueue" roles="amq"/>
+            <permission type="deleteDurableQueue" roles="amq"/>
+            <permission type="createAddress" roles="amq"/>
+            <permission type="deleteAddress" roles="amq"/>
+            <permission type="consume" roles="amq"/>
+            <permission type="browse" roles="amq"/>
+            <permission type="send" roles="amq"/>
+         </security-setting>
+         <security-setting match="activemq.management.#">
+            <permission type="manage" roles="amq"/>
+            <permission type="createNonDurableQueue" roles="amq"/>
+            <permission type="deleteNonDurableQueue" roles="amq"/>
+            <permission type="createAddress" roles="amq"/>
+            <permission type="deleteAddress" roles="amq"/>
+            <permission type="consume" roles="amq"/>
+            <permission type="send" roles="amq"/>
+         </security-setting>
+      </security-settings>
+
+      <address-settings>
+         <!-- AC17: ante una saturacion las posiciones esperan en la cola sin perder ninguna. Cuando la cola pasa de
+              10 MB en memoria, el broker guarda las nuevas en disco (paging) y las entrega en orden a medida que
+              se libera. La espera entre reintentos y la cola de mensajes muertos siguen con los valores por
+              defecto: estan pendientes (D2) -->
+         <address-setting match="queue_tracking">
+            <address-full-policy>PAGE</address-full-policy>
+            <max-size-bytes>10M</max-size-bytes>
+            <page-size-bytes>10M</page-size-bytes>
+            <dead-letter-address>DLQ</dead-letter-address>
+            <expiry-address>ExpiryQueue</expiry-address>
+            <max-delivery-attempts>10</max-delivery-attempts>
+            <redelivery-delay>0</redelivery-delay>
+            <auto-create-queues>false</auto-create-queues>
+            <auto-create-addresses>false</auto-create-addresses>
+         </address-setting>
+         <address-setting match="activemq.management.#">
+            <dead-letter-address>DLQ</dead-letter-address>
+            <expiry-address>ExpiryQueue</expiry-address>
+            <redelivery-delay>0</redelivery-delay>
+            <max-size-bytes>-1</max-size-bytes>
+            <message-counter-history-day-limit>10</message-counter-history-day-limit>
+            <address-full-policy>PAGE</address-full-policy>
+            <auto-create-queues>true</auto-create-queues>
+            <auto-create-addresses>true</auto-create-addresses>
+         </address-setting>
+         <address-setting match="#">
+            <dead-letter-address>DLQ</dead-letter-address>
+            <expiry-address>ExpiryQueue</expiry-address>
+            <redelivery-delay>0</redelivery-delay>
+            <message-counter-history-day-limit>10</message-counter-history-day-limit>
+            <address-full-policy>PAGE</address-full-policy>
+            <auto-create-queues>false</auto-create-queues>
+            <auto-create-addresses>false</auto-create-addresses>
+            <auto-delete-queues>false</auto-delete-queues>
+            <auto-delete-addresses>false</auto-delete-addresses>
+            <page-size-bytes>10M</page-size-bytes>
+            <max-size-bytes>-1</max-size-bytes>
+            <max-size-messages>-1</max-size-messages>
+            <max-read-page-messages>-1</max-read-page-messages>
+            <max-read-page-bytes>20M</max-read-page-bytes>
+         </address-setting>
+      </address-settings>
+
+      <addresses>
+         <!-- las posiciones que publican los nodos de tracking (CU-10) -->
+         <address name="queue_tracking">
+            <anycast>
+               <queue name="queue_tracking"/>
+            </anycast>
+         </address>
+         <address name="DLQ">
+            <anycast>
+               <queue name="DLQ"/>
+            </anycast>
+         </address>
+         <address name="ExpiryQueue">
+            <anycast>
+               <queue name="ExpiryQueue"/>
+            </anycast>
+         </address>
+      </addresses>
+
+   </core>
+</configuration>

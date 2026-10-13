@@ -24,6 +24,18 @@ services:
     volumes:
       - mongodata:/data/db
 
+  # broker de mensajeria (DA02): en su propio contenedor, compartido por todas las instancias del central.
+  # 8161 es la consola (usuario artemis, clave artemis), 61617 la entrada con TLS para los nodos perifericos
+  artemis:
+    build: ./artemis
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    ports:
+      - "8161:8161"
+      - "61617:61617"
+    volumes:
+      - artemisdata:/var/lib/artemis-instance
+
   carga-uy:
     build: .
     hostname: localhost
@@ -43,8 +55,13 @@ services:
       CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
       MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}
       MONGO_DB: ${MONGO_DB:-cargauy}
+      ARTEMIS_HOST: ${ARTEMIS_HOST:-artemis}
+      ARTEMIS_PORT: ${ARTEMIS_PORT:-61616}
+      ARTEMIS_USUARIO: ${ARTEMIS_USUARIO:-central}
+      ARTEMIS_CLAVE: ${ARTEMIS_CLAVE:-central123}
     depends_on:
       - mongo
+      - artemis
 
   # nodo periferico de tracking: simula la flota y publica sus posiciones en queue_tracking.
   # en el despliegue va en otra PaaS; aca esta para levantar todo con un solo comando
@@ -55,9 +72,10 @@ services:
     environment:
       TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
       NODO_ID: ${NODO_ID:-tracking-1}
-      NODO_JMS_URL: ${NODO_JMS_URL:-remote+http://carga-uy:8080}
-      NODO_JMS_USUARIO: ${NODO_JMS_USUARIO:-admin}
-      NODO_JMS_CLAVE: ${NODO_JMS_CLAVE:-admin123}
+      # directo al broker, con TLS (R8), con el usuario del nodo, que solo puede publicar
+      NODO_JMS_URL: ${NODO_JMS_URL:-tcp://artemis:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev}
+      NODO_JMS_USUARIO: ${NODO_JMS_USUARIO:-tracking-1}
+      NODO_JMS_CLAVE: ${NODO_JMS_CLAVE:-tracking123}
       NODO_INTERVALO_SEG: ${NODO_INTERVALO_SEG:-10}
       NODO_ACELERAR: ${NODO_ACELERAR:-1}
       NODO_VEHICULOS_EXTRA: ${NODO_VEHICULOS_EXTRA:-0}
@@ -65,9 +83,11 @@ services:
       NODO_DESORDENAR: ${NODO_DESORDENAR:-false}
       NODO_SIN_COBERTURA: ${NODO_SIN_COBERTURA:-}
       NODO_LOG_METRICAS_SEG: ${NODO_LOG_METRICAS_SEG:-60}
+    # publica en el broker aunque el central no este: las posiciones esperan en la cola
     depends_on:
-      - carga-uy
+      - artemis
 
 volumes:
   pgdata:
   mongodata:
+  artemisdata:

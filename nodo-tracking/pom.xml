@@ -13,11 +13,11 @@
   </properties>
 
   <dependencies>
-    <!-- cliente JNDI + JMS de WildFly: publica en la cola del componente central por el puerto web (HTTP Upgrade) -->
+    <!-- cliente JMS de Artemis: publica directo en el broker del componente central -->
     <dependency>
-      <groupId>org.wildfly</groupId>
-      <artifactId>wildfly-client-all</artifactId>
-      <version>36.0.1.Final</version>
+      <groupId>org.apache.artemis</groupId>
+      <artifactId>artemis-jakarta-client</artifactId>
+      <version>2.57.0</version>
     </dependency>
     <!-- la misma API JSON que usa el MDB del central, para que los dos lados parseen igual -->
     <dependency>
@@ -72,7 +72,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
-          <mainClass>tse.cargauy.nodotracking.SimuladorTracking</mainClass>
+          <mainClass>tse.cargauy.nodotracking.NodoTracking</mainClass>
         </configuration>
       </plugin>
     </plugins>
