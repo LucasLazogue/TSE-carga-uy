@@ -32,9 +32,13 @@ public class NodoTracking {
         ConfigFlota configFlota = ConfigFlota.desdeEntorno();
         Random azar = new Random();
         List<VehiculoSimulado> vehiculos = Flota.armar(configFlota, azar);
+        // trazas, metricas y logs por OTLP; los logs siguen saliendo tambien por la consola
+        Observabilidad observabilidad = Observabilidad.iniciar();
+        Logger.getLogger("").addHandler(new LogsOtel(observabilidad.openTelemetry()));
         // no conecta al arrancar: el nodo levanta aunque el central todavia no este listo
-        PublicadorJms publicador = new PublicadorJms(config);
+        PublicadorJms publicador = new PublicadorJms(config, observabilidad.openTelemetry());
         GeneradorPosiciones generador = new GeneradorPosiciones(config, configFlota, vehiculos, publicador, azar, Instant.now());
+        observabilidad.medir(generador);
 
         // un hilo genera y otro publica: si publicar se demora porque el central esta lento, la generacion no se atrasa.
         // el tercero es para el resumen periodico, asi tampoco espera a un envio lento
@@ -63,6 +67,7 @@ public class NodoTracking {
             System.out.printf("%1$tF %1$tT INFO nodo detenido metricas=%2$s%n", new Date(), generador.metricas());
             servidor.stop(1);
             publicador.close();
+            observabilidad.cerrar();
         }));
         LOGGER.info("Nodo " + config.nodoId() + " simulando " + vehiculos.size() + " vehiculos cada "
                 + configFlota.intervalo().toSeconds() + " s; metricas en el puerto " + config.puerto());

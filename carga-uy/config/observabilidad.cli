@@ -1,0 +1,22 @@
+# Observabilidad del componente central (AC21 a AC24): todo va a la Plataforma de Observabilidad (OpenTelemetry)
+embed-server --server-config=standalone-full.xml
+
+# trazas (y logs, ver abajo): WildFly traza solo las llamadas REST; la ingesta arma su propia traza con el contexto
+# que viene en el mensaje JMS. Con la misma proporcion en el nodo y en el central, las dos partes de una traza se
+# muestrean igual
+/extension=org.wildfly.extension.opentelemetry:add
+/subsystem=opentelemetry:add(service-name=carga-uy, exporter-type=otlp, endpoint="${env.OTEL_ENDPOINT:http://observabilidad:4317}", sampler-type=ratio, ratio="${env.OTEL_PROPORCION_TRAZAS:1.0}")
+
+# metricas: las del servidor (JVM, undertow, datasources, mensajeria) y las de la aplicacion, por OTLP
+/extension=org.wildfly.extension.micrometer:add
+/subsystem=micrometer:add(endpoint="${env.OTEL_ENDPOINT_METRICAS:http://observabilidad:4318/v1/metrics}", step=10, exposed-subsystems=["*"])
+
+# health checks en el puerto de administracion: /health/live y /health/ready
+/extension=org.wildfly.extension.microprofile.health-smallrye:add
+/subsystem=microprofile-health-smallrye:add(security-enabled=false, empty-liveness-checks-status=UP, empty-readiness-checks-status=UP, empty-startup-checks-status=UP)
+
+# logs: el subsistema de OpenTelemetry ya los manda por OTLP, estructurados y con el trace_id y el span_id de la
+# traza en curso (el identificador de correlacion). En la consola se agrega el trace_id a cada linea
+/subsystem=logging/pattern-formatter=COLOR-PATTERN:write-attribute(name=pattern, value="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %X{trace_id} %s%e%n")
+
+stop-embedded-server

@@ -54,6 +54,9 @@ a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado d
 | `NODO_DESORDENAR` | `false` | Mezcla cada lote antes de publicarlo |
 | `NODO_SIN_COBERTURA` | vacío | `desde,durante` en minutos: acumula y publica todo junto al volver |
 | `NODO_LOG_METRICAS_SEG` | `60` | Cada cuánto escribe las métricas en el log (`0` = nunca) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4318` | Plataforma de Observabilidad (OTLP por HTTP) |
+| `OTEL_TRACES_SAMPLER` / `OTEL_TRACES_SAMPLER_ARG` | todas las trazas | Proporción de trazas que se guardan; tiene que ser la misma que en el central |
+| `OTEL_SDK_DISABLED` | `false` | `true` apaga trazas, métricas y logs por OTLP |
 
 Por ejemplo, desde `carga-uy`:
 
@@ -64,6 +67,8 @@ Por ejemplo, desde `carga-uy`:
 - `GET http://localhost:8081/health`: `200 {"estado":"UP"}` si está conectado al broker; si no,
   `503 {"estado":"DOWN"}`.
 - `GET http://localhost:8081/metricas`: generados, duplicados, publicados, pendientes y reintentos.
+  Las mismas métricas van por OTLP a la Plataforma de Observabilidad, junto con una traza por cada
+  lote publicado (el contexto viaja en la propiedad `traceparent` de cada mensaje) y los logs.
   Las mismas métricas quedan en el log cada `NODO_LOG_METRICAS_SEG` segundos
   (`docker compose logs nodo-tracking`).
 - Ruta de un vehículo en el central: http://localhost:8080/carga-uy/api/posiciones?matricula=STA1234

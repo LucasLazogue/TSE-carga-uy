@@ -10,6 +10,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.connection.ServerDescription;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -59,6 +60,13 @@ public class AlmacenPosiciones {
             crearIndices();
         }
         return posiciones;
+    }
+
+    // segun lo ultimo que vio el monitor del cliente, que consulta al servidor cada pocos segundos: no espera una
+    // respuesta, asi que el health check no se traba si MongoDB no contesta
+    @Lock(LockType.READ)
+    public boolean conectado() {
+        return cliente.getClusterDescription().getServerDescriptions().stream().anyMatch(ServerDescription::isOk);
     }
 
     // el indice unico es el que hace idempotente la ingesta: el mismo evento reenviado por el mismo nodo no entra
