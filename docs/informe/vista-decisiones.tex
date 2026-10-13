@@ -18,11 +18,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & El componente central concentra la presentación para cuatro tipos de usuarios y la API del componente móvil, la lógica de negocio y de fiscalización, la persistencia y la integración con varios sistemas externos y nodos periféricos. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
             \textbf{Decisión} & Organizar el componente central en cuatro capas: presentación (API REST, frontoffice y backoffice), servicios y procesamiento (Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización), persistencia, y adaptadores e infraestructura, que aíslan cada integración externa (Figura \ref{fig:vista_logica}). \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA02, DA05 \\
         \hline
@@ -44,11 +44,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La recepción de los eventos de tracking debe estar desacoplada de su procesamiento mediante un mecanismo de mensajería asincrónica (R4). La letra pide justificar la tecnología elegida, la estrategia de particionamiento o distribución de los mensajes y la política de entrega. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
             \textbf{Decisión} & Usar Apache Artemis (Jakarta Messaging) como broker en su propio contenedor, separado de WildFly y con los mensajes en un volumen. Los nodos de tracking publican en la cola \texttt{queue\_tracking} conectándose directo al broker con TLS (R8), cada uno con un usuario que solo puede publicar en esa cola. Todas las instancias del componente central consumen la misma cola, mediante el componente de recepción (Sección \ref{sec:refinamiento-ingesta}), y compiten por sus mensajes; el orden de la ruta se reconstruye por el momento de generación de cada posición (AC16) y los duplicados se descartan en la ingesta (DA07). La entrega es al menos una vez: un mensaje se borra de la cola cuando se confirma la transacción que lo procesó, y si el procesamiento falla, el broker lo vuelve a entregar. \pendiente{definir la espera entre reintentos, la cantidad de intentos y qué se hace con los mensajes que terminan en la cola de mensajes muertos.} \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA01, DA07 \\
         \hline
@@ -70,7 +70,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & El componente central debe escalar horizontalmente sin guardar estado local en las instancias (AC07). El ingreso con Usuario gub.uy necesita conservar \texttt{state}, \texttt{nonce} y \texttt{code\_challenge} entre el inicio del ingreso y el \textit{callback}. \\
         \hline
-            \textbf{Alternativas} & Mantener ese estado en la \texttt{HttpSession} de la instancia y firmar el JWT de sesión con código propio, que fue la implementación inicial del grupo. \\
+            \textbf{Alternativas} & Mantener ese estado en la \texttt{HttpSession} de la instancia y firmar el JWT de sesión con código propio, que fue la implementación inicial. \\
         \hline
             \textbf{Decisión} & La sesión es un JWT firmado (HS256) con la biblioteca JJWT, que viaja en una cookie \textit{HttpOnly} en la web y como token \textit{Bearer} en el móvil. El estado del ingreso con gub.uy viaja en una cookie firmada en lugar de quedar en la \texttt{HttpSession}. El secreto se configura por entorno y debe tener al menos 32 bytes. El JWT se emite también tras el ingreso al backoffice, que valida las credenciales contra el directorio LDAP. \\
         \hline
@@ -96,11 +96,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La aplicación móvil debe autenticar al chofer mediante Usuario gub.uy (CU-01) y obtener un token para llamar a la API REST (R2). \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
             \textbf{Decisión} & La aplicación abre el ingreso en el navegador con un \texttt{code\_challenge}, recibe un código de un solo uso por el esquema \texttt{cargauy://ingreso} y lo canjea, junto con el \texttt{code\_verifier}, por el token de sesión. En Android, el ingreso se abre con Custom Tabs. \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA03 \\
         \hline
@@ -122,11 +122,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La plataforma tiene un frontoffice para ciudadanos, otro para funcionarios y un backoffice para autoridades y administradores, todos web. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
-            \textbf{Decisión} & Backoffice en JSF dentro del componente central; frontoffice en React, servido como sitio estático desde Vercel (Figura \ref{fig:vista_distrib}). \pendiente{confirmar con el tutor el uso de Vercel frente a R14.} \\
+            \textbf{Decisión} & Backoffice en JSF dentro del componente central; frontoffice en React, servido como sitio estático desde Vercel (Figura \ref{fig:vista_distrib}). \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA01 \\
         \hline
@@ -148,11 +148,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & El chofer debe poder consultar la Guía y registrar los eventos del viaje sin conectividad, y la sincronización posterior debe ser idempotente. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
             \textbf{Decisión} & Aplicación nativa para Android en Kotlin con Jetpack Compose, persistencia local con Room y un identificador UUID generado en el dispositivo para cada evento pendiente. La sincronización corre en segundo plano con WorkManager, que espera a tener conexión y reintenta con esperas crecientes, y las llamadas a la API REST usan Retrofit con OkHttp. \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA04 \\
         \hline
@@ -200,11 +200,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & Los administradores deben poder gestionar los nodos periféricos (CU-19), y la ingesta de tracking solo debe aceptar eventos de un nodo registrado y habilitado, que es la precondición del CU-10. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
             \textbf{Decisión} & Un registro de nodos con tipo (balanzas o tracking), punto de acceso y estado (deshabilitado, habilitado o baja). Todo nodo nuevo arranca deshabilitado, cambiar el punto de acceso lo vuelve a deshabilitar y la baja es lógica. \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA07 \\
         \hline
@@ -226,11 +226,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La autorización debe aplicarse en la capa de servicios y no solo en la interfaz de usuario (R9). Además, un responsable o un chofer solo debe acceder a los datos de su propia empresa. \\
         \hline
-            \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
+            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
             \textbf{Decisión} & Cada request se autentica con un mecanismo de Jakarta Security que valida el JWT de la cookie o del encabezado \texttt{Authorization} y le informa al contenedor el usuario y sus roles. Los EJB declaran los roles permitidos con \texttt{@RolesAllowed} y verifican además que el usuario tenga acceso a la empresa sobre la que opera. \\
         \hline
-            \textbf{Justificación} & \pendiente{justificación del grupo.} \\
+            \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
             \textbf{Decisiones Relacionadas} & DA03 \\
         \hline
@@ -265,7 +265,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
 
 \subsection{Decisiones Pendientes}
 
-La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y justificar, junto con otras decisiones que surgieron durante el desarrollo, que todavía no tienen una definición del grupo.
+La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y justificar, junto con otras decisiones que surgieron durante el desarrollo, que todavía no están definidas.
 
 \begin{longtable}{|p{4.6cm}|p{7.4cm}|p{3.5cm}|}
     \caption{Decisiones pendientes}\label{tab:decisiones-pendientes}\\
@@ -289,8 +289,6 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \hline
     Umbral de agregación & Umbral mínimo de agregación de la información pública. & AC06, R12. \\
     \hline
-    Ubicación del frontoffice & Si el frontoffice se sirve desde Vercel o desde Elastic Cloud. & DA05, R14, Vista de Distribución. \\
-    \hline
     Escalado y orquestador & Dónde corre el orquestador del opcional 4 y cómo escala con varias réplicas la sesión del backoffice JSF. & AC07, R14, DA02, Vista de Distribución. \\
     \hline
     Tecnología del backoffice & Si el backoffice queda en JSF o pasa a React. & DA05, AC07. \\
@@ -299,11 +297,9 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \hline
     Plataforma de observabilidad & En qué PaaS o IaaS se ejecuta la Plataforma de Observabilidad en el despliegue. & AC21 a AC24, Vista de Distribución. \\
     \hline
-    Pista de auditoría & Mecanismo que garantiza que sea de solo agregado. & R10, AC04. \\
-    \hline
     Fotografías de los incidentes & Dónde se guardan y cómo se envían desde el móvil al recuperar la conexión. & CU-09, Persistencia. \\
     \hline
-    Plazo de descargo & Duración del plazo y qué pasa cuando vence sin descargo. & CU-11, parametrización de reglas. \\
+    Plazo de descargo & Si el plazo se cuenta en días hábiles o corridos. & CU-11, parametrización de reglas. \\
     \hline
     Viaje sin fin registrado & Cómo se evalúa el exceso de carga si el chofer nunca registra el fin del viaje, y cómo se cubre la regla de viaje sin Guía por pesaje. & DA10, CU-11. \\
     \hline
