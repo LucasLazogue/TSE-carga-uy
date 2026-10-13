@@ -152,6 +152,24 @@ public class ViajeDAO implements ViajeDAOLocal {
         }
     }
 
+    @Override
+    public ViajeDto getEnCursoDelVehiculo(Long idVehiculo, LocalDateTime momento) {
+        List<Viaje> viajes = entityManager.createNamedQuery(Viaje.EN_CURSO_DEL_VEHICULO, Viaje.class)
+                .setParameter("idVehiculo", idVehiculo)
+                .setParameter("momento", momento)
+                .setMaxResults(1)
+                .getResultList();
+        return viajes.isEmpty() ? null : Serializers.toDto(viajes.get(0));
+    }
+
+    @Override
+    public List<ViajeDto> getIniciadosDelVehiculo(Long idVehiculo, LocalDateTime desde) {
+        return toDtos(entityManager.createNamedQuery(Viaje.INICIADOS_DEL_VEHICULO, Viaje.class)
+                .setParameter("idVehiculo", idVehiculo)
+                .setParameter("desde", desde)
+                .getResultList());
+    }
+
     // fecha de guia ascendente: getAll ordena al reves (lo que quiere el listado) y le daria al chofer el viaje mas lejano
     private Viaje primeroDelChofer(Long idCiudadano, EstadoViaje estado) {
         List<Viaje> viajes = entityManager.createQuery(

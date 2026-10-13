@@ -10,6 +10,8 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import tse.cargauy.data.eventoviaje.EventoViajeDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
@@ -22,6 +24,7 @@ import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoEventoViaje;
 import tse.cargauy.exceptions.CodigoError;
 import tse.cargauy.exceptions.MensajesError;
+import tse.cargauy.negocio.viaje.ViajeIniciadoOFinalizado;
 
 // esta separado de ViajeChoferEJB para que REQUIRES_NEW tenga efecto: una llamada dentro de la misma clase
 // no pasa por el contenedor y todos los eventos quedarian en una sola transaccion
@@ -41,6 +44,9 @@ public class AplicadorEventosEJB implements AplicadorEventosEJBLocal {
 
     @EJB
     GuiaDAOLocal guiaDAO;
+
+    @Inject
+    Event<ViajeIniciadoOFinalizado> inicioOFin;
 
     // un evento con problemas se registra con su resultado y no deshace a los demas;
     // por eso no se tira CargaUYException, que haria rollback tambien del registro
@@ -68,6 +74,8 @@ public class AplicadorEventosEJB implements AplicadorEventosEJBLocal {
         }
         if (nuevo != viaje.getEstado()) {
             viajeDAO.cambiarEstado(viaje.getId(), nuevo, LocalDateTime.ofInstant(evento.getTimestampGeneracion(), ZONA));
+            // con la nueva hora de inicio o de fin se reasocian las posiciones del vehiculo, al confirmarse (CU-10)
+            inicioOFin.fire(new ViajeIniciadoOFinalizado(viaje.getId()));
         }
         return registrar(evento, idChofer, ResultadoEvento.APLICADO, null);
     }

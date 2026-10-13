@@ -7,25 +7,30 @@ public class EventoPosicionDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Long id;
+    // el _id que le asigna MongoDB
+    private String id;
     private String idEvento;
     private String nodo;
     private Long idNodo;
     private String matricula;
     private Long idVehiculo;
+    // el viaje que el vehiculo tenia en curso cuando se genero la posicion; null si no tenia
+    private Long idViaje;
     private double latitud;
     private double longitud;
     private Instant timestampGeneracion;
     private Instant timestampRecepcion;
+    // true recien cuando se confirmo la transaccion que la proceso: si quedo en false, un reenvio la termina (DA07)
+    private boolean procesada;
 
     public EventoPosicionDto() {
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -69,6 +74,14 @@ public class EventoPosicionDto implements Serializable {
         this.idVehiculo = idVehiculo;
     }
 
+    public Long getIdViaje() {
+        return idViaje;
+    }
+
+    public void setIdViaje(Long idViaje) {
+        this.idViaje = idViaje;
+    }
+
     public double getLatitud() {
         return latitud;
     }
@@ -101,4 +114,11 @@ public class EventoPosicionDto implements Serializable {
         this.timestampRecepcion = timestampRecepcion;
     }
 
+    public boolean isProcesada() {
+        return procesada;
+    }
+
+    public void setProcesada(boolean procesada) {
+        this.procesada = procesada;
+    }
 }

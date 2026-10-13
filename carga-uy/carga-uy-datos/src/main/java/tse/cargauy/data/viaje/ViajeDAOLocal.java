@@ -1,6 +1,7 @@
 package tse.cargauy.data.viaje;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.ejb.Local;
 import tse.cargauy.dtos.FiltroViajes;
@@ -19,4 +20,8 @@ public interface ViajeDAOLocal {
     void deleteViaje(Long id);
     ViajeDto getActualDelChofer(Long idCiudadano);
     void cambiarEstado(Long id, EstadoViaje estado, LocalDateTime fecha);
+    // el viaje que el vehiculo tenia en curso en ese momento, o null
+    ViajeDto getEnCursoDelVehiculo(Long idVehiculo, LocalDateTime momento);
+    // los viajes del vehiculo que empezaron y seguian en curso en 'desde' o empezaron despues, por fecha de inicio
+    List<ViajeDto> getIniciadosDelVehiculo(Long idVehiculo, LocalDateTime desde);
 }

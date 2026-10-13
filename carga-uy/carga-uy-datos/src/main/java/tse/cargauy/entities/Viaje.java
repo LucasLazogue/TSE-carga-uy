@@ -10,10 +10,24 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToOne;
 
+// si un viaje del vehiculo quedo sin fin registrado y empezo otro, una posicion es del que empezo ultimo
 @Entity
+@NamedQueries({
+    @NamedQuery(name = Viaje.EN_CURSO_DEL_VEHICULO,
+            query = "SELECT v FROM Viaje v WHERE v.vehiculo.id = :idVehiculo AND v.fechaInicio <= :momento"
+                    + " AND (v.fechaFin IS NULL OR v.fechaFin >= :momento) ORDER BY v.fechaInicio DESC"),
+    @NamedQuery(name = Viaje.INICIADOS_DEL_VEHICULO,
+            query = "SELECT v FROM Viaje v WHERE v.vehiculo.id = :idVehiculo AND v.fechaInicio IS NOT NULL"
+                    + " AND (v.fechaFin IS NULL OR v.fechaFin >= :desde) ORDER BY v.fechaInicio")
+})
 public class Viaje {
+
+    public static final String EN_CURSO_DEL_VEHICULO = "Viaje.enCursoDelVehiculo";
+    public static final String INICIADOS_DEL_VEHICULO = "Viaje.iniciadosDelVehiculo";
 
     @Id @GeneratedValue
     private Long id;
