@@ -71,13 +71,13 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     \multicolumn{3}{|l|}{\textit{Observabilidad}} \\
     \hline
-    AC21 & Observabilidad & Los componentes emiten logs estructurados que incluyen un identificador de correlación. \\
+    AC21 & Observabilidad & Los componentes emiten logs estructurados que incluyen un identificador de correlación. El componente central y el nodo de tracking mandan sus logs con OpenTelemetry (OTLP) a la Plataforma de Observabilidad, como registros estructurados que llevan el identificador de la traza en curso: es el identificador de correlación, el mismo en el nodo y en el componente central para una misma posición. \\
     \hline
-    AC22 & Observabilidad & El componente central expone métricas de eventos procesados, latencia de procesamiento, tamaño de las colas y errores por tipo, y endpoints de verificación de estado. \\
+    AC22 & Observabilidad & El componente central expone métricas de eventos procesados, latencia de procesamiento, tamaño de las colas y errores por tipo, y endpoints de verificación de estado. Las métricas se exportan por OTLP con Micrometer: posiciones procesadas por resultado, errores por tipo, tiempo de procesamiento, espera en la cola y antigüedad de cada posición, mensajes y consumidores de la cola de tracking, y tiempo de respuesta de la API REST, con histogramas para calcular percentiles. Los endpoints de verificación de estado son \texttt{/health/live} y \texttt{/health/ready} del servidor de aplicaciones y \texttt{/api/salud}, que verifica PostgreSQL y el Almacén de Posiciones; la Plataforma de Observabilidad los consulta periódicamente. \\
     \hline
-    AC23 & Observabilidad & Al menos un flujo que atraviesa el componente móvil, el componente central y un nodo periférico se traza de forma distribuida. Ese flujo es el fin de un viaje: el chofer lo registra en el móvil, el componente central lo recibe al sincronizar y el Motor de Fiscalización consulta los pesajes al nodo de Balanzas (CU-11, DA10). \\
+    AC23 & Observabilidad & Al menos un flujo que atraviesa el componente móvil, el componente central y un nodo periférico se traza de forma distribuida. Ese flujo es el fin de un viaje: el chofer lo registra en el móvil, el componente central lo recibe al sincronizar y el Motor de Fiscalización consulta los pesajes al nodo de Balanzas (CU-11, DA10). Además se traza la ingesta: el nodo de tracking abre una traza por cada lote que publica y su contexto viaja en cada mensaje, así que el procesamiento de cada posición en el componente central forma parte de esa traza. \\
     \hline
-    AC24 & Observabilidad & El informe de la prueba de performance se apoya en la evidencia obtenida de logs, métricas y trazas. \\
+    AC24 & Observabilidad & El informe de la prueba de performance se apoya en la evidencia obtenida de logs, métricas y trazas. La plataforma incluye un tablero con esa evidencia para la ingesta, el nodo de tracking y la API REST. \\
     \hline
     \multicolumn{3}{|l|}{\textit{Pruebas y calidad del código}} \\
     \hline
