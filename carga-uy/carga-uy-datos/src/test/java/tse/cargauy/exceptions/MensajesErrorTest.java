@@ -1,8 +1,11 @@
 package tse.cargauy.exceptions;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,13 @@ class MensajesErrorTest {
             assertNotEquals(codigo.name(), MensajesError.resolver(codigo),
                     "falta la clave " + codigo.name() + " en mensajes-error.properties");
         }
+    }
+
+    @Test
+    void losCodigosNoSeRepiten() {
+        long distintos = Arrays.stream(CodigoError.values()).mapToInt(CodigoError::getCodigo).distinct().count();
+
+        assertEquals(CodigoError.values().length, distintos);
     }
 
     @Test
