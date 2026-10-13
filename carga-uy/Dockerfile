@@ -29,9 +29,8 @@ RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 jms-queue add --queue-address=queue_alta_empresa --entries=[java:/jms/queue/queue_alta_empresa java:jboss/exported/jms/queue/queue_alta_empresa],\
 stop-embedded-server'
 
-RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
-jms-queue add --queue-address=queue_tracking --entries=[java:/jms/queue/queue_tracking java:jboss/exported/jms/queue/queue_tracking],\
-stop-embedded-server'
+COPY --chown=jboss:jboss config/artemis.cli /opt/jboss/artemis.cli
+RUN $CLI --file=/opt/jboss/artemis.cli
 
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 /subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false),\

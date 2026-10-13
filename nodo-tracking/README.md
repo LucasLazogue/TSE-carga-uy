@@ -1,11 +1,14 @@
 ## Nodo periférico de tracking
 
 Simula el Sistema de Tracking: cada vehículo de la flota avanza sobre su ruta y, cada intervalo, el
-nodo publica su posición en la cola `queue_tracking` del componente central (CU-10).
+nodo publica su posición en la cola `queue_tracking` del componente central (CU-10). Publica directo
+en el broker del central (Artemis, en su propio contenedor), con TLS y con un usuario que solo puede
+publicar en esa cola.
 
 - Cada evento lleva un `idEvento` propio, la matrícula, la posición y la hora en que se generó.
 - Al llegar a destino, el vehículo emprende la vuelta, así que el flujo es continuo.
-- Si el central no responde, los eventos quedan pendientes y se publican cuando vuelve.
+- Si el broker no responde, los eventos quedan pendientes y se publican cuando vuelve. Si el que no
+  responde es WildFly, el nodo publica igual y las posiciones esperan en la cola.
 - La flota por defecto (`src/main/resources/rutas-prueba.json`) coincide con los datos de prueba
   del central.
 
@@ -26,10 +29,12 @@ habilitarlo), o con la API:
       http://localhost:8080/carga-uy/api/nodos
     curl -X POST http://localhost:8080/carga-uy/api/nodos/1/habilitar
 
-Fuera de Docker (PowerShell, desde `nodo-tracking`, con el central levantado):
+Fuera de Docker (PowerShell, desde `nodo-tracking`, con el central levantado). Por defecto se conecta
+a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado de desarrollo de
+`tls/confianza.p12`:
 
     mvn -q -DskipTests package
-    $env:NODO_ID="tracking-1"; $env:NODO_JMS_USUARIO="admin"; $env:NODO_JMS_CLAVE="admin123"
+    $env:NODO_ID="tracking-1"; $env:NODO_JMS_USUARIO="tracking-1"; $env:NODO_JMS_CLAVE="tracking123"
     java -cp "target/nodo-tracking.jar;target/lib/*" tse.cargauy.nodotracking.NodoTracking
 
 ### Configuración
@@ -37,8 +42,8 @@ Fuera de Docker (PowerShell, desde `nodo-tracking`, con el central levantado):
 | Variable | Por defecto | Para qué |
 | --- | --- | --- |
 | `NODO_ID` | obligatoria | Identificador del nodo registrado en el central |
-| `NODO_JMS_USUARIO` / `NODO_JMS_CLAVE` | obligatorias | Usuario de aplicación de WildFly |
-| `NODO_JMS_URL` | `remote+http://localhost:8080` | Dirección del central |
+| `NODO_JMS_USUARIO` / `NODO_JMS_CLAVE` | obligatorias | Usuario del nodo en el broker (`tracking-1` / `tracking123` en desarrollo) |
+| `NODO_JMS_URL` | `tcp://localhost:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev` | Dirección del broker, con TLS |
 | `NODO_PUERTO` | `8081` | Puerto de `/health` y `/metricas` |
 | `NODO_MAX_LOTE` | `500` | Máximo de eventos por publicación |
 | `NODO_RUTAS` | `rutas-prueba.json` | Archivo JSON con la flota (admite `desvioKm` por vehículo) |

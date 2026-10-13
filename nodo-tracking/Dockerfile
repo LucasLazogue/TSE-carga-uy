@@ -12,5 +12,7 @@ FROM eclipse-temurin:24-jre
 WORKDIR /app
 COPY --from=build /app/target/nodo-tracking.jar .
 COPY --from=build /app/target/lib lib
+# certificado del broker de desarrollo, para la conexion con TLS
+COPY tls tls
 EXPOSE 8081
 CMD ["java", "-cp", "nodo-tracking.jar:lib/*", "tse.cargauy.nodotracking.NodoTracking"]

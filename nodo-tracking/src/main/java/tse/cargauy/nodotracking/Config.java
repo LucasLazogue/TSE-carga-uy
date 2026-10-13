@@ -7,7 +7,8 @@ public record Config(String nodoId, int puerto, String jmsUrl, String jmsUsuario
         Config config = new Config(
             obligatoria("NODO_ID"),
             numero("NODO_PUERTO", 8081),
-            texto("NODO_JMS_URL", "remote+http://localhost:8080"),
+            // con TLS (R8): el certificado del broker de desarrollo esta en tls/confianza.p12
+            texto("NODO_JMS_URL", "tcp://localhost:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev"),
             obligatoria("NODO_JMS_USUARIO"),
             obligatoria("NODO_JMS_CLAVE"),
             numero("NODO_MAX_LOTE", 500)

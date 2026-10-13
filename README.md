@@ -84,6 +84,12 @@ en /api/nodos. Posiciones recibidas del tracking (CU-10):
 puerto 27018 desde el host), en la coleccion posiciones de la base cargauy. El nodo de tracking, que
 simula la flota y publica sus posiciones, esta en nodo-tracking (ver su README).
 
+La cola de tracking esta en un broker Artemis en su propio contenedor (carga-uy/artemis), que comparten
+todas las instancias de WildFly; sus mensajes quedan en un volumen. Consola en http://localhost:8161
+(usuario artemis, clave artemis). Los nodos se conectan por el puerto 61617, con TLS, con un usuario que
+solo puede publicar. Los usuarios, las claves y el certificado son de desarrollo y estan en el repositorio
+hasta que se saquen antes de la entrega.
+
 ## Ejecutar aplicacion consola
 Desde carga-uy-client ejecutar
 - mvn compile "exec:java" "-Dexec.mainClass=tse.cargauy.App"
