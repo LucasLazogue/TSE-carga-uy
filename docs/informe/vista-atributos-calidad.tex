@@ -59,7 +59,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC16 & Consistencia & El orden de la ruta se reconstruye a partir del momento de generación de cada evento y no del orden de llegada. \\
     \hline
-    AC17 & Resiliencia & Ante una saturación, las posiciones de tracking esperan en la cola y se procesan más tarde, sin perder ninguna. Para eso se usa el \emph{paging} del broker de mensajería de WildFly (política \texttt{PAGE}): cuando la cola \texttt{queue\_tracking} llena su memoria, el broker guarda las posiciones nuevas en disco en lugar de descartarlas, y las procesa en orden a medida que se libera memoria. Se descartan tirar posiciones, porque la plataforma no debe perder eventos (AC08), y pedirle al nodo que reporte menos seguido, porque la frecuencia de reporte la fija el sistema de tracking, que es externo a la plataforma. \\
+    AC17 & Resiliencia & Ante una saturación, las posiciones de tracking esperan en la cola y se procesan más tarde, sin perder ninguna. Para eso se usa el \emph{paging} del broker de mensajería (DA02, política \texttt{PAGE}): cuando la cola \texttt{queue\_tracking} llena su memoria, el broker guarda las posiciones nuevas en disco en lugar de descartarlas, y las procesa en orden a medida que se libera memoria. Se descartan tirar posiciones, porque la plataforma no debe perder eventos (AC08), y pedirle al nodo que reporte menos seguido, porque la frecuencia de reporte la fija el sistema de tracking, que es externo a la plataforma. \\
     \hline
     \multicolumn{3}{|l|}{\textit{Operación sin conectividad}} \\
     \hline

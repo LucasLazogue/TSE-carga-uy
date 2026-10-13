@@ -26,9 +26,9 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \hline
     Almacén de posiciones & MongoDB (opcional 10). & Almacén de Posiciones. \\
     \hline
-    Broker de mensajería & ActiveMQ Artemis embebido en WildFly, con la cola \texttt{queue\_tracking}. & Mensajería. \\
+    Broker de mensajería & Apache Artemis 2.57 en su propio contenedor, con los mensajes en un volumen y la cola \texttt{queue\_tracking}. Acepta a las instancias de WildFly en la red interna y a los nodos con TLS. & Mensajería. \\
     \hline
-    Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS remoto de WildFly. Expone \texttt{/health} y \texttt{/metricas}, y guarda los eventos mientras el componente central no responde. & Nodo Periférico Tracking. \\
+    Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS de Artemis. Incluye el generador de carga. Expone \texttt{/health} y \texttt{/metricas}, y guarda los eventos mientras el broker no responde. & Nodo Periférico Tracking. \\
     \hline
     Nodo de balanzas & Servicio de solicitud--respuesta sobre HTTPS (R3), con su propia base de pesajes. & Nodo Periférico Balanzas. \\
     \hline
@@ -58,7 +58,7 @@ La Figura \ref{fig:vista_impl} muestra, con un diagrama de deployment UML \cite{
 \begin{itemize}
     \item Dentro del EAR, \texttt{carga-uy-web} depende de \texttt{carga-uy-ejb}, y este de \texttt{carga-uy-datos}.
     \item El frontend web y la aplicación móvil consumen la API REST del EAR. El frontend redirige las llamadas a \texttt{/api} hacia el componente central.
-    \item El nodo de tracking publica en la cola \texttt{queue\_tracking}, a la que accede como cliente JMS remoto a través del puerto web de WildFly.
+    \item El nodo de tracking publica en la cola \texttt{queue\_tracking} del broker, con TLS. El EAR la consume con un adaptador de recursos de WildFly configurado hacia ese broker.
     \item El EAR accede a PostgreSQL mediante el \textit{datasource} \texttt{CargaUyDS}, a MongoDB mediante su controlador y al directorio LDAP por LDAPS.
     \item El EAR consume Usuario gub.uy (OpenID Connect), la PDI (SOAP), el servicio de rutas y el nodo de balanzas por HTTPS, y el servidor de correo por SMTP.
     \item El EAR y los nodos periféricos envían su telemetría a la Plataforma de Observabilidad.
@@ -66,7 +66,7 @@ La Figura \ref{fig:vista_impl} muestra, con un diagrama de deployment UML \cite{
 
 \subsection{Empaquetado}
 
-Todos los componentes se distribuyen como imágenes de contenedor (R13). El componente central se construye en dos etapas: la primera compila el proyecto con Maven y la segunda configura WildFly 41 con el controlador de PostgreSQL, el \textit{datasource}, las colas JMS y MicroProfile Fault Tolerance, y despliega el EAR. El nodo de tracking también se construye en dos etapas y corre sobre la imagen de Java 24. PostgreSQL con PostGIS, MongoDB, el directorio LDAP, el nodo de balanzas, el suplantador de la PDI y la Plataforma de Observabilidad corren cada uno en su contenedor. Un archivo de Docker Compose levanta el entorno completo con un único comando documentado en el README.
+Todos los componentes se distribuyen como imágenes de contenedor (R13). El componente central se construye en dos etapas: la primera compila el proyecto con Maven y la segunda configura WildFly 41 con el controlador de PostgreSQL, el \textit{datasource}, la conexión al broker de mensajería y MicroProfile Fault Tolerance, y despliega el EAR. El nodo de tracking también se construye en dos etapas y corre sobre la imagen de Java 24. PostgreSQL con PostGIS, MongoDB, el broker de mensajería, el directorio LDAP, el nodo de balanzas, el suplantador de la PDI y la Plataforma de Observabilidad corren cada uno en su contenedor. Un archivo de Docker Compose levanta el entorno completo con un único comando documentado en el README.
 
 La configuración sensible (credenciales de gub.uy, secreto de los tokens de sesión, credenciales de la base de datos, de MongoDB, del directorio LDAP y de la mensajería, y la clave del servicio de rutas) se pasa por variables de entorno desde un archivo \texttt{.env} que no se sube al repositorio (R11).
 
