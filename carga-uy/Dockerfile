@@ -32,6 +32,9 @@ stop-embedded-server'
 COPY --chown=jboss:jboss config/artemis.cli /opt/jboss/artemis.cli
 RUN $CLI --file=/opt/jboss/artemis.cli
 
+COPY --chown=jboss:jboss config/observabilidad.cli /opt/jboss/observabilidad.cli
+RUN $CLI --file=/opt/jboss/observabilidad.cli
+
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 /subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false),\
 stop-embedded-server'

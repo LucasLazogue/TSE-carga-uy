@@ -38,6 +38,25 @@
       <groupId>jakarta.platform</groupId>
       <artifactId>jakarta.jakartaee-api</artifactId>
     </dependency>
+    <!-- observabilidad: las bibliotecas las pone WildFly (subsistemas opentelemetry, micrometer y logging) -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+      <version>1.48.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+      <version>1.16.6</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>3.6.3.Final</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>tse.cargauy</groupId>
       <artifactId>carga-uy-datos</artifactId>

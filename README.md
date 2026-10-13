@@ -90,6 +90,21 @@ todas las instancias de WildFly; sus mensajes quedan en un volumen. Consola en h
 solo puede publicar. Los usuarios, las claves y el certificado son de desarrollo y estan en el repositorio
 hasta que se saquen antes de la entrega.
 
+### Observabilidad
+Todo va a la Plataforma de Observabilidad (carga-uy/observabilidad, imagen grafana/otel-lgtm: colector
+OpenTelemetry, Prometheus, Tempo, Loki y Grafana), que levanta el compose.
+- Grafana en http://localhost:3000, carpeta carga.uy, tablero "carga.uy · ingesta, nodo y API": ritmo de
+  ingesta por resultado, errores por tipo, tiempos (procesamiento, espera en la cola y antiguedad), tamano
+  de la cola, el nodo de tracking, tiempos de la API REST con el percentil 95 y los health checks.
+- Trazas: WildFly traza los pedidos REST. El nodo de tracking abre una traza por lote que publica y cada
+  mensaje lleva su contexto (traceparent), asi que el procesamiento de cada posicion en el central queda en
+  la misma traza. OTEL_PROPORCION_TRAZAS (1.0 por defecto) baja la proporcion que se guarda, para la prueba
+  de carga.
+- Logs: WildFly y el nodo los mandan por OTLP con el trace_id, que es el identificador de correlacion. En
+  la consola de WildFly el trace_id aparece despues del nombre del hilo.
+- Health checks: /health, /health/live y /health/ready en el puerto 9990 (servidor), y
+  http://localhost:8080/carga-uy/api/salud (base de datos y MongoDB; 503 si falta alguna).
+
 ## Ejecutar aplicacion consola
 Desde carga-uy-client ejecutar
 - mvn compile "exec:java" "-Dexec.mainClass=tse.cargauy.App"

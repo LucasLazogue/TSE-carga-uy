@@ -36,6 +36,17 @@ services:
     volumes:
       - artemisdata:/var/lib/artemis-instance
 
+  # Plataforma de Observabilidad (AC21 a AC24): colector OpenTelemetry, Prometheus, Tempo, Loki y Grafana.
+  # Grafana en http://localhost:3000 (sin usuario); 4317 y 4318 reciben OTLP desde el host
+  observabilidad:
+    build: ./observabilidad
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+
   carga-uy:
     build: .
     hostname: localhost
@@ -59,6 +70,11 @@ services:
       ARTEMIS_PORT: ${ARTEMIS_PORT:-61616}
       ARTEMIS_USUARIO: ${ARTEMIS_USUARIO:-central}
       ARTEMIS_CLAVE: ${ARTEMIS_CLAVE:-central123}
+      # trazas, metricas y logs hacia la Plataforma de Observabilidad; la proporcion de trazas que se guardan tiene
+      # que ser la misma que en el nodo
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
+      OTEL_ENDPOINT_METRICAS: ${OTEL_ENDPOINT_METRICAS:-http://observabilidad:4318/v1/metrics}
+      OTEL_PROPORCION_TRAZAS: ${OTEL_PROPORCION_TRAZAS:-1.0}
     depends_on:
       - mongo
       - artemis
@@ -83,6 +99,11 @@ services:
       NODO_DESORDENAR: ${NODO_DESORDENAR:-false}
       NODO_SIN_COBERTURA: ${NODO_SIN_COBERTURA:-}
       NODO_LOG_METRICAS_SEG: ${NODO_LOG_METRICAS_SEG:-60}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://observabilidad:4318}
+      OTEL_TRACES_SAMPLER: traceidratio
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_PROPORCION_TRAZAS:-1.0}
+      OTEL_METRIC_EXPORT_INTERVAL: 10000
+      OTEL_RESOURCE_ATTRIBUTES: nodo.id=${NODO_ID:-tracking-1}
     # publica en el broker aunque el central no este: las posiciones esperan en la cola
     depends_on:
       - artemis
