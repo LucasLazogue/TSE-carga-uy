@@ -10,8 +10,8 @@ import tse.cargauy.entities.EstadoNodo;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
-// CU-19. Falta la verificacion de conectividad antes de habilitar (paso 5 de la ficha): para un nodo de tracking
-// no esta decidido como hacerla, porque la integracion es one-way y el central no le puede preguntar nada
+// CU-19. El administrador habilita el nodo sin una verificacion previa de conectividad: la letra no la pide y la
+// integracion con tracking es one-way, el central no le pregunta nada al nodo
 @Stateless
 public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
 

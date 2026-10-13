@@ -32,21 +32,21 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
 \begin{table}[H]
     \small
     \centering
-    \caption{DA02: Mensajería embebida en el servidor de aplicaciones}
+    \caption{DA02: Broker de mensajería en su propio contenedor}
     \label{tab:da02}
     \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
         \hline
             \textbf{Identificador} & DA02 \\
         \hline
-            \textbf{Nombre} & Mensajería embebida en el servidor de aplicaciones \\
+            \textbf{Nombre} & Broker de mensajería en su propio contenedor \\
         \hline
-            \textbf{Categorías} & Mensajería; integración con tracking; R4; AC08, AC15, AC17. \\
+            \textbf{Categorías} & Mensajería; integración con tracking; R4, R8; AC07, AC08, AC15, AC17. \\
         \hline
             \textbf{Problema} & La recepción de los eventos de tracking debe estar desacoplada de su procesamiento mediante un mecanismo de mensajería asincrónica (R4). La letra pide justificar la tecnología elegida, la estrategia de particionamiento o distribución de los mensajes y la política de entrega. \\
         \hline
             \textbf{Alternativas} & \pendiente{alternativas consideradas por el grupo.} \\
         \hline
-            \textbf{Decisión} & Usar el broker embebido en el servidor de aplicaciones (ActiveMQ Artemis de WildFly), con la cola \texttt{queue\_tracking} consumida por un componente de recepción (Sección \ref{sec:refinamiento-ingesta}). \pendiente{definir el particionamiento y la política de entrega, incluidos los reintentos y el destino de los mensajes que terminan en la cola de mensajes muertos.} \\
+            \textbf{Decisión} & Usar Apache Artemis (Jakarta Messaging) como broker en su propio contenedor, separado de WildFly y con los mensajes en un volumen. Los nodos de tracking publican en la cola \texttt{queue\_tracking} conectándose directo al broker con TLS (R8), cada uno con un usuario que solo puede publicar en esa cola. Todas las instancias del componente central consumen la misma cola, mediante el componente de recepción (Sección \ref{sec:refinamiento-ingesta}), y compiten por sus mensajes; el orden de la ruta se reconstruye por el momento de generación de cada posición (AC16) y los duplicados se descartan en la ingesta (DA07). La entrega es al menos una vez: un mensaje se borra de la cola cuando se confirma la transacción que lo procesó, y si el procesamiento falla, el broker lo vuelve a entregar. \pendiente{definir la espera entre reintentos, la cantidad de intentos y qué se hace con los mensajes que terminan en la cola de mensajes muertos.} \\
         \hline
             \textbf{Justificación} & \pendiente{justificación del grupo.} \\
         \hline
@@ -176,7 +176,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & Guardar las posiciones en PostgreSQL con una restricción de unicidad; usar una colección de series temporales de MongoDB. \\
         \hline
-            \textbf{Decisión} & Guardar las posiciones en una colección normal de MongoDB, con un índice único sobre el par (nodo, identificador del evento) e índices por viaje y por matrícula con el momento de generación. Un evento que viola el índice único se descarta como duplicado. \pendiente{definir qué pasa con los pasos siguientes (asociación al viaje y disparo del Motor de Fiscalización) cuando la posición ya estaba guardada porque un intento anterior falló después de guardarla.} Las posiciones referencian el vehículo, el viaje y el nodo por su identificador, sin claves foráneas. \\
+            \textbf{Decisión} & Guardar las posiciones en una colección normal de MongoDB, con un índice único sobre el par (nodo, identificador del evento) e índices por viaje y por matrícula con el momento de generación. Un evento que viola el índice único se descarta como duplicado. Como MongoDB no participa de la transacción del mensaje, cada posición se guarda sin procesar y se marca como procesada cuando se confirma esa transacción. Si llega de nuevo una posición que quedó sin procesar, porque un intento anterior falló después de guardarla, no se guarda otra vez pero se completan los pasos que siguen al guardado; si ya estaba procesada, se descarta. Las posiciones referencian el vehículo, el viaje y el nodo por su identificador, sin claves foráneas. \\
         \hline
             \textbf{Justificación} & Las posiciones son el dato que más crece en la plataforma, y guardarlas aparte evita que degraden a PostgreSQL. Se usa una colección normal de MongoDB y no una de series temporales, porque estas no admiten índices únicos para descartar duplicados ni permiten modificar una posición después para asociarla a su viaje. Si una posición llega de nuevo, el índice único la identifica como duplicada y no se guarda dos veces. \\
         \hline
@@ -279,8 +279,6 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \endhead
     Volumen de tracking & Cantidad de vehículos reportando en forma concurrente, frecuencia de reporte y picos de al menos tres veces ese volumen. & AC08, prueba de performance, generador de carga. \\
     \hline
-    Mensajería & Tecnología, estrategia de particionamiento o distribución de los mensajes, y política de entrega. & DA02, R4. \\
-    \hline
     Reintentos y cola de mensajes muertos & Espera entre reintentos, cantidad de intentos y qué se hace con los mensajes que terminan en la cola de mensajes muertos. & DA02, AC12. \\
     \hline
     Servicio de rutas y geocodificación & Qué servicio externo se usa para ubicar el origen y el destino y obtener el recorrido esperado, con sus límites de uso. & CU-07, Vista Lógica, Distribución. \\
@@ -291,19 +289,15 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \hline
     Umbral de agregación & Umbral mínimo de agregación de la información pública. & AC06, R12. \\
     \hline
-    Nodo de tracking & Si el generador de carga (la flota simulada) se separa del nodo de tracking, que solo reenvía los eventos al broker. & Vista de Distribución, R15. \\
-    \hline
     Ubicación del frontoffice & Si el frontoffice se sirve desde Vercel o desde Elastic Cloud. & DA05, R14, Vista de Distribución. \\
     \hline
-    Escalado y orquestador & Dónde corre el orquestador del opcional 4 y cómo escalan con varias réplicas la sesión del backoffice JSF y la mensajería embebida. & AC07, R14, DA02, Vista de Distribución. \\
+    Escalado y orquestador & Dónde corre el orquestador del opcional 4 y cómo escala con varias réplicas la sesión del backoffice JSF. & AC07, R14, DA02, Vista de Distribución. \\
     \hline
     Tecnología del backoffice & Si el backoffice queda en JSF o pasa a React. & DA05, AC07. \\
     \hline
     Plataforma de los periféricos & Qué PaaS o IaaS ejecuta los nodos periféricos y el suplantador de la PDI. & R15, Vista de Distribución. \\
     \hline
-    Observabilidad & Tecnología de logs, métricas y trazas, y plataforma en la que se ejecuta. & AC21 a AC24, Vista de Distribución. \\
-    \hline
-    Conexión segura con el nodo de tracking & Cómo se protege con TLS la conexión del nodo de tracking con la mensajería. & R8, DA02. \\
+    Plataforma de observabilidad & En qué PaaS o IaaS se ejecuta la Plataforma de Observabilidad en el despliegue. & AC21 a AC24, Vista de Distribución. \\
     \hline
     Pista de auditoría & Mecanismo que garantiza que sea de solo agregado. & R10, AC04. \\
     \hline

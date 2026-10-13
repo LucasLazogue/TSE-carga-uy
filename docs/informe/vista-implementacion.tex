@@ -16,7 +16,7 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \textbf{Componente} & \textbf{Tecnología} & \textbf{Subsistemas que implementa} \\
     \hline
     \endhead
-    \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, Java 24. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. Los adaptadores usan MicroProfile Fault Tolerance (AC13) y el acceso al Almacén de Posiciones, el controlador de MongoDB. & API REST, Backoffice, Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización, adaptadores (gub.uy, PDI, rutas, balanzas y notificaciones) y acceso a la Persistencia y al Almacén de Posiciones. \\
+    \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, Java 24. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. Los adaptadores usan MicroProfile Fault Tolerance (AC13) y el acceso al Almacén de Posiciones, el controlador de MongoDB. Logs, métricas y trazas, con los subsistemas de OpenTelemetry y de Micrometer de WildFly (AC21 a AC24). & API REST, Backoffice, Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización, adaptadores (gub.uy, PDI, rutas, balanzas y notificaciones) y acceso a la Persistencia y al Almacén de Posiciones. \\
     \hline
     Frontend web & React 19 con TypeScript, Tailwind CSS 4 y componentes shadcn/ui, construido con Vite 8. & Frontoffice, un único artefacto para el público, los ciudadanos y los funcionarios. \\
     \hline
@@ -26,9 +26,9 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \hline
     Almacén de posiciones & MongoDB (opcional 10). & Almacén de Posiciones. \\
     \hline
-    Broker de mensajería & ActiveMQ Artemis embebido en WildFly, con la cola \texttt{queue\_tracking}. & Mensajería. \\
+    Broker de mensajería & Apache Artemis 2.57 en su propio contenedor, con los mensajes en un volumen y la cola \texttt{queue\_tracking}. Acepta a las instancias de WildFly en la red interna y a los nodos con TLS. & Mensajería. \\
     \hline
-    Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS remoto de WildFly. Expone \texttt{/health} y \texttt{/metricas}, y guarda los eventos mientras el componente central no responde. & Nodo Periférico Tracking. \\
+    Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS de Artemis. Incluye el generador de carga. Expone \texttt{/health} y \texttt{/metricas}, guarda los eventos mientras el broker no responde y exporta logs, métricas y trazas con el SDK de OpenTelemetry. & Nodo Periférico Tracking. \\
     \hline
     Nodo de balanzas & Servicio de solicitud--respuesta sobre HTTPS (R3), con su propia base de pesajes. & Nodo Periférico Balanzas. \\
     \hline
@@ -36,11 +36,11 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \hline
     Directorio LDAP & Accedido por LDAPS (opcional 8). & Directorio LDAP. \\
     \hline
-    Plataforma de Observabilidad & Colector, almacenamiento y visualización de logs, métricas y trazas. & Plataforma de Observabilidad. \\
+    Plataforma de Observabilidad & \texttt{grafana/otel-lgtm} 0.34 en un contenedor: colector de OpenTelemetry, Prometheus (métricas), Tempo (trazas), Loki (logs) y Grafana, con un tablero de la ingesta, el nodo de tracking y la API REST. & Plataforma de Observabilidad. \\
     \hline
 \end{longtable}
 
-\pendiente{definir la tecnología del nodo de balanzas, del suplantador de la PDI, del directorio LDAP y de la Plataforma de Observabilidad.}
+\pendiente{definir la tecnología del nodo de balanzas, del suplantador de la PDI y del directorio LDAP.}
 
 \pendiente{describir los pros y los contras de las tecnologías elegidas y las habilidades necesarias para el proyecto, como pide la plantilla para esta vista.}
 
@@ -58,15 +58,15 @@ La Figura \ref{fig:vista_impl} muestra, con un diagrama de deployment UML \cite{
 \begin{itemize}
     \item Dentro del EAR, \texttt{carga-uy-web} depende de \texttt{carga-uy-ejb}, y este de \texttt{carga-uy-datos}.
     \item El frontend web y la aplicación móvil consumen la API REST del EAR. El frontend redirige las llamadas a \texttt{/api} hacia el componente central.
-    \item El nodo de tracking publica en la cola \texttt{queue\_tracking}, a la que accede como cliente JMS remoto a través del puerto web de WildFly.
+    \item El nodo de tracking publica en la cola \texttt{queue\_tracking} del broker, con TLS. El EAR la consume con un adaptador de recursos de WildFly configurado hacia ese broker.
     \item El EAR accede a PostgreSQL mediante el \textit{datasource} \texttt{CargaUyDS}, a MongoDB mediante su controlador y al directorio LDAP por LDAPS.
     \item El EAR consume Usuario gub.uy (OpenID Connect), la PDI (SOAP), el servicio de rutas y el nodo de balanzas por HTTPS, y el servidor de correo por SMTP.
-    \item El EAR y los nodos periféricos envían su telemetría a la Plataforma de Observabilidad.
+    \item El EAR y los nodos periféricos envían sus logs, métricas y trazas a la Plataforma de Observabilidad por OTLP. En WildFly lo hacen los subsistemas de OpenTelemetry (trazas y logs) y de Micrometer (métricas); en el nodo de tracking, el SDK de OpenTelemetry.
 \end{itemize}
 
 \subsection{Empaquetado}
 
-Todos los componentes se distribuyen como imágenes de contenedor (R13). El componente central se construye en dos etapas: la primera compila el proyecto con Maven y la segunda configura WildFly 41 con el controlador de PostgreSQL, el \textit{datasource}, las colas JMS y MicroProfile Fault Tolerance, y despliega el EAR. El nodo de tracking también se construye en dos etapas y corre sobre la imagen de Java 24. PostgreSQL con PostGIS, MongoDB, el directorio LDAP, el nodo de balanzas, el suplantador de la PDI y la Plataforma de Observabilidad corren cada uno en su contenedor. Un archivo de Docker Compose levanta el entorno completo con un único comando documentado en el README.
+Todos los componentes se distribuyen como imágenes de contenedor (R13). El componente central se construye en dos etapas: la primera compila el proyecto con Maven y la segunda configura WildFly 41 con el controlador de PostgreSQL, el \textit{datasource}, la conexión al broker de mensajería y MicroProfile Fault Tolerance, y despliega el EAR. El nodo de tracking también se construye en dos etapas y corre sobre la imagen de Java 24. PostgreSQL con PostGIS, MongoDB, el broker de mensajería, el directorio LDAP, el nodo de balanzas, el suplantador de la PDI y la Plataforma de Observabilidad corren cada uno en su contenedor. Un archivo de Docker Compose levanta el entorno completo con un único comando documentado en el README.
 
 La configuración sensible (credenciales de gub.uy, secreto de los tokens de sesión, credenciales de la base de datos, de MongoDB, del directorio LDAP y de la mensajería, y la clave del servicio de rutas) se pasa por variables de entorno desde un archivo \texttt{.env} que no se sube al repositorio (R11).
 

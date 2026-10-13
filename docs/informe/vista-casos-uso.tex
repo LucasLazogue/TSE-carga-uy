@@ -284,6 +284,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Un vehículo sin viaje en curso al generarse el evento dispara la regla \emph{viaje sin Guía}.
+    \item Un evento con una matrícula que no corresponde a un vehículo registrado se guarda igual, con su matrícula, para no perder información: si después se registra el vehículo, sus viajes encuentran esas posiciones.
     \item Ante saturación, los eventos permanecen encolados y el broker los guarda en disco cuando se llena su memoria; se procesan más tarde, sin pérdida (AC17).
     \item Si el nodo no responde, el componente central continúa funcionando.
     \item Los eventos tardíos se incorporan a la ruta histórica y vuelven a evaluar las reglas.
@@ -296,7 +297,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 
 Por ejemplo, si un viaje va de 10:00 a 12:00 y el vehículo pierde cobertura desde las 11:30, las posiciones de 11:30 a 12:00 pueden llegar a las 12:15, con el viaje ya finalizado. Con este criterio igual quedan en ese viaje. Si se mirara el estado del viaje al llegar cada posición, parecerían de un vehículo sin viaje y se abriría un caso falso de \emph{viaje sin Guía}.
 
-Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las posiciones llegan antes que el aviso de inicio. Cuando el aviso llega, esas posiciones se asocian al viaje y se vuelve a evaluar la regla \emph{viaje sin Guía}.
+Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las posiciones llegan antes que el aviso de inicio. Cuando el aviso llega, esas posiciones se asocian al viaje y se vuelve a evaluar la regla \emph{viaje sin Guía}. Lo mismo con el fin: si el aviso llega tarde, las posiciones generadas después del fin, que se habían asociado al viaje porque seguía en curso, quedan sin viaje. Si dos viajes del mismo vehículo se superponen porque uno quedó sin fin registrado, cada posición es del viaje que empezó último.
 
 \subsubsection{CU-11 Detectar automáticamente un incumplimiento y generar el caso}\label{sec:cu-11}
 \begin{table}[H]
@@ -385,15 +386,13 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item Selecciona registrar un nodo e indica su tipo (balanzas o tracking), un identificador y su punto de acceso.
     \item El sistema valida que el identificador no esté en uso.
     \item Registra el nodo en estado \emph{deshabilitado}.
-    \item El administrador solicita verificar la conectividad con el nodo.
-    \item Si la verificación es exitosa, el administrador habilita el nodo.
+    \item El administrador habilita el nodo.
     \item A partir de ese momento el nodo intercambia datos con el componente central.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Si el identificador ya está en uso, se rechaza el registro.
-    \item Si la verificación falla, el nodo permanece deshabilitado y se informa el motivo.
-    \item Modificar el punto de acceso de un nodo habilitado lo vuelve a \emph{deshabilitado} hasta una nueva verificación.
+    \item Modificar el punto de acceso de un nodo habilitado lo vuelve a \emph{deshabilitado} hasta que el administrador lo habilite de nuevo.
     \item Deshabilitar un nodo de balanzas deja pendiente la evaluación de exceso de carga sin detener la plataforma.
     \item Deshabilitar un nodo de tracking hace que se descarten sus eventos y los viajes en curso quedan sin actualización de ruta.
     \item La baja es lógica: los pesajes y las posiciones que el nodo reportó siguen siendo evidencia de los casos generados.
@@ -401,5 +400,3 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \textbf{\underline{Postcondiciones:}} El nodo queda registrado con su tipo, punto de acceso y estado. Solo los nodos habilitados intercambian datos con el componente central y ninguna credencial queda en el repositorio. \\ \hline
 \end{tabular}
 \end{table}
-
-La verificación de conectividad consulta el punto de acceso del nodo: a un nodo de balanzas se le hace una consulta de pesajes de prueba, y a un nodo de tracking se le consulta su estado (\texttt{/health}), que indica si está conectado a la mensajería.

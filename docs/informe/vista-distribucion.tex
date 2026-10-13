@@ -13,7 +13,7 @@ Se utiliza el Diagrama de Deployment UML \cite{Ambysoft2018}. Los nodos físicos
 
 \subsection{Escenario 1: despliegue de la solución}
 
-La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas las conexiones entre entornos van por HTTPS (R8), salvo la del nodo de tracking con la mensajería, que se discute al final de esta sección.
+La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas las conexiones entre entornos van por HTTPS (R8), salvo la del nodo de tracking con el broker de mensajería, que usa el protocolo del broker cifrado con TLS.
 
 \textbf{Dispositivo del chofer.} Corre el Componente Móvil (Android) con su persistencia local, que conserva la Guía, el estado del viaje y los eventos pendientes. Se comunica con el componente central mediante REST sobre HTTPS, con un token \textit{Bearer} (R2).
 
@@ -21,9 +21,9 @@ La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas l
 
 \textbf{Vercel.} Sirve el frontoffice, construido en React como sitio estático, y redirige las llamadas a \texttt{/api} hacia el componente central.
 
-\textbf{ANTEL Elastic Cloud (componente central).} Corre el servidor de aplicaciones WildFly con la aplicación empaquetada como EAR (presentación: API REST y backoffice; servicios: Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización; adaptadores: gub.uy, PDI, rutas, notificaciones y balanzas), la base de datos PostgreSQL con PostGIS (opcional 11), el Almacén de Posiciones en MongoDB (opcional 10) y la mensajería (R14).
+\textbf{ANTEL Elastic Cloud (componente central).} Corre el servidor de aplicaciones WildFly con la aplicación empaquetada como EAR (presentación: API REST y backoffice; servicios: Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización; adaptadores: gub.uy, PDI, rutas, notificaciones y balanzas), la base de datos PostgreSQL con PostGIS (opcional 11), el Almacén de Posiciones en MongoDB (opcional 10) y el broker de mensajería, Artemis en su propio contenedor, con los mensajes en un volumen (R14, DA02). Todas las instancias de WildFly consumen la misma cola del broker, así que la ingesta escala con ellas (AC07).
 
-\textbf{PaaS o IaaS periférica.} Corre los nodos periféricos de balanzas y de tracking, y el suplantador de la PDI (R15). El nodo de balanzas guarda los pesajes en su propia base de datos. El componente central consulta a balanzas en modalidad solicitud--respuesta (R3), recibe los eventos de tracking a través de la mensajería (R4) y consulta el estado del nodo de tracking por HTTPS para verificar su conectividad (CU-19).
+\textbf{PaaS o IaaS periférica.} Corre los nodos periféricos de balanzas y de tracking, y el suplantador de la PDI (R15). El nodo de balanzas guarda los pesajes en su propia base de datos. El componente central consulta a balanzas en modalidad solicitud--respuesta (R3) y recibe los eventos de tracking a través de la mensajería (R4): el nodo de tracking publica directo en el broker, con TLS y con un usuario que solo puede publicar en la cola de tracking. El nodo de tracking incluye el generador de carga: además de simular la flota, puede sumar vehículos, duplicar y desordenar eventos y acumularlos para publicarlos juntos al recuperar la cobertura, que es lo que se usa en la prueba de performance.
 
 \textbf{Sistemas externos.} Usuario gub.uy (OpenID Connect), el servicio de correo (SMTP) y el servicio de rutas (HTTPS), del que el componente central obtiene el recorrido esperado de cada Guía.
 
@@ -32,10 +32,6 @@ La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas l
 \pendiente{describir los requerimientos no funcionales que justifican este escenario.}
 
 \pendiente{confirmar con el tutor que los frontoffices pueden servirse desde Vercel: la letra ubica los frontoffices en el componente central y exige que el componente central corra en Elastic Cloud (R14).}
-
-\pendiente{resolver la ubicación de la mensajería: el diagrama la muestra como un broker aparte, \enquote{a definir}, mientras que el grupo había decidido embeberla en el servidor de aplicaciones (DA02). Definir también cómo cumple R8 la conexión del nodo de tracking con la mensajería, porque los protocolos de los brokers no son HTTPS.}
-
-\pendiente{definir si el generador de carga se separa del nodo de tracking.}
 
 \subsection{Escenario 2}
 
