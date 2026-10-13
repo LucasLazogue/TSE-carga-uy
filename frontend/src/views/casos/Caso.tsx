@@ -26,7 +26,7 @@ const columnasAuditoria: GridColumn<PistaAuditoria>[] = [
         : ESTADOS_CASO[p.estadoNuevo],
   },
   { header: 'Usuario', cell: (p) => (p.usuario === p.rol ? p.usuario : `${p.usuario} (${p.rol})`) },
-  { header: 'Detalle', cell: (p) => p.detalle ?? '—', className: 'whitespace-normal' },
+  { header: 'Fundamento', cell: (p) => p.fundamento ?? '—', className: 'whitespace-normal' },
 ]
 
 function Caso() {

@@ -63,7 +63,7 @@ export type PistaAuditoria = {
   accion: AccionAuditoria
   estadoAnterior?: EstadoCaso | null
   estadoNuevo: EstadoCaso
-  detalle?: string
+  fundamento?: string
   fecha: string
 }
 
