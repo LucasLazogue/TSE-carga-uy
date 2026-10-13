@@ -20,7 +20,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC03 & Seguridad & La autorización se controla en la capa de servicios, con permisos asociados a roles (R9). \\
     \hline
-    AC04 & Seguridad & La pista de auditoría permite reconstruir el usuario, la acción, el fundamento y la marca de tiempo de cada acción de fiscalización, y no puede modificarse ni eliminarse desde la aplicación (R10). \\
+    AC04 & Seguridad & La pista de auditoría permite reconstruir el usuario, la acción, el fundamento y la marca de tiempo de cada acción de fiscalización, y no puede modificarse ni eliminarse desde la aplicación (R10). Cada registro guarda el caso, la acción (crear, notificar, presentar descargo, confirmar o desestimar), el usuario y su rol, los estados anterior y nuevo, el fundamento y la fecha. Un disparador de PostgreSQL rechaza cualquier modificación o borrado de esos registros, aunque se intente desde fuera de la aplicación, y la pista referencia al caso solo por su identificador, para que borrar un caso no la borre en cascada. \\
     \hline
     AC05 & Seguridad & Las credenciales, claves y certificados se administran fuera del repositorio de código y de las imágenes de contenedor (R11). \\
     \hline
@@ -81,7 +81,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     \multicolumn{3}{|l|}{\textit{Pruebas y calidad del código}} \\
     \hline
-    AC25 & Mantenibilidad & Las pruebas automatizadas cubren aproximadamente el 80~\% de la lógica, con al menos una prueba por servicio. \\
+    AC25 & Mantenibilidad & Las pruebas automatizadas cubren aproximadamente el 80~\% de la lógica, con al menos una prueba por servicio. La cobertura se mide con JaCoCo en el pipeline de integración continua. \\
     \hline
     AC26 & Corrección & Las pruebas cubren el ciclo de vida de los casos de fiscalización, verifican que no sean posibles transiciones de estado no previstas y comprueban la idempotencia del procesamiento de tracking y de la sincronización móvil. \\
     \hline

@@ -19,7 +19,7 @@ La Vista de Casos de Uso se centra en los aspectos funcionales de la plataforma.
 
 \subsection{Diagrama de Casos de Uso}
 
-En esta sección se utilizan Diagramas de Casos de Uso UML para presentar los casos de uso de la plataforma, indicando cuáles se consideran críticos para la arquitectura. Los casos críticos son CU-01, CU-07, CU-09, CU-10, CU-11, CU-16 y CU-19; el CU-19 se incorporó a pedido del tutor por su complejidad.
+En esta sección se utilizan Diagramas de Casos de Uso UML para presentar los casos de uso de la plataforma, indicando cuáles se consideran críticos para la arquitectura. Los casos críticos son CU-01, CU-07, CU-09, CU-10, CU-11, CU-16 y CU-19; el CU-19 se incluye por su complejidad.
 
 \begin{figure}[H]
     \centering
@@ -111,7 +111,7 @@ Se eligieron como críticos los casos de uso que hacen intervenir la mayor canti
 
 \subsection{Requerimientos Opcionales}
 
-El grupo decidió repartir entre sus integrantes los doce requerimientos opcionales de la letra. Como la letra exige al menos cuatro puntos, se definió un conjunto mínimo comprometido, con un requerimiento por integrante, elegido porque además resuelve aspectos de la arquitectura. El resto se implementa como adicional.
+Los doce requerimientos opcionales de la letra se repartieron entre los integrantes. Como la letra exige al menos cuatro puntos, se definió un conjunto mínimo comprometido, con un requerimiento por integrante, elegido porque además resuelve aspectos de la arquitectura. El resto se implementa como adicional.
 
 \begin{table}[H]
     \small
@@ -146,7 +146,7 @@ La plataforma debe detectar como mínimo:
     \item \textbf{Desvío de ruta:} el recorrido reportado se aparta significativamente del trayecto esperado entre el origen y el destino declarados.
 \end{itemize}
 
-Cada detección genera un caso cuyo ciclo de vida es \emph{detectada}, \emph{notificada}, \emph{en descargo} y, finalmente, \emph{confirmada} o \emph{desestimada}. La detección debe ser automática y asincrónica; las transiciones deben estar controladas; la empresa debe ser notificada; las acciones de los funcionarios deben quedar auditadas; y el reprocesamiento de un evento no debe crear casos duplicados.
+Cada detección genera un caso cuyo ciclo de vida es \emph{detectada}, \emph{notificada}, \emph{en descargo} y, finalmente, \emph{confirmada} o \emph{desestimada}. Un caso notificado pasa a \emph{en descargo} cuando el responsable de la empresa presenta su descargo dentro del plazo; si el plazo vence sin descargo, el funcionario puede resolverlo recién desde ese momento. Toda resolución exige un fundamento. El plazo de descargo es un parámetro de las reglas de fiscalización, con fecha de vigencia, y por defecto es de 10 días. La detección debe ser automática y asincrónica; las transiciones deben estar controladas; la empresa debe ser notificada; las acciones de los funcionarios deben quedar auditadas; y el reprocesamiento de un evento no debe crear casos duplicados.
 
 \FloatBarrier
 
