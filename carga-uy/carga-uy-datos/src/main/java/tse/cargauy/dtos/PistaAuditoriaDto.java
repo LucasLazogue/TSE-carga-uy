@@ -17,7 +17,7 @@ public class PistaAuditoriaDto implements Serializable {
     private AccionAuditoria accion;
     private EstadoCaso estadoAnterior;
     private EstadoCaso estadoNuevo;
-    private String detalle;
+    private String fundamento;
     private LocalDateTime fecha;
 
     public Long getId() {
@@ -76,12 +76,12 @@ public class PistaAuditoriaDto implements Serializable {
         this.estadoNuevo = estadoNuevo;
     }
 
-    public String getDetalle() {
-        return detalle;
+    public String getFundamento() {
+        return fundamento;
     }
 
-    public void setDetalle(String detalle) {
-        this.detalle = detalle;
+    public void setFundamento(String fundamento) {
+        this.fundamento = fundamento;
     }
 
     public LocalDateTime getFecha() {

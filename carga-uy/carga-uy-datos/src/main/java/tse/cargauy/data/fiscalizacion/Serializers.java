@@ -76,7 +76,7 @@ public class Serializers {
         dto.setAccion(registro.getAccion());
         dto.setEstadoAnterior(registro.getEstadoAnterior());
         dto.setEstadoNuevo(registro.getEstadoNuevo());
-        dto.setDetalle(registro.getDetalle());
+        dto.setFundamento(registro.getFundamento());
         dto.setFecha(registro.getFecha());
         return dto;
     }

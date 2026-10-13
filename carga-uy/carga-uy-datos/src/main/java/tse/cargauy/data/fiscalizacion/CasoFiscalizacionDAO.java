@@ -222,8 +222,8 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     }
 
     private void auditar(CasoFiscalizacion caso, String usuario, String rol, AccionAuditoria accion, EstadoCaso anterior,
-            String detalle, LocalDateTime fecha) {
-        entityManager.persist(new PistaAuditoria(caso.getId(), usuario, rol, accion, anterior, caso.getEstado(), detalle, fecha));
+            String fundamento, LocalDateTime fecha) {
+        entityManager.persist(new PistaAuditoria(caso.getId(), usuario, rol, accion, anterior, caso.getEstado(), fundamento, fecha));
     }
 
     // dos transacciones sobre la misma version del caso: la segunda en confirmar pierde

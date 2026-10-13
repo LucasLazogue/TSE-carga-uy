@@ -39,7 +39,7 @@ public class PistaAuditoria {
     private EstadoCaso estadoNuevo;
 
     @Column(columnDefinition = "text")
-    private String detalle;
+    private String fundamento;
 
     @Column(nullable = false)
     private LocalDateTime fecha;
@@ -48,14 +48,14 @@ public class PistaAuditoria {
     }
 
     public PistaAuditoria(Long idCaso, String usuario, String rol, AccionAuditoria accion, EstadoCaso estadoAnterior,
-            EstadoCaso estadoNuevo, String detalle, LocalDateTime fecha) {
+            EstadoCaso estadoNuevo, String fundamento, LocalDateTime fecha) {
         this.idCaso = idCaso;
         this.usuario = usuario;
         this.rol = rol;
         this.accion = accion;
         this.estadoAnterior = estadoAnterior;
         this.estadoNuevo = estadoNuevo;
-        this.detalle = detalle;
+        this.fundamento = fundamento;
         this.fecha = fecha;
     }
 
@@ -87,8 +87,8 @@ public class PistaAuditoria {
         return estadoNuevo;
     }
 
-    public String getDetalle() {
-        return detalle;
+    public String getFundamento() {
+        return fundamento;
     }
 
     public LocalDateTime getFecha() {
