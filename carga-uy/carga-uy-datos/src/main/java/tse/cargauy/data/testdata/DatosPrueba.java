@@ -80,6 +80,11 @@ public class DatosPrueba {
             usuarioDAO.addRol(Rol.FUNCIONARIO);
             usuarioDAO.addFuncionario("11111111");
         }
+        for (String rol : List.of(Rol.AUTORIDAD, Rol.ADMINISTRADOR)) {
+            if (!usuarioDAO.getRoles().contains(rol)) {
+                usuarioDAO.addRol(rol);
+            }
+        }
 
         UsuarioDto carlos = usuarioDAO.getCiudadanoByCedula("55555555");
         if (carlos == null) {

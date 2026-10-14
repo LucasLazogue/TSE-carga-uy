@@ -14,6 +14,7 @@ public interface UsuarioDAOLocal {
     UsuarioDto getFuncionarioByCedula(String cedula);
     UsuarioDto addCiudadano(String cedula, String correo);
     void addFuncionario(String cedula);
+    UsuarioDto saveUsuarioBackoffice(String usuario, List<String> roles);
     void addChofer(Long idCiudadano, Long idEmpresa, LocalDate fechaDesde);
     void addResponsable(Long idCiudadano, Long idEmpresa, LocalDate fechaDesde);
     Long getChoferVigente(Long idCiudadano, Long idEmpresa, LocalDate fecha);
