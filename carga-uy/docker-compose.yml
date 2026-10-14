@@ -124,6 +124,9 @@ services:
       ARTEMIS_PORT: ${ARTEMIS_PORT:-61616}
       ARTEMIS_USUARIO: ${ARTEMIS_USUARIO:-central}
       ARTEMIS_CLAVE: ${ARTEMIS_CLAVE:-central123}
+      # login del backoffice contra el directorio
+      LDAP_URL: ${LDAP_URL:-ldap://ldap:3389}
+      LDAP_DM_PASSWORD: ${LDAP_DM_PASSWORD:-cargauy123}
       # trazas, metricas y logs hacia la Plataforma de Observabilidad; la proporcion de trazas que se guardan tiene
       # que ser la misma que en el nodo
       OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
@@ -132,6 +135,7 @@ services:
     depends_on:
       - mongo
       - artemis
+      - ldap
 
   # nodo periferico de tracking: simula la flota y publica sus posiciones en queue_tracking.
   # en el despliegue va en otra PaaS; aca esta para levantar todo con un solo comando

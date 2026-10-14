@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -95,5 +96,21 @@ class UsuarioEJBTest {
     @Test
     void rechazaSinSecreto() {
         assertCodigo(CodigoError.AUTH_SECRETO_NO_CONFIGURADO, () -> conSecreto(null).crearToken(chofer()));
+    }
+
+    @Test
+    void losGruposDelDirectorioSonLosRolesDelBackoffice() {
+        assertEquals(List.of("ADMINISTRADOR", "AUTORIDAD"),
+                UsuarioEJB.rolesBackoffice(Set.of("autoridad", "administrador")));
+    }
+
+    @Test
+    void ignoraLosGruposQueNoSonDelBackoffice() {
+        assertEquals(List.of("AUTORIDAD"), UsuarioEJB.rolesBackoffice(Set.of("autoridad", "otro")));
+    }
+
+    @Test
+    void rechazaElBackofficeSinGrupoDelBackoffice() {
+        assertCodigo(CodigoError.ACCESO_DENEGADO, () -> ejb.loginBackoffice("admin1", Set.of("otro")));
     }
 }

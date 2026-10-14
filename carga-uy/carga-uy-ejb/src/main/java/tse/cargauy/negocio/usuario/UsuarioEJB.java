@@ -6,10 +6,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.crypto.SecretKey;
 
@@ -27,6 +31,7 @@ import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioActualDto;
 import tse.cargauy.dtos.UsuarioDto;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 import tse.cargauy.seguridad.Jwt;
@@ -83,6 +88,26 @@ public class UsuarioEJB implements UsuarioEJBLocal {
             return ciudadano;
         }
         return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
+    }
+
+    public UsuarioDto loginBackoffice(String usuario, Set<String> grupos) {
+        List<String> roles = rolesBackoffice(grupos);
+        if (roles.isEmpty()) {
+            throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
+        }
+        return usuarioDAO.saveUsuarioBackoffice(usuario, roles);
+    }
+
+    static List<String> rolesBackoffice(Set<String> grupos) {
+        List<String> roles = new ArrayList<>();
+        for (String grupo : grupos) {
+            String rol = grupo.toUpperCase(Locale.ROOT);
+            if (rol.equals(Rol.ADMINISTRADOR) || rol.equals(Rol.AUTORIDAD)) {
+                roles.add(rol);
+            }
+        }
+        Collections.sort(roles);
+        return roles;
     }
 
     public TokenDto crearEstadoLogin(String state, String nonce, String codeChallenge) {
