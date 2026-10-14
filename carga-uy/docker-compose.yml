@@ -57,8 +57,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 120s
-    # espera a que entre el Directory Manager, crea dc=carga,dc=uy si falta, carga directorio.ldif (las entradas que
-    # ya existen se saltean, 68) y crea el administrador del .env si no existe
+    # espera a que entre el Directory Manager, crea dc=carga,dc=uy si falta, bloquea la cuenta 15 min tras 5 claves
+    # erroneas, carga directorio.ldif (las entradas que ya existen se saltean, 68) y crea el administrador del .env si
+    # no existe
     post_start:
       - command:
           - sh
@@ -70,6 +71,7 @@ services:
             done
             dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend suffix list | grep -q "^dc=carga,dc=uy " \
               || dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend create --suffix dc=carga,dc=uy --be-name carga --create-suffix
+            dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 pwpolicy set --pwdlockout on --pwdmaxfailures 5 --pwdlockoutduration 900
             ldapadd -c -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -f /directorio.ldif || [ $$? -eq 68 ]
             admin="uid=$$LDAP_ADMIN_USUARIO,ou=usuarios,dc=carga,dc=uy"
             if [ -n "$$LDAP_ADMIN_USUARIO" ] && ! ldapsearch -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -b "$$admin" -s base > /dev/null 2>&1; then
