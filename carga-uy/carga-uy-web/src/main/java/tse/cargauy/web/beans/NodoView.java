@@ -14,7 +14,6 @@ import tse.cargauy.entities.EstadoNodo;
 import tse.cargauy.entities.TipoNodo;
 import tse.cargauy.negocio.nodo.NodoPerifericoEJBLocal;
 
-// CU-19 en el backoffice. TODO restringir al rol administrador cuando exista (CU-03)
 @Named
 @ViewScoped
 public class NodoView implements Serializable {
