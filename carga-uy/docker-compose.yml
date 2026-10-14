@@ -36,6 +36,42 @@ services:
     volumes:
       - artemisdata:/var/lib/artemis-instance
 
+  # Directorio LDAP
+  ldap:
+    image: 389ds/dirsrv:3.1
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      DS_DM_PASSWORD: ${LDAP_CLAVE_ADMIN:-cargauy123}
+      DS_SUFFIX_NAME: dc=carga,dc=uy
+    ports:
+      - "1389:3389"
+    volumes:
+      - ldapdata:/data
+      - ./ldap/ldifs:/ldifs:ro
+    # el de la imagen da sano antes de que termine la instalacion; la clave del admin es lo ultimo que se configura
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:3389 -D 'cn=Directory Manager' -w \"$$DS_DM_PASSWORD\" -b '' -s base > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    # espera a que entre el admin, crea dc=carga,dc=uy si falta y carga los ldif; las entradas que ya existen se
+    # saltean (68)
+    post_start:
+      - command:
+          - sh
+          - -c
+          - |
+            set -e
+            until ldapsearch -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -b "" -s base > /dev/null 2>&1; do
+              sleep 2
+            done
+            dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend suffix list | grep -q "^dc=carga,dc=uy " \
+              || dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend create --suffix dc=carga,dc=uy --be-name carga --create-suffix
+            for ldif in /ldifs/*.ldif; do
+              ldapadd -c -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -f "$$ldif" || [ $$? -eq 68 ]
+            done
+
   # Plataforma de Observabilidad (AC21 a AC24): colector OpenTelemetry, Prometheus, Tempo, Loki y Grafana.
   # Grafana en http://localhost:3000 (sin usuario); 4317 y 4318 reciben OTLP desde el host
   observabilidad:
@@ -112,3 +148,4 @@ volumes:
   pgdata:
   mongodata:
   artemisdata:
+  ldapdata:
