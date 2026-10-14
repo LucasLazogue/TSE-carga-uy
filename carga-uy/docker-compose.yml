@@ -41,22 +41,24 @@ services:
     image: 389ds/dirsrv:3.1
     environment:
       TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
-      DS_DM_PASSWORD: ${LDAP_CLAVE_ADMIN:-cargauy123}
+      DS_DM_PASSWORD: ${LDAP_DM_PASSWORD:-cargauy123}
       DS_SUFFIX_NAME: dc=carga,dc=uy
+      LDAP_ADMIN_USUARIO: ${LDAP_ADMIN_USUARIO:-}
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-}
     ports:
       - "1389:3389"
     volumes:
       - ldapdata:/data
-      - ./ldap/ldifs:/ldifs:ro
-    # el de la imagen da sano antes de que termine la instalacion; la clave del admin es lo ultimo que se configura
+      - ./ldap/directorio.ldif:/directorio.ldif:ro
+    # el de la imagen da sano antes de que termine la instalacion; la clave del Directory Manager es lo ultimo que se configura
     healthcheck:
       test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:3389 -D 'cn=Directory Manager' -w \"$$DS_DM_PASSWORD\" -b '' -s base > /dev/null"]
       interval: 5s
       timeout: 5s
       retries: 3
       start_period: 120s
-    # espera a que entre el admin, crea dc=carga,dc=uy si falta y carga los ldif; las entradas que ya existen se
-    # saltean (68)
+    # espera a que entre el Directory Manager, crea dc=carga,dc=uy si falta, carga directorio.ldif (las entradas que
+    # ya existen se saltean, 68) y crea el administrador del .env si no existe
     post_start:
       - command:
           - sh
@@ -68,9 +70,23 @@ services:
             done
             dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend suffix list | grep -q "^dc=carga,dc=uy " \
               || dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend create --suffix dc=carga,dc=uy --be-name carga --create-suffix
-            for ldif in /ldifs/*.ldif; do
-              ldapadd -c -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -f "$$ldif" || [ $$? -eq 68 ]
-            done
+            ldapadd -c -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -f /directorio.ldif || [ $$? -eq 68 ]
+            admin="uid=$$LDAP_ADMIN_USUARIO,ou=usuarios,dc=carga,dc=uy"
+            if [ -n "$$LDAP_ADMIN_USUARIO" ] && ! ldapsearch -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -b "$$admin" -s base > /dev/null 2>&1; then
+              ldapadd -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" <<FIN
+            dn: $$admin
+            objectClass: inetOrgPerson
+            uid: $$LDAP_ADMIN_USUARIO
+            cn: $$LDAP_ADMIN_USUARIO
+            sn: $$LDAP_ADMIN_USUARIO
+            userPassword: $$LDAP_ADMIN_PASSWORD
+
+            dn: cn=administrador,ou=grupos,dc=carga,dc=uy
+            changetype: modify
+            add: member
+            member: $$admin
+            FIN
+            fi
 
   # Plataforma de Observabilidad (AC21 a AC24): colector OpenTelemetry, Prometheus, Tempo, Loki y Grafana.
   # Grafana en http://localhost:3000 (sin usuario); 4317 y 4318 reciben OTLP desde el host

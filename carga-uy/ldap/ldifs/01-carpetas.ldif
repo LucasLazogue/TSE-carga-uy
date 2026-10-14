@@ -1,7 +1,0 @@
-dn: ou=usuarios,dc=carga,dc=uy
-objectClass: organizationalUnit
-ou: usuarios
-
-dn: ou=grupos,dc=carga,dc=uy
-objectClass: organizationalUnit
-ou: grupos
