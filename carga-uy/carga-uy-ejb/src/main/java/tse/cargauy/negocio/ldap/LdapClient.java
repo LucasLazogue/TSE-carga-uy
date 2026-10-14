@@ -1,6 +1,9 @@
-package tse.cargauy.web.seguridad;
+package tse.cargauy.negocio.ldap;
 
-import jakarta.ejb.EJB;
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import org.eclipse.microprofile.faulttolerance.Timeout;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -8,40 +11,39 @@ import jakarta.security.enterprise.credential.UsernamePasswordCredential;
 import jakarta.security.enterprise.identitystore.CredentialValidationResult;
 import jakarta.security.enterprise.identitystore.IdentityStoreHandler;
 import jakarta.security.enterprise.identitystore.LdapIdentityStoreDefinition;
-import tse.cargauy.dtos.TokenDto;
-import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
-import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 
 @Named
 @ApplicationScoped
 @LdapIdentityStoreDefinition(
-        url = "${directorioBackoffice.url}",
+        url = "${ldapClient.url}",
         bindDn = "cn=Directory Manager",
-        bindDnPassword = "${directorioBackoffice.claveDirectoryManager}",
+        bindDnPassword = "${ldapClient.claveDirectoryManager}",
         callerBaseDn = "ou=usuarios,dc=carga,dc=uy",
         callerNameAttribute = "uid",
         groupSearchBase = "ou=grupos,dc=carga,dc=uy",
         groupMemberAttribute = "member",
         groupNameAttribute = "cn")
-public class DirectorioBackoffice {
+public class LdapClient {
 
     @Inject
     IdentityStoreHandler identityStoreHandler;
 
-    @EJB
-    UsuarioEJBLocal usuarioEJB;
-
-    public TokenDto ingresar(String usuario, String clave) {
+    @Timeout(3000)
+    @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5, delay = 30000, skipOn = CargaUYException.class)
+    @Fallback(fallbackMethod = "noDisponible", skipOn = CargaUYException.class)
+    public IdentidadLdap autenticar(String usuario, String clave) {
         CredentialValidationResult resultado = identityStoreHandler.validate(
                 new UsernamePasswordCredential(usuario, clave));
         if (resultado.getStatus() != CredentialValidationResult.Status.VALID) {
             throw new CargaUYException(CodigoError.AUTH_CREDENCIALES_INVALIDAS);
         }
-        UsuarioDto backoffice = usuarioEJB.loginBackoffice(resultado.getCallerPrincipal().getName(),
-                resultado.getCallerGroups());
-        return usuarioEJB.crearToken(backoffice);
+        return new IdentidadLdap(resultado.getCallerPrincipal().getName(), resultado.getCallerGroups());
+    }
+
+    IdentidadLdap noDisponible(String usuario, String clave) {
+        throw new CargaUYException(CodigoError.AUTH_DIRECTORIO_NO_DISPONIBLE);
     }
 
     public String getUrl() {

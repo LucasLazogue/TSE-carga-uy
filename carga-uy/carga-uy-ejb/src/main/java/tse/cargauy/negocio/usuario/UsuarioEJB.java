@@ -34,6 +34,8 @@ import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.ldap.IdentidadLdap;
+import tse.cargauy.negocio.ldap.LdapClient;
 import tse.cargauy.seguridad.Jwt;
 
 @Stateless
@@ -59,6 +61,9 @@ public class UsuarioEJB implements UsuarioEJBLocal {
 
     @Inject
     GubUyClient gubUy;
+
+    @Inject
+    LdapClient ldap;
 
     @Resource
     SessionContext contexto;
@@ -90,12 +95,13 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
     }
 
-    public UsuarioDto loginBackoffice(String usuario, Set<String> grupos) {
-        List<String> roles = rolesBackoffice(grupos);
+    public UsuarioDto loginBackoffice(String usuario, String clave) {
+        IdentidadLdap identidad = ldap.autenticar(usuario, clave);
+        List<String> roles = rolesBackoffice(identidad.getGrupos());
         if (roles.isEmpty()) {
             throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
         }
-        return usuarioDAO.saveUsuarioBackoffice(usuario, roles);
+        return usuarioDAO.saveUsuarioBackoffice(identidad.getUsuario(), roles);
     }
 
     static List<String> rolesBackoffice(Set<String> grupos) {

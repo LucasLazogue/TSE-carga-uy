@@ -35,6 +35,12 @@ RUN $CLI --file=/opt/jboss/artemis.cli
 COPY --chown=jboss:jboss config/observabilidad.cli /opt/jboss/observabilidad.cli
 RUN $CLI --file=/opt/jboss/observabilidad.cli
 
+# activa fault tolerance para que anden @Timeout, @CircuitBreaker y @Fallback
+RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
+/extension=org.wildfly.extension.microprofile.fault-tolerance-smallrye:add,\
+/subsystem=microprofile-fault-tolerance-smallrye:add,\
+stop-embedded-server'
+
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 /subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false),\
 stop-embedded-server'

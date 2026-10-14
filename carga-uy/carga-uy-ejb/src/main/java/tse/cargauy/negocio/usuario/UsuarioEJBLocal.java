@@ -1,7 +1,6 @@
 package tse.cargauy.negocio.usuario;
 
 import java.net.URI;
-import java.util.Set;
 
 import jakarta.ejb.Local;
 import tse.cargauy.dtos.EstadoLoginDto;
@@ -16,7 +15,7 @@ public interface UsuarioEJBLocal {
     TokenDto crearEstadoLogin(String state, String nonce, String codeChallenge);
     EstadoLoginDto leerEstadoLogin(String token);
     UsuarioDto loginGubUy(String code, String nonce);
-    UsuarioDto loginBackoffice(String usuario, Set<String> grupos);
+    UsuarioDto loginBackoffice(String usuario, String clave);
     TokenDto crearToken(UsuarioDto usuario);
     UsuarioDto validarToken(String token);
 

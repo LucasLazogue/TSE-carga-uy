@@ -15,6 +15,8 @@ import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.ldap.IdentidadLdap;
+import tse.cargauy.negocio.ldap.LdapClient;
 
 class UsuarioEJBTest {
 
@@ -111,6 +113,13 @@ class UsuarioEJBTest {
 
     @Test
     void rechazaElBackofficeSinGrupoDelBackoffice() {
-        assertCodigo(CodigoError.ACCESO_DENEGADO, () -> ejb.loginBackoffice("admin1", Set.of("otro")));
+        ejb.ldap = new LdapClient() {
+            @Override
+            public IdentidadLdap autenticar(String usuario, String clave) {
+                return new IdentidadLdap(usuario, Set.of("otro"));
+            }
+        };
+
+        assertCodigo(CodigoError.ACCESO_DENEGADO, () -> ejb.loginBackoffice("admin1", "clave"));
     }
 }
