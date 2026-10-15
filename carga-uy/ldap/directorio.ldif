@@ -1,0 +1,15 @@
+dn: ou=usuarios,dc=carga,dc=uy
+objectClass: organizationalUnit
+ou: usuarios
+
+dn: ou=grupos,dc=carga,dc=uy
+objectClass: organizationalUnit
+ou: grupos
+
+dn: cn=administrador,ou=grupos,dc=carga,dc=uy
+objectClass: groupOfNames
+cn: administrador
+
+dn: cn=autoridad,ou=grupos,dc=carga,dc=uy
+objectClass: groupOfNames
+cn: autoridad

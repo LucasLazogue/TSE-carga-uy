@@ -12,6 +12,8 @@ public class Rol {
     public static final String CHOFER = "CHOFER";
     public static final String RESPONSABLE = "RESPONSABLE";
     public static final String FUNCIONARIO = "FUNCIONARIO";
+    public static final String AUTORIDAD = "AUTORIDAD";
+    public static final String ADMINISTRADOR = "ADMINISTRADOR";
 
     @Id @GeneratedValue
     private Long id;

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html">
+<h:head>
+    <meta charset="UTF-8" />
+    <title>Ingresar al backoffice</title>
+</h:head>
+<h:body>
+
+    <h1>Ingresar al backoffice</h1>
+
+    <h:form>
+        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
+
+        <p>Usuario: <h:inputText value="#{loginView.usuario}" required="true"
+                                 requiredMessage="El usuario es obligatorio." /></p>
+        <p>Clave: <h:inputSecret value="#{loginView.clave}" required="true"
+                                 requiredMessage="La clave es obligatoria." /></p>
+
+        <h:commandButton value="Ingresar" action="#{loginView.ingresar}" />
+    </h:form>
+
+</h:body>
+</html>

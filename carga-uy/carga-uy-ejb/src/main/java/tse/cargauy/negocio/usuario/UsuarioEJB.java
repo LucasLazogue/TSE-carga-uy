@@ -6,10 +6,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.crypto.SecretKey;
 
@@ -27,8 +31,11 @@ import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioActualDto;
 import tse.cargauy.dtos.UsuarioDto;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.ldap.IdentidadLdap;
+import tse.cargauy.negocio.ldap.LdapClient;
 import tse.cargauy.seguridad.Jwt;
 
 @Stateless
@@ -54,6 +61,9 @@ public class UsuarioEJB implements UsuarioEJBLocal {
 
     @Inject
     GubUyClient gubUy;
+
+    @Inject
+    LdapClient ldap;
 
     @Resource
     SessionContext contexto;
@@ -83,6 +93,27 @@ public class UsuarioEJB implements UsuarioEJBLocal {
             return ciudadano;
         }
         return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
+    }
+
+    public UsuarioDto loginBackoffice(String usuario, String clave) {
+        IdentidadLdap identidad = ldap.autenticar(usuario, clave);
+        List<String> roles = rolesBackoffice(identidad.getGrupos());
+        if (roles.isEmpty()) {
+            throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
+        }
+        return usuarioDAO.saveUsuarioBackoffice(identidad.getUsuario(), roles);
+    }
+
+    static List<String> rolesBackoffice(Set<String> grupos) {
+        List<String> roles = new ArrayList<>();
+        for (String grupo : grupos) {
+            String rol = grupo.toUpperCase(Locale.ROOT);
+            if (rol.equals(Rol.ADMINISTRADOR) || rol.equals(Rol.AUTORIDAD)) {
+                roles.add(rol);
+            }
+        }
+        Collections.sort(roles);
+        return roles;
     }
 
     public TokenDto crearEstadoLogin(String state, String nonce, String codeChallenge) {

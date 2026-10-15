@@ -19,6 +19,7 @@ public class JwtAuthenticationMechanism implements HttpAuthenticationMechanism {
 
     private static final String BEARER = "Bearer ";
     private static final String COOKIE_SESION = "cargauy_token";
+    private static final String LOGIN = "/login.xhtml";
 
     @EJB
     UsuarioEJBLocal usuarioEJB;
@@ -28,14 +29,21 @@ public class JwtAuthenticationMechanism implements HttpAuthenticationMechanism {
             HttpMessageContext contexto) {
         String token = token(request);
         if (token == null || token.isBlank()) {
-            return contexto.doNothing();
+            return sinSesion(request, contexto);
         }
         try {
             UsuarioDto usuario = usuarioEJB.validarToken(token);
             return contexto.notifyContainerAboutLogin(String.valueOf(usuario.getId()), new HashSet<>(usuario.getRoles()));
         } catch (CargaUYException e) {
-            return contexto.doNothing();
+            return sinSesion(request, contexto);
         }
+    }
+
+    private static AuthenticationStatus sinSesion(HttpServletRequest request, HttpMessageContext contexto) {
+        if (contexto.isProtected()) {
+            return contexto.redirect(request.getContextPath() + LOGIN);
+        }
+        return contexto.doNothing();
     }
 
     private static String token(HttpServletRequest request) {

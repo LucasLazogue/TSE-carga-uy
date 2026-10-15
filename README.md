@@ -78,7 +78,7 @@ nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
 Una vez desplegada en OpenShift, obtener la URL con
 - oc get route carga-uy
 
-Nodos perifericos (CU-19): pantalla del backoffice en http://localhost:8080/carga-uy/nodos.xhtml y API
+Nodos perifericos (CU-19): pantalla del backoffice en http://localhost:8080/carga-uy/admin/nodos.xhtml y API
 en /api/nodos. Posiciones recibidas del tracking (CU-10):
 /api/posiciones?matricula=X. Las posiciones se guardan en MongoDB (servicio mongo del compose, en el
 puerto 27018 desde el host), en la coleccion posiciones de la base cargauy. El nodo de tracking, que

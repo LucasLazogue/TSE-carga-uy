@@ -21,7 +21,7 @@ Junto al central, desde `carga-uy`:
 El nodo tiene que estar registrado y habilitado en el central con el identificador de `NODO_ID`
 (`tracking-1` en el compose); si no, la ingesta descarta sus eventos. Hay que hacerlo una vez, y de
 nuevo después de cada `docker compose down -v`. Desde el backoffice, en
-http://localhost:8080/carga-uy/nodos.xhtml (identificador `tracking-1`, tipo `TRACKING`, y
+http://localhost:8080/carga-uy/admin/nodos.xhtml (identificador `tracking-1`, tipo `TRACKING`, y
 habilitarlo), o con la API:
 
     curl -X POST -H 'Content-Type: application/json' \

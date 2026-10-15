@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -14,6 +15,8 @@ import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.ldap.IdentidadLdap;
+import tse.cargauy.negocio.ldap.LdapClient;
 
 class UsuarioEJBTest {
 
@@ -95,5 +98,28 @@ class UsuarioEJBTest {
     @Test
     void rechazaSinSecreto() {
         assertCodigo(CodigoError.AUTH_SECRETO_NO_CONFIGURADO, () -> conSecreto(null).crearToken(chofer()));
+    }
+
+    @Test
+    void losGruposDelDirectorioSonLosRolesDelBackoffice() {
+        assertEquals(List.of("ADMINISTRADOR", "AUTORIDAD"),
+                UsuarioEJB.rolesBackoffice(Set.of("autoridad", "administrador")));
+    }
+
+    @Test
+    void ignoraLosGruposQueNoSonDelBackoffice() {
+        assertEquals(List.of("AUTORIDAD"), UsuarioEJB.rolesBackoffice(Set.of("autoridad", "otro")));
+    }
+
+    @Test
+    void rechazaElBackofficeSinGrupoDelBackoffice() {
+        ejb.ldap = new LdapClient() {
+            @Override
+            public IdentidadLdap autenticar(String usuario, String clave) {
+                return new IdentidadLdap(usuario, Set.of("otro"));
+            }
+        };
+
+        assertCodigo(CodigoError.ACCESO_DENEGADO, () -> ejb.loginBackoffice("admin1", "clave"));
     }
 }

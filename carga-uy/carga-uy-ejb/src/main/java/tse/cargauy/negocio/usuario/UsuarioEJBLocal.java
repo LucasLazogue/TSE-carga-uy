@@ -15,6 +15,7 @@ public interface UsuarioEJBLocal {
     TokenDto crearEstadoLogin(String state, String nonce, String codeChallenge);
     EstadoLoginDto leerEstadoLogin(String token);
     UsuarioDto loginGubUy(String code, String nonce);
+    UsuarioDto loginBackoffice(String usuario, String clave);
     TokenDto crearToken(UsuarioDto usuario);
     UsuarioDto validarToken(String token);
 

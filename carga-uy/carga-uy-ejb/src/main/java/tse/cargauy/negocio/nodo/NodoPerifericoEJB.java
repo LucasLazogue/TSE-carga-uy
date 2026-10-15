@@ -2,17 +2,20 @@ package tse.cargauy.negocio.nodo;
 
 import java.util.List;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.nodo.NodoPerifericoDAOLocal;
 import tse.cargauy.dtos.NodoPerifericoDto;
 import tse.cargauy.entities.EstadoNodo;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
 // CU-19. El administrador habilita el nodo sin una verificacion previa de conectividad: la letra no la pide y la
 // integracion con tracking es one-way, el central no le pregunta nada al nodo
 @Stateless
+@RolesAllowed(Rol.ADMINISTRADOR)
 public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
 
     @EJB

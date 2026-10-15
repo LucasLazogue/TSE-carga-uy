@@ -36,6 +36,56 @@ services:
     volumes:
       - artemisdata:/var/lib/artemis-instance
 
+  # Directorio LDAP
+  ldap:
+    image: 389ds/dirsrv:3.1
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      DS_DM_PASSWORD: ${LDAP_DM_PASSWORD:-cargauy123}
+      DS_SUFFIX_NAME: dc=carga,dc=uy
+      LDAP_ADMIN_USUARIO: ${LDAP_ADMIN_USUARIO:-}
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-}
+    ports:
+      - "1389:3389"
+    volumes:
+      - ldapdata:/data
+      - ./ldap/directorio.ldif:/directorio.ldif:ro
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:3389 -D 'cn=Directory Manager' -w \"$$DS_DM_PASSWORD\" -b '' -s base > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    post_start:
+      - command:
+          - sh
+          - -c
+          - |
+            set -e
+            until ldapsearch -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -b "" -s base > /dev/null 2>&1; do
+              sleep 2
+            done
+            dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend suffix list | grep -q "^dc=carga,dc=uy " \
+              || dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend create --suffix dc=carga,dc=uy --be-name carga --create-suffix
+            dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 pwpolicy set --pwdlockout on --pwdmaxfailures 5 --pwdlockoutduration 900
+            ldapadd -c -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -f /directorio.ldif || [ $$? -eq 68 ]
+            admin="uid=$$LDAP_ADMIN_USUARIO,ou=usuarios,dc=carga,dc=uy"
+            if [ -n "$$LDAP_ADMIN_USUARIO" ] && ! ldapsearch -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" -b "$$admin" -s base > /dev/null 2>&1; then
+              ldapadd -x -H ldap://localhost:3389 -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" <<FIN
+            dn: $$admin
+            objectClass: inetOrgPerson
+            uid: $$LDAP_ADMIN_USUARIO
+            cn: $$LDAP_ADMIN_USUARIO
+            sn: $$LDAP_ADMIN_USUARIO
+            userPassword: $$LDAP_ADMIN_PASSWORD
+
+            dn: cn=administrador,ou=grupos,dc=carga,dc=uy
+            changetype: modify
+            add: member
+            member: $$admin
+            FIN
+            fi
+
   # Plataforma de Observabilidad (AC21 a AC24): colector OpenTelemetry, Prometheus, Tempo, Loki y Grafana.
   # Grafana en http://localhost:3000 (sin usuario); 4317 y 4318 reciben OTLP desde el host
   observabilidad:
@@ -70,6 +120,8 @@ services:
       ARTEMIS_PORT: ${ARTEMIS_PORT:-61616}
       ARTEMIS_USUARIO: ${ARTEMIS_USUARIO:-central}
       ARTEMIS_CLAVE: ${ARTEMIS_CLAVE:-central123}
+      LDAP_URL: ${LDAP_URL:-ldap://ldap:3389}
+      LDAP_DM_PASSWORD: ${LDAP_DM_PASSWORD:-cargauy123}
       # trazas, metricas y logs hacia la Plataforma de Observabilidad; la proporcion de trazas que se guardan tiene
       # que ser la misma que en el nodo
       OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
@@ -78,6 +130,7 @@ services:
     depends_on:
       - mongo
       - artemis
+      - ldap
 
   # nodo periferico de tracking: simula la flota y publica sus posiciones en queue_tracking.
   # en el despliegue va en otra PaaS; aca esta para levantar todo con un solo comando
@@ -112,3 +165,4 @@ volumes:
   pgdata:
   mongodata:
   artemisdata:
+  ldapdata:

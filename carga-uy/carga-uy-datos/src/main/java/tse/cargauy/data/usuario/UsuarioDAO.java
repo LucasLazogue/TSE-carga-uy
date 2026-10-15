@@ -17,6 +17,7 @@ import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Responsable;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.Usuario;
+import tse.cargauy.entities.UsuarioBackoffice;
 import tse.cargauy.entities.VinculoEmpresa;
 
 @Stateless
@@ -54,6 +55,25 @@ public class UsuarioDAO implements UsuarioDAOLocal {
         Funcionario funcionario = new Funcionario(cedula);
         funcionario.getRoles().add(getRol(Rol.FUNCIONARIO));
         entityManager.persist(funcionario);
+    }
+
+    @Override
+    public UsuarioDto saveUsuarioBackoffice(String usuario, List<String> roles) {
+        UsuarioBackoffice backoffice = entityManager.createQuery(
+                        "SELECT u FROM UsuarioBackoffice u WHERE u.usuario = :usuario", UsuarioBackoffice.class)
+                .setParameter("usuario", usuario)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+        if (backoffice == null) {
+            backoffice = new UsuarioBackoffice(usuario);
+            entityManager.persist(backoffice);
+        }
+        backoffice.getRoles().clear();
+        for (String rol : roles) {
+            backoffice.getRoles().add(getRol(rol));
+        }
+        return toDto(backoffice);
     }
 
     @Override
