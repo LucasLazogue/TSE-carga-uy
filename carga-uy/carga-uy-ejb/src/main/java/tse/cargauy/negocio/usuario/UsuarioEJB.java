@@ -149,9 +149,17 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         return usuario(verificar(token, TIPO_SESION, CodigoError.AUTH_SESION_INVALIDA));
     }
 
+    public UsuarioDto getUsuarioSesion() {
+        return usuarioDAO.getById(idSesion());
+    }
+
     public UsuarioActualDto getUsuarioActual() {
-        Long id = Long.valueOf(contexto.getCallerPrincipal().getName());
+        Long id = idSesion();
         return new UsuarioActualDto(usuarioDAO.getById(id), empresaDAO.getByResponsable(id, LocalDate.now()));
+    }
+
+    private Long idSesion() {
+        return Long.valueOf(contexto.getCallerPrincipal().getName());
     }
 
     public String crearCodigoMobile(UsuarioDto usuario, String codeChallenge) {
