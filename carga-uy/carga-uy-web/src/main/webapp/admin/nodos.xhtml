@@ -1,66 +1,88 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:ui="jakarta.faces.facelets"
-      xmlns:pt="jakarta.faces.passthrough">
-<h:head>
-    <meta charset="UTF-8" />
-    <title>Nodos Perifericos</title>
-</h:head>
-<h:body>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/backoffice.xhtml">
 
-    <h1>Nodos Perifericos</h1>
+    <ui:define name="titulo">Nodos periféricos</ui:define>
 
-    <h:form id="nodos">
-        <p><h:link value="Registrar nodo" outcome="crear-nodo" /></p>
+    <ui:define name="contenido">
+        <h:form id="nodos">
+            <p:toolbar styleClass="mb-3">
+                <p:toolbarGroup>
+                    <p:commandButton value="Registrar nodo" icon="pi pi-plus" action="#{nodoView.nuevo}"
+                                     process="@this" update=":registro" resetValues="true"
+                                     oncomplete="PF('registro').show()" />
+                </p:toolbarGroup>
+            </p:toolbar>
 
-        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
+            <p:dataTable id="tabla" value="#{nodoView.nodos}" var="nodo" rowKey="#{nodo.id}"
+                         emptyMessage="No hay nodos registrados.">
+                <p:column headerText="Identificador">#{nodo.identificador}</p:column>
+                <p:column headerText="Tipo">#{nodo.tipo}</p:column>
+                <p:column headerText="Punto de acceso">
+                    <div class="flex gap-2">
+                        <p:inputText id="puntoAcceso" value="#{nodo.puntoAcceso}" styleClass="flex-1" />
+                        <p:commandButton icon="pi pi-check" title="Cambiar punto de acceso"
+                                         action="#{nodoView.cambiarPuntoAcceso(nodo)}"
+                                         process="@this puntoAcceso" update="@form"
+                                         styleClass="ui-button-outlined" />
+                    </div>
+                </p:column>
+                <p:column headerText="Estado">
+                    <p:tag value="#{nodo.estado}" severity="#{nodoView.habilitado(nodo) ? 'success' : 'warning'}" />
+                </p:column>
+                <p:column headerText="Acciones">
+                    <div class="flex gap-2">
+                        <p:commandButton value="Habilitar" icon="pi pi-play" action="#{nodoView.habilitar(nodo)}"
+                                         rendered="#{not nodoView.habilitado(nodo)}" process="@this" update="@form"
+                                         styleClass="ui-button-outlined" />
+                        <p:commandButton value="Deshabilitar" icon="pi pi-pause" action="#{nodoView.deshabilitar(nodo)}"
+                                         rendered="#{nodoView.habilitado(nodo)}" process="@this" update="@form"
+                                         styleClass="ui-button-outlined ui-button-secondary" />
+                        <p:commandButton icon="pi pi-trash" title="Dar de baja" action="#{nodoView.darDeBaja(nodo)}"
+                                         process="@this" update="@form"
+                                         styleClass="ui-button-outlined ui-button-danger">
+                            <p:confirm header="Dar de baja" message="¿Dar de baja el nodo #{nodo.identificador}?"
+                                       icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
+                    </div>
+                </p:column>
+            </p:dataTable>
+        </h:form>
 
-        <h:panelGroup id="tabla" layout="block">
-            <ui:fragment rendered="#{not empty nodoView.nodos}">
-                <table border="1">
-                    <tr>
-                        <th>Identificador</th>
-                        <th>Tipo</th>
-                        <th>Punto de acceso</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                    <ui:repeat value="#{nodoView.nodos}" var="nodo">
-                        <tr>
-                            <td>#{nodo.identificador}</td>
-                            <td>#{nodo.tipo}</td>
-                            <td>
-                                <h:inputText id="puntoAcceso" value="#{nodo.puntoAcceso}" size="35" />
-                                <h:commandButton value="Cambiar" action="#{nodoView.cambiarPuntoAcceso(nodo)}">
-                                    <f:ajax execute="@this puntoAcceso" render="@form" />
-                                </h:commandButton>
-                            </td>
-                            <td>#{nodo.estado}</td>
-                            <td>
-                                <h:commandButton value="Habilitar" action="#{nodoView.habilitar(nodo)}"
-                                                 rendered="#{not nodoView.habilitado(nodo)}">
-                                    <f:ajax render="@form" />
-                                </h:commandButton>
-                                <h:commandButton value="Deshabilitar" action="#{nodoView.deshabilitar(nodo)}"
-                                                 rendered="#{nodoView.habilitado(nodo)}">
-                                    <f:ajax render="@form" />
-                                </h:commandButton>
-                                <h:commandButton value="Dar de baja" action="#{nodoView.darDeBaja(nodo)}"
-                                                 onclick="return confirm('¿Dar de baja el nodo #{nodo.identificador}?')">
-                                    <f:ajax render="@form" />
-                                </h:commandButton>
-                            </td>
-                        </tr>
-                    </ui:repeat>
-                </table>
-            </ui:fragment>
-            <ui:fragment rendered="#{empty nodoView.nodos}">
-                <p>No hay nodos registrados.</p>
-            </ui:fragment>
-        </h:panelGroup>
-    </h:form>
+        <p:dialog header="Registrar nodo" widgetVar="registro" modal="true" resizable="false"
+                  responsive="true" width="30rem">
+            <h:form id="registro">
+                <div class="field">
+                    <p:outputLabel for="identificador" value="Identificador" styleClass="block mb-2" />
+                    <p:inputText id="identificador" value="#{nodoView.nodo.identificador}" required="true"
+                                 requiredMessage="El identificador del nodo es obligatorio." styleClass="w-full" />
+                </div>
+                <div class="field">
+                    <p:outputLabel for="tipo" value="Tipo" styleClass="block mb-2" />
+                    <p:selectOneMenu id="tipo" value="#{nodoView.nodo.tipo}" required="true"
+                                     requiredMessage="Debe indicar el tipo de nodo (BALANZAS o TRACKING)."
+                                     styleClass="w-full">
+                        <f:selectItem itemLabel="Seleccione un tipo" noSelectionOption="true" />
+                        <f:selectItems value="#{nodoView.tipos}" />
+                    </p:selectOneMenu>
+                </div>
+                <div class="field">
+                    <p:outputLabel for="puntoAcceso" value="Punto de acceso" styleClass="block mb-2" />
+                    <p:inputText id="puntoAcceso" value="#{nodoView.nodo.puntoAcceso}" placeholder="https://..."
+                                 styleClass="w-full" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <p:commandButton value="Cancelar" type="button" onclick="PF('registro').hide()"
+                                     styleClass="ui-button-secondary ui-button-flat" />
+                    <p:commandButton value="Guardar" icon="pi pi-check" action="#{nodoView.createNodo}"
+                                     update="@form :nodos"
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('registro').hide()" />
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
 
-</h:body>
-</html>
+</ui:composition>
