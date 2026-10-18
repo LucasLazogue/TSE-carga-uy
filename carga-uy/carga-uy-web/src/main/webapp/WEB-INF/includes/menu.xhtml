@@ -1,0 +1,12 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces">
+    <nav class="w-16rem flex-shrink-0 p-3">
+        <p:menu styleClass="w-full">
+            <p:submenu label="Administración" rendered="#{request.isUserInRole('ADMINISTRADOR')}">
+                <p:menuitem value="Nodos periféricos" icon="pi pi-server" outcome="/admin/nodos"
+                            styleClass="#{view.viewId eq '/admin/nodos.xhtml' ? 'ui-state-active' : ''}" />
+            </p:submenu>
+        </p:menu>
+    </nav>
+</ui:composition>

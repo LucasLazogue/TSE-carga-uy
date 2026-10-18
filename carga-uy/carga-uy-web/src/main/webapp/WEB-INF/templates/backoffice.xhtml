@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="primefaces"
+      lang="es">
+<h:head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><ui:insert name="titulo" /> · carga.uy</title>
+    <h:outputStylesheet library="webjars" name="primeflex/4.0.0/primeflex.min.css" />
+</h:head>
+<h:body styleClass="m-0">
+    <ui:include src="/WEB-INF/includes/topbar.xhtml" />
+
+    <div class="flex">
+        <ui:include src="/WEB-INF/includes/menu.xhtml" />
+
+        <main class="flex-1 p-4 min-w-0">
+            <h1 class="text-2xl mt-0 mb-4"><ui:insert name="titulo" /></h1>
+            <ui:insert name="contenido" />
+        </main>
+    </div>
+
+    <p:growl id="mensajes">
+        <p:autoUpdate />
+    </p:growl>
+
+    <h:form id="confirmacion">
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="25rem">
+            <p:commandButton value="No" type="button" icon="pi pi-times"
+                             styleClass="ui-confirmdialog-no ui-button-secondary ui-button-flat" />
+            <p:commandButton value="Sí" type="button" icon="pi pi-check" styleClass="ui-confirmdialog-yes" />
+        </p:confirmDialog>
+    </h:form>
+</h:body>
+</html>
