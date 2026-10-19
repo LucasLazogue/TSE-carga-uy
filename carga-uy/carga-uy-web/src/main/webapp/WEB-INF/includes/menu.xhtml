@@ -4,6 +4,8 @@
     <nav class="w-16rem flex-shrink-0 p-3">
         <p:menu styleClass="w-full">
             <p:submenu label="Administración" rendered="#{request.isUserInRole('ADMINISTRADOR')}">
+                <p:menuitem value="Usuarios" icon="pi pi-users" outcome="/admin/usuarios"
+                            styleClass="#{view.viewId eq '/admin/usuarios.xhtml' ? 'ui-state-active' : ''}" />
                 <p:menuitem value="Nodos periféricos" icon="pi pi-server" outcome="/admin/nodos"
                             styleClass="#{view.viewId eq '/admin/nodos.xhtml' ? 'ui-state-active' : ''}" />
             </p:submenu>

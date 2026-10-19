@@ -14,7 +14,7 @@ public interface UsuarioDAOLocal {
     UsuarioDto getFuncionarioByCedula(String cedula);
     UsuarioDto addCiudadano(String cedula, String correo);
     void addFuncionario(String cedula);
-    List<UsuarioDto> getFuncionarios();
+    PaginaDto<UsuarioDto> getFuncionarios(Paginacion paginacion);
     void deleteFuncionario(String cedula);
     void deleteUsuarioBackoffice(String usuario);
     UsuarioDto saveUsuarioBackoffice(String usuario, List<String> roles);

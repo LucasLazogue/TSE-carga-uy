@@ -1,7 +1,5 @@
 package tse.cargauy.negocio.usuario;
 
-import java.util.List;
-
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
@@ -9,6 +7,8 @@ import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
@@ -28,8 +28,8 @@ public class UsuarioBackofficeEJB implements UsuarioBackofficeEJBLocal {
     @Resource
     SessionContext contexto;
 
-    public List<UsuarioDto> getUsuarios() {
-        return ldap.getUsuarios();
+    public PaginaDto<UsuarioDto> getUsuarios(Paginacion paginacion) {
+        return ldap.getUsuarios(paginacion);
     }
 
     public void addUsuario(UsuarioDto usuario, String clave) {

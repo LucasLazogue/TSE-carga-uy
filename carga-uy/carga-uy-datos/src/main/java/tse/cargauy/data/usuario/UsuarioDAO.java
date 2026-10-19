@@ -58,11 +58,16 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     }
 
     @Override
-    public List<UsuarioDto> getFuncionarios() {
-        return entityManager.createQuery("SELECT f FROM Funcionario f ORDER BY f.cedula", Funcionario.class)
+    public PaginaDto<UsuarioDto> getFuncionarios(Paginacion paginacion) {
+        List<UsuarioDto> funcionarios = entityManager.createQuery(
+                        "SELECT f FROM Funcionario f ORDER BY f.cedula", Funcionario.class)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
                 .getResultStream()
                 .map(this::toDto)
                 .toList();
+        long total = entityManager.createQuery("SELECT COUNT(f) FROM Funcionario f", Long.class).getSingleResult();
+        return new PaginaDto<>(funcionarios, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     @Override

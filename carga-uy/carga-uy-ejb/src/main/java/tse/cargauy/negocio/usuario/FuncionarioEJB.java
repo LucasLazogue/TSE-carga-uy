@@ -1,11 +1,11 @@
 package tse.cargauy.negocio.usuario;
 
-import java.util.List;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
@@ -18,8 +18,8 @@ public class FuncionarioEJB implements FuncionarioEJBLocal {
     @EJB
     UsuarioDAOLocal usuarioDAO;
 
-    public List<UsuarioDto> getFuncionarios() {
-        return usuarioDAO.getFuncionarios();
+    public PaginaDto<UsuarioDto> getFuncionarios(Paginacion paginacion) {
+        return usuarioDAO.getFuncionarios(paginacion);
     }
 
     public void addFuncionario(String cedula) {

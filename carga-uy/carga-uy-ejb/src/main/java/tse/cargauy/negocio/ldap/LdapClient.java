@@ -25,10 +25,15 @@ import com.unboundid.ldap.sdk.ModificationType;
 import com.unboundid.ldap.sdk.RDN;
 import com.unboundid.ldap.sdk.ResultCode;
 import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import com.unboundid.ldap.sdk.SimpleBindRequest;
 import com.unboundid.ldap.sdk.SingleServerSet;
+import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.controls.SortKey;
+import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
+import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -39,6 +44,8 @@ import jakarta.security.enterprise.credential.UsernamePasswordCredential;
 import jakarta.security.enterprise.identitystore.CredentialValidationResult;
 import jakarta.security.enterprise.identitystore.IdentityStoreHandler;
 import jakarta.security.enterprise.identitystore.LdapIdentityStoreDefinition;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -102,17 +109,24 @@ public class LdapClient {
         throw new CargaUYException(CodigoError.AUTH_DIRECTORIO_NO_DISPONIBLE);
     }
 
-    public List<UsuarioDto> getUsuarios() {
+    public PaginaDto<UsuarioDto> getUsuarios(Paginacion paginacion) {
         try {
-            Map<DN, List<String>> roles = getRolesPorUsuario();
-            List<UsuarioDto> usuarios = new ArrayList<>();
-            for (SearchResultEntry entrada : directorio.search(ConstantesLdap.USERS_DN, SearchScope.ONE,
+            SearchRequest busqueda = new SearchRequest(ConstantesLdap.USERS_DN, SearchScope.ONE,
                     Filter.createEqualityFilter(ConstantesLdap.OBJECT_CLASS, ConstantesLdap.INET_ORG_PERSON),
-                    ConstantesLdap.USER_ID).getSearchEntries()) {
+                    ConstantesLdap.USER_ID);
+            busqueda.addControl(new ServerSideSortRequestControl(new SortKey(ConstantesLdap.USER_ID)));
+            busqueda.addControl(new VirtualListViewRequestControl(paginacion.getDesde() + 1, 0,
+                    paginacion.getTamanio() - 1, 0, null));
+            SearchResult resultado = directorio.search(busqueda);
+            List<SearchResultEntry> entradas = resultado.getSearchEntries();
+            Map<DN, List<String>> roles = getRolesPorUsuario(entradas);
+            List<UsuarioDto> usuarios = new ArrayList<>();
+            for (SearchResultEntry entrada : entradas) {
                 usuarios.add(new UsuarioDto(entrada.getAttributeValue(ConstantesLdap.USER_ID),
                         roles.getOrDefault(entrada.getParsedDN(), List.of())));
             }
-            return usuarios;
+            int total = VirtualListViewResponseControl.get(resultado).getContentCount();
+            return new PaginaDto<>(usuarios, total, paginacion.getPagina(), paginacion.getTamanio());
         } catch (LDAPException e) {
             throw error(e, null);
         }
@@ -195,15 +209,20 @@ public class LdapClient {
         return roles;
     }
 
-    private Map<DN, List<String>> getRolesPorUsuario() throws LDAPException {
+    private Map<DN, List<String>> getRolesPorUsuario(List<SearchResultEntry> usuarios) throws LDAPException {
         Map<DN, List<String>> roles = new HashMap<>();
+        if (usuarios.isEmpty()) {
+            return roles;
+        }
+        List<Filter> miembros = new ArrayList<>();
+        for (SearchResultEntry usuario : usuarios) {
+            miembros.add(Filter.createEqualityFilter(ConstantesLdap.MEMBER, usuario.getDN()));
+        }
         for (SearchResultEntry grupo : directorio.search(ConstantesLdap.GROUPS_DN, SearchScope.ONE,
-                Filter.createEqualityFilter(ConstantesLdap.OBJECT_CLASS, ConstantesLdap.GROUP_OF_NAMES),
-                ConstantesLdap.COMMON_NAME, ConstantesLdap.MEMBER).getSearchEntries()) {
-            String[] miembros = grupo.getAttributeValues(ConstantesLdap.MEMBER);
-            for (String miembro : miembros == null ? new String[0] : miembros) {
-                roles.computeIfAbsent(new DN(miembro), dn -> new ArrayList<>())
-                        .add(grupo.getAttributeValue(ConstantesLdap.COMMON_NAME).toUpperCase(Locale.ROOT));
+                Filter.createORFilter(miembros), ConstantesLdap.COMMON_NAME, ConstantesLdap.MEMBER).getSearchEntries()) {
+            String rol = grupo.getAttributeValue(ConstantesLdap.COMMON_NAME).toUpperCase(Locale.ROOT);
+            for (String miembro : grupo.getAttributeValues(ConstantesLdap.MEMBER)) {
+                roles.computeIfAbsent(new DN(miembro), dn -> new ArrayList<>()).add(rol);
             }
         }
         return roles;
