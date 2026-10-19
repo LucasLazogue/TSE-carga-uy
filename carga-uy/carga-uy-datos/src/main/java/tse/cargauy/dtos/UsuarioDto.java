@@ -16,6 +16,11 @@ public class UsuarioDto implements Serializable {
     public UsuarioDto() {
     }
 
+    public UsuarioDto(String usuario, List<String> roles) {
+        this.usuario = usuario;
+        this.roles = roles;
+    }
+
     public Long getId() {
         return id;
     }
