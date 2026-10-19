@@ -58,6 +58,32 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     }
 
     @Override
+    public List<UsuarioDto> getFuncionarios() {
+        return entityManager.createQuery("SELECT f FROM Funcionario f ORDER BY f.cedula", Funcionario.class)
+                .getResultStream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Override
+    public void deleteFuncionario(String cedula) {
+        entityManager.createQuery("SELECT f FROM Funcionario f WHERE f.cedula = :cedula", Funcionario.class)
+                .setParameter("cedula", cedula)
+                .getResultStream()
+                .findFirst()
+                .ifPresent(entityManager::remove);
+    }
+
+    @Override
+    public void deleteUsuarioBackoffice(String usuario) {
+        entityManager.createQuery("SELECT u FROM UsuarioBackoffice u WHERE u.usuario = :usuario", UsuarioBackoffice.class)
+                .setParameter("usuario", usuario)
+                .getResultStream()
+                .findFirst()
+                .ifPresent(entityManager::remove);
+    }
+
+    @Override
     public UsuarioDto saveUsuarioBackoffice(String usuario, List<String> roles) {
         UsuarioBackoffice backoffice = entityManager.createQuery(
                         "SELECT u FROM UsuarioBackoffice u WHERE u.usuario = :usuario", UsuarioBackoffice.class)

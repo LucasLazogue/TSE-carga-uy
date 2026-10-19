@@ -108,7 +108,7 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         List<String> roles = new ArrayList<>();
         for (String grupo : grupos) {
             String rol = grupo.toUpperCase(Locale.ROOT);
-            if (rol.equals(Rol.ADMINISTRADOR) || rol.equals(Rol.AUTORIDAD)) {
+            if (Rol.BACKOFFICE.contains(rol)) {
                 roles.add(rol);
             }
         }
