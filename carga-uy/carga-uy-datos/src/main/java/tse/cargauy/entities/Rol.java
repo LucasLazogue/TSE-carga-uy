@@ -1,5 +1,7 @@
 package tse.cargauy.entities;
 
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,6 +16,7 @@ public class Rol {
     public static final String FUNCIONARIO = "FUNCIONARIO";
     public static final String AUTORIDAD = "AUTORIDAD";
     public static final String ADMINISTRADOR = "ADMINISTRADOR";
+    public static final List<String> BACKOFFICE = List.of(ADMINISTRADOR, AUTORIDAD);
 
     @Id @GeneratedValue
     private Long id;

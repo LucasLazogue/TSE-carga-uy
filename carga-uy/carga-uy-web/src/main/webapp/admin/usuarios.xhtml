@@ -1,0 +1,131 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/backoffice.xhtml">
+
+    <ui:define name="titulo">Usuarios</ui:define>
+
+    <ui:define name="contenido">
+        <p:tabView id="pestanas">
+            <p:tab title="Backoffice">
+                <h:form id="usuarios">
+                    <p:toolbar styleClass="mb-3">
+                        <p:toolbarGroup>
+                            <p:commandButton value="Registrar usuario" icon="pi pi-plus" action="#{usuarioView.nuevo}"
+                                             process="@this" update=":usuario" resetValues="true"
+                                             oncomplete="PF('usuario').show()" />
+                        </p:toolbarGroup>
+                    </p:toolbar>
+
+                    <p:dataTable value="#{usuarioView.usuarios}" var="u" rowKey="#{u.usuario}"
+                                 lazy="true" paginator="true" rows="10" paginatorPosition="bottom"
+                                 emptyMessage="No hay usuarios registrados.">
+                        <p:column headerText="Usuario">#{u.usuario}</p:column>
+                        <p:column headerText="Roles">
+                            <div class="flex gap-2">
+                                <ui:repeat value="#{u.roles}" var="rol">
+                                    <p:tag value="#{rol}" />
+                                </ui:repeat>
+                            </div>
+                        </p:column>
+                        <p:column headerText="Acciones">
+                            <div class="flex gap-2">
+                                <p:commandButton icon="pi pi-pencil" title="Editar" action="#{usuarioView.editar(u)}"
+                                                 process="@this" update=":usuario" resetValues="true"
+                                                 oncomplete="PF('usuario').show()" styleClass="ui-button-outlined" />
+                                <p:commandButton icon="pi pi-trash" title="Eliminar" action="#{usuarioView.deleteUsuario(u)}"
+                                                 process="@this" update="@form"
+                                                 styleClass="ui-button-outlined ui-button-danger">
+                                    <p:confirm header="Eliminar usuario" message="¿Eliminar el usuario #{u.usuario}?"
+                                               icon="pi pi-exclamation-triangle" />
+                                </p:commandButton>
+                            </div>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+
+            <p:tab title="Funcionarios">
+                <h:form id="funcionarios">
+                    <p:toolbar styleClass="mb-3">
+                        <p:toolbarGroup>
+                            <p:commandButton value="Registrar funcionario" icon="pi pi-plus"
+                                             action="#{usuarioView.nuevoFuncionario}"
+                                             process="@this" update=":funcionario" resetValues="true"
+                                             oncomplete="PF('funcionario').show()" />
+                        </p:toolbarGroup>
+                    </p:toolbar>
+
+                    <p:dataTable value="#{usuarioView.funcionarios}" var="f" rowKey="#{f.cedula}"
+                                 lazy="true" paginator="true" rows="10" paginatorPosition="bottom"
+                                 emptyMessage="No hay funcionarios registrados.">
+                        <p:column headerText="Cédula">#{f.cedula}</p:column>
+                        <p:column headerText="Acciones">
+                            <p:commandButton icon="pi pi-trash" title="Eliminar" action="#{usuarioView.deleteFuncionario(f)}"
+                                             process="@this" update="@form"
+                                             styleClass="ui-button-outlined ui-button-danger">
+                                <p:confirm header="Eliminar funcionario" message="¿Eliminar el funcionario #{f.cedula}?"
+                                           icon="pi pi-exclamation-triangle" />
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:tab>
+        </p:tabView>
+
+        <p:dialog header="#{usuarioView.edicion ? 'Editar usuario' : 'Registrar usuario'}" widgetVar="usuario"
+                  modal="true" resizable="false" responsive="true" width="30rem">
+            <h:form id="usuario">
+                <div class="field">
+                    <p:outputLabel for="nombre" value="Usuario" styleClass="block mb-2" />
+                    <p:inputText id="nombre" value="#{usuarioView.usuario.usuario}" disabled="#{usuarioView.edicion}"
+                                 required="true" requiredMessage="El usuario es obligatorio." styleClass="w-full" />
+                </div>
+                <div class="field">
+                    <p:outputLabel for="clave" value="#{usuarioView.edicion ? 'Clave nueva (opcional)' : 'Clave'}"
+                                   styleClass="block mb-2" />
+                    <p:password id="clave" value="#{usuarioView.clave}" feedback="false"
+                                required="#{not usuarioView.edicion}" requiredMessage="La clave es obligatoria."
+                                autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full" />
+                </div>
+                <div class="field">
+                    <p:outputLabel for="roles" value="Roles" styleClass="block mb-2" />
+                    <p:selectManyCheckbox id="roles" value="#{usuarioView.usuario.roles}" required="true"
+                                          layout="responsive" columns="1"
+                                          requiredMessage="Debe indicar al menos un rol (ADMINISTRADOR o AUTORIDAD).">
+                        <f:selectItems value="#{usuarioView.rolesBackoffice}" />
+                    </p:selectManyCheckbox>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <p:commandButton value="Cancelar" type="button" onclick="PF('usuario').hide()"
+                                     styleClass="ui-button-secondary ui-button-flat" />
+                    <p:commandButton value="Guardar" icon="pi pi-check" action="#{usuarioView.guardar}"
+                                     update="@form :pestanas:usuarios"
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('usuario').hide()" />
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Registrar funcionario" widgetVar="funcionario" modal="true" resizable="false"
+                  responsive="true" width="25rem">
+            <h:form id="funcionario">
+                <div class="field">
+                    <p:outputLabel for="cedula" value="Cédula" styleClass="block mb-2" />
+                    <p:inputText id="cedula" value="#{usuarioView.cedula}" required="true" maxlength="8"
+                                 requiredMessage="La cedula del funcionario es obligatoria." styleClass="w-full" />
+                    <p:keyFilter for="cedula" mask="pint" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <p:commandButton value="Cancelar" type="button" onclick="PF('funcionario').hide()"
+                                     styleClass="ui-button-secondary ui-button-flat" />
+                    <p:commandButton value="Guardar" icon="pi pi-check" action="#{usuarioView.addFuncionario}"
+                                     update="@form :pestanas:funcionarios"
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('funcionario').hide()" />
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

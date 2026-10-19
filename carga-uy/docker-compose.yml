@@ -85,6 +85,12 @@ services:
             member: $$admin
             FIN
             fi
+            # indice para paginar el listado de usuarios ordenado por uid sin recorrer todo el directorio
+            if ! dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend vlv-index list carga | grep -q "^cn: usuarios$$"; then
+              dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend vlv-index add-search --name usuarios --search-base ou=usuarios,dc=carga,dc=uy --search-scope 1 --search-filter "(objectClass=inetOrgPerson)" carga
+              dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend vlv-index add-index --parent-name usuarios --index-name usuarios-uid --sort uid carga
+              dsconf -D "cn=Directory Manager" -w "$$DS_DM_PASSWORD" ldap://localhost:3389 backend vlv-index reindex --parent-name usuarios carga
+            fi
 
   # Plataforma de Observabilidad (AC21 a AC24): colector OpenTelemetry, Prometheus, Tempo, Loki y Grafana.
   # Grafana en http://localhost:3000 (sin usuario); 4317 y 4318 reciben OTLP desde el host

@@ -1,0 +1,13 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/simple.xhtml">
+
+    <ui:define name="titulo">Página expirada</ui:define>
+
+    <ui:define name="contenido">
+        <p class="mt-0 mb-4">La página expiró por inactividad. Vuelva a ingresar para continuar.</p>
+        <p:linkButton value="Volver al inicio" icon="pi pi-home" outcome="/login" />
+    </ui:define>
+
+</ui:composition>

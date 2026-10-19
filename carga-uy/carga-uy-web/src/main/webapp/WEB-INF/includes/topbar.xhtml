@@ -1,0 +1,20 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces">
+    <p:toolbar styleClass="border-noround border-x-none border-top-none">
+        <p:toolbarGroup>
+            <span class="text-primary font-semibold">carga.uy · Backoffice</span>
+        </p:toolbarGroup>
+        <p:toolbarGroup align="right">
+            <h:form id="sesion" styleClass="flex align-items-center gap-3">
+                <span class="flex align-items-center gap-2">
+                    <i class="pi pi-user" />
+                    #{sesionView.usuario}
+                </span>
+                <p:commandButton value="Salir" icon="pi pi-sign-out" action="#{sesionView.salir}" ajax="false"
+                                 styleClass="ui-button-secondary ui-button-flat" />
+            </h:form>
+        </p:toolbarGroup>
+    </p:toolbar>
+</ui:composition>

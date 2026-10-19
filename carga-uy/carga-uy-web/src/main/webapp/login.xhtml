@@ -1,24 +1,32 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html">
-<h:head>
-    <meta charset="UTF-8" />
-    <title>Ingresar al backoffice</title>
-</h:head>
-<h:body>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/simple.xhtml">
 
-    <h1>Ingresar al backoffice</h1>
+    <ui:define name="titulo">Ingresar</ui:define>
 
-    <h:form>
-        <h:messages infoStyle="color: green;" errorStyle="color: red;" />
+    <ui:define name="contenido">
+        <h:form id="login">
+            <p:messages id="mensajes" closable="true" />
 
-        <p>Usuario: <h:inputText value="#{loginView.usuario}" required="true"
-                                 requiredMessage="El usuario es obligatorio." /></p>
-        <p>Clave: <h:inputSecret value="#{loginView.clave}" required="true"
-                                 requiredMessage="La clave es obligatoria." /></p>
+            <div class="field">
+                <p:outputLabel for="usuario" value="Usuario" styleClass="block mb-2" />
+                <p:inputText id="usuario" value="#{loginView.usuario}" required="true"
+                             requiredMessage="El usuario es obligatorio."
+                             autocomplete="username" styleClass="w-full" />
+            </div>
 
-        <h:commandButton value="Ingresar" action="#{loginView.ingresar}" />
-    </h:form>
+            <div class="field">
+                <p:outputLabel for="clave" value="Clave" styleClass="block mb-2" />
+                <p:password id="clave" value="#{loginView.clave}" required="true"
+                            requiredMessage="La clave es obligatoria." feedback="false"
+                            autocomplete="current-password" styleClass="w-full" inputStyleClass="w-full" />
+            </div>
 
-</h:body>
-</html>
+            <p:commandButton value="Ingresar" icon="pi pi-sign-in" action="#{loginView.ingresar}"
+                             update="@form" styleClass="w-full mt-2" />
+        </h:form>
+    </ui:define>
+
+</ui:composition>

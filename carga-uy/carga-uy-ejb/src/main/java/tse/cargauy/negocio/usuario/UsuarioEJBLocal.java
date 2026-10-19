@@ -19,6 +19,7 @@ public interface UsuarioEJBLocal {
     TokenDto crearToken(UsuarioDto usuario);
     UsuarioDto validarToken(String token);
 
+    UsuarioDto getUsuarioSesion();
     UsuarioActualDto getUsuarioActual();
     String crearCodigoMobile(UsuarioDto usuario, String codeChallenge);
     TokenDto canjearCodigoMobile(String codigo, String codeVerifier);

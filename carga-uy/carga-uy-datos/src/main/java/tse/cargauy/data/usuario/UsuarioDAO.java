@@ -58,6 +58,37 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     }
 
     @Override
+    public PaginaDto<UsuarioDto> getFuncionarios(Paginacion paginacion) {
+        List<UsuarioDto> funcionarios = entityManager.createQuery(
+                        "SELECT f FROM Funcionario f ORDER BY f.cedula", Funcionario.class)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultStream()
+                .map(this::toDto)
+                .toList();
+        long total = entityManager.createQuery("SELECT COUNT(f) FROM Funcionario f", Long.class).getSingleResult();
+        return new PaginaDto<>(funcionarios, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public void deleteFuncionario(String cedula) {
+        entityManager.createQuery("SELECT f FROM Funcionario f WHERE f.cedula = :cedula", Funcionario.class)
+                .setParameter("cedula", cedula)
+                .getResultStream()
+                .findFirst()
+                .ifPresent(entityManager::remove);
+    }
+
+    @Override
+    public void deleteUsuarioBackoffice(String usuario) {
+        entityManager.createQuery("SELECT u FROM UsuarioBackoffice u WHERE u.usuario = :usuario", UsuarioBackoffice.class)
+                .setParameter("usuario", usuario)
+                .getResultStream()
+                .findFirst()
+                .ifPresent(entityManager::remove);
+    }
+
+    @Override
     public UsuarioDto saveUsuarioBackoffice(String usuario, List<String> roles) {
         UsuarioBackoffice backoffice = entityManager.createQuery(
                         "SELECT u FROM UsuarioBackoffice u WHERE u.usuario = :usuario", UsuarioBackoffice.class)

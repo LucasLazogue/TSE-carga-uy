@@ -35,10 +35,14 @@ public class NodoView implements Serializable {
         nodos = nodoEJB.getVigentes();
     }
 
+    public void nuevo() {
+        nodo = new NodoPerifericoDto();
+    }
+
     public void createNodo() {
         nodoEJB.addNodo(nodo);
         mensaje("Nodo " + nodo.getIdentificador() + " registrado. Queda deshabilitado hasta que se habilite.");
-        nodo = new NodoPerifericoDto();
+        cargar();
     }
 
     public void habilitar(NodoPerifericoDto n) {

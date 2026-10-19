@@ -5,6 +5,30 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
   <display-name>carga-uy</display-name>
+  <context-param>
+    <param-name>jakarta.faces.PROJECT_STAGE</param-name>
+    <param-value>Production</param-value>
+  </context-param>
+  <context-param>
+    <param-name>jakarta.faces.FACELETS_SKIP_COMMENTS</param-name>
+    <param-value>true</param-value>
+  </context-param>
+  <context-param>
+    <param-name>jakarta.faces.FACELETS_BUFFER_SIZE</param-name>
+    <param-value>65535</param-value>
+  </context-param>
+  <context-param>
+    <param-name>primefaces.THEME</param-name>
+    <param-value>aura-light-emerald</param-value>
+  </context-param>
+  <context-param>
+    <param-name>primefaces.FLEX</param-name>
+    <param-value>true</param-value>
+  </context-param>
+  <context-param>
+    <param-name>primefaces.CLIENT_SIDE_LOCALISATION</param-name>
+    <param-value>true</param-value>
+  </context-param>
   <servlet>
     <servlet-name>faces</servlet-name>
     <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
@@ -40,6 +64,22 @@
   <security-role>
     <role-name>AUTORIDAD</role-name>
   </security-role>
+  <error-page>
+    <error-code>403</error-code>
+    <location>/error/acceso-denegado.xhtml</location>
+  </error-page>
+  <error-page>
+    <error-code>404</error-code>
+    <location>/error/no-encontrada.xhtml</location>
+  </error-page>
+  <error-page>
+    <exception-type>jakarta.faces.application.ViewExpiredException</exception-type>
+    <location>/error/vista-expirada.xhtml</location>
+  </error-page>
+  <error-page>
+    <exception-type>java.lang.Throwable</exception-type>
+    <location>/error/error.xhtml</location>
+  </error-page>
   <session-config>
     <cookie-config>
       <path>/</path>
