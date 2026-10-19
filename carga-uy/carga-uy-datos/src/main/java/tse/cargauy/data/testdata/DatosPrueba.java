@@ -1,18 +1,24 @@
 package tse.cargauy.data.testdata;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
+import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
+import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.EvidenciaDto;
+import tse.cargauy.dtos.FiltroCasos;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
@@ -21,7 +27,10 @@ import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
+import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.Rol;
+import tse.cargauy.entities.TipoEvidencia;
+import tse.cargauy.entities.TipoInfraccion;
 
 @Singleton
 @Startup
@@ -44,6 +53,9 @@ public class DatosPrueba {
 
     @EJB
     private ViajeDAOLocal viajeDAO;
+
+    @EJB
+    private CasoFiscalizacionDAOLocal casoDAO;
 
     @PostConstruct
     public void init() {
@@ -130,5 +142,41 @@ public class DatosPrueba {
                     -33.1325, -58.2956, -34.9058, -56.2132, 20000,
                     empresas.get(0).getId(), chofer, rubros.get(3).getId(), tipos.get(4).getId()));
         }
+
+        if (casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, LocalDate.now()) == null) {
+            casoDAO.addNorma(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, 10, LocalDate.of(2026, 1, 1));
+        }
+
+        // fechas relativas a hoy para que siempre haya un caso en plazo, uno vencido y uno en descargo
+        if (casoDAO.buscar(new FiltroCasos(), new Paginacion(0, 1)).getTotal() == 0 && vehiculoDAO.getVehiculoByMatricula("SCC9012") != null) {
+            LocalDateTime ahora = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+            Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();
+            Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
+
+            agregarCaso(TipoInfraccion.EXCESO_CARGA, scc, ahora.minusDays(3), ahora.minusDays(2),
+                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanza-r5-km30/1001", ahora.minusDays(3), "36500 kg", "33800 kg",
+                            "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 5 km 30 por encima del maximo."));
+            agregarCaso(TipoInfraccion.DESVIO_RUTA, scc, ahora.minusDays(16), ahora.minusDays(15),
+                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-1", ahora.minusDays(16), "12,4 km", "0 km",
+                            "2 km", "Posiciones a mas de 2 km del recorrido esperado durante 40 minutos."));
+            Long enDescargo = agregarCaso(TipoInfraccion.EXCESO_CARGA, scc, ahora.minusDays(7), ahora.minusDays(6),
+                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanza-r1-km45/2002", ahora.minusDays(7), "35100 kg", "33800 kg",
+                            "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 1 km 45 por encima del maximo."));
+            agregarCaso(TipoInfraccion.VIAJE_SIN_GUIA, sbb, ahora.minusDays(2), ahora.minusDays(1),
+                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-2", ahora.minusDays(2), "en movimiento", "sin viaje",
+                            null, "El vehiculo circulo dos horas sin un viaje asignado."));
+
+            casoDAO.presentarDescargo(enDescargo, ana.getId(),
+                    "La balanza estaba descalibrada ese dia; adjuntamos el ticket del pesaje en planta.", ahora.minusDays(3));
+        }
+    }
+
+    private Long agregarCaso(TipoInfraccion tipo, Long idVehiculo, LocalDateTime fechaHecho, LocalDateTime fechaNotificacion,
+            EvidenciaDto evidencia) {
+        CasoFiscalizacionDto caso = new CasoFiscalizacionDto(tipo, tipo + "|" + idVehiculo + "|" + fechaHecho, fechaHecho, idVehiculo, null);
+        Long id = casoDAO.addCaso(caso, List.of(evidencia), fechaHecho.plusMinutes(5)).getId();
+        int plazo = casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, fechaNotificacion.toLocalDate());
+        casoDAO.notificar(id, fechaNotificacion, fechaNotificacion.plusDays(plazo));
+        return id;
     }
 }
