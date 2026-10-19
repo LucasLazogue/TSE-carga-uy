@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="primefaces"
+      lang="es">
+<f:view transient="true">
+    <h:head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title><ui:insert name="titulo" /> · carga.uy</title>
+        <h:outputStylesheet library="webjars" name="primeflex/4.0.0/primeflex.min.css" />
+    </h:head>
+    <h:body styleClass="m-0 p-3 min-h-screen flex align-items-center justify-content-center">
+        <p:card styleClass="w-full max-w-25rem">
+            <div class="text-primary font-semibold mb-2">carga.uy · Backoffice</div>
+            <h1 class="text-2xl mt-0 mb-4"><ui:insert name="titulo" /></h1>
+            <ui:insert name="contenido" />
+        </p:card>
+    </h:body>
+</f:view>
+</html>

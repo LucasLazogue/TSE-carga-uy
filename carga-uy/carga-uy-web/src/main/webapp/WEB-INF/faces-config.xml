@@ -12,6 +12,7 @@
     </application>
 
     <factory>
+        <exception-handler-factory>org.primefaces.application.exceptionhandler.PrimeExceptionHandlerFactory</exception-handler-factory>
         <exception-handler-factory>tse.cargauy.web.errores.CargaUYExceptionHandlerFactory</exception-handler-factory>
     </factory>
 

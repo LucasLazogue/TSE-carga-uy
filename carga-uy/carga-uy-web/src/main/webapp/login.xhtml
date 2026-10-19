@@ -1,42 +1,32 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:p="primefaces"
-      lang="es">
-<f:view transient="true">
-    <h:head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Ingresar · carga.uy</title>
-        <h:outputStylesheet library="webjars" name="primeflex/4.0.0/primeflex.min.css" />
-    </h:head>
-    <h:body styleClass="m-0 p-3 min-h-screen flex align-items-center justify-content-center">
-        <p:card styleClass="w-full max-w-25rem">
-            <div class="text-primary font-semibold mb-2">carga.uy · Backoffice</div>
-            <h1 class="text-2xl mt-0 mb-4">Ingresar</h1>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/simple.xhtml">
 
-            <h:form id="login">
-                <p:messages id="mensajes" closable="true" />
+    <ui:define name="titulo">Ingresar</ui:define>
 
-                <div class="field">
-                    <p:outputLabel for="usuario" value="Usuario" styleClass="block mb-2" />
-                    <p:inputText id="usuario" value="#{loginView.usuario}" required="true"
-                                 requiredMessage="El usuario es obligatorio."
-                                 autocomplete="username" styleClass="w-full" />
-                </div>
+    <ui:define name="contenido">
+        <h:form id="login">
+            <p:messages id="mensajes" closable="true" />
 
-                <div class="field">
-                    <p:outputLabel for="clave" value="Clave" styleClass="block mb-2" />
-                    <p:password id="clave" value="#{loginView.clave}" required="true"
-                                requiredMessage="La clave es obligatoria." feedback="false"
-                                autocomplete="current-password" styleClass="w-full" inputStyleClass="w-full" />
-                </div>
+            <div class="field">
+                <p:outputLabel for="usuario" value="Usuario" styleClass="block mb-2" />
+                <p:inputText id="usuario" value="#{loginView.usuario}" required="true"
+                             requiredMessage="El usuario es obligatorio."
+                             autocomplete="username" styleClass="w-full" />
+            </div>
 
-                <p:commandButton value="Ingresar" icon="pi pi-sign-in" action="#{loginView.ingresar}"
-                                 update="@form" styleClass="w-full mt-2" />
-            </h:form>
-        </p:card>
-    </h:body>
-</f:view>
-</html>
+            <div class="field">
+                <p:outputLabel for="clave" value="Clave" styleClass="block mb-2" />
+                <p:password id="clave" value="#{loginView.clave}" required="true"
+                            requiredMessage="La clave es obligatoria." feedback="false"
+                            autocomplete="current-password" styleClass="w-full" inputStyleClass="w-full" />
+            </div>
+
+            <p:commandButton value="Ingresar" icon="pi pi-sign-in" action="#{loginView.ingresar}"
+                             update="@form" styleClass="w-full mt-2" />
+        </h:form>
+    </ui:define>
+
+</ui:composition>
