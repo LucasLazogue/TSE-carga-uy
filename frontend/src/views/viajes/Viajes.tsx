@@ -1,194 +1,116 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
-import { getErrorMessage } from '@/api/errors'
-import { EmpresasApi } from '@/api/empresas/empresas.api'
-import type { Empresa } from '@/api/empresas/empresas.types'
-import { GuiasApi } from '@/api/guias/guias.api'
-import type { Guia } from '@/api/guias/guias.types'
-import { TAMANIO_MAXIMO } from '@/api/page'
+import type { ComponentProps } from 'react'
+import { Plus, RefreshCw } from 'lucide-react'
+import PageHeader from '@/components/PageHeader'
+import Grid from '@/components/grid/Grid'
+import type { GridColumn } from '@/components/grid/Grid'
+import { useDialogs } from '@/components/dialogs/useDialogs'
+import DataToolbar from '@/components/toolbar/DataToolbar'
+import FilterSelect from '@/components/toolbar/FilterSelect'
+import LookupFilter from '@/components/toolbar/LookupFilter'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import type { Page } from '@/api/page'
-import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
-import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
 import { ViajesApi } from '@/api/viajes/viajes.api'
-import type { EstadoViaje, FiltroViajes, Viaje, ViajeNuevo } from '@/api/viajes/viajes.types'
-import { ESTADOS_VIAJE, VIAJE_VACIO } from './viajes.constants'
+import type { EstadoViaje, Viaje } from '@/api/viajes/viajes.types'
+import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
+import { useListParams } from '@/hooks/useListParams'
+import { fechaHora } from '@/lib/fechas'
+import { fuenteEmpresas } from '@/components/lookup/fuente'
+import NuevoViajeDialog from './dialogs/NuevoViajeDialog'
+import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './viajes.constants'
+
+const VARIANTES_ESTADO: Record<EstadoViaje, ComponentProps<typeof Badge>['variant']> = {
+  ASIGNADO: 'outline',
+  EN_CURSO: 'default',
+  FINALIZADO: 'secondary',
+}
+
+const columnas: GridColumn<Viaje>[] = [
+  { header: 'Nro. guía', cell: (v) => v.nroGuia, className: 'font-medium' },
+  { header: 'Vehículo', cell: (v) => v.matricula },
+  { header: 'Chofer', cell: (v) => v.cedulaChofer },
+  { header: 'Estado', cell: (v) => <Badge variant={VARIANTES_ESTADO[v.estado]}>{NOMBRES_ESTADO[v.estado]}</Badge> },
+  { header: 'Inicio', cell: (v) => (v.fechaInicio ? fechaHora(v.fechaInicio) : '-') },
+  { header: 'Fin', cell: (v) => (v.fechaFin ? fechaHora(v.fechaFin) : '-') },
+]
+
+const FILTROS = ['idEmpresa', 'estado'] as const
 
 function Viajes() {
-  const [pagina, setPagina] = useState<Page<Viaje> | null>(null)
-  const [filtro, setFiltro] = useState<FiltroViajes>({})
-  const [nroPagina, setNroPagina] = useState(0)
-  const [empresas, setEmpresas] = useState<Empresa[]>([])
-  const [idEmpresa, setIdEmpresa] = useState(0)
-  const [guias, setGuias] = useState<Guia[]>([])
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
-  const [creando, setCreando] = useState(false)
-  const [nuevo, setNuevo] = useState<ViajeNuevo>(VIAJE_VACIO)
-  const [error, setError] = useState('')
+  const { values, pagina, set, setPagina } = useListParams(FILTROS)
+  const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
+  const [version, setVersion] = useState(0)
+  const { open } = useDialogs()
+  const { idEmpresa, estado } = values
 
-  const totalPaginas = pagina ? Math.max(1, Math.ceil(pagina.total / pagina.tamanio)) : 1
+  useEmpresaInicial(idEmpresa, set)
 
   useEffect(() => {
-    EmpresasApi.findAll({}, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
-      setEmpresas(lista)
-      setIdEmpresa(lista[0]?.id ?? 0)
+    if (!idEmpresa) {
+      return
+    }
+    let vigente = true
+    ViajesApi.findAll(Number(idEmpresa), { estado: estado as EstadoViaje | undefined }, { pagina }).then((page) => {
+      if (vigente) {
+        setResultado(page)
+      }
     })
-  }, [])
-
-  useEffect(() => {
-    if (idEmpresa) {
-      cargarGuiasSinViaje(idEmpresa)
-      VehiculosApi.findAll({ idEmpresa: idEmpresa }, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
+    return () => {
+      vigente = false
     }
-  }, [idEmpresa])
+  }, [idEmpresa, estado, pagina, version])
 
-  useEffect(() => {
-    if (idEmpresa) {
-      ViajesApi.findAll(idEmpresa, filtro, { pagina: nroPagina }).then(setPagina)
-    }
-  }, [idEmpresa, filtro, nroPagina])
-
-  async function cargarGuiasSinViaje(id: number) {
-    setGuias((await GuiasApi.findAll(id, { conViaje: false }, { tamanio: TAMANIO_MAXIMO })).items)
+  function recargar() {
+    setVersion((v) => v + 1)
   }
 
-  function elegirEmpresa(id: number) {
-    setIdEmpresa(id)
-    setNroPagina(0)
-    setNuevo(VIAJE_VACIO)
-  }
-
-  function filtrar(cambio: FiltroViajes) {
-    setFiltro({ ...filtro, ...cambio })
-    setNroPagina(0)
-  }
-
-  async function guardar(e: FormEvent) {
-    e.preventDefault()
-    setError('')
-    try {
-      await ViajesApi.create(idEmpresa, nuevo)
-      setNuevo(VIAJE_VACIO)
-      setCreando(false)
-      await cargarGuiasSinViaje(idEmpresa)
-      setFiltro({ ...filtro })
-    } catch (err) {
-      setError(getErrorMessage(err))
+  function nuevoViaje() {
+    if (!idEmpresa) {
+      return
     }
+    open({
+      title: 'Asignar viaje',
+      content: (close) => <NuevoViajeDialog idEmpresa={Number(idEmpresa)} close={close} onAssigned={recargar} />,
+    })
   }
 
   return (
     <div>
-      <h1>Viajes</h1>
-      <div>
-        <select value={idEmpresa} onChange={(e) => elegirEmpresa(Number(e.target.value))}>
-          {empresas.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nombrePublico}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filtro.estado ?? ''}
-          onChange={(e) => filtrar({ estado: (e.target.value || undefined) as EstadoViaje | undefined })}
-        >
-          <option value="">Todos los estados</option>
-          {ESTADOS_VIAJE.map((estado) => (
-            <option key={estado} value={estado}>
-              {estado}
-            </option>
-          ))}
-        </select>
-      </div>
-      <button onClick={() => setCreando(true)}>Asignar viaje</button>
-
-      {creando && (
-        <form onSubmit={guardar}>
-          <h2>Asignar viaje</h2>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <div>
-            <label>Guia </label>
-            <select value={nuevo.idGuia} onChange={(e) => setNuevo({ ...nuevo, idGuia: Number(e.target.value) })}>
-              <option value={0}>Seleccione una guia</option>
-              {guias.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.nroGuia} - {g.nombreEmpresa} - {g.fecha}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>Vehiculo </label>
-            <select
-              value={nuevo.idVehiculo}
-              onChange={(e) => setNuevo({ ...nuevo, idVehiculo: Number(e.target.value) })}
-            >
-              <option value={0}>Seleccione un vehiculo</option>
-              {vehiculos.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.matricula}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>Id chofer </label>
-            <input
-              type="number"
-              value={nuevo.idChofer || ''}
-              onChange={(e) => setNuevo({ ...nuevo, idChofer: Number(e.target.value) })}
-            />
-          </div>
-          <button type="submit">Guardar</button>
-          <button type="button" onClick={() => setCreando(false)}>
-            Cancelar
-          </button>
-        </form>
-      )}
-
-      <table border={1}>
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Guia</th>
-            <th>Vehiculo</th>
-            <th>Chofer</th>
-            <th>Estado</th>
-            <th>Inicio</th>
-            <th>Fin</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagina?.items.map((v) => (
-            <tr key={v.id}>
-              <td>{v.id}</td>
-              <td>{v.nroGuia}</td>
-              <td>{v.matricula}</td>
-              <td>{v.cedulaChofer}</td>
-              <td>{v.estado}</td>
-              <td>{v.fechaInicio}</td>
-              <td>{v.fechaFin}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div>
-        <button
-          disabled={!nroPagina}
-          onClick={() => setNroPagina(nroPagina - 1)}
-        >
-          Anterior
-        </button>
-        <span>
-          {' '}
-          Página {nroPagina + 1} de {totalPaginas} ({pagina?.total ?? 0} viajes){' '}
-        </span>
-        <button
-          disabled={nroPagina + 1 >= totalPaginas}
-          onClick={() => setNroPagina(nroPagina + 1)}
-        >
-          Siguiente
-        </button>
-      </div>
+      <PageHeader
+        title="Viajes"
+        description="Viajes asignados a los vehículos y choferes de la empresa."
+        actions={
+          <Button onClick={nuevoViaje} disabled={!idEmpresa}>
+            <Plus />
+            Asignar viaje
+          </Button>
+        }
+      />
+      <DataToolbar
+        actions={
+          <Button variant="outline" size="icon" aria-label="Recargar" onClick={recargar}>
+            <RefreshCw />
+          </Button>
+        }
+      >
+        <LookupFilter
+          label="Empresa"
+          value={idEmpresa}
+          onChange={(v) => v && set('idEmpresa', v)}
+          {...fuenteEmpresas}
+          required
+        />
+        <FilterSelect label="Estado" value={estado} options={OPCIONES_ESTADO} onChange={(v) => set('estado', v)} />
+      </DataToolbar>
+      <Grid
+        columns={columnas}
+        items={resultado?.items ?? []}
+        rowKey={(v) => v.id}
+        empty="No hay viajes registrados."
+        page={resultado ?? undefined}
+        onPageChange={setPagina}
+      />
     </div>
   )
 }

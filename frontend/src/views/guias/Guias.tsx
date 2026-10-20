@@ -11,19 +11,15 @@ import LookupFilter from '@/components/toolbar/LookupFilter'
 import SearchInput from '@/components/toolbar/SearchInput'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { EmpresasApi } from '@/api/empresas/empresas.api'
 import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
 import type { Page } from '@/api/page'
-import { fuenteEmpresas } from '@/components/lookup/fuente'
+import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
+import { fecha } from '@/lib/fechas'
+import { fuenteEmpresas } from '@/components/lookup/fuente'
 import AsignarViajeDialog from './dialogs/AsignarViajeDialog'
 import NuevaGuiaDialog from './dialogs/NuevaGuiaDialog'
-
-function fecha(iso: string) {
-  const [anio, mes, dia] = iso.split('-')
-  return `${dia}/${mes}/${anio}`
-}
 
 function coordenadas(lat: number, lon: number) {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
@@ -61,20 +57,7 @@ function Guias() {
   // se busca en la pagina actual, asi al recargar o cambiar de pagina queda al dia
   const seleccionada = resultado?.items.find((g) => g.id === idSeleccionada)
 
-  useEffect(() => {
-    if (idEmpresa) {
-      return
-    }
-    let vigente = true
-    EmpresasApi.findAll().then(({ items: empresas }) => {
-      if (vigente && empresas.length) {
-        set('idEmpresa', String(empresas[0].id))
-      }
-    })
-    return () => {
-      vigente = false
-    }
-  }, [idEmpresa, set])
+  useEmpresaInicial(idEmpresa, set)
 
   useEffect(() => {
     if (!idEmpresa) {
