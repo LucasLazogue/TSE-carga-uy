@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { History, Plus, RefreshCw } from 'lucide-react'
+import { History, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -18,7 +18,6 @@ import { useListParams } from '@/hooks/useListParams'
 import { fechaHora } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
 import EventosViajeDialog from './dialogs/EventosViajeDialog'
-import NuevoViajeDialog from './dialogs/NuevoViajeDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './viajes.constants'
 
 const VARIANTES_ESTADO: Record<EstadoViaje, ComponentProps<typeof Badge>['variant']> = {
@@ -68,16 +67,6 @@ function Viajes() {
     setVersion((v) => v + 1)
   }
 
-  function nuevoViaje() {
-    if (!idEmpresa) {
-      return
-    }
-    open({
-      title: 'Asignar viaje',
-      content: (close) => <NuevoViajeDialog idEmpresa={Number(idEmpresa)} close={close} onAssigned={recargar} />,
-    })
-  }
-
   function verEventos(viaje: Viaje) {
     open({
       title: 'Eventos del viaje',
@@ -92,18 +81,12 @@ function Viajes() {
         title="Viajes"
         description="Viajes asignados a los vehículos y choferes de la empresa."
         actions={
-          <>
-            {seleccionado && (
-              <Button variant="outline" onClick={() => verEventos(seleccionado)}>
-                <History />
-                Ver eventos
-              </Button>
-            )}
-            <Button onClick={nuevoViaje} disabled={!idEmpresa}>
-              <Plus />
-              Asignar viaje
+          seleccionado && (
+            <Button variant="outline" onClick={() => verEventos(seleccionado)}>
+              <History />
+              Ver eventos
             </Button>
-          </>
+          )
         }
       />
       <DataToolbar
