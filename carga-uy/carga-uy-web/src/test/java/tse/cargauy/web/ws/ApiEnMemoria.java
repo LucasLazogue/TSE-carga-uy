@@ -18,7 +18,6 @@ public class ApiEnMemoria {
     public ApiEnMemoria(Object recurso) {
         dispatcher.getProviderFactory().registerProvider(FechaParamConverterProvider.class);
         dispatcher.getProviderFactory().registerProvider(CargaUYExceptionMapper.class);
-        dispatcher.getProviderFactory().registerProvider(ErrorInesperadoMapper.class);
         dispatcher.getRegistry().addSingletonResource(recurso);
     }
 
@@ -31,7 +30,6 @@ public class ApiEnMemoria {
     }
 
     private MockHttpResponse invocar(MockHttpRequest request) {
-        request.accept(MediaType.APPLICATION_JSON);
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
         return response;
