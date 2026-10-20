@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
-import { useDialogs } from '@/components/dialogs/useDialogs'
 import DataToolbar from '@/components/toolbar/DataToolbar'
 import FilterSelect from '@/components/toolbar/FilterSelect'
 import LookupFilter from '@/components/toolbar/LookupFilter'
@@ -17,7 +16,6 @@ import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fechaHora } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
-import NuevoViajeDialog from './dialogs/NuevoViajeDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './viajes.constants'
 
 const VARIANTES_ESTADO: Record<EstadoViaje, ComponentProps<typeof Badge>['variant']> = {
@@ -41,7 +39,6 @@ function Viajes() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
   const [version, setVersion] = useState(0)
-  const { open } = useDialogs()
   const { idEmpresa, estado } = values
 
   useEmpresaInicial(idEmpresa, set)
@@ -65,27 +62,11 @@ function Viajes() {
     setVersion((v) => v + 1)
   }
 
-  function nuevoViaje() {
-    if (!idEmpresa) {
-      return
-    }
-    open({
-      title: 'Asignar viaje',
-      content: (close) => <NuevoViajeDialog idEmpresa={Number(idEmpresa)} close={close} onAssigned={recargar} />,
-    })
-  }
-
   return (
     <div>
       <PageHeader
         title="Viajes"
         description="Viajes asignados a los vehículos y choferes de la empresa."
-        actions={
-          <Button onClick={nuevoViaje} disabled={!idEmpresa}>
-            <Plus />
-            Asignar viaje
-          </Button>
-        }
       />
       <DataToolbar
         actions={
