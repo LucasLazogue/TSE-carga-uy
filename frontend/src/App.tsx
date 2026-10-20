@@ -1,10 +1,12 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from '@/components/layout/AppShell'
 import { useSession } from '@/auth/useSession'
+import Casos from '@/views/casos/Casos'
 import Empresas from '@/views/empresas/Empresas'
 import PerfilEmpresa from '@/views/empresas/PerfilEmpresa'
 import Guias from '@/views/guias/Guias'
 import Home from '@/views/home/Home'
+import Infracciones from '@/views/infracciones/Infracciones'
 import PublicHome from '@/views/home/PublicHome'
 import Login from '@/views/login/Login'
 import Permisos from '@/views/permisos/Permisos'
@@ -33,6 +35,8 @@ function App() {
             <Route path="/permisos" element={<Permisos />} />
             <Route path="/guias" element={<Guias />} />
             <Route path="/viajes" element={<Viajes />} />
+            <Route path="/casos" element={<Casos />} />
+            <Route path="/infracciones" element={<Infracciones />} />
           </>
         )}
         <Route path="*" element={<Navigate to="/" replace />} />
