@@ -1,6 +1,7 @@
 package tse.cargauy.negocio.viaje;
 
 import jakarta.ejb.Remote;
+import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
@@ -12,6 +13,8 @@ public interface ViajeEJBRemote {
     PaginaDto<ViajeDto> listar(Long idEmpresa, FiltroViajes filtro, Paginacion paginacion);
 
     ViajeDto getViaje(Long idEmpresa, Long id);
+
+    PaginaDto<EventoViajeDto> getEventos(Long idEmpresa, Long id, Paginacion paginacion);
 
     ViajeDto asignarViaje(Long idEmpresa, ViajeDto viajeDto);
 
