@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
-import { empresasApi } from '@/api/empresas/empresas.api'
+import { EmpresasApi } from '@/api/empresas/empresas.api'
 import type { Empresa } from '@/api/empresas/empresas.types'
-import { guiasApi } from '@/api/guias/guias.api'
+import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
 import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Page } from '@/api/page'
-import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
+import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
-import { viajesApi } from '@/api/viajes/viajes.api'
+import { ViajesApi } from '@/api/viajes/viajes.api'
 import type { EstadoViaje, FiltroViajes, Viaje, ViajeNuevo } from '@/api/viajes/viajes.types'
 import { ESTADOS_VIAJE, VIAJE_VACIO } from './viajes.constants'
 
@@ -28,7 +28,7 @@ function Viajes() {
   const totalPaginas = pagina ? Math.max(1, Math.ceil(pagina.total / pagina.tamanio)) : 1
 
   useEffect(() => {
-    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
+    EmpresasApi.findAll({}, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
       setEmpresas(lista)
       setIdEmpresa(lista[0]?.id ?? 0)
     })
@@ -37,18 +37,18 @@ function Viajes() {
   useEffect(() => {
     if (idEmpresa) {
       cargarGuiasSinViaje(idEmpresa)
-      vehiculosApi.getAll(idEmpresa, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
+      VehiculosApi.findAll({ idEmpresa: idEmpresa }, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
     }
   }, [idEmpresa])
 
   useEffect(() => {
     if (idEmpresa) {
-      viajesApi.getAll(idEmpresa, filtro, { pagina: nroPagina }).then(setPagina)
+      ViajesApi.findAll(idEmpresa, filtro, { pagina: nroPagina }).then(setPagina)
     }
   }, [idEmpresa, filtro, nroPagina])
 
   async function cargarGuiasSinViaje(id: number) {
-    setGuias((await guiasApi.getAll(id, { conViaje: false }, { tamanio: TAMANIO_MAXIMO })).items)
+    setGuias((await GuiasApi.findAll(id, { conViaje: false }, { tamanio: TAMANIO_MAXIMO })).items)
   }
 
   function elegirEmpresa(id: number) {
@@ -66,7 +66,7 @@ function Viajes() {
     e.preventDefault()
     setError('')
     try {
-      await viajesApi.create(idEmpresa, nuevo)
+      await ViajesApi.create(idEmpresa, nuevo)
       setNuevo(VIAJE_VACIO)
       setCreando(false)
       await cargarGuiasSinViaje(idEmpresa)

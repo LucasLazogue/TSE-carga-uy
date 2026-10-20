@@ -8,14 +8,14 @@ import { DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import Lookup from '@/components/lookup/Lookup'
 import type { LookupOption } from '@/components/lookup/Lookup'
-import { choferesApi } from '@/api/choferes/choferes.api'
+import { ChoferesApi } from '@/api/choferes/choferes.api'
 import type { Chofer } from '@/api/choferes/choferes.types'
 import { getErrorMessage } from '@/api/errors'
 import type { Guia } from '@/api/guias/guias.types'
 import { TAMANIO_MAXIMO } from '@/api/page'
-import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
+import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
-import { viajesApi } from '@/api/viajes/viajes.api'
+import { ViajesApi } from '@/api/viajes/viajes.api'
 
 const selectClass =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
@@ -39,13 +39,13 @@ function AsignarViajeDialog({ guia, close, onAssigned }: Props) {
   const conocidos = useRef(new Map<string, LookupOption>())
 
   useEffect(() => {
-    vehiculosApi.getAll(guia.idEmpresa, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
+    VehiculosApi.findAll({ idEmpresa: guia.idEmpresa }, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
   }, [guia.idEmpresa])
 
   // solo los choferes vigentes a la fecha de la guia, que son los que acepta la asignacion
   const buscarChoferes = useCallback(
     async (texto: string) => {
-      const { items } = await choferesApi.getAll(guia.idEmpresa, { cedula: texto, fecha: guia.fecha })
+      const { items } = await ChoferesApi.findAll(guia.idEmpresa, { cedula: texto, fecha: guia.fecha })
       const opciones = items.map(opcionChofer)
       opciones.forEach((o) => conocidos.current.set(o.value, o))
       return opciones
@@ -60,7 +60,7 @@ function AsignarViajeDialog({ guia, close, onAssigned }: Props) {
     setError('')
     setGuardando(true)
     try {
-      await viajesApi.create(guia.idEmpresa, { idGuia: guia.id, idVehiculo, idChofer: Number(idChofer ?? 0) })
+      await ViajesApi.create(guia.idEmpresa, { idGuia: guia.id, idVehiculo, idChofer: Number(idChofer ?? 0) })
       onAssigned()
       close()
     } catch (err) {

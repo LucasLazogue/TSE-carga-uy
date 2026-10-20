@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
-import { empresasApi } from '@/api/empresas/empresas.api'
+import { EmpresasApi } from '@/api/empresas/empresas.api'
 import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa } from '@/api/empresas/empresas.types'
-import { vehiculosApi } from '@/api/vehiculos/vehiculos.api'
+import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
 import { PERMISO_VACIO } from './permisos.constants'
-import { permisosApi } from '@/api/permisos/permisos.api'
+import { PermisosApi } from '@/api/permisos/permisos.api'
 import type { Permiso, PermisoNuevo } from '@/api/permisos/permisos.types'
 
 function Permisos() {
@@ -22,7 +22,7 @@ function Permisos() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
+    EmpresasApi.findAll({}, { tamanio: TAMANIO_MAXIMO }).then(({ items: lista }) => {
       setEmpresas(lista)
       if (lista.length) {
         elegirEmpresa(lista[0].id)
@@ -31,12 +31,12 @@ function Permisos() {
   }, [])
 
   async function cargar(id: number) {
-    setLista(id ? (await permisosApi.getAll(id, { tamanio: TAMANIO_MAXIMO })).items : [])
+    setLista(id ? (await PermisosApi.findAll({ idVehiculo: id }, { tamanio: TAMANIO_MAXIMO })).items : [])
   }
 
   async function elegirEmpresa(id: number) {
     setIdEmpresa(id)
-    const { items: delaEmpresa } = await vehiculosApi.getAll(id, { tamanio: TAMANIO_MAXIMO })
+    const { items: delaEmpresa } = await VehiculosApi.findAll({ idEmpresa: id }, { tamanio: TAMANIO_MAXIMO })
     setVehiculos(delaEmpresa)
     elegirVehiculo(delaEmpresa[0]?.id ?? 0)
   }
@@ -50,7 +50,7 @@ function Permisos() {
     e.preventDefault()
     setError('')
     try {
-      await permisosApi.create(nuevo)
+      await PermisosApi.create(nuevo)
       setNuevo(PERMISO_VACIO)
       setCreando(false)
       await cargar(idVehiculo)

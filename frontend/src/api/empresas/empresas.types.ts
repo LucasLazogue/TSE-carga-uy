@@ -8,3 +8,7 @@ export type Empresa = {
 }
 
 export type EmpresaNueva = Omit<Empresa, 'id' | 'fechaAlta'>
+
+export type FiltroEmpresas = {
+  nombre?: string
+}

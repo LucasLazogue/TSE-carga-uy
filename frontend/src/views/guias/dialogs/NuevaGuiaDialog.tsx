@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { empresasApi } from '@/api/empresas/empresas.api'
+import { EmpresasApi } from '@/api/empresas/empresas.api'
 import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa } from '@/api/empresas/empresas.types'
 import { getErrorMessage } from '@/api/errors'
-import { guiasApi } from '@/api/guias/guias.api'
+import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia, GuiaNueva, Rubro, TipoCarga } from '@/api/guias/guias.types'
 import { useSession } from '@/auth/useSession'
 import { GUIA_VACIA } from '../guias.constants'
@@ -34,9 +34,9 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    empresasApi.getAll(undefined, { tamanio: TAMANIO_MAXIMO }).then((page) => setEmpresas(page.items))
-    guiasApi.getRubros().then(setRubros)
-    guiasApi.getTiposCarga().then(setTiposCarga)
+    EmpresasApi.findAll({}, { tamanio: TAMANIO_MAXIMO }).then((page) => setEmpresas(page.items))
+    GuiasApi.getRubros().then(setRubros)
+    GuiasApi.getTiposCarga().then(setTiposCarga)
   }, [])
 
   async function guardar(e: FormEvent) {
@@ -44,7 +44,7 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
     setError('')
     setGuardando(true)
     try {
-      onCreated(await guiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 }))
+      onCreated(await GuiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 }))
       close()
     } catch (err) {
       setError(getErrorMessage(err))
