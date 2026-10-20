@@ -3,6 +3,7 @@ package tse.cargauy.dtos;
 import java.io.Serializable;
 import java.time.Instant;
 
+import tse.cargauy.entities.ResultadoEvento;
 import tse.cargauy.entities.TipoEventoViaje;
 
 public class EventoViajeDto implements Serializable{
@@ -12,6 +13,9 @@ public class EventoViajeDto implements Serializable{
     private Long idViaje;
     private TipoEventoViaje tipo;
     private Instant timestampGeneracion;
+    private Instant timestampRecepcion;
+    private ResultadoEvento resultado;
+    private String detalle;
 
     public EventoViajeDto () {
     }
@@ -46,5 +50,29 @@ public class EventoViajeDto implements Serializable{
 
     public void setTimestampGeneracion(Instant timestampGeneracion) {
         this.timestampGeneracion = timestampGeneracion;
+    }
+
+    public Instant getTimestampRecepcion() {
+        return timestampRecepcion;
+    }
+
+    public void setTimestampRecepcion(Instant timestampRecepcion) {
+        this.timestampRecepcion = timestampRecepcion;
+    }
+
+    public ResultadoEvento getResultado() {
+        return resultado;
+    }
+
+    public void setResultado(ResultadoEvento resultado) {
+        this.resultado = resultado;
+    }
+
+    public String getDetalle() {
+        return detalle;
+    }
+
+    public void setDetalle(String detalle) {
+        this.detalle = detalle;
     }
 }

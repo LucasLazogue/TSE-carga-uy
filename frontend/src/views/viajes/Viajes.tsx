@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { History, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
+import { useDialogs } from '@/components/dialogs/useDialogs'
 import DataToolbar from '@/components/toolbar/DataToolbar'
 import FilterSelect from '@/components/toolbar/FilterSelect'
 import LookupFilter from '@/components/toolbar/LookupFilter'
@@ -16,6 +17,7 @@ import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fechaHora } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
+import EventosViajeDialog from './dialogs/EventosViajeDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './viajes.constants'
 
 const VARIANTES_ESTADO: Record<EstadoViaje, ComponentProps<typeof Badge>['variant']> = {
@@ -39,7 +41,10 @@ function Viajes() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
   const [version, setVersion] = useState(0)
+  const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null)
+  const { open } = useDialogs()
   const { idEmpresa, estado } = values
+  const seleccionado = resultado?.items.find((v) => v.id === idSeleccionado)
 
   useEmpresaInicial(idEmpresa, set)
 
@@ -62,11 +67,27 @@ function Viajes() {
     setVersion((v) => v + 1)
   }
 
+  function verEventos(viaje: Viaje) {
+    open({
+      title: 'Eventos del viaje',
+      size: 'lg',
+      content: (close) => <EventosViajeDialog idEmpresa={Number(idEmpresa)} viaje={viaje} close={close} />,
+    })
+  }
+
   return (
     <div>
       <PageHeader
         title="Viajes"
         description="Viajes asignados a los vehículos y choferes de la empresa."
+        actions={
+          seleccionado && (
+            <Button variant="outline" onClick={() => verEventos(seleccionado)}>
+              <History />
+              Ver eventos
+            </Button>
+          )
+        }
       />
       <DataToolbar
         actions={
@@ -91,6 +112,8 @@ function Viajes() {
         empty="No hay viajes registrados."
         page={resultado ?? undefined}
         onPageChange={setPagina}
+        selected={seleccionado?.id}
+        onSelect={(v) => setIdSeleccionado(v?.id ?? null)}
       />
     </div>
   )
