@@ -6,3 +6,7 @@ export function fecha(iso: string) {
 export function fechaHora(iso: string) {
   return `${fecha(iso)} ${iso.slice(11, 16)}`
 }
+
+export function momento(iso: string) {
+  return new Date(iso).toLocaleString('es-UY', { dateStyle: 'short', timeStyle: 'medium' })
+}

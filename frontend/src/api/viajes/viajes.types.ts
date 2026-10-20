@@ -20,3 +20,17 @@ export type FiltroViajes = {
   idVehiculo?: number
   estado?: EstadoViaje
 }
+
+export type TipoEventoViaje = 'INICIO' | 'CARGA_PARCIAL' | 'DESCARGA_PARCIAL' | 'INCIDENTE' | 'FIN'
+
+export type ResultadoEvento = 'APLICADO' | 'DUPLICADO' | 'CONFLICTO' | 'RECHAZADO'
+
+export type EventoViaje = {
+  idEvento: string
+  idViaje: number
+  tipo: TipoEventoViaje
+  timestampGeneracion: string
+  timestampRecepcion: string
+  resultado: ResultadoEvento
+  detalle: string | null
+}

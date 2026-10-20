@@ -5,11 +5,13 @@ import java.util.List;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import tse.cargauy.data.eventoviaje.EventoViajeDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.data.viaje.ViajeDAOLocal;
+import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.PaginaDto;
@@ -44,6 +46,9 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
     @EJB
     EmpresaEJBLocal empresaEJB;
 
+    @EJB
+    EventoViajeDAOLocal eventoViajeDAO;
+
     public PaginaDto<ViajeDto> listar(Long idEmpresa, FiltroViajes filtro, Paginacion paginacion) {
         empresaEJB.validarAcceso(idEmpresa);
         filtro.setIdsEmpresa(List.of(idEmpresa));
@@ -53,6 +58,12 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
     public ViajeDto getViaje(Long idEmpresa, Long id) {
         empresaEJB.validarAcceso(idEmpresa);
         return getDeEmpresa(idEmpresa, id);
+    }
+
+    public PaginaDto<EventoViajeDto> getEventos(Long idEmpresa, Long id, Paginacion paginacion) {
+        empresaEJB.validarAcceso(idEmpresa);
+        getDeEmpresa(idEmpresa, id);
+        return eventoViajeDAO.getByViaje(id, paginacion);
     }
 
     @RolesAllowed(Rol.RESPONSABLE)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { History, Plus, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -17,6 +17,7 @@ import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fechaHora } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
+import EventosViajeDialog from './dialogs/EventosViajeDialog'
 import NuevoViajeDialog from './dialogs/NuevoViajeDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './viajes.constants'
 
@@ -41,8 +42,10 @@ function Viajes() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
   const [version, setVersion] = useState(0)
+  const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null)
   const { open } = useDialogs()
   const { idEmpresa, estado } = values
+  const seleccionado = resultado?.items.find((v) => v.id === idSeleccionado)
 
   useEmpresaInicial(idEmpresa, set)
 
@@ -75,16 +78,32 @@ function Viajes() {
     })
   }
 
+  function verEventos(viaje: Viaje) {
+    open({
+      title: 'Eventos del viaje',
+      size: 'lg',
+      content: (close) => <EventosViajeDialog idEmpresa={Number(idEmpresa)} viaje={viaje} close={close} />,
+    })
+  }
+
   return (
     <div>
       <PageHeader
         title="Viajes"
         description="Viajes asignados a los vehículos y choferes de la empresa."
         actions={
-          <Button onClick={nuevoViaje} disabled={!idEmpresa}>
-            <Plus />
-            Asignar viaje
-          </Button>
+          <>
+            {seleccionado && (
+              <Button variant="outline" onClick={() => verEventos(seleccionado)}>
+                <History />
+                Ver eventos
+              </Button>
+            )}
+            <Button onClick={nuevoViaje} disabled={!idEmpresa}>
+              <Plus />
+              Asignar viaje
+            </Button>
+          </>
         }
       />
       <DataToolbar
@@ -110,6 +129,8 @@ function Viajes() {
         empty="No hay viajes registrados."
         page={resultado ?? undefined}
         onPageChange={setPagina}
+        selected={seleccionado?.id}
+        onSelect={(v) => setIdSeleccionado(v?.id ?? null)}
       />
     </div>
   )

@@ -13,6 +13,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.negocio.viaje.ViajeEJBLocal;
@@ -41,6 +42,12 @@ public class ViajesRest {
     @Path("/{id}")
     public ViajeDto getViaje(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id) {
         return viajeEJB.getViaje(idEmpresa, id);
+    }
+
+    @GET
+    @Path("/{id}/eventos")
+    public PaginaDto<EventoViajeDto> getEventos(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id, @BeanParam PaginacionQuery paginacion) {
+        return viajeEJB.getEventos(idEmpresa, id, paginacion.paginacion());
     }
 
     @PUT

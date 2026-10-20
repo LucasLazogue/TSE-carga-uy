@@ -12,4 +12,16 @@ public class Serializers {
         return new EventoViaje(dto.getIdEvento(), dto.getIdViaje(), idChofer, dto.getTipo(),
                 dto.getTimestampGeneracion(), recepcion, resultado, detalle);
     }
+
+    public static EventoViajeDto toDto(EventoViaje entity) {
+        EventoViajeDto dto = new EventoViajeDto();
+        dto.setIdEvento(entity.getIdEvento());
+        dto.setIdViaje(entity.getIdViaje());
+        dto.setTipo(entity.getTipo());
+        dto.setTimestampGeneracion(entity.getTimestampGeneracion());
+        dto.setTimestampRecepcion(entity.getTimestampRecepcion());
+        dto.setResultado(entity.getResultado());
+        dto.setDetalle(entity.getDetalle());
+        return dto;
+    }
 }
