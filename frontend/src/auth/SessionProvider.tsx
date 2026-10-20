@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { authApi } from '@/api/auth/auth.api'
+import { AuthApi } from '@/api/auth/auth.api'
 import type { Session } from '@/api/auth/auth.types'
 import { getProfile } from './profile'
 import { SessionContext } from './session.context'
@@ -10,7 +10,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    authApi
+    AuthApi
       .me()
       .then(setSession)
       .catch(() => setSession(null))
@@ -19,7 +19,7 @@ function SessionProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await authApi.logout()
+      await AuthApi.logout()
     } finally {
       setSession(null)
     }

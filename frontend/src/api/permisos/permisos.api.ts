@@ -1,14 +1,10 @@
 import { http } from '@/api/http'
 import type { Page, Paginacion } from '@/api/page'
-import type { Permiso, PermisoNuevo } from './permisos.types'
+import type { FiltroPermisos, Permiso, PermisoNuevo } from './permisos.types'
 
-export const permisosApi = {
-  getAll: async (idVehiculo?: number, paginacion: Paginacion = {}) => {
-    const res = await http.get<Page<Permiso>>('/permisos', {
-      params: { idVehiculo, ...paginacion },
-    })
-    return res.data
-  },
+export const PermisosApi = {
+  findAll: async (filtro: FiltroPermisos = {}, paginacion: Paginacion = {}) =>
+    (await http.get<Page<Permiso>>('/permisos', { params: { ...filtro, ...paginacion } })).data,
 
   create: async (permiso: PermisoNuevo) => {
     await http.post('/permisos', permiso)

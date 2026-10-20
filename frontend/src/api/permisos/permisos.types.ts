@@ -8,3 +8,7 @@ export type Permiso = {
 }
 
 export type PermisoNuevo = Omit<Permiso, 'id' | 'matricula'>
+
+export type FiltroPermisos = {
+  idVehiculo?: number
+}

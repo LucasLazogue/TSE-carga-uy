@@ -11,10 +11,11 @@ import LookupFilter from '@/components/toolbar/LookupFilter'
 import SearchInput from '@/components/toolbar/SearchInput'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { empresasApi } from '@/api/empresas/empresas.api'
-import { guiasApi } from '@/api/guias/guias.api'
+import { EmpresasApi } from '@/api/empresas/empresas.api'
+import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
 import type { Page } from '@/api/page'
+import { fuenteEmpresas } from '@/components/lookup/fuente'
 import { useListParams } from '@/hooks/useListParams'
 import AsignarViajeDialog from './dialogs/AsignarViajeDialog'
 import NuevaGuiaDialog from './dialogs/NuevaGuiaDialog'
@@ -50,20 +51,6 @@ const OPCIONES_VIAJE: FilterOption[] = [
   { value: 'false', label: 'Sin asignar' },
 ]
 
-async function buscarEmpresas(texto: string) {
-  const { items: empresas } = await empresasApi.getAll(texto)
-  return empresas.map((e) => ({ value: String(e.id), label: e.nombrePublico }))
-}
-
-async function empresaPorId(id: string) {
-  try {
-    const empresa = await empresasApi.getById(Number(id))
-    return { value: String(empresa.id), label: empresa.nombrePublico }
-  } catch {
-    return null
-  }
-}
-
 function Guias() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Guia> | null>(null)
@@ -79,7 +66,7 @@ function Guias() {
       return
     }
     let vigente = true
-    empresasApi.getAll().then(({ items: empresas }) => {
+    EmpresasApi.findAll().then(({ items: empresas }) => {
       if (vigente && empresas.length) {
         set('idEmpresa', String(empresas[0].id))
       }
@@ -94,8 +81,8 @@ function Guias() {
       return
     }
     let vigente = true
-    guiasApi
-      .getAll(
+    GuiasApi
+      .findAll(
         Number(idEmpresa),
         {
           busqueda,
@@ -177,8 +164,7 @@ function Guias() {
           label="Empresa"
           value={idEmpresa}
           onChange={(v) => v && set('idEmpresa', v)}
-          search={buscarEmpresas}
-          resolve={empresaPorId}
+          {...fuenteEmpresas}
           required
         />
         <FilterSelect label="Viaje" value={conViaje} options={OPCIONES_VIAJE} onChange={(v) => set('conViaje', v)} />
