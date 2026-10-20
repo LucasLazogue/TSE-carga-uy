@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
 import { EMPRESA_VACIA } from './empresas.constants'
-import { empresasApi } from '@/api/empresas/empresas.api'
+import { EmpresasApi } from '@/api/empresas/empresas.api'
 import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Empresa, EmpresaNueva } from '@/api/empresas/empresas.types'
 
@@ -15,7 +15,7 @@ function Empresas() {
   const [error, setError] = useState('')
 
   async function cargar(filtro?: string) {
-    setLista((await empresasApi.getAll(filtro, { tamanio: TAMANIO_MAXIMO })).items)
+    setLista((await EmpresasApi.findAll({ nombre: filtro }, { tamanio: TAMANIO_MAXIMO })).items)
   }
 
   async function buscar(e: FormEvent) {
@@ -27,7 +27,7 @@ function Empresas() {
     e.preventDefault()
     setError('')
     try {
-      await empresasApi.create(nueva)
+      await EmpresasApi.create(nueva)
       setNueva(EMPRESA_VACIA)
       setCreando(false)
       await cargar(nombre)

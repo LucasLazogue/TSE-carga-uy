@@ -10,3 +10,7 @@ export type Vehiculo = {
 }
 
 export type VehiculoNuevo = Omit<Vehiculo, 'id' | 'nombreEmpresa'>
+
+export type FiltroVehiculos = {
+  idEmpresa?: number
+}

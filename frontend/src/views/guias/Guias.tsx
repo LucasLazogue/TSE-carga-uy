@@ -11,18 +11,15 @@ import LookupFilter from '@/components/toolbar/LookupFilter'
 import SearchInput from '@/components/toolbar/SearchInput'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { empresasApi } from '@/api/empresas/empresas.api'
-import { guiasApi } from '@/api/guias/guias.api'
+import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
 import type { Page } from '@/api/page'
+import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
+import { fecha } from '@/lib/fechas'
+import { fuenteEmpresas } from '@/components/lookup/fuente'
 import AsignarViajeDialog from './dialogs/AsignarViajeDialog'
 import NuevaGuiaDialog from './dialogs/NuevaGuiaDialog'
-
-function fecha(iso: string) {
-  const [anio, mes, dia] = iso.split('-')
-  return `${dia}/${mes}/${anio}`
-}
 
 function coordenadas(lat: number, lon: number) {
   return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
@@ -50,20 +47,6 @@ const OPCIONES_VIAJE: FilterOption[] = [
   { value: 'false', label: 'Sin asignar' },
 ]
 
-async function buscarEmpresas(texto: string) {
-  const { items: empresas } = await empresasApi.getAll(texto)
-  return empresas.map((e) => ({ value: String(e.id), label: e.nombrePublico }))
-}
-
-async function empresaPorId(id: string) {
-  try {
-    const empresa = await empresasApi.getById(Number(id))
-    return { value: String(empresa.id), label: empresa.nombrePublico }
-  } catch {
-    return null
-  }
-}
-
 function Guias() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Guia> | null>(null)
@@ -74,28 +57,15 @@ function Guias() {
   // se busca en la pagina actual, asi al recargar o cambiar de pagina queda al dia
   const seleccionada = resultado?.items.find((g) => g.id === idSeleccionada)
 
-  useEffect(() => {
-    if (idEmpresa) {
-      return
-    }
-    let vigente = true
-    empresasApi.getAll().then(({ items: empresas }) => {
-      if (vigente && empresas.length) {
-        set('idEmpresa', String(empresas[0].id))
-      }
-    })
-    return () => {
-      vigente = false
-    }
-  }, [idEmpresa, set])
+  useEmpresaInicial(idEmpresa, set)
 
   useEffect(() => {
     if (!idEmpresa) {
       return
     }
     let vigente = true
-    guiasApi
-      .getAll(
+    GuiasApi
+      .findAll(
         Number(idEmpresa),
         {
           busqueda,
@@ -177,8 +147,7 @@ function Guias() {
           label="Empresa"
           value={idEmpresa}
           onChange={(v) => v && set('idEmpresa', v)}
-          search={buscarEmpresas}
-          resolve={empresaPorId}
+          {...fuenteEmpresas}
           required
         />
         <FilterSelect label="Viaje" value={conViaje} options={OPCIONES_VIAJE} onChange={(v) => set('conViaje', v)} />

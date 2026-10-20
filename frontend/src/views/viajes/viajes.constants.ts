@@ -1,9 +1,13 @@
-import type { EstadoViaje, ViajeNuevo } from '@/api/viajes/viajes.types'
+import type { FilterOption } from '@/components/toolbar/FilterSelect'
+import type { EstadoViaje } from '@/api/viajes/viajes.types'
 
-export const VIAJE_VACIO: ViajeNuevo = {
-  idGuia: 0,
-  idVehiculo: 0,
-  idChofer: 0,
+export const NOMBRES_ESTADO: Record<EstadoViaje, string> = {
+  ASIGNADO: 'Asignado',
+  EN_CURSO: 'En curso',
+  FINALIZADO: 'Finalizado',
 }
 
-export const ESTADOS_VIAJE: EstadoViaje[] = ['ASIGNADO', 'EN_CURSO', 'FINALIZADO']
+export const OPCIONES_ESTADO: FilterOption[] = Object.entries(NOMBRES_ESTADO).map(([value, label]) => ({
+  value,
+  label,
+}))

@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { authApi } from '@/api/auth/auth.api'
+import { AuthApi } from '@/api/auth/auth.api'
 import { getLoginErrorMessage } from '@/api/errors'
 import { CEDULA_DIGITOS, formatCedula, onlyDigits } from '@/lib/cedula'
 
@@ -16,7 +16,7 @@ function Login() {
   const [cedula, setCedula] = useState('')
 
   useEffect(() => {
-    authApi
+    AuthApi
       .getConfig()
       .then((config) => setMock(config.mock))
       .catch(() => setMock(false))
@@ -55,7 +55,7 @@ function Login() {
               </Button>
             ) : (
               <Button asChild size="lg" className="w-full">
-                <a href={mock ? authApi.mockLoginUrl(cedula) : authApi.loginUrl}>Ingresar con gub.uy</a>
+                <a href={mock ? AuthApi.mockLoginUrl(cedula) : AuthApi.loginUrl}>Ingresar con gub.uy</a>
               </Button>
             )}
           </CardContent>
