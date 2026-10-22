@@ -127,12 +127,15 @@ public class App {
         String razonSocial = System.console().readLine();
         System.out.print("Ingrese la direccion principal: ");
         String direccionPrincipal = System.console().readLine();
+        System.out.print("Ingrese la cedula del responsable: ");
+        String cedulaResponsable = System.console().readLine().trim();
 
         EmpresaDto dto = new EmpresaDto();
         dto.setNroEmpresa(nroEmpresa);
         dto.setNombrePublico(nombrePublico);
         dto.setRazonSocial(razonSocial);
         dto.setDireccionPrincipal(direccionPrincipal);
+        dto.setCedulaResponsable(cedulaResponsable);
         return dto;
     }
 
@@ -157,7 +160,8 @@ public class App {
                     String.valueOf(dto.getNroEmpresa()),
                     dto.getNombrePublico(),
                     dto.getRazonSocial(),
-                    dto.getDireccionPrincipal());
+                    dto.getDireccionPrincipal(),
+                    dto.getCedulaResponsable());
 
             try (JMSContext jmsContext = connectionFactory.createContext("admin", "admin123")) {
                 jmsContext.createProducer().send(destination, message);
