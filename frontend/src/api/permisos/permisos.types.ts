@@ -13,7 +13,13 @@ export type Permiso = {
 
 export type PermisoNuevo = Pick<Permiso, 'nroPermiso' | 'validoDesde' | 'idVehiculo'>
 
+export type AprobacionPermiso = {
+  validoDesde: string
+  validoHasta: string
+}
+
 export type FiltroPermisos = {
+  idEmpresa?: number
   idVehiculo?: number
   estado?: EstadoPermiso
 }

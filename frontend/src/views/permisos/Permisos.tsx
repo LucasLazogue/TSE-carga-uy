@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { AlertCircle, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -23,6 +23,8 @@ import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fecha } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
+import AprobarPermisoDialog from './dialogs/AprobarPermisoDialog'
+import RechazarPermisoDialog from './dialogs/RechazarPermisoDialog'
 import SolicitudPermisoDialog from './dialogs/SolicitudPermisoDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './permisos.constants'
 
@@ -63,9 +65,12 @@ function Permisos() {
   const [error, setError] = useState('')
   const { open, confirm } = useDialogs()
   const { profile } = useSession()
+  const esFuncionario = profile === 'FUNCIONARIO'
   const { idEmpresa, idVehiculo, estado } = values
+  const vehiculoValido = Boolean(idEmpresa) && vehiculos.some((v) => String(v.id) === idVehiculo)
+  const filtroVehiculo = vehiculoValido ? Number(idVehiculo) : undefined
 
-  useEmpresaInicial(idEmpresa, set)
+  useEmpresaInicial(idEmpresa, set, !esFuncionario)
 
   useEffect(() => {
     if (!idEmpresa) {
@@ -83,27 +88,30 @@ function Permisos() {
   }, [idEmpresa])
 
   useEffect(() => {
-    if (!vehiculos.some((v) => String(v.id) === idVehiculo) && vehiculos.length) {
+    if (!esFuncionario && !vehiculoValido && vehiculos.length) {
       set('idVehiculo', String(vehiculos[0].id))
     }
-  }, [vehiculos, idVehiculo, set])
+  }, [esFuncionario, vehiculoValido, vehiculos, set])
 
   useEffect(() => {
-    if (!idVehiculo) {
+    if (!esFuncionario && !filtroVehiculo) {
       return
     }
     let vigente = true
-    PermisosApi.findAll({ idVehiculo: Number(idVehiculo), estado: estado as EstadoPermiso | undefined }, { pagina }).then(
-      (page) => {
-        if (vigente) {
-          setResultado(page)
-        }
-      },
-    )
+    const filtro = {
+      idEmpresa: esFuncionario && idEmpresa ? Number(idEmpresa) : undefined,
+      idVehiculo: filtroVehiculo,
+      estado: estado as EstadoPermiso | undefined,
+    }
+    PermisosApi.findAll(filtro, { pagina }).then((page) => {
+      if (vigente) {
+        setResultado(page)
+      }
+    })
     return () => {
       vigente = false
     }
-  }, [idVehiculo, estado, pagina, version])
+  }, [esFuncionario, idEmpresa, filtroVehiculo, estado, pagina, version])
 
   const buscarVehiculos = useCallback(
     async (texto: string) =>
@@ -179,43 +187,81 @@ function Permisos() {
     }
   }
 
-  const columnasConAcciones: GridColumn<Permiso>[] =
-    profile === 'RESPONSABLE'
-      ? [
-          ...columnas,
-          {
-            header: 'Acciones',
-            hideHeader: true,
-            className: 'sticky right-0 w-px bg-background text-right',
-            cell: (p) =>
-              p.estado !== 'APROBADO' && (
-                <div className="flex justify-end gap-1">
-                  <Button size="sm" variant="outline" onClick={() => corregir(p)}>
-                    <Pencil />
-                    <span className="sr-only md:not-sr-only md:whitespace-nowrap">Corregir</span>
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => retirar(p)}>
-                    <Trash2 />
-                    <span className="sr-only md:not-sr-only md:whitespace-nowrap">Retirar</span>
-                  </Button>
-                </div>
-              ),
-          },
-        ]
-      : columnas
+  function aprobar(permiso: Permiso) {
+    open({
+      title: 'Aprobar permiso',
+      content: (close) => <AprobarPermisoDialog permiso={permiso} close={close} onSaved={recargar} />,
+    })
+  }
 
-  const conVehiculo = Boolean(idVehiculo && vehiculos.length)
+  function rechazar(permiso: Permiso) {
+    open({
+      title: 'Rechazar permiso',
+      content: (close) => <RechazarPermisoDialog permiso={permiso} close={close} onSaved={recargar} />,
+    })
+  }
+
+  function acciones(p: Permiso) {
+    if (esFuncionario) {
+      return (
+        p.estado === 'PENDIENTE' && (
+          <div className="flex justify-end gap-1">
+            <Button size="sm" variant="outline" onClick={() => aprobar(p)}>
+              <Check />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Aprobar</span>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => rechazar(p)}>
+              <X />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Rechazar</span>
+            </Button>
+          </div>
+        )
+      )
+    }
+    return (
+      p.estado !== 'APROBADO' && (
+        <div className="flex justify-end gap-1">
+          <Button size="sm" variant="outline" onClick={() => corregir(p)}>
+            <Pencil />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Corregir</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => retirar(p)}>
+            <Trash2 />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Retirar</span>
+          </Button>
+        </div>
+      )
+    )
+  }
+
+  const columnasConAcciones: GridColumn<Permiso>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      hideHeader: true,
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: acciones,
+    },
+  ]
+
+  const mostrar = esFuncionario || Boolean(filtroVehiculo)
 
   return (
     <div>
       <PageHeader
         title="Permisos"
-        description="Permisos nacionales de circulación de los vehículos de la empresa."
+        description={
+          esFuncionario
+            ? 'Permisos nacionales de circulación de los vehículos.'
+            : 'Permisos nacionales de circulación de los vehículos de la empresa.'
+        }
         actions={
-          <Button onClick={nuevoPermiso} disabled={!vehiculos.length}>
-            <Plus />
-            Nuevo permiso
-          </Button>
+          !esFuncionario && (
+            <Button onClick={nuevoPermiso} disabled={!vehiculos.length}>
+              <Plus />
+              Nuevo permiso
+            </Button>
+          )
         }
       />
       <DataToolbar
@@ -228,18 +274,20 @@ function Permisos() {
         <LookupFilter
           label="Empresa"
           value={idEmpresa}
-          onChange={(v) => v && set('idEmpresa', v)}
+          onChange={(v) => (esFuncionario || v) && set('idEmpresa', v)}
           {...fuenteEmpresas}
-          required
+          required={!esFuncionario}
         />
-        <LookupFilter
-          label="Vehículo"
-          value={idVehiculo}
-          onChange={(v) => v && set('idVehiculo', v)}
-          search={buscarVehiculos}
-          resolve={vehiculoPorId}
-          required
-        />
+        {idEmpresa && (
+          <LookupFilter
+            label="Vehículo"
+            value={vehiculoValido ? idVehiculo : undefined}
+            onChange={(v) => (esFuncionario || v) && set('idVehiculo', v)}
+            search={buscarVehiculos}
+            resolve={vehiculoPorId}
+            required={!esFuncionario}
+          />
+        )}
         <FilterSelect label="Estado" value={estado} options={OPCIONES_ESTADO} onChange={(v) => set('estado', v)} />
       </DataToolbar>
       {error && (
@@ -250,10 +298,10 @@ function Permisos() {
       )}
       <Grid
         columns={columnasConAcciones}
-        items={conVehiculo ? (resultado?.items ?? []) : []}
+        items={mostrar ? (resultado?.items ?? []) : []}
         rowKey={(p) => p.id}
-        empty={vehiculos.length ? 'No hay permisos registrados.' : 'La empresa no tiene vehículos.'}
-        page={conVehiculo ? (resultado ?? undefined) : undefined}
+        empty={esFuncionario || vehiculos.length ? 'No hay permisos registrados.' : 'La empresa no tiene vehículos.'}
+        page={mostrar ? (resultado ?? undefined) : undefined}
         onPageChange={setPagina}
       />
     </div>
