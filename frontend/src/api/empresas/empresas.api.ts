@@ -1,6 +1,6 @@
 import { http } from '@/api/http'
 import type { Page, Paginacion } from '@/api/page'
-import type { Empresa, EmpresaNueva, FiltroEmpresas } from './empresas.types'
+import type { DatosEmpresa, Empresa, EmpresaNueva, FiltroEmpresas } from './empresas.types'
 
 export const EmpresasApi = {
   findAll: async (filtro: FiltroEmpresas = {}, paginacion: Paginacion = {}) =>
@@ -10,5 +10,9 @@ export const EmpresasApi = {
 
   create: async (empresa: EmpresaNueva) => {
     await http.post('/empresas', empresa)
+  },
+
+  update: async (id: number, datos: DatosEmpresa) => {
+    await http.put(`/empresas/${id}`, datos)
   },
 }

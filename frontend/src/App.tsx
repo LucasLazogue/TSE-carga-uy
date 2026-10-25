@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from '@/components/layout/AppShell'
 import { useSession } from '@/auth/useSession'
 import Empresas from '@/views/empresas/Empresas'
+import PerfilEmpresa from '@/views/empresas/PerfilEmpresa'
 import Guias from '@/views/guias/Guias'
 import Home from '@/views/home/Home'
 import PublicHome from '@/views/home/PublicHome'
@@ -27,6 +28,7 @@ function App() {
         {session && (
           <>
             <Route path="/empresas" element={<Empresas />} />
+            <Route path="/empresas/:id" element={<PerfilEmpresa />} />
             <Route path="/vehiculos" element={<Vehiculos />} />
             <Route path="/permisos" element={<Permisos />} />
             <Route path="/guias" element={<Guias />} />

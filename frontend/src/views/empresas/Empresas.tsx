@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Eye, Plus, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -29,10 +30,12 @@ function Empresas() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Empresa> | null>(null)
   const [version, setVersion] = useState(0)
+  const [idSeleccionada, setIdSeleccionada] = useState<number | null>(null)
   const { open } = useDialogs()
   const { profile } = useSession()
   const esFuncionario = profile === 'FUNCIONARIO'
   const { nombre } = values
+  const seleccionada = resultado?.items.find((e) => e.id === idSeleccionada)
 
   useEffect(() => {
     let vigente = true
@@ -64,12 +67,22 @@ function Empresas() {
         title="Empresas"
         description={esFuncionario ? 'Empresas transportistas registradas.' : 'Empresas de las que es responsable.'}
         actions={
-          esFuncionario && (
-            <Button onClick={nuevaEmpresa}>
-              <Plus />
-              Nueva empresa
-            </Button>
-          )
+          <>
+            {seleccionada && (
+              <Button variant="outline" asChild>
+                <Link to={`/empresas/${seleccionada.id}`}>
+                  <Eye />
+                  Ver detalle
+                </Link>
+              </Button>
+            )}
+            {esFuncionario && (
+              <Button onClick={nuevaEmpresa}>
+                <Plus />
+                Nueva empresa
+              </Button>
+            )}
+          </>
         }
       />
       <DataToolbar
@@ -94,6 +107,8 @@ function Empresas() {
         empty="No hay empresas registradas."
         page={resultado ?? undefined}
         onPageChange={setPagina}
+        selected={seleccionada?.id}
+        onSelect={(e) => setIdSeleccionada(e?.id ?? null)}
       />
     </div>
   )
