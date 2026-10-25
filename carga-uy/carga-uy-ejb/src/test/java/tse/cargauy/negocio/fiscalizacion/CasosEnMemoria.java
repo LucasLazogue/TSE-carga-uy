@@ -65,6 +65,8 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     public CasoFiscalizacionDto addCaso(CasoFiscalizacionDto casoDto, List<EvidenciaDto> evidencias, LocalDateTime fecha) {
         CasoFiscalizacionDto caso = agregar(casoDto.getClaveDeduplicacion(), empresaDeLosVehiculos, EstadoCaso.DETECTADA, null);
         caso.setTipo(casoDto.getTipo());
+        caso.setIdVehiculo(casoDto.getIdVehiculo());
+        caso.setIdViaje(casoDto.getIdViaje());
         caso.setFechaDeteccion(fecha);
         caso.setEvidencias(new ArrayList<>(evidencias));
         auditar(caso, "SISTEMA", AccionAuditoria.CREAR_CASO, null);

@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import jakarta.annotation.Resource;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.SessionContext;
@@ -55,6 +56,8 @@ public class CasoFiscalizacionEJB implements CasoFiscalizacionEJBLocal {
 
     // si el hecho ya genero un caso se devuelve ese, asi reprocesar un evento no duplica casos
     // TODO: pasar a notificada recien cuando se confirme el envio del correo; por ahora se notifica en la bandeja web
+    // lo llama el motor de fiscalizacion, que corre sin un funcionario
+    @PermitAll
     public CasoFiscalizacionDto registrarCaso(CasoFiscalizacionDto casoDto, List<EvidenciaDto> evidencias) {
         CasoFiscalizacionDto existente = casoDAO.getByClave(casoDto.getClaveDeduplicacion());
         if (existente != null) {
