@@ -1,4 +1,4 @@
-package tse.cargauy.nodobalanzas.datos;
+package tse.cargauy.nodobalanzas.entities;
 
 import java.time.LocalDateTime;
 
@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
 // los indices son para que la consulta del central sea rapida aunque haya millones de pesajes.
@@ -22,7 +24,18 @@ import jakarta.persistence.Table;
     @Index(name = "ix_pesaje_matricula_fecha", columnList = "matricula, fechaHora"),
     @Index(name = "ix_pesaje_rut_fecha", columnList = "rutEmpresa, fechaHora")
 })
+@NamedQueries({
+    @NamedQuery(name = Pesaje.POR_MATRICULA,
+            query = "SELECT p FROM Pesaje p WHERE p.matricula = :matricula"
+                    + " AND p.fechaHora >= :desde AND p.fechaHora < :hasta ORDER BY p.fechaHora"),
+    @NamedQuery(name = Pesaje.POR_RUT,
+            query = "SELECT p FROM Pesaje p WHERE p.rutEmpresa = :rut"
+                    + " AND p.fechaHora >= :desde AND p.fechaHora < :hasta ORDER BY p.fechaHora")
+})
 public class Pesaje {
+
+    public static final String POR_MATRICULA = "Pesaje.porMatricula";
+    public static final String POR_RUT = "Pesaje.porRut";
 
     @Id @GeneratedValue
     private Long id;

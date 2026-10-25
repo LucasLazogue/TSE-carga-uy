@@ -26,6 +26,10 @@ data-source add --name=NodoBalanzasDS \
 --use-java-context=true,\
 stop-embedded-server'
 
+RUN $CLI --commands='embed-server,\
+/subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false),\
+stop-embedded-server'
+
 RUN rm -rf /opt/jboss/wildfly/standalone/configuration/standalone_xml_history
 
 COPY --from=build /app/target/nodo-balanzas.war /opt/jboss/wildfly/standalone/deployments/

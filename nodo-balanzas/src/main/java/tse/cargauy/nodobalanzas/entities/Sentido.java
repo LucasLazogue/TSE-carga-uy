@@ -1,4 +1,4 @@
-package tse.cargauy.nodobalanzas.datos;
+package tse.cargauy.nodobalanzas.entities;
 
 public enum Sentido {
     HACIA_MONTEVIDEO,

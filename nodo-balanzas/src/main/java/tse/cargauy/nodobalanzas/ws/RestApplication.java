@@ -1,4 +1,4 @@
-package tse.cargauy.nodobalanzas.rest;
+package tse.cargauy.nodobalanzas.ws;
 
 import jakarta.ws.rs.ApplicationPath;
 import jakarta.ws.rs.core.Application;
