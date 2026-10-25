@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Eye, Plus, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -17,19 +17,24 @@ import { fecha } from '@/lib/fechas'
 import NuevaEmpresaDialog from './dialogs/NuevaEmpresaDialog'
 
 const columnas: GridColumn<Empresa>[] = [
-  {
-    header: 'Nro. empresa',
-    cell: (e) => (
-      <Link to={`/empresas/${e.id}`} className="underline-offset-4 hover:underline">
-        {e.nroEmpresa}
-      </Link>
-    ),
-    className: 'font-medium',
-  },
+  { header: 'Nro. empresa', cell: (e) => e.nroEmpresa, className: 'font-medium' },
   { header: 'Nombre público', cell: (e) => e.nombrePublico },
   { header: 'Razón social', cell: (e) => e.razonSocial },
   { header: 'Dirección principal', cell: (e) => e.direccionPrincipal },
   { header: 'Fecha de alta', cell: (e) => fecha(e.fechaAlta) },
+  {
+    header: 'Acciones',
+    hideHeader: true,
+    className: 'sticky right-0 w-px bg-background text-right',
+    cell: (e) => (
+      <Button size="sm" variant="outline" asChild>
+        <Link to={`/empresas/${e.id}`}>
+          <Eye />
+          <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver detalle</span>
+        </Link>
+      </Button>
+    ),
+  },
 ]
 
 const FILTROS = ['nombre'] as const
