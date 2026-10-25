@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -17,7 +17,15 @@ import { fecha } from '@/lib/fechas'
 import NuevaEmpresaDialog from './dialogs/NuevaEmpresaDialog'
 
 const columnas: GridColumn<Empresa>[] = [
-  { header: 'Nro. empresa', cell: (e) => e.nroEmpresa, className: 'font-medium' },
+  {
+    header: 'Nro. empresa',
+    cell: (e) => (
+      <Link to={`/empresas/${e.id}`} className="underline-offset-4 hover:underline">
+        {e.nroEmpresa}
+      </Link>
+    ),
+    className: 'font-medium',
+  },
   { header: 'Nombre público', cell: (e) => e.nombrePublico },
   { header: 'Razón social', cell: (e) => e.razonSocial },
   { header: 'Dirección principal', cell: (e) => e.direccionPrincipal },
@@ -30,12 +38,10 @@ function Empresas() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Empresa> | null>(null)
   const [version, setVersion] = useState(0)
-  const [idSeleccionada, setIdSeleccionada] = useState<number | null>(null)
   const { open } = useDialogs()
   const { profile } = useSession()
   const esFuncionario = profile === 'FUNCIONARIO'
   const { nombre } = values
-  const seleccionada = resultado?.items.find((e) => e.id === idSeleccionada)
 
   useEffect(() => {
     let vigente = true
@@ -67,22 +73,12 @@ function Empresas() {
         title="Empresas"
         description={esFuncionario ? 'Empresas transportistas registradas.' : 'Empresas de las que es responsable.'}
         actions={
-          <>
-            {seleccionada && (
-              <Button variant="outline" asChild>
-                <Link to={`/empresas/${seleccionada.id}`}>
-                  <Eye />
-                  Ver detalle
-                </Link>
-              </Button>
-            )}
-            {esFuncionario && (
-              <Button onClick={nuevaEmpresa}>
-                <Plus />
-                Nueva empresa
-              </Button>
-            )}
-          </>
+          esFuncionario && (
+            <Button onClick={nuevaEmpresa}>
+              <Plus />
+              Nueva empresa
+            </Button>
+          )
         }
       />
       <DataToolbar
@@ -107,8 +103,6 @@ function Empresas() {
         empty="No hay empresas registradas."
         page={resultado ?? undefined}
         onPageChange={setPagina}
-        selected={seleccionada?.id}
-        onSelect={(e) => setIdSeleccionada(e?.id ?? null)}
       />
     </div>
   )
