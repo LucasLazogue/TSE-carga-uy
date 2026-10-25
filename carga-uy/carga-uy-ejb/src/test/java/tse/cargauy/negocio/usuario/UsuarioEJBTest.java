@@ -180,4 +180,15 @@ class UsuarioEJBTest {
         assertEquals("anterior@correo.uy", ejb.loginGubUy("code", "nonce").getCorreo());
         assertTrue(correos.isEmpty());
     }
+
+    @Test
+    void elTokenMovilDuraQuinceMinutosYSoloLlevaElRolDeChofer() {
+        UsuarioDto usuario = chofer();
+        usuario.setRoles(List.of("CHOFER", "RESPONSABLE"));
+
+        TokenDto token = ejb.crearTokenMovil(usuario);
+
+        assertEquals(List.of("CHOFER"), ejb.validarToken(token.getToken()).getRoles());
+        assertEquals(15 * 60, token.getSegundosVigencia());
+    }
 }

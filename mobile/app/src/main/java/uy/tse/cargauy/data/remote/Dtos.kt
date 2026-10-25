@@ -7,7 +7,11 @@ import kotlinx.serialization.Serializable
 data class TokenRespuesta(
     @SerialName("access_token") val accessToken: String,
     @SerialName("token_type") val tokenType: String,
-    @SerialName("expires_in") val expiresIn: Long
+    @SerialName("expires_in") val expiresIn: Long,
+    // solo en el login
+    @SerialName("refresh_token") val refreshToken: String? = null,
+    // extension: cuando deja de servir el refresh token
+    @SerialName("refresh_expires_in") val refreshExpiresIn: Long? = null
 )
 
 @Serializable

@@ -17,10 +17,11 @@ public interface UsuarioEJBLocal {
     UsuarioDto loginGubUy(String code, String nonce);
     UsuarioDto loginBackoffice(String usuario, String clave);
     TokenDto crearToken(UsuarioDto usuario);
+    TokenDto crearTokenMovil(UsuarioDto usuario);
     UsuarioDto validarToken(String token);
 
     UsuarioDto getUsuarioSesion();
     UsuarioActualDto getUsuarioActual();
     String crearCodigoMobile(UsuarioDto usuario, String codeChallenge);
-    TokenDto canjearCodigoMobile(String codigo, String codeVerifier);
+    UsuarioDto validarCodigoMobile(String codigo, String codeVerifier);
 }

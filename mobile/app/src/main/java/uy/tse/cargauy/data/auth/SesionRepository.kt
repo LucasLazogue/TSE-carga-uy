@@ -34,8 +34,7 @@ class SesionRepository(
     // true si la ultima sesion la cerro el central (401) y no el usuario: el login explica por que aparecio
     val rechazadaPorCentral: Flow<Boolean> = dataStore.data.map { prefs -> prefs[rechazadaKey] ?: false }
 
-    // el JWT guardado, aunque haya vencido: si vencio, lo decide el central (responde 401 y ApiClient
-    // cierra la sesion). asi el chofer sigue trabajando sin conexion con la sesion vencida (V1.a)
+    // aunque haya vencido: ante un 401, ApiClient lo renueva. asi se sigue trabajando sin conexion (V1.a)
     val token: Flow<String?> = dataStore.data.map { prefs -> prefs[tokenKey] }
 
     // lo que mira la navegacion: el chofer ingreso en este celular y no cerro sesion (ni el central la rechazo)
@@ -44,11 +43,10 @@ class SesionRepository(
     // el usuario logueado, sacado del token: cada evento y viaje guardado queda a su nombre
     val idUsuario: Flow<Long?> = token.map { it?.let(::idUsuarioDelToken) }
 
-    // true desde el momento en que el token vence, para avisarle al chofer que al volver la señal
-    // va a tener que ingresar de nuevo
+    // true cuando vence el refresh token, no el access token, que se renueva solo
     val vencida: Flow<Boolean> = vencimiento(dataStore.data.map { prefs -> prefs[expiraKey] }, ahora)
 
-    // se guarda cuando vence y no cuanto dura: expires_in cuenta desde que el servidor lo emitio
+    // expiraEnSegundos: refresh_expires_in. se guarda cuando vence y no cuanto dura
     suspend fun guardarToken(token: String, expiraEnSegundos: Long) {
         dataStore.edit { prefs ->
             prefs[tokenKey] = token

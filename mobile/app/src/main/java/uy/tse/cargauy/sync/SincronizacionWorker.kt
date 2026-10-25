@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import java.io.IOException
-import kotlinx.coroutines.flow.first
 import retrofit2.HttpException
 
 import uy.tse.cargauy.CargaUYApp
@@ -15,9 +14,6 @@ class SincronizacionWorker(contexto: Context, parametros: WorkerParameters) : Co
 
     override suspend fun doWork(): Result {
         val app = applicationContext as CargaUYApp
-        // sin sesion no se envia nada: los eventos quedan guardados y el login vuelve a programar el envio
-        if (app.sesion.token.first() == null) return Result.success()
-
         return try {
             ViajeRepository(app).sincronizar()
             Result.success()
