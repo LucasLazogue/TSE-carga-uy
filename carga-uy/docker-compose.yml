@@ -118,6 +118,7 @@ services:
       GUBUY_MOCK: ${GUBUY_MOCK:-false} # TODO mock
       GUBUY_REDIRECT_URI: ${GUBUY_REDIRECT_URI:-http://localhost:8080/carga-uy/api/auth/callback}
       CARGAUY_FRONTEND_URL: ${CARGAUY_FRONTEND_URL:-http://localhost:5173}
+      CARGAUY_API_URL: ${CARGAUY_API_URL:-}
       CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
       CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
       MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}

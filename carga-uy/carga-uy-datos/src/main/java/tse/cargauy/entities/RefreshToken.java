@@ -12,20 +12,18 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-// el refresh token de la app movil (RFC 6749 1.5). se guarda el hash y no el token: si la base se filtra,
-// los tokens no sirven
+// se guarda el hash del token: si la base se filtra, los tokens no sirven
 @Entity
-// el indice: cada login revoca los activos del mismo chofer y celular, y sin el recorreria toda la tabla
 @Table(uniqueConstraints = @UniqueConstraint(name = "uk_refresh_token_hash", columnNames = {"hash"}),
         indexes = @Index(name = "ix_refresh_token_usuario_dispositivo", columnList = "idUsuario, dispositivo"))
 public class RefreshToken {
     @Id @GeneratedValue private Long id;
-    @Column(nullable = false) private String hash;          // SHA-256 del token, en base64url
+    @Column(nullable = false) private String hash;
     @Column(nullable = false) private Long idUsuario;
-    @Column(nullable = false) private String dispositivo;   // el celular al que se le entrego
+    @Column(nullable = false) private String dispositivo;   // huella de la clave DPoP del celular
     @Enumerated(EnumType.STRING) @Column(nullable = false) private EstadoRefreshToken estado;
     @Column(nullable = false) private Instant emitido;
-    @Column(nullable = false) private Instant ultimoUso;    // para vencerlo por inactividad (RFC 9700 4.14)
+    @Column(nullable = false) private Instant ultimoUso;
     @Column(nullable = false) private Instant expira;
 
     public RefreshToken() {

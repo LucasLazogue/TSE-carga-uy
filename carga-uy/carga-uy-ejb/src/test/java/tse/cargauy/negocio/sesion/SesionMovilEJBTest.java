@@ -31,8 +31,8 @@ import tse.cargauy.negocio.usuario.UsuarioEJB;
 class SesionMovilEJBTest {
 
     private static final Long CHOFER = 5001L;
+    private static final String URL = "http://192.168.1.50:8080/carga-uy/api/auth/token";
 
-    // los refresh tokens guardados por el DAO falso, por hash, y cuantas veces se escribio el ultimo uso
     private final Map<String, RefreshTokenDto> guardados = new HashMap<>();
     private final List<String> usosRegistrados = new ArrayList<>();
     private Instant limiteBorrado;
@@ -40,8 +40,16 @@ class SesionMovilEJBTest {
     private final SesionMovilEJB ejb = crearEjb();
 
     private SesionMovilEJB crearEjb() {
-        SesionMovilEJB ejb = new SesionMovilEJB();
-        // la identidad y la firma del access token son de UsuarioEJB y tienen sus propios tests
+        // la prueba DPoP falsa "prueba-de-<celular>" vale como la de ese celular; la criptografia esta en DpopTest
+        SesionMovilEJB ejb = new SesionMovilEJB() {
+            @Override
+            String huellaDpop(String dpop, String metodo, String url) {
+                if (dpop == null || !dpop.startsWith("prueba-de-")) {
+                    throw new CargaUYException(CodigoError.AUTH_DPOP_INVALIDO);
+                }
+                return dpop.substring("prueba-de-".length());
+            }
+        };
         ejb.usuarioEJB = new UsuarioEJB() {
             @Override
             public UsuarioDto validarCodigoMobile(String codigo, String codeVerifier) {
@@ -113,18 +121,21 @@ class SesionMovilEJBTest {
         assertEquals(esperado, assertThrows(CargaUYException.class, accion).getCodigo());
     }
 
-    private String ingresar(String dispositivo) {
-        return ejb.iniciar("code-valido", "el-verifier", dispositivo).getRefreshToken();
+    private String ingresar(String celular) {
+        return ejb.iniciar("code-valido", "el-verifier", "prueba-de-" + celular, "POST", URL).getRefreshToken();
     }
 
-    // el unico guardado: el estado de los tests empieza vacio
+    private TokensMovilDto renovar(String refreshToken, String celular) {
+        return ejb.renovar(refreshToken, "prueba-de-" + celular, "POST", URL);
+    }
+
     private RefreshTokenDto guardado() {
         return guardados.values().iterator().next();
     }
 
     @Test
     void elLoginDevuelveAccessYRefreshTokenYGuardaSoloElHash() {
-        TokensMovilDto tokens = ejb.iniciar("code-valido", "el-verifier", "celular-1");
+        TokensMovilDto tokens = ejb.iniciar("code-valido", "el-verifier", "prueba-de-celular-1", "POST", URL);
 
         assertEquals("access-de-5001", tokens.getAccessToken());
         assertNotNull(tokens.getRefreshToken());
@@ -136,7 +147,7 @@ class SesionMovilEJBTest {
 
     @Test
     void unCodigoInvalidoNoCreaSesion() {
-        assertCodigo(CodigoError.AUTH_SOLICITUD_INVALIDA, () -> ejb.iniciar("otro", "el-verifier", "celular-1"));
+        assertCodigo(CodigoError.AUTH_SOLICITUD_INVALIDA, () -> ejb.iniciar("otro", "el-verifier", "prueba-de-celular-1", "POST", URL));
         assertTrue(guardados.isEmpty());
     }
 
@@ -144,17 +155,17 @@ class SesionMovilEJBTest {
     void renuevaDesdeElMismoDispositivoSinEntregarOtroRefresh() {
         String refresh = ingresar("celular-1");
 
-        TokensMovilDto renovado = ejb.renovar(refresh, "celular-1");
+        TokensMovilDto renovado = renovar(refresh, "celular-1");
 
         assertEquals("access-de-5001", renovado.getAccessToken());
         assertNull(renovado.getRefreshToken());
     }
 
     @Test
-    void rechazaRenovarDesdeOtroDispositivo() {
+    void rechazaRenovarConLaClaveDeOtroCelular() {
         String refresh = ingresar("celular-1");
 
-        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> ejb.renovar(refresh, "celular-2"));
+        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> renovar(refresh, "celular-2"));
     }
 
     @Test
@@ -163,7 +174,7 @@ class SesionMovilEJBTest {
 
         ejb.revocar(refresh);
 
-        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> ejb.renovar(refresh, "celular-1"));
+        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> renovar(refresh, "celular-1"));
     }
 
     @Test
@@ -171,8 +182,8 @@ class SesionMovilEJBTest {
         String anterior = ingresar("celular-1");
         String nuevo = ingresar("celular-1");
 
-        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> ejb.renovar(anterior, "celular-1"));
-        assertNotNull(ejb.renovar(nuevo, "celular-1").getAccessToken());
+        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> renovar(anterior, "celular-1"));
+        assertNotNull(renovar(nuevo, "celular-1").getAccessToken());
     }
 
     @Test
@@ -180,25 +191,26 @@ class SesionMovilEJBTest {
         String refresh = ingresar("celular-1");
         guardado().setUltimoUso(Instant.now().minus(Duration.ofDays(8)));
 
-        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> ejb.renovar(refresh, "celular-1"));
+        assertCodigo(CodigoError.AUTH_REFRESH_INVALIDO, () -> renovar(refresh, "celular-1"));
     }
 
     @Test
     void elUltimoUsoSeEscribeComoMuchoUnaVezPorDia() {
         String refresh = ingresar("celular-1");
 
-        ejb.renovar(refresh, "celular-1");
+        renovar(refresh, "celular-1");
         assertTrue(usosRegistrados.isEmpty());
 
         guardado().setUltimoUso(Instant.now().minus(Duration.ofDays(2)));
-        ejb.renovar(refresh, "celular-1");
+        renovar(refresh, "celular-1");
         assertEquals(1, usosRegistrados.size());
     }
 
     @Test
-    void exigeElDispositivo() {
-        assertCodigo(CodigoError.AUTH_DISPOSITIVO_REQUERIDO, () -> ejb.iniciar("code-valido", "el-verifier", " "));
-        assertCodigo(CodigoError.AUTH_DISPOSITIVO_REQUERIDO, () -> ejb.renovar("x", null));
+    void sinPruebaDpopNoHaySesion() {
+        assertCodigo(CodigoError.AUTH_DPOP_INVALIDO, () -> ejb.iniciar("code-valido", "el-verifier", null, "POST", URL));
+        assertCodigo(CodigoError.AUTH_DPOP_INVALIDO, () -> ejb.renovar("x", null, "POST", URL));
+        assertTrue(guardados.isEmpty());
     }
 
     @Test

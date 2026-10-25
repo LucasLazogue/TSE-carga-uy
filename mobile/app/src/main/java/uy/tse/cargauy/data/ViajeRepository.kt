@@ -81,8 +81,7 @@ class ViajeRepository(private val app: CargaUYApp) {
         Sincronizacion.programar(app)
     }
 
-    // manda al central los eventos de cada chofer que tenga pendientes, este logueado o no. un chofer que
-    // falla no frena a los otros; al final se tira el primer error para que el worker decida si reintentar
+    // un chofer que falla no frena a los otros; el primer error se tira al final para que el worker reintente
     suspend fun sincronizar() {
         var error: Exception? = null
         for (idUsuario in eventoDao.usuariosConPendientes()) {
@@ -97,8 +96,6 @@ class ViajeRepository(private val app: CargaUYApp) {
         error?.let { throw it }
     }
 
-    // el logueado envia con su sesion; otro chofer, con un access token que se pide con su refresh token.
-    // todos por el mismo /movil/sync
     private suspend fun sincronizarUsuario(idUsuario: Long) {
         val pendientes = eventoDao.pendientes(idUsuario)
         if (pendientes.isEmpty()) return
@@ -115,8 +112,7 @@ class ViajeRepository(private val app: CargaUYApp) {
         return ApiClient.crearConToken(app.preferencias.urlServidor.first(), tokens.accessToken).create(MovilApi::class.java)
     }
 
-    // guarda lo que respondio el central por cada evento. lo que decidio el central pisa el viaje local,
-    // salvo que se hayan registrado eventos nuevos mientras se enviaba
+    // lo que decidio el central pisa lo local, salvo que se hayan registrado eventos nuevos mientras se enviaba
     private suspend fun guardarRespuesta(idUsuario: Long, respuesta: SyncRespuestaDto) {
         for (resultado in respuesta.resultados) {
             eventoDao.marcar(resultado.idEvento, resultado.resultado, resultado.mensaje)
@@ -127,8 +123,7 @@ class ViajeRepository(private val app: CargaUYApp) {
         }
     }
 
-    // el chofer cierra sesion desde Configuracion. su refresh token se revoca si no le quedan eventos;
-    // si le quedan, se conserva para que el worker los envie y despues se revoca
+    // si le quedan eventos, el refresh token se conserva hasta que el worker los envie
     suspend fun cerrarSesion() {
         val idUsuario = usuarioActual()
         app.sesion.cerrarSesion()

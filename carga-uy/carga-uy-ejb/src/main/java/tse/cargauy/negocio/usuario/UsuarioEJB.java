@@ -45,7 +45,6 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     private static final Duration DURACION_SESION = Duration.ofHours(6);
     private static final Duration DURACION_CODIGO_MOBILE = Duration.ofMinutes(1);
     private static final Duration DURACION_LOGIN = Duration.ofMinutes(5);
-    // el movil renueva su access token solo (SesionMovilEJB): corto, asi un rol quitado deja de valer enseguida
     private static final Duration DURACION_ACCESO_MOVIL = Duration.ofMinutes(15);
     private static final String TIPO_SESION = "sesion";
     private static final String TIPO_CODIGO_MOBILE = "codigo_mobile";
@@ -139,8 +138,7 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         return firmarSesion(usuario, usuario.getRoles(), DURACION_SESION);
     }
 
-    // el access token de la app movil: la app es la del chofer, asi que lleva solo ese rol aunque el usuario
-    // tenga otros (RFC 9700 2.3)
+    // la app movil es la del chofer: el token lleva solo ese rol (RFC 9700 2.3)
     public TokenDto crearTokenMovil(UsuarioDto usuario) {
         boolean chofer = usuario.getRoles() != null && usuario.getRoles().contains(Rol.CHOFER);
         return firmarSesion(usuario, chofer ? List.of(Rol.CHOFER) : List.of(), DURACION_ACCESO_MOVIL);
@@ -179,8 +177,6 @@ public class UsuarioEJB implements UsuarioEJBLocal {
                 DURACION_CODIGO_MOBILE, clave());
     }
 
-    // verifica el codigo de la vuelta del login y el verifier de PKCE, y devuelve de quien es.
-    // la sesion del movil (access y refresh token) la arma SesionMovilEJB
     public UsuarioDto validarCodigoMobile(String codigo, String codeVerifier) {
         Claims claims = verificar(codigo, TIPO_CODIGO_MOBILE, CodigoError.AUTH_SOLICITUD_INVALIDA);
         String codeChallenge = claims.get(CODE_CHALLENGE, String.class);

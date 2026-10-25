@@ -19,7 +19,6 @@ public class RefreshTokenDAO implements RefreshTokenDAOLocal {
         entityManager.persist(Serializers.toEntity(refreshToken));
     }
 
-    // uno activo por chofer y celular: un login nuevo deja sin efecto al anterior
     @Override
     public void revocarActivos(Long idUsuario, String dispositivo) {
         entityManager.createQuery("UPDATE RefreshToken r SET r.estado = :revocado"
@@ -49,7 +48,7 @@ public class RefreshTokenDAO implements RefreshTokenDAOLocal {
                 .executeUpdate();
     }
 
-    // ultimoUso viejo alcanza para saber que ya no sirve (vence a los 7 dias sin uso), este revocado o no
+    // sin uso hace mas de 7 dias ya no sirve, este revocado o no
     @Override
     public int borrarViejos(Instant limite) {
         return entityManager.createQuery("DELETE FROM RefreshToken r WHERE r.ultimoUso < :limite OR r.expira < :limite")

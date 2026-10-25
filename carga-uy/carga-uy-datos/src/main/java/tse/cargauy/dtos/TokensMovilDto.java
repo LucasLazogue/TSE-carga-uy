@@ -2,7 +2,7 @@ package tse.cargauy.dtos;
 
 import java.io.Serializable;
 
-// lo que responde /auth/token a la app movil. refreshToken es null al renovar: la app sigue usando el que tiene
+// refreshToken es null al renovar: no se rota
 public class TokensMovilDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -30,7 +30,7 @@ public class TokensMovilDto implements Serializable {
         return refreshToken;
     }
 
-    // cuanto falta para que el refresh token deje de servir, contando la inactividad
+    // contando la inactividad
     public long getSegundosRefresh() {
         return segundosRefresh;
     }

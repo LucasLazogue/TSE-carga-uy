@@ -7,8 +7,7 @@ import uy.tse.cargauy.CargaUYApp
 import uy.tse.cargauy.data.remote.ApiClient
 import uy.tse.cargauy.data.remote.AuthApi
 
-// le pregunta al central si la sesion guardada sigue sirviendo. ante un 401, ApiClient intenta renovarla;
-// si el central rechaza el refresh token, cierra la sesion y el login aparece solo
+// ante un 401, ApiClient renueva la sesion o, si el central rechaza el refresh token, la cierra y aparece el login
 suspend fun verificarSesionConCentral(app: CargaUYApp) {
     val urlServidor = app.preferencias.urlServidor.first()
     if (urlServidor.isBlank()) return

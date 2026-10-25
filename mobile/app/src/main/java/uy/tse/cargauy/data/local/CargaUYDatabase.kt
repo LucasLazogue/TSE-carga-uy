@@ -20,7 +20,7 @@ abstract class CargaUYDatabase : RoomDatabase() {
     abstract fun refreshTokenDao(): RefreshTokenDao
 
     companion object {
-        // 1 -> 2: la tabla de los refresh tokens. el sql es el createSql de schemas/.../2.json
+        // el sql es el createSql de schemas/.../2.json
         val MIGRACION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

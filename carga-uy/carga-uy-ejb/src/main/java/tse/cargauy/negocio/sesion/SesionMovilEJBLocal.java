@@ -3,10 +3,10 @@ package tse.cargauy.negocio.sesion;
 import jakarta.ejb.Local;
 import tse.cargauy.dtos.TokensMovilDto;
 
-// solo Local, como UsuarioEJB: lo usa /auth, no el cliente de consola
+// solo Local, como UsuarioEJB: no lo usa el cliente de consola
 @Local
 public interface SesionMovilEJBLocal {
-    TokensMovilDto iniciar(String codigo, String codeVerifier, String dispositivo);
-    TokensMovilDto renovar(String refreshToken, String dispositivo);
+    TokensMovilDto iniciar(String codigo, String codeVerifier, String dpop, String metodo, String url);
+    TokensMovilDto renovar(String refreshToken, String dpop, String metodo, String url);
     void revocar(String refreshToken);
 }

@@ -3,6 +3,7 @@ package uy.tse.cargauy
 import android.app.Application
 
 import uy.tse.cargauy.data.PreferenciasRepository
+import uy.tse.cargauy.data.auth.ClaveDispositivo
 import uy.tse.cargauy.data.auth.RefreshTokens
 import uy.tse.cargauy.data.auth.SesionRepository
 import uy.tse.cargauy.data.local.CargaUYDatabase
@@ -15,4 +16,5 @@ class CargaUYApp : Application() {
     val preferencias: PreferenciasRepository by lazy { PreferenciasRepository(this) }
     val sesion: SesionRepository by lazy { SesionRepository(this) }
     val refreshTokens: RefreshTokens by lazy { RefreshTokens(this) }
+    val claveDispositivo: ClaveDispositivo by lazy { ClaveDispositivo() }
 }
