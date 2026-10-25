@@ -93,7 +93,7 @@ Se eligieron como críticos los casos de uso que hacen intervenir la mayor canti
 
 \begin{enumerate}
     \item Autenticación mediante Usuario gub.uy.
-    \item Gestión de empresas de transporte.
+    \item Gestión de empresas de transporte: el alta se hace con la cédula del responsable, que se valida con su dígito verificador y no puede ser la de un funcionario; el responsable queda vinculado a la empresa desde ese momento, aunque todavía no haya ingresado.
     \item Fiscalización de permisos e ITV de los vehículos.
     \item Monitoreo de viajes en curso y finalizados, posiciones y pesajes.
     \item Gestión de casos de fiscalización: consultar evidencia y descargos, y confirmar o desestimar la infracción registrando el fundamento.
@@ -182,6 +182,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Si no existe perfil local, se crea con la cédula y el correo (CU-02) y se consultan a la PDI el nombre y la fecha de nacimiento.
     \item Si el perfil existe pero no tiene los datos de la PDI, se vuelven a consultar.
+    \item Si el perfil se creó al dar de alta una empresa y todavía no tiene correo, se completa con el que devuelve gub.uy.
     \item Si la PDI no responde, la sesión se establece igual y el perfil queda sin esos datos, que se completan en el próximo ingreso (AC13).
     \item Un ciudadano sin empresa asociada accede solamente a funciones públicas.
     \item Una autenticación cancelada, fallida, inválida o vencida no crea sesión.
