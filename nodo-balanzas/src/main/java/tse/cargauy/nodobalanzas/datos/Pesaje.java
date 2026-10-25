@@ -11,6 +11,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+// los indices son para que la consulta del central sea rapida aunque haya millones de pesajes.
+// el central pregunta "pesajes de la matricula SCC9012 el 2026-10-20" (o lo mismo por rut de empresa).
+// sin indice postgres tendria que recorrer toda la tabla pesaje fila por fila para encontrarlos.
+// con el indice (matricula, fechaHora) los tiene ordenados como en una guia telefonica: primero por
+// matricula y adentro por fecha, asi salta directo a SCC9012 y lee solo las filas de ese dia.
+// el segundo indice hace lo mismo cuando la consulta viene por rut en vez de matricula
 @Entity
 @Table(indexes = {
     @Index(name = "ix_pesaje_matricula_fecha", columnList = "matricula, fechaHora"),
