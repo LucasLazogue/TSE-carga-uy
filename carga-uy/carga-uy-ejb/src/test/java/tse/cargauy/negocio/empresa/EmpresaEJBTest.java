@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Proxy;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,10 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import jakarta.ejb.SessionContext;
 import tse.cargauy.data.empresa.EmpresaDAO;
 import tse.cargauy.data.usuario.UsuarioDAO;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.UsuarioDto;
+import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -98,6 +102,52 @@ class EmpresaEJBTest {
 
         Long id = ciudadanos.get("12345672");
         assertEquals(List.of(List.of(id, creada.getId(), LocalDate.now())), responsables);
+    }
+
+    private Map<Long, EmpresaDto> editadas(Long idResponsableDe) {
+        Map<Long, EmpresaDto> editadas = new HashMap<>();
+        ejb.contexto = (SessionContext) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class<?>[] { SessionContext.class }, (proxy, metodo, args) -> switch (metodo.getName()) {
+                    case "isCallerInRole" -> Rol.RESPONSABLE.equals(args[0]);
+                    case "getCallerPrincipal" -> (Principal) () -> "5";
+                    default -> null;
+                });
+        ejb.empresaDAO = new EmpresaDAO() {
+            @Override
+            public EmpresaDto getEmpresaByNro(int nroEmpresa) {
+                return null;
+            }
+
+            @Override
+            public void updateEmpresa(Long id, EmpresaDto empresaDto) {
+                editadas.put(id, empresaDto);
+            }
+        };
+        ejb.usuarioDAO = new UsuarioDAO() {
+            @Override
+            public Long getResponsableVigente(Long idCiudadano, Long idEmpresa, LocalDate fecha) {
+                return idCiudadano == 5L && idEmpresa.equals(idResponsableDe) ? 1L : null;
+            }
+        };
+        return editadas;
+    }
+
+    @Test
+    void elResponsableEditaSuEmpresa() {
+        Map<Long, EmpresaDto> editadas = editadas(1L);
+        EmpresaDto datos = empresa(null);
+
+        ejb.updateEmpresa(1L, datos);
+
+        assertEquals(Map.of(1L, datos), editadas);
+    }
+
+    @Test
+    void elResponsableNoEditaUnaEmpresaAjena() {
+        Map<Long, EmpresaDto> editadas = editadas(1L);
+
+        assertCodigo(CodigoError.ACCESO_DENEGADO, () -> ejb.updateEmpresa(2L, empresa(null)));
+        assertTrue(editadas.isEmpty());
     }
 
     @Test

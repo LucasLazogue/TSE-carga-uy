@@ -87,7 +87,9 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         return empresa;
     }
 
+    @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
     public void updateEmpresa(Long id, EmpresaDto empresaDto) {
+        validarAcceso(id);
         validar(empresaDto);
         EmpresaDto existente = empresaDAO.getEmpresaByNro(empresaDto.getNroEmpresa());
         if (existente != null && !existente.getId().equals(id)) {
