@@ -37,6 +37,20 @@ class DtosTest {
         assertEquals(21600L, dto.expiresIn)
     }
 
+    // el login trae el refresh token; la renovacion no, y la app sigue usando el que tiene
+    @Test
+    fun token_conRefreshEnElLoginYSinElAlRenovar() {
+        val login = ApiClient.json.decodeFromString<TokenRespuesta>(
+            """{"access_token":"a","token_type":"Bearer","expires_in":900,"refresh_expires_in":604800,"refresh_token":"r"}"""
+        )
+        val renovacion = ApiClient.json.decodeFromString<TokenRespuesta>(
+            """{"access_token":"b","token_type":"Bearer","expires_in":900,"refresh_expires_in":604800}"""
+        )
+        assertEquals("r", login.refreshToken)
+        assertEquals(604800L, login.refreshExpiresIn)
+        assertNull(renovacion.refreshToken)
+    }
+
     @Test
     fun sync_sinViajeDejaViajeEnNull() {
         val dto = ApiClient.json.decodeFromString<SyncRespuestaDto>(

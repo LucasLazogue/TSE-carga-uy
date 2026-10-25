@@ -3,11 +3,9 @@ package tse.cargauy.negocio.usuario;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +35,7 @@ import tse.cargauy.exceptions.CodigoError;
 import tse.cargauy.negocio.ldap.IdentidadLdap;
 import tse.cargauy.negocio.ldap.LdapClient;
 import tse.cargauy.seguridad.Jwt;
+import tse.cargauy.seguridad.Sha256;
 
 @Stateless
 public class UsuarioEJB implements UsuarioEJBLocal {
@@ -46,6 +45,8 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     private static final Duration DURACION_SESION = Duration.ofHours(6);
     private static final Duration DURACION_CODIGO_MOBILE = Duration.ofMinutes(1);
     private static final Duration DURACION_LOGIN = Duration.ofMinutes(5);
+    // el movil renueva su access token solo (SesionMovilEJB): corto, asi un rol quitado deja de valer enseguida
+    private static final Duration DURACION_ACCESO_MOVIL = Duration.ofMinutes(15);
     private static final String TIPO_SESION = "sesion";
     private static final String TIPO_CODIGO_MOBILE = "codigo_mobile";
     private static final String TIPO_LOGIN = "login";
@@ -135,14 +136,25 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     }
 
     public TokenDto crearToken(UsuarioDto usuario) {
+        return firmarSesion(usuario, usuario.getRoles(), DURACION_SESION);
+    }
+
+    // el access token de la app movil: la app es la del chofer, asi que lleva solo ese rol aunque el usuario
+    // tenga otros (RFC 9700 2.3)
+    public TokenDto crearTokenMovil(UsuarioDto usuario) {
+        boolean chofer = usuario.getRoles() != null && usuario.getRoles().contains(Rol.CHOFER);
+        return firmarSesion(usuario, chofer ? List.of(Rol.CHOFER) : List.of(), DURACION_ACCESO_MOVIL);
+    }
+
+    private TokenDto firmarSesion(UsuarioDto usuario, List<String> roles, Duration duracion) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("cedula", usuario.getCedula());
-        claims.put("roles", usuario.getRoles());
+        claims.put("roles", roles);
         if (usuario.getCorreo() != null) {
             claims.put("correo", usuario.getCorreo());
         }
-        String token = Jwt.firmar(String.valueOf(usuario.getId()), TIPO_SESION, claims, DURACION_SESION, clave());
-        return new TokenDto(token, DURACION_SESION.toSeconds());
+        String token = Jwt.firmar(String.valueOf(usuario.getId()), TIPO_SESION, claims, duracion, clave());
+        return new TokenDto(token, duracion.toSeconds());
     }
 
     public UsuarioDto validarToken(String token) {
@@ -167,7 +179,9 @@ public class UsuarioEJB implements UsuarioEJBLocal {
                 DURACION_CODIGO_MOBILE, clave());
     }
 
-    public TokenDto canjearCodigoMobile(String codigo, String codeVerifier) {
+    // verifica el codigo de la vuelta del login y el verifier de PKCE, y devuelve de quien es.
+    // la sesion del movil (access y refresh token) la arma SesionMovilEJB
+    public UsuarioDto validarCodigoMobile(String codigo, String codeVerifier) {
         Claims claims = verificar(codigo, TIPO_CODIGO_MOBILE, CodigoError.AUTH_SOLICITUD_INVALIDA);
         String codeChallenge = claims.get(CODE_CHALLENGE, String.class);
         if (codeVerifier == null || codeChallenge == null || !MessageDigest.isEqual(
@@ -179,7 +193,7 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         if (usuario == null) {
             throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
         }
-        return crearToken(usuario);
+        return usuario;
     }
 
     private Claims verificar(String token, String tipo, CodigoError error) {
@@ -218,12 +232,7 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     }
 
     private static String challenge(String codeVerifier) {
-        try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(codeVerifier.getBytes(StandardCharsets.US_ASCII));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
+        return Sha256.base64Url(codeVerifier);
     }
 
 }

@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -16,6 +17,7 @@ private val Context.dataStore by preferencesDataStore(name = "preferencias")
 class PreferenciasRepository( private val context: Context) {
     private val temaOscuroKey = booleanPreferencesKey("tema_oscuro")
     private val urlServidorKey = stringPreferencesKey("url_servidor")
+    private val idDispositivoKey = stringPreferencesKey("id_dispositivo")
 
     val temaOscuro: Flow<Boolean> = context.dataStore.data.map {prefs -> prefs[temaOscuroKey] ?: false}
 
@@ -35,6 +37,17 @@ class PreferenciasRepository( private val context: Context) {
         context.dataStore.edit {
             prefs -> prefs[urlServidorKey] = normalizarUrl(url)
         }
+    }
+
+    // identifica al celular ante el central: cada refresh token queda atado al celular que lo pidio.
+    // se crea la primera vez y queda:
+    // vive en las preferencias y no en el archivo de la sesion, asi que cerrar sesion no lo cambia
+    suspend fun idDispositivo(): String {
+        var id = ""
+        context.dataStore.edit { prefs ->
+            id = prefs[idDispositivoKey] ?: UUID.randomUUID().toString().also { prefs[idDispositivoKey] = it }
+        }
+        return id
     }
 
     // borra la guardada para volver a la del build

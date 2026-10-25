@@ -5,7 +5,8 @@ import androidx.room.Insert
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
-// todo filtra por usuario: los eventos de un chofer se ven y se envian solo con su sesion
+// todo filtra por usuario: los eventos de un chofer se ven solo con su sesion, y se envian con su sesion
+// o, si ya no esta logueado, con su refresh token
 @Dao
 interface EventoPendienteDao {
 
@@ -15,6 +16,10 @@ interface EventoPendienteDao {
     // los que faltan enviar, en el orden en que se generaron
     @Query("SELECT * FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IS NULL ORDER BY timestampGeneracion")
     suspend fun pendientes(idUsuario: Long): List<EventoPendiente>
+
+    // los choferes con eventos sin enviar, este o no logueado alguno de ellos
+    @Query("SELECT DISTINCT idUsuario FROM evento_pendiente WHERE resultado IS NULL")
+    suspend fun usuariosConPendientes(): List<Long>
 
     @Query("SELECT COUNT(*) FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IS NULL")
     fun contar(idUsuario: Long): Flow<Int>

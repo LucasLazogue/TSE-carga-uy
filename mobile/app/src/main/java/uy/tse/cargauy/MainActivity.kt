@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
+import uy.tse.cargauy.data.ViajeRepository
 import uy.tse.cargauy.data.auth.verificarSesionConCentral
 import uy.tse.cargauy.data.remote.hayRed
 import uy.tse.cargauy.ui.navigation.NavGraph
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
             // con la sesion vencida, apenas hay red (o al volver a la app) se consulta al central:
             // si responde 401, la sesion se cierra y aparece el login sin que el chofer haga nada
             LaunchedEffect(haySesion, sesionVencida, conRed) {
-                if (haySesion == true && sesionVencida && conRed) verificarSesionConCentral(preferencias, sesion)
+                if (haySesion == true && sesionVencida && conRed) verificarSesionConCentral(app)
             }
 
             CargaUYTheme(darkTheme = temaOscuro) {
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
                     ingreso = uriIngreso,
                     onIngresoProcesado = { ingreso.value = null },
                     onCerrarSesion = {
-                        scope.launch { sesion.cerrarSesion() }
+                        scope.launch { ViajeRepository(app).cerrarSesion() }
                     }
                 )
             }

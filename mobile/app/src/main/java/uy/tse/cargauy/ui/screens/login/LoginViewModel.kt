@@ -15,6 +15,7 @@ import retrofit2.HttpException
 
 import uy.tse.cargauy.CargaUYApp
 import uy.tse.cargauy.data.auth.Pkce
+import uy.tse.cargauy.data.auth.idUsuarioDelToken
 import uy.tse.cargauy.data.remote.ApiClient
 import uy.tse.cargauy.data.remote.AuthApi
 import uy.tse.cargauy.data.remote.mensajeDeError
@@ -67,9 +68,14 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
             _estado.value = UiState.Loading
             try {
-                val api = ApiClient.crear(app.preferencias.urlServidor.first(), app.sesion).create(AuthApi::class.java)
-                val respuesta = api.token("authorization_code", code, verifier)
-                app.sesion.guardarToken(respuesta.accessToken, respuesta.expiresIn)
+                val api = ApiClient.sinSesion(app.preferencias.urlServidor.first()).create(AuthApi::class.java)
+                val respuesta = api.token("authorization_code", code, verifier, app.preferencias.idDispositivo())
+                // el refresh token queda a nombre del chofer: renueva su sesion y, si despues ingresa otro,
+                // sirve para enviar sus eventos pendientes
+                val idUsuario = idUsuarioDelToken(respuesta.accessToken)
+                if (idUsuario != null && respuesta.refreshToken != null) app.refreshTokens.guardar(idUsuario, respuesta.refreshToken)
+                // la sesion vence cuando deja de servir el refresh token, no el access token
+                app.sesion.guardarToken(respuesta.accessToken, respuesta.refreshExpiresIn ?: respuesta.expiresIn)
                 // si quedaron eventos sin enviar (por ejemplo, la sesion vencio sin señal), se envian ahora
                 Sincronizacion.programar(app)
                 _estado.value = null

@@ -8,6 +8,7 @@ import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.FormParam;
@@ -20,9 +21,11 @@ import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
+import tse.cargauy.dtos.TokensMovilDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.sesion.SesionMovilEJBLocal;
 import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 
 @RequestScoped
@@ -30,7 +33,8 @@ import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 public class AuthRest {
 
     private static final String MOBILE = "mobile";
-    private static final String GRANT_TYPE = "authorization_code";
+    private static final String GRANT_CODIGO = "authorization_code";
+    private static final String GRANT_REFRESH = "refresh_token";
     private static final String COOKIE_SESION = "cargauy_token";
     private static final String COOKIE_LOGIN = "cargauy_login";
     private static final URI FRONTEND = URI.create(System.getenv("CARGAUY_FRONTEND_URL")).resolve("/");
@@ -39,6 +43,9 @@ public class AuthRest {
 
     @EJB
     UsuarioEJBLocal usuarioEJB;
+
+    @EJB
+    SesionMovilEJBLocal sesionMovilEJB;
 
     @GET
     @Path("/login")
@@ -91,16 +98,36 @@ public class AuthRest {
     @Consumes("application/x-www-form-urlencoded")
     @Produces("application/json")
     public JsonObject token(@FormParam("grant_type") String grantType, @FormParam("code") String code,
-            @FormParam("code_verifier") String codeVerifier) {
-        if (!GRANT_TYPE.equals(grantType)) {
+            @FormParam("code_verifier") String codeVerifier, @FormParam("refresh_token") String refreshToken,
+            @FormParam("dispositivo") String dispositivo) {
+        TokensMovilDto tokens;
+        if (GRANT_CODIGO.equals(grantType)) {
+            tokens = sesionMovilEJB.iniciar(code, codeVerifier, dispositivo);
+        } else if (GRANT_REFRESH.equals(grantType)) {
+            tokens = sesionMovilEJB.renovar(refreshToken, dispositivo);
+        } else {
             throw new CargaUYException(CodigoError.AUTH_SOLICITUD_INVALIDA);
         }
-        TokenDto token = usuarioEJB.canjearCodigoMobile(code, codeVerifier);
-        return Json.createObjectBuilder()
-                .add("access_token", token.getToken())
+        JsonObjectBuilder respuesta = Json.createObjectBuilder()
+                .add("access_token", tokens.getAccessToken())
                 .add("token_type", "Bearer")
-                .add("expires_in", token.getSegundosVigencia())
-                .build();
+                .add("expires_in", tokens.getSegundosAcceso())
+                // extension que permite RFC 6749 5.1 (la misma que usa Keycloak): cuando deja de servir el refresh token
+                .add("refresh_expires_in", tokens.getSegundosRefresh());
+        // al renovar no viene: la app sigue usando el refresh token que tiene
+        if (tokens.getRefreshToken() != null) {
+            respuesta.add("refresh_token", tokens.getRefreshToken());
+        }
+        return respuesta.build();
+    }
+
+    // RFC 7009: la app revoca el refresh token cuando ya no lo necesita. responde 200 aunque no exista (2.2)
+    @POST
+    @Path("/revoke")
+    @Consumes("application/x-www-form-urlencoded")
+    public Response revocar(@FormParam("token") String token) {
+        sesionMovilEJB.revocar(token);
+        return Response.ok().build();
     }
 
     @GET

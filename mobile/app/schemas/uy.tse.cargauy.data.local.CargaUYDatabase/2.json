@@ -1,0 +1,179 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "ed1defa9cd867dcb2a0784e410feb6e0",
+    "entities": [
+      {
+        "tableName": "evento_pendiente",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idEvento` TEXT NOT NULL, `idUsuario` INTEGER NOT NULL, `idViaje` INTEGER NOT NULL, `tipo` TEXT NOT NULL, `timestampGeneracion` INTEGER NOT NULL, `resultado` TEXT, `mensaje` TEXT, PRIMARY KEY(`idEvento`))",
+        "fields": [
+          {
+            "fieldPath": "idEvento",
+            "columnName": "idEvento",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idUsuario",
+            "columnName": "idUsuario",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idViaje",
+            "columnName": "idViaje",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestampGeneracion",
+            "columnName": "timestampGeneracion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resultado",
+            "columnName": "resultado",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mensaje",
+            "columnName": "mensaje",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idEvento"
+          ]
+        }
+      },
+      {
+        "tableName": "viaje_local",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idViaje` INTEGER NOT NULL, `idUsuario` INTEGER NOT NULL, `estado` TEXT NOT NULL, `nroGuia` TEXT NOT NULL, `fechaGuia` TEXT NOT NULL, `matricula` TEXT NOT NULL, `origenLat` REAL NOT NULL, `origenLon` REAL NOT NULL, `destinoLat` REAL NOT NULL, `destinoLon` REAL NOT NULL, `volumen` INTEGER NOT NULL, `rubro` TEXT NOT NULL, `tipoCarga` TEXT NOT NULL, PRIMARY KEY(`idViaje`))",
+        "fields": [
+          {
+            "fieldPath": "idViaje",
+            "columnName": "idViaje",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idUsuario",
+            "columnName": "idUsuario",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estado",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nroGuia",
+            "columnName": "nroGuia",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaGuia",
+            "columnName": "fechaGuia",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "matricula",
+            "columnName": "matricula",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origenLat",
+            "columnName": "origenLat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "origenLon",
+            "columnName": "origenLon",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinoLat",
+            "columnName": "destinoLat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinoLon",
+            "columnName": "destinoLon",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "volumen",
+            "columnName": "volumen",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rubro",
+            "columnName": "rubro",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipoCarga",
+            "columnName": "tipoCarga",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idViaje"
+          ]
+        }
+      },
+      {
+        "tableName": "refresh_token",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idUsuario` INTEGER NOT NULL, `token` TEXT NOT NULL, PRIMARY KEY(`idUsuario`))",
+        "fields": [
+          {
+            "fieldPath": "idUsuario",
+            "columnName": "idUsuario",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "token",
+            "columnName": "token",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idUsuario"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ed1defa9cd867dcb2a0784e410feb6e0')"
+    ]
+  }
+}
