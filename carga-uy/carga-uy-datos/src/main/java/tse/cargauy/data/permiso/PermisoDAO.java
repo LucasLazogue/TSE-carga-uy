@@ -17,6 +17,7 @@ import tse.cargauy.dtos.FiltroPermisos;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.entities.Empresa_;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Permiso;
@@ -93,6 +94,10 @@ public class PermisoDAO implements PermisoDAOLocal {
 
     private Predicate[] condiciones(FiltroPermisos filtro, CriteriaBuilder cb, Root<Permiso> permiso) {
         List<Predicate> condiciones = new ArrayList<>();
+        if (filtro.getIdEmpresa() != null) {
+            condiciones.add(cb.equal(permiso.get(Permiso_.vehiculo).get(Vehiculo_.empresa).get(Empresa_.id),
+                    filtro.getIdEmpresa()));
+        }
         if (filtro.getIdVehiculo() != null) {
             condiciones.add(cb.equal(permiso.get(Permiso_.vehiculo).get(Vehiculo_.id), filtro.getIdVehiculo()));
         }

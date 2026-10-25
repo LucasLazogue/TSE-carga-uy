@@ -6,6 +6,9 @@ import tse.cargauy.entities.EstadoPermiso;
 
 public class PermisosQuery {
 
+    @QueryParam("idEmpresa")
+    private Long idEmpresa;
+
     @QueryParam("idVehiculo")
     private Long idVehiculo;
 
@@ -13,6 +16,6 @@ public class PermisosQuery {
     private EstadoPermiso estado;
 
     public FiltroPermisos filtro() {
-        return new FiltroPermisos(idVehiculo, estado);
+        return new FiltroPermisos(idEmpresa, idVehiculo, estado);
     }
 }

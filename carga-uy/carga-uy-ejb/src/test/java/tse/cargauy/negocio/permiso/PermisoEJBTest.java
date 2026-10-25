@@ -237,7 +237,7 @@ class PermisoEJBTest {
                 (proxy, metodo, args) -> metodo.getName().equals("isCallerInRole") ? Boolean.FALSE : null);
 
         assertCodigo(CodigoError.ACCESO_DENEGADO,
-                () -> ejb.listar(new FiltroPermisos(null, EstadoPermiso.PENDIENTE), new Paginacion(0, 10)));
+                () -> ejb.listar(new FiltroPermisos(null, null, EstadoPermiso.PENDIENTE), new Paginacion(0, 10)));
     }
 
     @Test

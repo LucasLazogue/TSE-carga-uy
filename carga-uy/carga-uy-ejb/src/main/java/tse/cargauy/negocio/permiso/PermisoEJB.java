@@ -61,6 +61,8 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
     public PaginaDto<PermisoDto> listar(FiltroPermisos filtro, Paginacion paginacion) {
         if (filtro.getIdVehiculo() != null) {
             validarAccesoAlVehiculo(filtro.getIdVehiculo());
+        } else if (filtro.getIdEmpresa() != null) {
+            empresaEJB.validarAcceso(filtro.getIdEmpresa());
         } else if (!contexto.isCallerInRole(Rol.FUNCIONARIO)) {
             throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
         }
