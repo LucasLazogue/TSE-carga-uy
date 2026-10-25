@@ -14,6 +14,9 @@ public class Serializers {
         dto.setIdVehiculo(permiso.getVehiculo().getId());
         dto.setMatricula(permiso.getVehiculo().getMatricula());
         dto.setEstado(permiso.getEstado());
+        dto.setMotivoRechazo(permiso.getMotivoRechazo());
+        dto.setCedulaRevisor(permiso.getRevisor() == null ? null : permiso.getRevisor().getCedula());
+        dto.setFechaRevision(permiso.getFechaRevision());
         return dto;
     }
 

@@ -1,14 +1,20 @@
 package tse.cargauy.negocio.permiso;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import jakarta.annotation.Resource;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.EJB;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
+import tse.cargauy.dtos.AprobacionPermisoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.RechazoPermisoDto;
 import tse.cargauy.dtos.SolicitudPermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.entities.EstadoPermiso;
@@ -29,6 +35,9 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
 
     @EJB
     EmpresaEJBLocal empresaEJB;
+
+    @Resource
+    SessionContext contexto;
 
     public PermisoDto getPermisoById(Long id) {
         PermisoDto permiso = permisoDAO.getPermisoById(id);
@@ -81,6 +90,59 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
     public void deletePermiso(Long id) {
         validarModificable(id);
         permisoDAO.deletePermiso(id);
+    }
+
+    @RolesAllowed(Rol.FUNCIONARIO)
+    public void aprobar(Long id, AprobacionPermisoDto aprobacion) {
+        PermisoDto permiso = buscarPendiente(id);
+        LocalDate desde = aprobacion.getValidoDesde() == null ? permiso.getValidoDesde() : aprobacion.getValidoDesde();
+        LocalDate hasta = aprobacion.getValidoHasta();
+        if (hasta == null) {
+            throw new CargaUYException(CodigoError.PERMISO_FIN_REQUERIDO);
+        }
+        if (hasta.isBefore(desde)) {
+            throw new CargaUYException(CodigoError.PERMISO_RANGO_FECHAS_INVALIDO);
+        }
+        LocalDateTime ahora = ahora();
+        if (hasta.isBefore(ahora.toLocalDate())) {
+            throw new CargaUYException(CodigoError.PERMISO_VENCIDO);
+        }
+        PermisoDto superpuesto = permisoDAO.getSuperpuesto(permiso.getIdVehiculo(), desde, hasta, id);
+        if (superpuesto != null) {
+            throw new CargaUYException(CodigoError.PERMISO_SUPERPUESTO, superpuesto.getNroPermiso(),
+                    superpuesto.getValidoDesde().toString(), superpuesto.getValidoHasta().toString());
+        }
+
+        permisoDAO.aprobar(id, desde, hasta, idUsuario(), ahora);
+    }
+
+    @RolesAllowed(Rol.FUNCIONARIO)
+    public void rechazar(Long id, RechazoPermisoDto rechazo) {
+        buscarPendiente(id);
+        if (rechazo.getMotivo() == null || rechazo.getMotivo().isBlank()) {
+            throw new CargaUYException(CodigoError.PERMISO_MOTIVO_REQUERIDO);
+        }
+
+        permisoDAO.rechazar(id, rechazo.getMotivo().strip(), idUsuario(), ahora());
+    }
+
+    private PermisoDto buscarPendiente(Long id) {
+        PermisoDto permiso = permisoDAO.getPermisoById(id);
+        if (permiso == null) {
+            throw new CargaUYException(CodigoError.PERMISO_NO_ENCONTRADO, String.valueOf(id));
+        }
+        if (permiso.getEstado() != EstadoPermiso.PENDIENTE) {
+            throw new CargaUYException(CodigoError.PERMISO_NO_PENDIENTE, permiso.getNroPermiso());
+        }
+        return permiso;
+    }
+
+    Long idUsuario() {
+        return Long.valueOf(contexto.getCallerPrincipal().getName());
+    }
+
+    LocalDateTime ahora() {
+        return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
     private static PermisoDto pendiente(SolicitudPermisoDto solicitud) {

@@ -1,6 +1,7 @@
 package tse.cargauy.data.permiso;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.entities.EstadoPermiso;
+import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Permiso;
 import tse.cargauy.entities.Vehiculo;
 
@@ -125,7 +127,30 @@ public class PermisoDAO implements PermisoDAOLocal {
             permiso.setValidoHasta(permisoDto.getValidoHasta());
             permiso.setVehiculo(entityManager.find(Vehiculo.class, permisoDto.getIdVehiculo()));
             permiso.setEstado(permisoDto.getEstado());
+            permiso.setMotivoRechazo(null);
+            permiso.setRevisor(null);
+            permiso.setFechaRevision(null);
         }
+    }
+
+    @Override
+    public void aprobar(Long id, LocalDate desde, LocalDate hasta, Long idFuncionario, LocalDateTime fecha) {
+        Permiso permiso = revisar(id, EstadoPermiso.APROBADO, idFuncionario, fecha);
+        permiso.setValidoDesde(desde);
+        permiso.setValidoHasta(hasta);
+    }
+
+    @Override
+    public void rechazar(Long id, String motivo, Long idFuncionario, LocalDateTime fecha) {
+        revisar(id, EstadoPermiso.RECHAZADO, idFuncionario, fecha).setMotivoRechazo(motivo);
+    }
+
+    private Permiso revisar(Long id, EstadoPermiso estado, Long idFuncionario, LocalDateTime fecha) {
+        Permiso permiso = entityManager.find(Permiso.class, id);
+        permiso.setEstado(estado);
+        permiso.setRevisor(entityManager.find(Funcionario.class, idFuncionario));
+        permiso.setFechaRevision(fecha);
+        return permiso;
     }
 
     @Override

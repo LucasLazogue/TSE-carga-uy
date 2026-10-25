@@ -2,6 +2,7 @@ package tse.cargauy.dtos;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import tse.cargauy.entities.EstadoPermiso;
 
@@ -16,6 +17,9 @@ public class PermisoDto implements Serializable {
     private Long idVehiculo;
     private String matricula;
     private EstadoPermiso estado;
+    private String motivoRechazo;
+    private String cedulaRevisor;
+    private LocalDateTime fechaRevision;
 
     public PermisoDto() {
     }
@@ -83,6 +87,30 @@ public class PermisoDto implements Serializable {
 
     public void setEstado(EstadoPermiso estado) {
         this.estado = estado;
+    }
+
+    public String getMotivoRechazo() {
+        return motivoRechazo;
+    }
+
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
+    }
+
+    public String getCedulaRevisor() {
+        return cedulaRevisor;
+    }
+
+    public void setCedulaRevisor(String cedulaRevisor) {
+        this.cedulaRevisor = cedulaRevisor;
+    }
+
+    public LocalDateTime getFechaRevision() {
+        return fechaRevision;
+    }
+
+    public void setFechaRevision(LocalDateTime fechaRevision) {
+        this.fechaRevision = fechaRevision;
     }
 
     @Override

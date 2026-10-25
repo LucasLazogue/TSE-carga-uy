@@ -1,6 +1,7 @@
 package tse.cargauy.data.permiso;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import jakarta.ejb.Local;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
@@ -16,5 +17,7 @@ public interface PermisoDAOLocal {
     PermisoDto getVigente(Long idVehiculo, LocalDate fecha);
     void addPermiso(PermisoDto permisoDto);
     void updatePermiso(Long id, PermisoDto permisoDto);
+    void aprobar(Long id, LocalDate desde, LocalDate hasta, Long idFuncionario, LocalDateTime fecha);
+    void rechazar(Long id, String motivo, Long idFuncionario, LocalDateTime fecha);
     void deletePermiso(Long id);
 }

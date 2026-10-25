@@ -12,8 +12,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import tse.cargauy.dtos.AprobacionPermisoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.RechazoPermisoDto;
 import tse.cargauy.dtos.SolicitudPermisoDto;
 import tse.cargauy.negocio.permiso.PermisoEJBLocal;
 import tse.cargauy.web.ws.PaginacionQuery;
@@ -45,6 +47,18 @@ public class PermisosRest {
     @DELETE
     public void deletePermiso(@PathParam("id") Long id) {
         permisoEJB.deletePermiso(id);
+    }
+
+    @POST
+    @Path("/{id}/aprobacion")
+    public void aprobar(@PathParam("id") Long id, AprobacionPermisoDto aprobacion) {
+        permisoEJB.aprobar(id, aprobacion);
+    }
+
+    @POST
+    @Path("/{id}/rechazo")
+    public void rechazar(@PathParam("id") Long id, RechazoPermisoDto rechazo) {
+        permisoEJB.rechazar(id, rechazo);
     }
 
     @GET
