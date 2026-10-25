@@ -1,9 +1,12 @@
 package tse.cargauy.entities;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
@@ -19,6 +22,14 @@ public class Permiso {
     private LocalDate validoHasta;
     @ManyToOne(optional = false)
     private Vehiculo vehiculo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'APROBADO' not null")
+    private EstadoPermiso estado;
+    @Column(columnDefinition = "text")
+    private String motivoRechazo;
+    @ManyToOne
+    private Funcionario revisor;
+    private LocalDateTime fechaRevision;
 
     public Permiso() {
     }
@@ -68,6 +79,38 @@ public class Permiso {
 
     public void setVehiculo(Vehiculo vehiculo) {
         this.vehiculo = vehiculo;
+    }
+
+    public EstadoPermiso getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoPermiso estado) {
+        this.estado = estado;
+    }
+
+    public String getMotivoRechazo() {
+        return motivoRechazo;
+    }
+
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
+    }
+
+    public Funcionario getRevisor() {
+        return revisor;
+    }
+
+    public void setRevisor(Funcionario revisor) {
+        this.revisor = revisor;
+    }
+
+    public LocalDateTime getFechaRevision() {
+        return fechaRevision;
+    }
+
+    public void setFechaRevision(LocalDateTime fechaRevision) {
+        this.fechaRevision = fechaRevision;
     }
 
 }

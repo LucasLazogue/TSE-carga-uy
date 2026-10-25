@@ -1,32 +1,56 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import type { ComponentProps } from 'react'
+import { AlertCircle, ClipboardCheck, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
 import { useDialogs } from '@/components/dialogs/useDialogs'
 import DataToolbar from '@/components/toolbar/DataToolbar'
+import FilterSelect from '@/components/toolbar/FilterSelect'
 import LookupFilter from '@/components/toolbar/LookupFilter'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { getErrorMessage } from '@/api/errors'
 import { TAMANIO_MAXIMO } from '@/api/page'
 import type { Page } from '@/api/page'
 import { PermisosApi } from '@/api/permisos/permisos.api'
-import type { Permiso } from '@/api/permisos/permisos.types'
+import type { EstadoPermiso, Permiso } from '@/api/permisos/permisos.types'
 import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
+import { useSession } from '@/auth/useSession'
 import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fecha } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
-import NuevoPermisoDialog from './dialogs/NuevoPermisoDialog'
+import RevisarPermisoDialog from './dialogs/RevisarPermisoDialog'
+import SolicitudPermisoDialog from './dialogs/SolicitudPermisoDialog'
+import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './permisos.constants'
+
+const VARIANTES_ESTADO: Record<EstadoPermiso, ComponentProps<typeof Badge>['variant']> = {
+  PENDIENTE: 'outline',
+  APROBADO: 'secondary',
+  RECHAZADO: 'destructive',
+}
 
 const columnas: GridColumn<Permiso>[] = [
   { header: 'Nro. permiso', cell: (p) => p.nroPermiso, className: 'font-medium' },
   { header: 'Vehículo', cell: (p) => p.matricula },
   { header: 'Válido desde', cell: (p) => fecha(p.validoDesde) },
-  { header: 'Válido hasta', cell: (p) => fecha(p.validoHasta) },
+  { header: 'Válido hasta', cell: (p) => (p.validoHasta ? fecha(p.validoHasta) : '-') },
+  {
+    header: 'Estado',
+    className: 'max-w-xs whitespace-normal',
+    cell: (p) => (
+      <div className="space-y-1">
+        <Badge variant={VARIANTES_ESTADO[p.estado]}>{NOMBRES_ESTADO[p.estado]}</Badge>
+        {p.motivoRechazo && <p className="text-xs text-muted-foreground">{p.motivoRechazo}</p>}
+      </div>
+    ),
+  },
 ]
 
-const FILTROS = ['idEmpresa', 'idVehiculo'] as const
+const FILTROS = ['idEmpresa', 'idVehiculo', 'estado'] as const
 
 function opcionVehiculo(v: Vehiculo) {
   return { value: String(v.id), label: v.matricula }
@@ -37,10 +61,15 @@ function Permisos() {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
   const [resultado, setResultado] = useState<Page<Permiso> | null>(null)
   const [version, setVersion] = useState(0)
-  const { open } = useDialogs()
-  const { idEmpresa, idVehiculo } = values
+  const [error, setError] = useState('')
+  const { open, confirm } = useDialogs()
+  const { profile } = useSession()
+  const esFuncionario = profile === 'FUNCIONARIO'
+  const { idEmpresa, idVehiculo, estado } = values
+  const vehiculoValido = Boolean(idEmpresa) && vehiculos.some((v) => String(v.id) === idVehiculo)
+  const filtroVehiculo = vehiculoValido ? Number(idVehiculo) : undefined
 
-  useEmpresaInicial(idEmpresa, set)
+  useEmpresaInicial(idEmpresa, set, !esFuncionario)
 
   useEffect(() => {
     if (!idEmpresa) {
@@ -58,17 +87,22 @@ function Permisos() {
   }, [idEmpresa])
 
   useEffect(() => {
-    if (!vehiculos.some((v) => String(v.id) === idVehiculo) && vehiculos.length) {
+    if (!esFuncionario && !vehiculoValido && vehiculos.length) {
       set('idVehiculo', String(vehiculos[0].id))
     }
-  }, [vehiculos, idVehiculo, set])
+  }, [esFuncionario, vehiculoValido, vehiculos, set])
 
   useEffect(() => {
-    if (!idVehiculo) {
+    if (!esFuncionario && !filtroVehiculo) {
       return
     }
     let vigente = true
-    PermisosApi.findAll({ idVehiculo: Number(idVehiculo) }, { pagina }).then((page) => {
+    const filtro = {
+      idEmpresa: esFuncionario && idEmpresa ? Number(idEmpresa) : undefined,
+      idVehiculo: filtroVehiculo,
+      estado: estado as EstadoPermiso | undefined,
+    }
+    PermisosApi.findAll(filtro, { pagina }).then((page) => {
       if (vigente) {
         setResultado(page)
       }
@@ -76,7 +110,7 @@ function Permisos() {
     return () => {
       vigente = false
     }
-  }, [idVehiculo, pagina, version])
+  }, [esFuncionario, idEmpresa, filtroVehiculo, estado, pagina, version])
 
   const buscarVehiculos = useCallback(
     async (texto: string) =>
@@ -108,28 +142,112 @@ function Permisos() {
     open({
       title: 'Nuevo permiso',
       content: (close) => (
-        <NuevoPermisoDialog
+        <SolicitudPermisoDialog
           vehiculos={vehiculos}
           idVehiculo={Number(idVehiculo ?? 0)}
           close={close}
-          onCreated={mostrarCreado}
+          onSaved={mostrarCreado}
         />
       ),
     })
   }
 
-  const conVehiculo = Boolean(idVehiculo && vehiculos.length)
+  function corregir(permiso: Permiso) {
+    open({
+      title: 'Corregir permiso',
+      content: (close) => (
+        <SolicitudPermisoDialog
+          vehiculos={vehiculos}
+          idVehiculo={permiso.idVehiculo}
+          permiso={permiso}
+          close={close}
+          onSaved={mostrarCreado}
+        />
+      ),
+    })
+  }
+
+  async function retirar(permiso: Permiso) {
+    const ok = await confirm({
+      title: 'Retirar permiso',
+      description: `Se va a eliminar la solicitud del permiso ${permiso.nroPermiso}.`,
+      confirmText: 'Retirar',
+      destructive: true,
+    })
+    if (!ok) {
+      return
+    }
+    setError('')
+    try {
+      await PermisosApi.remove(permiso.id)
+      recargar()
+    } catch (err) {
+      setError(getErrorMessage(err))
+    }
+  }
+
+  function revisar(permiso: Permiso) {
+    open({
+      title: 'Revisar permiso',
+      content: (close) => <RevisarPermisoDialog permiso={permiso} close={close} onSaved={recargar} />,
+    })
+  }
+
+  function acciones(p: Permiso) {
+    if (esFuncionario) {
+      return (
+        p.estado === 'PENDIENTE' && (
+          <Button size="sm" variant="outline" onClick={() => revisar(p)}>
+            <ClipboardCheck />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Revisar</span>
+          </Button>
+        )
+      )
+    }
+    return (
+      p.estado !== 'APROBADO' && (
+        <div className="flex justify-end gap-1">
+          <Button size="sm" variant="outline" onClick={() => corregir(p)}>
+            <Pencil />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Corregir</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => retirar(p)}>
+            <Trash2 />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Retirar</span>
+          </Button>
+        </div>
+      )
+    )
+  }
+
+  const columnasConAcciones: GridColumn<Permiso>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      hideHeader: true,
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: acciones,
+    },
+  ]
+
+  const mostrar = esFuncionario || Boolean(filtroVehiculo)
 
   return (
     <div>
       <PageHeader
         title="Permisos"
-        description="Permisos nacionales de circulación de los vehículos de la empresa."
+        description={
+          esFuncionario
+            ? 'Permisos nacionales de circulación de los vehículos.'
+            : 'Permisos nacionales de circulación de los vehículos de la empresa.'
+        }
         actions={
-          <Button onClick={nuevoPermiso} disabled={!vehiculos.length}>
-            <Plus />
-            Nuevo permiso
-          </Button>
+          !esFuncionario && (
+            <Button onClick={nuevoPermiso} disabled={!vehiculos.length}>
+              <Plus />
+              Nuevo permiso
+            </Button>
+          )
         }
       />
       <DataToolbar
@@ -142,25 +260,34 @@ function Permisos() {
         <LookupFilter
           label="Empresa"
           value={idEmpresa}
-          onChange={(v) => v && set('idEmpresa', v)}
+          onChange={(v) => (esFuncionario || v) && set('idEmpresa', v)}
           {...fuenteEmpresas}
-          required
+          required={!esFuncionario}
         />
-        <LookupFilter
-          label="Vehículo"
-          value={idVehiculo}
-          onChange={(v) => v && set('idVehiculo', v)}
-          search={buscarVehiculos}
-          resolve={vehiculoPorId}
-          required
-        />
+        {idEmpresa && (
+          <LookupFilter
+            label="Vehículo"
+            value={vehiculoValido ? idVehiculo : undefined}
+            onChange={(v) => (esFuncionario || v) && set('idVehiculo', v)}
+            search={buscarVehiculos}
+            resolve={vehiculoPorId}
+            required={!esFuncionario}
+          />
+        )}
+        <FilterSelect label="Estado" value={estado} options={OPCIONES_ESTADO} onChange={(v) => set('estado', v)} />
       </DataToolbar>
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <Grid
-        columns={columnas}
-        items={conVehiculo ? (resultado?.items ?? []) : []}
+        columns={columnasConAcciones}
+        items={mostrar ? (resultado?.items ?? []) : []}
         rowKey={(p) => p.id}
-        empty={vehiculos.length ? 'No hay permisos registrados.' : 'La empresa no tiene vehículos.'}
-        page={conVehiculo ? (resultado ?? undefined) : undefined}
+        empty={esFuncionario || vehiculos.length ? 'No hay permisos registrados.' : 'La empresa no tiene vehículos.'}
+        page={mostrar ? (resultado ?? undefined) : undefined}
         onPageChange={setPagina}
       />
     </div>
