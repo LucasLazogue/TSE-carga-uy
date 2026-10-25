@@ -89,10 +89,14 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         }
 
         UsuarioDto ciudadano = usuarioDAO.getCiudadanoByCedula(cedula);
-        if (ciudadano != null) {
-            return ciudadano;
+        if (ciudadano == null) {
+            return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
         }
-        return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
+        if (ciudadano.getCorreo() == null && identidad.getCorreo() != null) {
+            usuarioDAO.updateCorreo(ciudadano.getId(), identidad.getCorreo());
+            ciudadano.setCorreo(identidad.getCorreo());
+        }
+        return ciudadano;
     }
 
     public UsuarioDto loginBackoffice(String usuario, String clave) {

@@ -13,6 +13,7 @@ public class EmpresaDto implements Serializable {
     private String razonSocial;
     private String direccionPrincipal;
     private LocalDate fechaAlta;
+    private String cedulaResponsable;
 
     public EmpresaDto() {
     }
@@ -71,6 +72,14 @@ public class EmpresaDto implements Serializable {
 
     public void setFechaAlta(LocalDate fechaAlta) {
         this.fechaAlta = fechaAlta;
+    }
+
+    public String getCedulaResponsable() {
+        return cedulaResponsable;
+    }
+
+    public void setCedulaResponsable(String cedulaResponsable) {
+        this.cedulaResponsable = cedulaResponsable;
     }
 
     @Override

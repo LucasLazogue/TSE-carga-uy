@@ -51,6 +51,11 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     }
 
     @Override
+    public void updateCorreo(Long idCiudadano, String correo) {
+        entityManager.find(Ciudadano.class, idCiudadano).setCorreo(correo);
+    }
+
+    @Override
     public void addFuncionario(String cedula) {
         Funcionario funcionario = new Funcionario(cedula);
         funcionario.getRoles().add(getRol(Rol.FUNCIONARIO));

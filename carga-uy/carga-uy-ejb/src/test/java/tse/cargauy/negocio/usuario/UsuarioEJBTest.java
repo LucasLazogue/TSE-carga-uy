@@ -3,13 +3,19 @@ package tse.cargauy.negocio.usuario;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import tse.cargauy.adaptadores.gubuy.GubUyClient;
+import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
+import tse.cargauy.data.usuario.UsuarioDAO;
 import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
@@ -121,5 +127,57 @@ class UsuarioEJBTest {
         };
 
         assertCodigo(CodigoError.ACCESO_DENEGADO, () -> ejb.loginBackoffice("admin1", "clave"));
+    }
+
+    private Map<Long, String> correosGuardados(UsuarioDto existente) {
+        Map<Long, String> correos = new HashMap<>();
+        ejb.gubUy = new GubUyClient() {
+            @Override
+            public IdentidadGubUy exchangeCode(String code, String nonce) {
+                return new IdentidadGubUy("12345672", "responsable@correo.uy");
+            }
+        };
+        ejb.usuarioDAO = new UsuarioDAO() {
+            @Override
+            public UsuarioDto getFuncionarioByCedula(String cedula) {
+                return null;
+            }
+
+            @Override
+            public UsuarioDto getCiudadanoByCedula(String cedula) {
+                return existente;
+            }
+
+            @Override
+            public void updateCorreo(Long idCiudadano, String correo) {
+                correos.put(idCiudadano, correo);
+            }
+        };
+        return correos;
+    }
+
+    @Test
+    void elResponsableDadoDeAltaSinIngresarEntraConSuRolYCompletaElCorreo() {
+        UsuarioDto existente = new UsuarioDto();
+        existente.setId(7L);
+        existente.setRoles(List.of("CIUDADANO", "RESPONSABLE"));
+        Map<Long, String> correos = correosGuardados(existente);
+
+        UsuarioDto usuario = ejb.loginGubUy("code", "nonce");
+
+        assertEquals(List.of("CIUDADANO", "RESPONSABLE"), usuario.getRoles());
+        assertEquals("responsable@correo.uy", usuario.getCorreo());
+        assertEquals(Map.of(7L, "responsable@correo.uy"), correos);
+    }
+
+    @Test
+    void noPisaElCorreoQueYaTenia() {
+        UsuarioDto existente = new UsuarioDto();
+        existente.setId(7L);
+        existente.setCorreo("anterior@correo.uy");
+        Map<Long, String> correos = correosGuardados(existente);
+
+        assertEquals("anterior@correo.uy", ejb.loginGubUy("code", "nonce").getCorreo());
+        assertTrue(correos.isEmpty());
     }
 }
