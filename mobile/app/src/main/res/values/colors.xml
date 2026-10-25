@@ -7,4 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- fondo del icono: el primary del tema (ui/theme/Color.kt) -->
+    <color name="ic_launcher_background">#FF00696E</color>
 </resources>
