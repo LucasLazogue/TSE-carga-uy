@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 export type GridColumn<T> = {
   header: string
+  hideHeader?: boolean
   cell: (item: T) => ReactNode
   className?: string
 }
@@ -55,7 +56,7 @@ function Grid<T>({
             <TableRow>
               {columns.map((c) => (
                 <TableHead key={c.header} className={c.className}>
-                  {c.header}
+                  {c.hideHeader ? <span className="sr-only">{c.header}</span> : c.header}
                 </TableHead>
               ))}
             </TableRow>

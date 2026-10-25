@@ -77,6 +77,7 @@ function Viajes() {
     ...columnas,
     {
       header: 'Acciones',
+      hideHeader: true,
       className: 'sticky right-0 w-px bg-background text-right',
       cell: (v) => (
         <Button size="sm" variant="outline" onClick={() => verEventos(v)}>

@@ -105,6 +105,7 @@ function Guias() {
     ...columnas,
     {
       header: 'Acciones',
+      hideHeader: true,
       className: 'sticky right-0 w-px bg-background text-right',
       cell: (g) =>
         g.idViaje == null && (
