@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.logging.Logger;
 
 import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.Asynchronous;
@@ -35,6 +36,8 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     // los viajes y los permisos usan la hora local; la zona es la del servidor (CARGAUY_ZONA_HORARIA)
     private static final ZoneId ZONA = ZoneId.systemDefault();
 
+    private static final Logger LOGGER = Logger.getLogger(MotorFiscalizacionEJB.class.getName());
+
     @EJB
     EventoPosicionDAOLocal eventoDAO;
 
@@ -50,10 +53,10 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     @Asynchronous
     public void evaluarPosicion(Long idNodo, String idEvento) {
         EventoPosicionDto posicion = eventoDAO.get(idNodo, idEvento);
-        if (posicion.getIdVehiculo() == null) {
+        Long idVehiculo = posicion.getIdVehiculo();
+        if (idVehiculo == null) {
             return;
         }
-        Long idVehiculo = posicion.getIdVehiculo();
         LocalDateTime momento = LocalDateTime.ofInstant(posicion.getTimestampGeneracion(), ZONA);
         String origen = posicion.getNodo() + "/" + posicion.getIdEvento();
 
@@ -73,7 +76,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         if (viaje.getEstado() != EstadoViaje.FINALIZADO) {
             return;
         }
-        evaluarPermiso(viaje.getIdVehiculo(), viaje.getFechaInicio(), viaje.getId(), "viaje " + viaje.getId());
+        evaluarPermiso(viaje.getIdVehiculo(), viaje.getFechaInicio(), idViaje, "viaje " + idViaje);
     }
 
     private void evaluarPermiso(Long idVehiculo, LocalDateTime momento, Long idViaje, String origen) {
@@ -102,9 +105,10 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         try {
             casoEJB.registrarCaso(caso, List.of(evidencia));
         } catch (CargaUYException e) {
-            // otra posicion del mismo vehiculo registro el caso al mismo tiempo
+            // CASO_YA_REGISTRADO: otra posicion del mismo vehiculo registro el caso al mismo tiempo.
+            // Los otros errores se loguean aca porque en segundo plano no le llegan a nadie
             if (e.getCodigo() != CodigoError.CASO_YA_REGISTRADO) {
-                throw e;
+                LOGGER.warning("fiscalizacion evaluacion=FALLIDA caso=" + caso.getClaveDeduplicacion() + " error=" + e);
             }
         }
     }

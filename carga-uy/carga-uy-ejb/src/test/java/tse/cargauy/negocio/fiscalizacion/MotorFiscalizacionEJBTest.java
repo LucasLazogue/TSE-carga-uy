@@ -73,7 +73,8 @@ class MotorFiscalizacionEJBTest {
 
             @Override
             public PaginaDto<ViajeDto> getAll(FiltroViajes filtro, Paginacion paginacion) {
-                List<ViajeDto> items = viajeAsignado == null ? List.of() : List.of(viajeAsignado);
+                List<ViajeDto> items = viajeAsignado != null && filtro.getEstado() == EstadoViaje.ASIGNADO
+                        && VEHICULO.equals(filtro.getIdVehiculo()) ? List.of(viajeAsignado) : List.of();
                 return new PaginaDto<>(items, items.size(), paginacion.getPagina(), paginacion.getTamanio());
             }
         };
@@ -84,12 +85,7 @@ class MotorFiscalizacionEJBTest {
             }
         };
 
-        CasoFiscalizacionEJB casoEJB = new CasoFiscalizacionEJB() {
-            @Override
-            LocalDateTime ahora() {
-                return LocalDateTime.of(2026, 10, 6, 13, 0);
-            }
-        };
+        CasoFiscalizacionEJB casoEJB = new CasoFiscalizacionEJB();
         casoEJB.casoDAO = casos;
         casoEJB.vehiculoDAO = new VehiculoDAO() {
             @Override
