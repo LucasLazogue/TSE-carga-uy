@@ -35,10 +35,8 @@ function Casos() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Caso> | null>(null)
   const [version, setVersion] = useState(0)
-  const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null)
   const { open } = useDialogs()
   const { estado, tipo, empresa } = values
-  const seleccionado = resultado?.items.find((c) => c.id === idSeleccionado)
 
   useEffect(() => {
     let vigente = true
@@ -77,28 +75,32 @@ function Casos() {
     })
   }
 
+  const columnasConAcciones: GridColumn<Caso>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      hideHeader: true,
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: (c) => (
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={() => verCaso(c.id)}>
+            <Eye />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver caso</span>
+          </Button>
+          {(c.estado === 'NOTIFICADA' || c.estado === 'EN_DESCARGO') && (
+            <Button size="sm" variant="outline" onClick={() => resolver(c)}>
+              <Gavel />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Resolver</span>
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div>
-      <PageHeader
-        title="Casos"
-        description="Casos de fiscalización detectados sobre las empresas."
-        actions={
-          seleccionado && (
-            <>
-              <Button variant="outline" onClick={() => verCaso(seleccionado.id)}>
-                <Eye />
-                Ver caso
-              </Button>
-              {(seleccionado.estado === 'NOTIFICADA' || seleccionado.estado === 'EN_DESCARGO') && (
-                <Button onClick={() => resolver(seleccionado)}>
-                  <Gavel />
-                  Resolver
-                </Button>
-              )}
-            </>
-          )
-        }
-      />
+      <PageHeader title="Casos" description="Casos de fiscalización detectados sobre las empresas." />
       <DataToolbar
         actions={
           <Button variant="outline" size="icon" aria-label="Recargar" onClick={recargar}>
@@ -111,14 +113,12 @@ function Casos() {
         <LookupFilter label="Empresa" value={empresa} onChange={(v) => set('empresa', v)} {...fuenteEmpresas} />
       </DataToolbar>
       <Grid
-        columns={columnas}
+        columns={columnasConAcciones}
         items={resultado?.items ?? []}
         rowKey={(c) => c.id}
         empty="No hay casos."
         page={resultado ?? undefined}
         onPageChange={setPagina}
-        selected={seleccionado?.id}
-        onSelect={(c) => setIdSeleccionado(c?.id ?? null)}
       />
     </div>
   )

@@ -31,10 +31,8 @@ function Infracciones() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Caso> | null>(null)
   const [version, setVersion] = useState(0)
-  const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null)
   const { open } = useDialogs()
   const { estado } = values
-  const seleccionado = resultado?.items.find((c) => c.id === idSeleccionado)
 
   useEffect(() => {
     let vigente = true
@@ -68,28 +66,32 @@ function Infracciones() {
     })
   }
 
+  const columnasConAcciones: GridColumn<Caso>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      hideHeader: true,
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: (c) => (
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={() => verInfraccion(c.id)}>
+            <Eye />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver</span>
+          </Button>
+          {c.estado === 'NOTIFICADA' && (
+            <Button size="sm" variant="outline" onClick={() => presentarDescargo(c)}>
+              <MessageSquareText />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Presentar descargo</span>
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   return (
     <div>
-      <PageHeader
-        title="Infracciones"
-        description="Infracciones notificadas a tu empresa."
-        actions={
-          seleccionado && (
-            <>
-              <Button variant="outline" onClick={() => verInfraccion(seleccionado.id)}>
-                <Eye />
-                Ver
-              </Button>
-              {seleccionado.estado === 'NOTIFICADA' && (
-                <Button onClick={() => presentarDescargo(seleccionado)}>
-                  <MessageSquareText />
-                  Presentar descargo
-                </Button>
-              )}
-            </>
-          )
-        }
-      />
+      <PageHeader title="Infracciones" description="Infracciones notificadas a tu empresa." />
       <DataToolbar
         actions={
           <Button variant="outline" size="icon" aria-label="Recargar" onClick={recargar}>
@@ -100,14 +102,12 @@ function Infracciones() {
         <FilterSelect label="Estado" value={estado} options={OPCIONES_ESTADO} onChange={(v) => set('estado', v)} />
       </DataToolbar>
       <Grid
-        columns={columnas}
+        columns={columnasConAcciones}
         items={resultado?.items ?? []}
         rowKey={(c) => c.id}
         empty="No hay infracciones notificadas."
         page={resultado ?? undefined}
         onPageChange={setPagina}
-        selected={seleccionado?.id}
-        onSelect={(c) => setIdSeleccionado(c?.id ?? null)}
       />
     </div>
   )
