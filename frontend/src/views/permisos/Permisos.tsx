@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { AlertCircle, Check, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react'
+import { AlertCircle, ClipboardCheck, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -23,8 +23,7 @@ import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fecha } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
-import AprobarPermisoDialog from './dialogs/AprobarPermisoDialog'
-import RechazarPermisoDialog from './dialogs/RechazarPermisoDialog'
+import RevisarPermisoDialog from './dialogs/RevisarPermisoDialog'
 import SolicitudPermisoDialog from './dialogs/SolicitudPermisoDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './permisos.constants'
 
@@ -187,17 +186,10 @@ function Permisos() {
     }
   }
 
-  function aprobar(permiso: Permiso) {
+  function revisar(permiso: Permiso) {
     open({
-      title: 'Aprobar permiso',
-      content: (close) => <AprobarPermisoDialog permiso={permiso} close={close} onSaved={recargar} />,
-    })
-  }
-
-  function rechazar(permiso: Permiso) {
-    open({
-      title: 'Rechazar permiso',
-      content: (close) => <RechazarPermisoDialog permiso={permiso} close={close} onSaved={recargar} />,
+      title: 'Revisar permiso',
+      content: (close) => <RevisarPermisoDialog permiso={permiso} close={close} onSaved={recargar} />,
     })
   }
 
@@ -205,16 +197,10 @@ function Permisos() {
     if (esFuncionario) {
       return (
         p.estado === 'PENDIENTE' && (
-          <div className="flex justify-end gap-1">
-            <Button size="sm" variant="outline" onClick={() => aprobar(p)}>
-              <Check />
-              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Aprobar</span>
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => rechazar(p)}>
-              <X />
-              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Rechazar</span>
-            </Button>
-          </div>
+          <Button size="sm" variant="outline" onClick={() => revisar(p)}>
+            <ClipboardCheck />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Revisar</span>
+          </Button>
         )
       )
     }
