@@ -110,7 +110,7 @@ function Guias() {
         g.idViaje == null && (
           <Button size="sm" variant="outline" onClick={() => asignarViaje(g)}>
             <Truck />
-            <span className="sr-only md:not-sr-only">Asignar viaje</span>
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Asignar viaje</span>
           </Button>
         ),
     },

@@ -81,7 +81,7 @@ function Viajes() {
       cell: (v) => (
         <Button size="sm" variant="outline" onClick={() => verEventos(v)}>
           <History />
-          <span className="sr-only md:not-sr-only">Ver eventos</span>
+          <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver eventos</span>
         </Button>
       ),
     },
