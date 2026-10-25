@@ -27,6 +27,7 @@ import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
+import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoEvidencia;
@@ -80,11 +81,11 @@ public class DatosPrueba {
             Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();
             Long sdd = vehiculoDAO.getVehiculoByMatricula("SDD3456").getId();
 
-            permisoDAO.addPermiso(new PermisoDto("PNC-1001", LocalDate.of(2024, 1, 1), LocalDate.of(2025, 12, 31), sta));
-            permisoDAO.addPermiso(new PermisoDto("PNC-1002", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), sta));
-            permisoDAO.addPermiso(new PermisoDto("PNC-1003", LocalDate.of(2026, 3, 1), LocalDate.of(2027, 2, 28), sbb));
-            permisoDAO.addPermiso(new PermisoDto("PNC-1004", LocalDate.of(2026, 2, 1), LocalDate.of(2027, 1, 31), scc));
-            permisoDAO.addPermiso(new PermisoDto("PNC-1005", LocalDate.of(2025, 6, 1), LocalDate.of(2026, 5, 31), sdd));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1001", LocalDate.of(2024, 1, 1), LocalDate.of(2025, 12, 31), sta, EstadoPermiso.APROBADO));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1002", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), sta, EstadoPermiso.APROBADO));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1003", LocalDate.of(2026, 3, 1), LocalDate.of(2027, 2, 28), sbb, EstadoPermiso.APROBADO));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1004", LocalDate.of(2026, 2, 1), LocalDate.of(2027, 1, 31), scc, EstadoPermiso.APROBADO));
+            permisoDAO.addPermiso(new PermisoDto("PNC-1005", LocalDate.of(2025, 6, 1), LocalDate.of(2026, 5, 31), sdd, EstadoPermiso.APROBADO));
         }
 
         if (usuarioDAO.getRoles().isEmpty()) {

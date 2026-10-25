@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
@@ -19,6 +21,9 @@ public class Permiso {
     private LocalDate validoHasta;
     @ManyToOne(optional = false)
     private Vehiculo vehiculo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'APROBADO' not null")
+    private EstadoPermiso estado;
 
     public Permiso() {
     }
@@ -68,6 +73,14 @@ public class Permiso {
 
     public void setVehiculo(Vehiculo vehiculo) {
         this.vehiculo = vehiculo;
+    }
+
+    public EstadoPermiso getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoPermiso estado) {
+        this.estado = estado;
     }
 
 }

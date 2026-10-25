@@ -13,6 +13,7 @@ public class Serializers {
         dto.setValidoHasta(permiso.getValidoHasta());
         dto.setIdVehiculo(permiso.getVehiculo().getId());
         dto.setMatricula(permiso.getVehiculo().getMatricula());
+        dto.setEstado(permiso.getEstado());
         return dto;
     }
 
@@ -22,6 +23,7 @@ public class Serializers {
         permiso.setValidoDesde(dto.getValidoDesde());
         permiso.setValidoHasta(dto.getValidoHasta());
         permiso.setVehiculo(vehiculo);
+        permiso.setEstado(dto.getEstado());
         return permiso;
     }
 

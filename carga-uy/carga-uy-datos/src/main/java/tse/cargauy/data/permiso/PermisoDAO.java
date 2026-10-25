@@ -11,6 +11,7 @@ import jakarta.persistence.TypedQuery;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.Permiso;
 import tse.cargauy.entities.Vehiculo;
 
@@ -96,8 +97,10 @@ public class PermisoDAO implements PermisoDAOLocal {
     @Override
     public PermisoDto getVigente(Long idVehiculo, LocalDate fecha) {
         List<Permiso> permisos = entityManager.createQuery(
-                        "SELECT p FROM Permiso p WHERE p.vehiculo.id = :idVehiculo AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha", Permiso.class)
+                        "SELECT p FROM Permiso p WHERE p.vehiculo.id = :idVehiculo AND p.estado = :aprobado"
+                                + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha", Permiso.class)
                 .setParameter("idVehiculo", idVehiculo)
+                .setParameter("aprobado", EstadoPermiso.APROBADO)
                 .setParameter("fecha", fecha)
                 .getResultList();
         if (permisos.isEmpty()) {
@@ -121,6 +124,7 @@ public class PermisoDAO implements PermisoDAOLocal {
             permiso.setValidoDesde(permisoDto.getValidoDesde());
             permiso.setValidoHasta(permisoDto.getValidoHasta());
             permiso.setVehiculo(entityManager.find(Vehiculo.class, permisoDto.getIdVehiculo()));
+            permiso.setEstado(permisoDto.getEstado());
         }
     }
 

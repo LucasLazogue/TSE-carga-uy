@@ -15,6 +15,7 @@ import jakarta.jms.JMSContext;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.SolicitudPermisoDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.MensajesError;
@@ -244,13 +245,11 @@ public class App {
             String nroPermiso = System.console().readLine();
             System.out.print("Ingrese la fecha de inicio de validez (aaaa-mm-dd): ");
             LocalDate validoDesde = LocalDate.parse(System.console().readLine().trim());
-            System.out.print("Ingrese la fecha de fin de validez (aaaa-mm-dd): ");
-            LocalDate validoHasta = LocalDate.parse(System.console().readLine().trim());
             System.out.print("Ingrese el id del vehiculo: ");
             Long idVehiculo = Long.parseLong(System.console().readLine().trim());
 
-            permisoEJB.addPermiso(new PermisoDto(nroPermiso, validoDesde, validoHasta, idVehiculo));
-            System.out.println("Permiso creado exitosamente.");
+            permisoEJB.addPermiso(new SolicitudPermisoDto(nroPermiso, validoDesde, idVehiculo));
+            System.out.println("Permiso enviado, queda pendiente de aprobacion.");
         } catch (DateTimeParseException e) {
             System.out.println("Las fechas deben tener el formato aaaa-mm-dd.");
         } catch (NumberFormatException e) {

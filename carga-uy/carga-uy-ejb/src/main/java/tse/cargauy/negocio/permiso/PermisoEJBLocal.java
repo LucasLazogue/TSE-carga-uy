@@ -5,6 +5,7 @@ import jakarta.ejb.Local;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.SolicitudPermisoDto;
 
 @Local
 public interface PermisoEJBLocal {
@@ -12,7 +13,7 @@ public interface PermisoEJBLocal {
     PaginaDto<PermisoDto> getAll(Paginacion paginacion);
     PaginaDto<PermisoDto> getByVehiculo(Long idVehiculo, Paginacion paginacion);
     PermisoDto getVigente(Long idVehiculo, LocalDate fecha);
-    void addPermiso(PermisoDto permisoDto);
-    void updatePermiso(Long id, PermisoDto permisoDto);
+    void addPermiso(SolicitudPermisoDto solicitud);
+    void updatePermiso(Long id, SolicitudPermisoDto solicitud);
     void deletePermiso(Long id);
 }

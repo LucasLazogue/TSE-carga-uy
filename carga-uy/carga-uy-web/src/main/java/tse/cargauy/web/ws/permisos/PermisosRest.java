@@ -14,6 +14,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.SolicitudPermisoDto;
 import tse.cargauy.negocio.permiso.PermisoEJBLocal;
 import tse.cargauy.web.ws.PaginacionQuery;
 
@@ -30,14 +31,14 @@ public class PermisosRest {
     }
 
     @POST
-    public void createPermiso(PermisoDto permisoDto) {
-        permisoEJB.addPermiso(permisoDto);
+    public void createPermiso(SolicitudPermisoDto solicitud) {
+        permisoEJB.addPermiso(solicitud);
     }
 
     @Path("/{id}")
     @PUT
-    public void updatePermiso(@PathParam("id") Long id, PermisoDto permisoDto) {
-        permisoEJB.updatePermiso(id, permisoDto);
+    public void updatePermiso(@PathParam("id") Long id, SolicitudPermisoDto solicitud) {
+        permisoEJB.updatePermiso(id, solicitud);
     }
 
     @Path("/{id}")
