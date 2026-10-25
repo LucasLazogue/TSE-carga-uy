@@ -1,12 +1,27 @@
 package tse.cargauy.nodobalanzas.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
 
 @Entity
+@NamedQueries({
+    @NamedQuery(name = Peaje.TODOS,
+            query = "SELECT p FROM Peaje p ORDER BY p.codigo"),
+    @NamedQuery(name = Peaje.POR_CODIGO,
+            query = "SELECT p FROM Peaje p WHERE p.codigo = :codigo")
+})
 public class Peaje {
+
+    public static final String TODOS = "Peaje.todos";
+    public static final String POR_CODIGO = "Peaje.porCodigo";
 
     @Id @GeneratedValue
     private Long id;
@@ -19,6 +34,8 @@ public class Peaje {
     private int km;
     private double latitud;
     private double longitud;
+    @OneToMany(mappedBy = "peaje")
+    private List<Balanza> balanzas = new ArrayList<>();
 
     public Peaje() {
     }
@@ -77,5 +94,13 @@ public class Peaje {
 
     public void setLongitud(double longitud) {
         this.longitud = longitud;
+    }
+
+    public List<Balanza> getBalanzas() {
+        return balanzas;
+    }
+
+    public void setBalanzas(List<Balanza> balanzas) {
+        this.balanzas = balanzas;
     }
 }

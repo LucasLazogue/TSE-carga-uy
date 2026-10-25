@@ -10,8 +10,15 @@ public class BalanzaDto implements Serializable {
 
     private String codigo;
     private Sentido sentido;
+    private String clave;
 
     public BalanzaDto() {
+    }
+
+    public BalanzaDto(String codigo, Sentido sentido, String clave) {
+        this.codigo = codigo;
+        this.sentido = sentido;
+        this.clave = clave;
     }
 
     public String getCodigo() {
@@ -28,5 +35,13 @@ public class BalanzaDto implements Serializable {
 
     public void setSentido(Sentido sentido) {
         this.sentido = sentido;
+    }
+
+    public String getClave() {
+        return clave;
+    }
+
+    public void setClave(String clave) {
+        this.clave = clave;
     }
 }

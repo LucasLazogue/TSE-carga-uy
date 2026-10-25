@@ -4,7 +4,9 @@ public enum Categoria {
 
     VALIDACION(400),
     NO_AUTENTICADO(401),
-    PROHIBIDO(403);
+    PROHIBIDO(403),
+    NO_ENCONTRADO(404),
+    CONFLICTO(409);
 
     private final int status;
 

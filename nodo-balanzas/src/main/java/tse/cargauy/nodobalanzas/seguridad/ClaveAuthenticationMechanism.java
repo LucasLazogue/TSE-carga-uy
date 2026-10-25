@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.ejb.EJB;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.security.enterprise.AuthenticationStatus;
@@ -13,6 +14,7 @@ import jakarta.security.enterprise.authentication.mechanism.http.HttpAuthenticat
 import jakarta.security.enterprise.authentication.mechanism.http.HttpMessageContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import tse.cargauy.nodobalanzas.data.peaje.PeajeDAOLocal;
 
 @ApplicationScoped
 public class ClaveAuthenticationMechanism implements HttpAuthenticationMechanism {
@@ -23,12 +25,29 @@ public class ClaveAuthenticationMechanism implements HttpAuthenticationMechanism
     @ConfigProperty(name = "nodo.clave.central")
     String claveCentral;
 
+    @Inject
+    @ConfigProperty(name = "nodo.clave.admin")
+    String claveAdmin;
+
+    @EJB
+    PeajeDAOLocal peajeDAO;
+
     @Override
     public AuthenticationStatus validateRequest(HttpServletRequest request, HttpServletResponse response,
             HttpMessageContext contexto) {
         String clave = clave(request);
-        if (clave != null && coincide(clave, claveCentral)) {
+        if (clave == null) {
+            return contexto.doNothing();
+        }
+        if (coincide(clave, claveCentral)) {
             return contexto.notifyContainerAboutLogin(Rol.CENTRAL, Set.of(Rol.CENTRAL));
+        }
+        if (coincide(clave, claveAdmin)) {
+            return contexto.notifyContainerAboutLogin(Rol.ADMINISTRADOR, Set.of(Rol.ADMINISTRADOR));
+        }
+        String balanza = peajeDAO.getCodigoBalanzaByClave(Sha256.base64Url(clave));
+        if (balanza != null) {
+            return contexto.notifyContainerAboutLogin(balanza, Set.of(Rol.BALANZA));
         }
         return contexto.doNothing();
     }

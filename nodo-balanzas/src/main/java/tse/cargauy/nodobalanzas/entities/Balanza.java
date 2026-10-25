@@ -8,23 +8,33 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "uk_balanza_peaje_codigo", columnNames = {"peaje_id", "codigo"}))
+@NamedQueries({
+    @NamedQuery(name = Balanza.POR_CODIGO,
+            query = "SELECT b FROM Balanza b WHERE b.codigo = :codigo"),
+    @NamedQuery(name = Balanza.POR_CLAVE,
+            query = "SELECT b FROM Balanza b WHERE b.claveHash = :claveHash")
+})
 public class Balanza {
+
+    public static final String POR_CODIGO = "Balanza.porCodigo";
+    public static final String POR_CLAVE = "Balanza.porClave";
 
     @Id @GeneratedValue
     private Long id;
     @ManyToOne(optional = false)
     @JoinColumn(name = "peaje_id")
     private Peaje peaje;
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String codigo;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Sentido sentido;
+    @Column(unique = true, nullable = false)
+    private String claveHash;
 
     public Balanza() {
     }
@@ -59,5 +69,13 @@ public class Balanza {
 
     public void setSentido(Sentido sentido) {
         this.sentido = sentido;
+    }
+
+    public String getClaveHash() {
+        return claveHash;
+    }
+
+    public void setClaveHash(String claveHash) {
+        this.claveHash = claveHash;
     }
 }

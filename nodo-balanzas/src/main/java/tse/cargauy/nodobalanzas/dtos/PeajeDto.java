@@ -1,6 +1,7 @@
 package tse.cargauy.nodobalanzas.dtos;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class PeajeDto implements Serializable {
 
@@ -12,8 +13,18 @@ public class PeajeDto implements Serializable {
     private int km;
     private double latitud;
     private double longitud;
+    private List<BalanzaDto> balanzas;
 
     public PeajeDto() {
+    }
+
+    public PeajeDto(String codigo, String nombre, String ruta, int km, double latitud, double longitud) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.ruta = ruta;
+        this.km = km;
+        this.latitud = latitud;
+        this.longitud = longitud;
     }
 
     public String getCodigo() {
@@ -62,5 +73,13 @@ public class PeajeDto implements Serializable {
 
     public void setLongitud(double longitud) {
         this.longitud = longitud;
+    }
+
+    public List<BalanzaDto> getBalanzas() {
+        return balanzas;
+    }
+
+    public void setBalanzas(List<BalanzaDto> balanzas) {
+        this.balanzas = balanzas;
     }
 }
