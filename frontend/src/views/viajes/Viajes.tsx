@@ -41,10 +41,8 @@ function Viajes() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
   const [version, setVersion] = useState(0)
-  const [idSeleccionado, setIdSeleccionado] = useState<number | null>(null)
   const { open } = useDialogs()
   const { idEmpresa, estado } = values
-  const seleccionado = resultado?.items.find((v) => v.id === idSeleccionado)
 
   useEmpresaInicial(idEmpresa, set)
 
@@ -75,19 +73,26 @@ function Viajes() {
     })
   }
 
+  const columnasConAcciones: GridColumn<Viaje>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      hideHeader: true,
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: (v) => (
+        <Button size="sm" variant="outline" onClick={() => verEventos(v)}>
+          <History />
+          <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver eventos</span>
+        </Button>
+      ),
+    },
+  ]
+
   return (
     <div>
       <PageHeader
         title="Viajes"
         description="Viajes asignados a los vehículos y choferes de la empresa."
-        actions={
-          seleccionado && (
-            <Button variant="outline" onClick={() => verEventos(seleccionado)}>
-              <History />
-              Ver eventos
-            </Button>
-          )
-        }
       />
       <DataToolbar
         actions={
@@ -106,14 +111,12 @@ function Viajes() {
         <FilterSelect label="Estado" value={estado} options={OPCIONES_ESTADO} onChange={(v) => set('estado', v)} />
       </DataToolbar>
       <Grid
-        columns={columnas}
+        columns={columnasConAcciones}
         items={resultado?.items ?? []}
         rowKey={(v) => v.id}
         empty="No hay viajes registrados."
         page={resultado ?? undefined}
         onPageChange={setPagina}
-        selected={seleccionado?.id}
-        onSelect={(v) => setIdSeleccionado(v?.id ?? null)}
       />
     </div>
   )
