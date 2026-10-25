@@ -1,23 +1,30 @@
 import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, Pencil } from 'lucide-react'
+import { AlertCircle, ArrowLeft } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
-import { useDialogs } from '@/components/dialogs/useDialogs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { EmpresasApi } from '@/api/empresas/empresas.api'
-import type { Empresa } from '@/api/empresas/empresas.types'
+import type { DatosEmpresa, Empresa } from '@/api/empresas/empresas.types'
 import { getErrorMessage } from '@/api/errors'
 import { fecha } from '@/lib/fechas'
-import EditarEmpresaDialog from './dialogs/EditarEmpresaDialog'
 
 function PerfilEmpresa() {
   const { id } = useParams()
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [datos, setDatos] = useState<DatosEmpresa | null>(null)
+  const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
-  const [version, setVersion] = useState(0)
-  const { open } = useDialogs()
+  const sinCambios =
+    !!empresa &&
+    !!datos &&
+    empresa.nroEmpresa === datos.nroEmpresa &&
+    empresa.nombrePublico === datos.nombrePublico &&
+    empresa.razonSocial === datos.razonSocial &&
+    empresa.direccionPrincipal === datos.direccionPrincipal
 
   useEffect(() => {
     let vigente = true
@@ -25,6 +32,7 @@ function PerfilEmpresa() {
       .then((e) => {
         if (vigente) {
           setEmpresa(e)
+          setDatos(e)
         }
       })
       .catch((err) => {
@@ -35,65 +43,88 @@ function PerfilEmpresa() {
     return () => {
       vigente = false
     }
-  }, [id, version])
+  }, [id])
 
-  function editar(e: Empresa) {
-    open({
-      title: 'Editar empresa',
-      size: 'lg',
-      content: (close) => <EditarEmpresaDialog empresa={e} close={close} onSaved={() => setVersion((v) => v + 1)} />,
-    })
+  async function guardar(e: FormEvent) {
+    e.preventDefault()
+    if (!empresa || !datos) {
+      return
+    }
+    setError('')
+    setGuardando(true)
+    try {
+      await EmpresasApi.update(empresa.id, datos)
+      setEmpresa({ ...empresa, ...datos })
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setGuardando(false)
+    }
   }
-
-  const datos = empresa && [
-    ['Nro. empresa', empresa.nroEmpresa],
-    ['Nombre público', empresa.nombrePublico],
-    ['Razón social', empresa.razonSocial],
-    ['Dirección principal', empresa.direccionPrincipal],
-    ['Fecha de alta', fecha(empresa.fechaAlta)],
-  ]
 
   return (
     <div>
       <PageHeader
         title={empresa?.nombrePublico ?? 'Empresa'}
-        description="Datos de la empresa transportista."
+        description={empresa && `Alta el ${fecha(empresa.fechaAlta)}`}
         actions={
-          <>
-            <Button variant="outline" asChild>
-              <Link to="/empresas">
-                <ArrowLeft />
-                Volver
-              </Link>
-            </Button>
-            {empresa && (
-              <Button onClick={() => editar(empresa)}>
-                <Pencil />
-                Editar
-              </Button>
-            )}
-          </>
+          <Button variant="outline" asChild>
+            <Link to="/empresas">
+              <ArrowLeft />
+              Volver
+            </Link>
+          </Button>
         }
       />
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-4 max-w-2xl">
           <AlertCircle />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {datos && (
-        <Card>
-          <CardContent>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              {datos.map(([etiqueta, valor]) => (
-                <div key={etiqueta} className="space-y-1">
-                  <dt className="text-sm text-muted-foreground">{etiqueta}</dt>
-                  <dd className="font-medium">{valor}</dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
+        <form onSubmit={guardar} className="max-w-2xl space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="nroEmpresa">Nro. empresa</Label>
+              <Input
+                id="nroEmpresa"
+                type="number"
+                value={datos.nroEmpresa || ''}
+                onChange={(e) => setDatos({ ...datos, nroEmpresa: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nombrePublico">Nombre público</Label>
+              <Input
+                id="nombrePublico"
+                value={datos.nombrePublico}
+                onChange={(e) => setDatos({ ...datos, nombrePublico: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="razonSocial">Razón social</Label>
+              <Input
+                id="razonSocial"
+                value={datos.razonSocial}
+                onChange={(e) => setDatos({ ...datos, razonSocial: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="direccionPrincipal">Dirección principal</Label>
+              <Input
+                id="direccionPrincipal"
+                value={datos.direccionPrincipal}
+                onChange={(e) => setDatos({ ...datos, direccionPrincipal: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={guardando || sinCambios}>
+              Guardar
+            </Button>
+          </div>
+        </form>
       )}
     </div>
   )
