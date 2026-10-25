@@ -11,6 +11,7 @@ import jakarta.ejb.EJB;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
 import tse.cargauy.dtos.AprobacionPermisoDto;
+import tse.cargauy.dtos.FiltroPermisos;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
@@ -55,6 +56,15 @@ public class PermisoEJB implements PermisoEJBLocal, PermisoEJBRemote {
     public PaginaDto<PermisoDto> getByVehiculo(Long idVehiculo, Paginacion paginacion) {
         validarAccesoAlVehiculo(idVehiculo);
         return permisoDAO.getByVehiculo(idVehiculo, paginacion);
+    }
+
+    public PaginaDto<PermisoDto> listar(FiltroPermisos filtro, Paginacion paginacion) {
+        if (filtro.getIdVehiculo() != null) {
+            validarAccesoAlVehiculo(filtro.getIdVehiculo());
+        } else if (!contexto.isCallerInRole(Rol.FUNCIONARIO)) {
+            throw new CargaUYException(CodigoError.ACCESO_DENEGADO);
+        }
+        return permisoDAO.getAll(filtro, paginacion);
     }
 
     public PermisoDto getVigente(Long idVehiculo, LocalDate fecha) {

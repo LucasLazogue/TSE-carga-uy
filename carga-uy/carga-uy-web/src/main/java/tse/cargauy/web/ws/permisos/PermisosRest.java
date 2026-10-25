@@ -11,7 +11,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import tse.cargauy.dtos.AprobacionPermisoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PermisoDto;
@@ -62,11 +61,8 @@ public class PermisosRest {
     }
 
     @GET
-    public PaginaDto<PermisoDto> getPermisos(@QueryParam("idVehiculo") Long idVehiculo, @BeanParam PaginacionQuery paginacion) {
-        if (idVehiculo == null) {
-            return permisoEJB.getAll(paginacion.paginacion());
-        }
-        return permisoEJB.getByVehiculo(idVehiculo, paginacion.paginacion());
+    public PaginaDto<PermisoDto> getPermisos(@BeanParam PermisosQuery query, @BeanParam PaginacionQuery paginacion) {
+        return permisoEJB.listar(query.filtro(), paginacion.paginacion());
     }
 
     @Path("/{id}")

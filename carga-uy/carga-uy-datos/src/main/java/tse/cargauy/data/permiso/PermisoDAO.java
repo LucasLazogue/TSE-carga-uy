@@ -9,13 +9,20 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import tse.cargauy.dtos.FiltroPermisos;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Permiso;
+import tse.cargauy.entities.Permiso_;
 import tse.cargauy.entities.Vehiculo;
+import tse.cargauy.entities.Vehiculo_;
 
 @Stateless
 public class PermisoDAO implements PermisoDAOLocal {
@@ -57,6 +64,42 @@ public class PermisoDAO implements PermisoDAOLocal {
         }
         long total = entityManager.createQuery("SELECT COUNT(p) FROM Permiso p", Long.class).getSingleResult();
         return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public PaginaDto<PermisoDto> getAll(FiltroPermisos filtro, Paginacion paginacion) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Permiso> query = cb.createQuery(Permiso.class);
+        Root<Permiso> permiso = query.from(Permiso.class);
+        query.select(permiso)
+                .where(condiciones(filtro, cb, permiso))
+                .orderBy(cb.desc(permiso.get(Permiso_.validoDesde)), cb.desc(permiso.get(Permiso_.id)));
+        List<PermisoDto> items = entityManager.createQuery(query)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultList()
+                .stream()
+                .map(Serializers::toDto)
+                .toList();
+
+        CriteriaQuery<Long> conteo = cb.createQuery(Long.class);
+        Root<Permiso> contado = conteo.from(Permiso.class);
+        conteo.select(cb.count(contado)).where(condiciones(filtro, cb, contado));
+        long total = entityManager.createQuery(conteo).getSingleResult();
+
+        return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    private Predicate[] condiciones(FiltroPermisos filtro, CriteriaBuilder cb, Root<Permiso> permiso) {
+        List<Predicate> condiciones = new ArrayList<>();
+        if (filtro.getIdVehiculo() != null) {
+            condiciones.add(cb.equal(permiso.get(Permiso_.vehiculo).get(Vehiculo_.id), filtro.getIdVehiculo()));
+        }
+        if (filtro.getEstado() != null) {
+            condiciones.add(cb.equal(permiso.get(Permiso_.estado), filtro.getEstado()));
+        }
+        return condiciones.toArray(Predicate[]::new);
     }
 
     @Override

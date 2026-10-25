@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Proxy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -16,7 +17,10 @@ import org.junit.jupiter.api.function.Executable;
 
 import tse.cargauy.data.permiso.PermisoDAO;
 import tse.cargauy.data.vehiculo.VehiculoDAO;
+import jakarta.ejb.SessionContext;
 import tse.cargauy.dtos.AprobacionPermisoDto;
+import tse.cargauy.dtos.FiltroPermisos;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.RechazoPermisoDto;
 import tse.cargauy.dtos.SolicitudPermisoDto;
@@ -224,6 +228,16 @@ class PermisoEJBTest {
         ejb.updatePermiso(1L, new SolicitudPermisoDto("PNC-3", DESDE, 10L));
         assertEquals(EstadoPermiso.PENDIENTE, permisos.get(1L).getEstado());
         assertNull(permisos.get(1L).getMotivoRechazo());
+    }
+
+    @Test
+    void elResponsableNoListaPermisosSinIndicarElVehiculo() {
+        ejb.contexto = (SessionContext) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class<?>[] { SessionContext.class },
+                (proxy, metodo, args) -> metodo.getName().equals("isCallerInRole") ? Boolean.FALSE : null);
+
+        assertCodigo(CodigoError.ACCESO_DENEGADO,
+                () -> ejb.listar(new FiltroPermisos(null, EstadoPermiso.PENDIENTE), new Paginacion(0, 10)));
     }
 
     @Test
