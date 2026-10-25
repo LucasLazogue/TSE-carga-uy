@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getErrorMessage } from '@/api/errors'
 import { PermisosApi } from '@/api/permisos/permisos.api'
-import type { PermisoNuevo } from '@/api/permisos/permisos.types'
+import type { Permiso, PermisoNuevo } from '@/api/permisos/permisos.types'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
 import { PERMISO_VACIO } from '../permisos.constants'
 
@@ -18,12 +18,17 @@ const selectClass =
 type Props = {
   vehiculos: Vehiculo[]
   idVehiculo: number
+  permiso?: Permiso
   close: () => void
-  onCreated: (idVehiculo: number) => void
+  onSaved: (idVehiculo: number) => void
 }
 
-function NuevoPermisoDialog({ vehiculos, idVehiculo, close, onCreated }: Props) {
-  const [nuevo, setNuevo] = useState<PermisoNuevo>({ ...PERMISO_VACIO, idVehiculo })
+function SolicitudPermisoDialog({ vehiculos, idVehiculo, permiso, close, onSaved }: Props) {
+  const [datos, setDatos] = useState<PermisoNuevo>(
+    permiso
+      ? { nroPermiso: permiso.nroPermiso, validoDesde: permiso.validoDesde, idVehiculo: permiso.idVehiculo }
+      : { ...PERMISO_VACIO, idVehiculo },
+  )
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,8 +37,12 @@ function NuevoPermisoDialog({ vehiculos, idVehiculo, close, onCreated }: Props) 
     setError('')
     setGuardando(true)
     try {
-      await PermisosApi.create(nuevo)
-      onCreated(nuevo.idVehiculo)
+      if (permiso) {
+        await PermisosApi.update(permiso.id, datos)
+      } else {
+        await PermisosApi.create(datos)
+      }
+      onSaved(datos.idVehiculo)
       close()
     } catch (err) {
       setError(getErrorMessage(err))
@@ -50,13 +59,19 @@ function NuevoPermisoDialog({ vehiculos, idVehiculo, close, onCreated }: Props) 
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      {permiso?.motivoRechazo && (
+        <Alert>
+          <AlertCircle />
+          <AlertDescription>Motivo del rechazo: {permiso.motivoRechazo}</AlertDescription>
+        </Alert>
+      )}
       <div className="space-y-1.5">
         <Label htmlFor="vehiculo">Vehículo</Label>
         <select
           id="vehiculo"
           className={selectClass}
-          value={nuevo.idVehiculo}
-          onChange={(e) => setNuevo({ ...nuevo, idVehiculo: Number(e.target.value) })}
+          value={datos.idVehiculo}
+          onChange={(e) => setDatos({ ...datos, idVehiculo: Number(e.target.value) })}
         >
           <option value={0}>Seleccione un vehículo</option>
           {vehiculos.map((v) => (
@@ -66,44 +81,38 @@ function NuevoPermisoDialog({ vehiculos, idVehiculo, close, onCreated }: Props) 
           ))}
         </select>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="nroPermiso">Nro. permiso</Label>
-        <Input
-          id="nroPermiso"
-          value={nuevo.nroPermiso}
-          onChange={(e) => setNuevo({ ...nuevo, nroPermiso: e.target.value })}
-        />
-      </div>
       <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="nroPermiso">Nro. permiso</Label>
+          <Input
+            id="nroPermiso"
+            value={datos.nroPermiso}
+            onChange={(e) => setDatos({ ...datos, nroPermiso: e.target.value })}
+          />
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor="validoDesde">Válido desde</Label>
           <Input
             id="validoDesde"
             type="date"
-            value={nuevo.validoDesde}
-            onChange={(e) => setNuevo({ ...nuevo, validoDesde: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="validoHasta">Válido hasta</Label>
-          <Input
-            id="validoHasta"
-            type="date"
-            value={nuevo.validoHasta}
-            onChange={(e) => setNuevo({ ...nuevo, validoHasta: e.target.value })}
+            value={datos.validoDesde}
+            onChange={(e) => setDatos({ ...datos, validoDesde: e.target.value })}
           />
         </div>
       </div>
+      <p className="text-sm text-muted-foreground">
+        El permiso queda pendiente hasta que lo apruebe un funcionario, que define la fecha de fin.
+      </p>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={close}>
           Cancelar
         </Button>
         <Button type="submit" disabled={guardando}>
-          Guardar
+          {permiso ? 'Reenviar' : 'Enviar'}
         </Button>
       </DialogFooter>
     </form>
   )
 }
 
-export default NuevoPermisoDialog
+export default SolicitudPermisoDialog

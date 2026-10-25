@@ -9,4 +9,12 @@ export const PermisosApi = {
   create: async (permiso: PermisoNuevo) => {
     await http.post('/permisos', permiso)
   },
+
+  update: async (id: number, permiso: PermisoNuevo) => {
+    await http.put(`/permisos/${id}`, permiso)
+  },
+
+  remove: async (id: number) => {
+    await http.delete(`/permisos/${id}`)
+  },
 }
