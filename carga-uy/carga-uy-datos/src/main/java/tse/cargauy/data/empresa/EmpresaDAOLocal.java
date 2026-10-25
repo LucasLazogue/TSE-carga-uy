@@ -14,6 +14,7 @@ public interface EmpresaDAOLocal {
     PaginaDto<EmpresaDto> getAll(Paginacion paginacion);
     PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion);
     List<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha);
+    PaginaDto<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha, Paginacion paginacion);
     EmpresaDto addEmpresa(EmpresaDto empresaDto);
     void updateEmpresa(Long id, EmpresaDto empresaDto);
     void deleteEmpresa(Long id);

@@ -1,7 +1,6 @@
 package tse.cargauy.negocio.empresa;
 
 import java.time.LocalDate;
-import java.util.List;
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
@@ -46,8 +45,7 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         if (contexto.isCallerInRole(Rol.FUNCIONARIO)) {
             return empresaDAO.getAll(paginacion);
         }
-        List<EmpresaDto> empresas = empresaDAO.getByResponsable(idUsuario(), LocalDate.now());
-        return new PaginaDto<>(empresas, empresas.size(), 0, paginacion.getTamanio());
+        return empresaDAO.getByResponsable(idUsuario(), LocalDate.now(), paginacion);
     }
 
     public PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion) {
