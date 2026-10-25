@@ -2,13 +2,16 @@ package tse.cargauy.nodobalanzas.negocio.pesaje;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import tse.cargauy.nodobalanzas.data.pesaje.PesajeDAO;
 import tse.cargauy.nodobalanzas.dtos.PesajeDto;
@@ -18,57 +21,102 @@ import tse.cargauy.nodobalanzas.exceptions.NodoBalanzasException;
 class PesajeEJBTest {
 
     private static final LocalDate FECHA = LocalDate.of(2026, 10, 20);
+    private static final LocalDateTime AHORA = LocalDateTime.of(2026, 10, 20, 9, 11);
 
-    private final PesajeEJB ejb = new PesajeEJB();
+    private final List<String> guardados = new ArrayList<>();
     private String consulta;
+    private final PesajeEJB ejb = new PesajeEJB() {
+        @Override
+        String codigoBalanza() {
+            return "balanza-r5-km30";
+        }
+
+        @Override
+        LocalDateTime ahora() {
+            return AHORA;
+        }
+    };
 
     @BeforeEach
     void iniciar() {
         ejb.pesajeDAO = new PesajeDAO() {
             @Override
             public List<PesajeDto> getPesajesByMatricula(String matricula, LocalDateTime desde, LocalDateTime hasta) {
-                consulta = "matricula " + matricula + " " + desde + " " + hasta;
+                consulta = matricula + " " + desde + " " + hasta;
                 return List.of();
             }
 
             @Override
-            public List<PesajeDto> getPesajesByRut(String rut, LocalDateTime desde, LocalDateTime hasta) {
-                consulta = "rut " + rut + " " + desde + " " + hasta;
-                return List.of();
+            public boolean existePesaje(String codigoBalanza, String idRegistro) {
+                return guardados.contains(codigoBalanza + "/" + idRegistro);
+            }
+
+            @Override
+            public void addPesaje(String codigoBalanza, PesajeDto pesajeDto, LocalDateTime recibidoEn) {
+                guardados.add(codigoBalanza + "/" + pesajeDto.getIdRegistro());
             }
         };
     }
 
     @Test
-    void sinFechaFalla() {
-        assertError(CodigoError.PESAJE_FECHA_REQUERIDA, () -> ejb.getPesajes("SCC9012", null, null));
+    void consultaSinMatriculaFalla() {
+        assertError(CodigoError.PESAJE_MATRICULA_REQUERIDA, () -> ejb.getPesajes(" ", FECHA));
     }
 
     @Test
-    void sinMatriculaNiRutFalla() {
-        assertError(CodigoError.PESAJE_MATRICULA_O_RUT, () -> ejb.getPesajes(null, " ", FECHA));
+    void consultaSinFechaFalla() {
+        assertError(CodigoError.PESAJE_FECHA_REQUERIDA, () -> ejb.getPesajes("SCC9012", null));
     }
 
     @Test
-    void conMatriculaYRutFalla() {
-        assertError(CodigoError.PESAJE_MATRICULA_O_RUT, () -> ejb.getPesajes("SCC9012", "211234560019", FECHA));
+    void consultaBuscaEseDiaCompleto() {
+        ejb.getPesajes("SCC9012", FECHA);
+
+        assertEquals("SCC9012 2026-10-20T00:00 2026-10-21T00:00", consulta);
     }
 
     @Test
-    void porMatriculaBuscaEseDiaCompleto() {
-        ejb.getPesajes("SCC9012", null, FECHA);
-
-        assertEquals("matricula SCC9012 2026-10-20T00:00 2026-10-21T00:00", consulta);
+    void sinLecturasFalla() {
+        assertError(CodigoError.PESAJE_LECTURAS_REQUERIDAS, () -> ejb.addPesajes(List.of()));
     }
 
     @Test
-    void porRutBuscaEseDiaCompleto() {
-        ejb.getPesajes(null, "211234560019", FECHA);
-
-        assertEquals("rut 211234560019 2026-10-20T00:00 2026-10-21T00:00", consulta);
+    void lecturaSinIdRegistroFalla() {
+        assertError(CodigoError.PESAJE_REGISTRO_REQUERIDO, () -> ejb.addPesajes(List.of(lectura(null, 36500))));
     }
 
-    private static void assertError(CodigoError codigo, org.junit.jupiter.api.function.Executable accion) {
+    @Test
+    void lecturaConPesoCeroFalla() {
+        assertError(CodigoError.PESAJE_PESO_INVALIDO, () -> ejb.addPesajes(List.of(lectura("1001", 0))));
+    }
+
+    @Test
+    void unaLecturaInvalidaNoGuardaNingunaDelLote() {
+        assertThrows(NodoBalanzasException.class, () -> ejb.addPesajes(List.of(lectura("1001", 36500), lectura("1002", 0))));
+
+        assertTrue(guardados.isEmpty());
+    }
+
+    @Test
+    void guardaLasLecturasConLaBalanzaQueLasMando() {
+        ejb.addPesajes(List.of(lectura("1001", 36500), lectura("1002", 20000)));
+
+        assertEquals(List.of("balanza-r5-km30/1001", "balanza-r5-km30/1002"), guardados);
+    }
+
+    @Test
+    void unReenvioNoSeGuardaDosVeces() {
+        ejb.addPesajes(List.of(lectura("1001", 36500)));
+        ejb.addPesajes(List.of(lectura("1001", 36500), lectura("1002", 20000)));
+
+        assertEquals(List.of("balanza-r5-km30/1001", "balanza-r5-km30/1002"), guardados);
+    }
+
+    private static PesajeDto lectura(String idRegistro, int peso) {
+        return new PesajeDto(idRegistro, "SCC9012", LocalDateTime.of(2026, 10, 20, 9, 10), peso);
+    }
+
+    private static void assertError(CodigoError codigo, Executable accion) {
         assertEquals(codigo, assertThrows(NodoBalanzasException.class, accion).getCodigo());
     }
 }

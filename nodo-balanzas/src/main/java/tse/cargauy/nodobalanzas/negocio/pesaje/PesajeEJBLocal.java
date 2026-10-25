@@ -8,5 +8,6 @@ import tse.cargauy.nodobalanzas.dtos.PesajeDto;
 
 @Local
 public interface PesajeEJBLocal {
-    List<PesajeDto> getPesajes(String matricula, String rut, LocalDate fecha);
+    List<PesajeDto> getPesajes(String matricula, LocalDate fecha);
+    void addPesajes(List<PesajeDto> lecturas);
 }

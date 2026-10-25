@@ -5,7 +5,9 @@ import java.util.List;
 
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -14,6 +16,7 @@ import tse.cargauy.nodobalanzas.negocio.pesaje.PesajeEJBLocal;
 
 @RequestScoped
 @Path("/pesajes")
+@Consumes("application/json")
 @Produces("application/json")
 public class PesajesRest {
 
@@ -24,8 +27,12 @@ public class PesajesRest {
     }
 
     @GET
-    public List<PesajeDto> getPesajes(@QueryParam("matricula") String matricula, @QueryParam("rut") String rut,
-            @QueryParam("fecha") LocalDate fecha) {
-        return pesajeEJB.getPesajes(matricula, rut, fecha);
+    public List<PesajeDto> getPesajes(@QueryParam("matricula") String matricula, @QueryParam("fecha") LocalDate fecha) {
+        return pesajeEJB.getPesajes(matricula, fecha);
+    }
+
+    @POST
+    public void createPesajes(List<PesajeDto> lecturas) {
+        pesajeEJB.addPesajes(lecturas);
     }
 }

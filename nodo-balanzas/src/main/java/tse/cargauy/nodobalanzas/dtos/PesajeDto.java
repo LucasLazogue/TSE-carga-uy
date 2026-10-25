@@ -7,9 +7,8 @@ public class PesajeDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Long id;
+    private String idRegistro;
     private String matricula;
-    private String rutEmpresa;
     private LocalDateTime fechaHora;
     private int pesoRegistrado;
     private BalanzaDto balanza;
@@ -18,12 +17,19 @@ public class PesajeDto implements Serializable {
     public PesajeDto() {
     }
 
-    public Long getId() {
-        return id;
+    public PesajeDto(String idRegistro, String matricula, LocalDateTime fechaHora, int pesoRegistrado) {
+        this.idRegistro = idRegistro;
+        this.matricula = matricula;
+        this.fechaHora = fechaHora;
+        this.pesoRegistrado = pesoRegistrado;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public String getIdRegistro() {
+        return idRegistro;
+    }
+
+    public void setIdRegistro(String idRegistro) {
+        this.idRegistro = idRegistro;
     }
 
     public String getMatricula() {
@@ -32,14 +38,6 @@ public class PesajeDto implements Serializable {
 
     public void setMatricula(String matricula) {
         this.matricula = matricula;
-    }
-
-    public String getRutEmpresa() {
-        return rutEmpresa;
-    }
-
-    public void setRutEmpresa(String rutEmpresa) {
-        this.rutEmpresa = rutEmpresa;
     }
 
     public LocalDateTime getFechaHora() {
