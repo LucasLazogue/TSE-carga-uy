@@ -1,4 +1,4 @@
-import { Building2, CalendarClock, FileText, Home, Route, ShieldCheck, Truck } from 'lucide-react'
+import { Building2, CalendarClock, FileText, Gavel, Home, Route, ShieldCheck, TriangleAlert, Truck } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Profile } from '@/auth/profile'
 
@@ -73,6 +73,25 @@ const groups: NavGroup[] = [
         path: '/permisos',
         icon: CalendarClock,
         profiles: ['RESPONSABLE', 'FUNCIONARIO'],
+      },
+    ],
+  },
+  {
+    title: 'Fiscalización',
+    items: [
+      {
+        title: 'Casos',
+        description: 'Revisar casos detectados, su evidencia y descargos, y resolverlos.',
+        path: '/casos',
+        icon: Gavel,
+        profiles: ['FUNCIONARIO'],
+      },
+      {
+        title: 'Infracciones',
+        description: 'Infracciones notificadas a la empresa y presentación de descargos.',
+        path: '/infracciones',
+        icon: TriangleAlert,
+        profiles: ['RESPONSABLE'],
       },
     ],
   },
