@@ -5,4 +5,5 @@ export const EMPRESA_VACIA: EmpresaNueva = {
   nombrePublico: '',
   razonSocial: '',
   direccionPrincipal: '',
+  cedulaResponsable: '',
 }

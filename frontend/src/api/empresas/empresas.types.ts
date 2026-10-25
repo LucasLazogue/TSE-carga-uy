@@ -7,7 +7,9 @@ export type Empresa = {
   fechaAlta: string
 }
 
-export type EmpresaNueva = Omit<Empresa, 'id' | 'fechaAlta'>
+export type EmpresaNueva = Omit<Empresa, 'id' | 'fechaAlta'> & {
+  cedulaResponsable: string
+}
 
 export type FiltroEmpresas = {
   nombre?: string

@@ -34,7 +34,7 @@ public class EmpresaQueueMDB implements MessageListener {
             }
 
             String[] parts = msg.getText().split("\\|");
-            if (parts.length < 4) {
+            if (parts.length < 5) {
                 System.err.println("Mensaje no valido: " + msg.getText());
                 return;
             }
@@ -56,6 +56,7 @@ public class EmpresaQueueMDB implements MessageListener {
         empresaDto.setNombrePublico(parts[1]);
         empresaDto.setRazonSocial(parts[2]);
         empresaDto.setDireccionPrincipal(parts[3]);
+        empresaDto.setCedulaResponsable(parts[4].trim());
         return empresaDto;
     }
 

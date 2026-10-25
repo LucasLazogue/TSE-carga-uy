@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { FormEvent } from 'react'
 import { getErrorMessage } from '@/api/errors'
+import { formatCedula, onlyDigits } from '@/lib/cedula'
 import { EMPRESA_VACIA } from './empresas.constants'
 import { EmpresasApi } from '@/api/empresas/empresas.api'
 import { TAMANIO_MAXIMO } from '@/api/page'
@@ -88,6 +89,15 @@ function Empresas() {
             <input
               value={nueva.direccionPrincipal}
               onChange={(e) => setNueva({ ...nueva, direccionPrincipal: e.target.value })}
+            />
+          </div>
+          <div>
+            <label>Cedula del responsable </label>
+            <input
+              inputMode="numeric"
+              placeholder="Ingrese cédula"
+              value={formatCedula(nueva.cedulaResponsable)}
+              onChange={(e) => setNueva({ ...nueva, cedulaResponsable: onlyDigits(e.target.value) })}
             />
           </div>
           <button type="submit">Guardar</button>

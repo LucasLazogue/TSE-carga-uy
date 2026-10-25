@@ -16,6 +16,7 @@ import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.validacion.Cedula;
 
 @Stateless
 @RolesAllowed(Rol.FUNCIONARIO)
@@ -70,12 +71,22 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
 
     public EmpresaDto addEmpresa(EmpresaDto empresaDto) {
         validar(empresaDto);
+        String cedula = empresaDto.getCedulaResponsable();
+        validarResponsable(cedula);
         if (empresaDAO.getEmpresaByNro(empresaDto.getNroEmpresa()) != null) {
             throw new CargaUYException(CodigoError.EMPRESA_NRO_DUPLICADO, String.valueOf(empresaDto.getNroEmpresa()));
         }
 
         empresaDto.setFechaAlta(LocalDate.now());
-        return empresaDAO.addEmpresa(empresaDto);
+        EmpresaDto empresa = empresaDAO.addEmpresa(empresaDto);
+
+        UsuarioDto ciudadano = usuarioDAO.getCiudadanoByCedula(cedula);
+        if (ciudadano == null) {
+            ciudadano = usuarioDAO.addCiudadano(cedula, null);
+        }
+        usuarioDAO.addResponsable(ciudadano.getId(), empresa.getId(), empresa.getFechaAlta());
+        empresa.setCedulaResponsable(cedula);
+        return empresa;
     }
 
     public void updateEmpresa(Long id, EmpresaDto empresaDto) {
@@ -94,6 +105,18 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
 
     private Long idUsuario() {
         return Long.valueOf(contexto.getCallerPrincipal().getName());
+    }
+
+    private void validarResponsable(String cedula) {
+        if (cedula == null || cedula.isBlank()) {
+            throw new CargaUYException(CodigoError.EMPRESA_RESPONSABLE_REQUERIDO);
+        }
+        if (!Cedula.esValida(cedula)) {
+            throw new CargaUYException(CodigoError.CEDULA_INVALIDA, cedula);
+        }
+        if (usuarioDAO.getFuncionarioByCedula(cedula) != null) {
+            throw new CargaUYException(CodigoError.EMPRESA_RESPONSABLE_FUNCIONARIO, cedula);
+        }
     }
 
     private void validar(EmpresaDto empresaDto) {

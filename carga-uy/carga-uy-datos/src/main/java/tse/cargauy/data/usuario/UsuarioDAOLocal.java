@@ -13,6 +13,7 @@ public interface UsuarioDAOLocal {
     UsuarioDto getCiudadanoByCedula(String cedula);
     UsuarioDto getFuncionarioByCedula(String cedula);
     UsuarioDto addCiudadano(String cedula, String correo);
+    void updateCorreo(Long idCiudadano, String correo);
     void addFuncionario(String cedula);
     PaginaDto<UsuarioDto> getFuncionarios(Paginacion paginacion);
     void deleteFuncionario(String cedula);
