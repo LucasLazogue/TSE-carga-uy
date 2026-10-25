@@ -51,11 +51,8 @@ function Guias() {
   const { values, pagina, set, setPagina } = useListParams(FILTROS)
   const [resultado, setResultado] = useState<Page<Guia> | null>(null)
   const [version, setVersion] = useState(0)
-  const [idSeleccionada, setIdSeleccionada] = useState<number | null>(null)
   const { open } = useDialogs()
   const { busqueda, idEmpresa, conViaje, desde, hasta } = values
-  // se busca en la pagina actual, asi al recargar o cambiar de pagina queda al dia
-  const seleccionada = resultado?.items.find((g) => g.id === idSeleccionada)
 
   useEmpresaInicial(idEmpresa, set)
 
@@ -104,6 +101,21 @@ function Guias() {
     })
   }
 
+  const columnasConAcciones: GridColumn<Guia>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: (g) =>
+        g.idViaje == null && (
+          <Button size="sm" variant="outline" onClick={() => asignarViaje(g)}>
+            <Truck />
+            <span className="sr-only md:not-sr-only">Asignar viaje</span>
+          </Button>
+        ),
+    },
+  ]
+
   function nuevaGuia() {
     if (!idEmpresa) {
       return
@@ -121,18 +133,10 @@ function Guias() {
         title="Guías"
         description="Guías de carga registradas por la empresa."
         actions={
-          <>
-            {seleccionada && seleccionada.idViaje == null && (
-              <Button variant="outline" onClick={() => asignarViaje(seleccionada)}>
-                <Truck />
-                Asignar viaje
-              </Button>
-            )}
-            <Button onClick={nuevaGuia} disabled={!idEmpresa}>
-              <Plus />
-              Nueva guía
-            </Button>
-          </>
+          <Button onClick={nuevaGuia} disabled={!idEmpresa}>
+            <Plus />
+            Nueva guía
+          </Button>
         }
       />
       <DataToolbar
@@ -153,14 +157,12 @@ function Guias() {
         <FilterSelect label="Viaje" value={conViaje} options={OPCIONES_VIAJE} onChange={(v) => set('conViaje', v)} />
       </DataToolbar>
       <Grid
-        columns={columnas}
+        columns={columnasConAcciones}
         items={resultado?.items ?? []}
         rowKey={(g) => g.id}
         empty="No hay guías registradas."
         page={resultado ?? undefined}
         onPageChange={setPagina}
-        selected={seleccionada?.id}
-        onSelect={(g) => setIdSeleccionada(g?.id ?? null)}
       />
     </div>
   )
