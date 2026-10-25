@@ -1,139 +1,115 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { FormEvent } from 'react'
-import { getErrorMessage } from '@/api/errors'
-import { formatCedula, onlyDigits } from '@/lib/cedula'
-import { EMPRESA_VACIA } from './empresas.constants'
+import { Eye, Plus, RefreshCw } from 'lucide-react'
+import PageHeader from '@/components/PageHeader'
+import Grid from '@/components/grid/Grid'
+import type { GridColumn } from '@/components/grid/Grid'
+import { useDialogs } from '@/components/dialogs/useDialogs'
+import DataToolbar from '@/components/toolbar/DataToolbar'
+import SearchInput from '@/components/toolbar/SearchInput'
+import { Button } from '@/components/ui/button'
+import type { Page } from '@/api/page'
 import { EmpresasApi } from '@/api/empresas/empresas.api'
-import { TAMANIO_MAXIMO } from '@/api/page'
-import type { Empresa, EmpresaNueva } from '@/api/empresas/empresas.types'
+import type { Empresa } from '@/api/empresas/empresas.types'
+import { useSession } from '@/auth/useSession'
+import { useListParams } from '@/hooks/useListParams'
+import { fecha } from '@/lib/fechas'
+import NuevaEmpresaDialog from './dialogs/NuevaEmpresaDialog'
+
+const columnas: GridColumn<Empresa>[] = [
+  { header: 'Nro. empresa', cell: (e) => e.nroEmpresa, className: 'font-medium' },
+  { header: 'Nombre público', cell: (e) => e.nombrePublico },
+  { header: 'Razón social', cell: (e) => e.razonSocial },
+  { header: 'Dirección principal', cell: (e) => e.direccionPrincipal },
+  { header: 'Fecha de alta', cell: (e) => fecha(e.fechaAlta) },
+]
+
+const FILTROS = ['nombre'] as const
 
 function Empresas() {
-  const [lista, setLista] = useState<Empresa[]>([])
-  const [nombre, setNombre] = useState('')
-  const [creando, setCreando] = useState(false)
-  const [nueva, setNueva] = useState<EmpresaNueva>(EMPRESA_VACIA)
-  const [error, setError] = useState('')
+  const { values, pagina, set, setPagina } = useListParams(FILTROS)
+  const [resultado, setResultado] = useState<Page<Empresa> | null>(null)
+  const [version, setVersion] = useState(0)
+  const [idSeleccionada, setIdSeleccionada] = useState<number | null>(null)
+  const { open } = useDialogs()
+  const { profile } = useSession()
+  const esFuncionario = profile === 'FUNCIONARIO'
+  const { nombre } = values
+  const seleccionada = resultado?.items.find((e) => e.id === idSeleccionada)
 
-  async function cargar(filtro?: string) {
-    setLista((await EmpresasApi.findAll({ nombre: filtro }, { tamanio: TAMANIO_MAXIMO })).items)
-  }
-
-  async function buscar(e: FormEvent) {
-    e.preventDefault()
-    await cargar(nombre)
-  }
-
-  async function guardar(e: FormEvent) {
-    e.preventDefault()
-    setError('')
-    try {
-      await EmpresasApi.create(nueva)
-      setNueva(EMPRESA_VACIA)
-      setCreando(false)
-      await cargar(nombre)
-    } catch (err) {
-      setError(getErrorMessage(err))
+  useEffect(() => {
+    let vigente = true
+    EmpresasApi.findAll({ nombre }, { pagina }).then((page) => {
+      if (vigente) {
+        setResultado(page)
+      }
+    })
+    return () => {
+      vigente = false
     }
+  }, [nombre, pagina, version])
+
+  function recargar() {
+    setVersion((v) => v + 1)
+  }
+
+  function nuevaEmpresa() {
+    open({
+      title: 'Nueva empresa',
+      size: 'lg',
+      content: (close) => <NuevaEmpresaDialog close={close} onCreated={recargar} />,
+    })
   }
 
   return (
     <div>
-      <h1>Empresas</h1>
-      <form onSubmit={buscar}>
-        <input
-          placeholder="Buscar por nombre o razon social"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-        />
-        <button type="submit">Buscar</button>
-      </form>
-      <button
-        onClick={() => {
-          setNombre('')
-          cargar()
-        }}
+      <PageHeader
+        title="Empresas"
+        description={esFuncionario ? 'Empresas transportistas registradas.' : 'Empresas de las que es responsable.'}
+        actions={
+          <>
+            {seleccionada && (
+              <Button variant="outline" asChild>
+                <Link to={`/empresas/${seleccionada.id}`}>
+                  <Eye />
+                  Ver detalle
+                </Link>
+              </Button>
+            )}
+            {esFuncionario && (
+              <Button onClick={nuevaEmpresa}>
+                <Plus />
+                Nueva empresa
+              </Button>
+            )}
+          </>
+        }
+      />
+      <DataToolbar
+        actions={
+          <Button variant="outline" size="icon" aria-label="Recargar" onClick={recargar}>
+            <RefreshCw />
+          </Button>
+        }
       >
-        Ver todas
-      </button>
-      <button onClick={() => setCreando(true)}>Crear</button>
-
-      {creando && (
-        <form onSubmit={guardar}>
-          <h2>Nueva empresa</h2>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <div>
-            <label>Nro. Empresa </label>
-            <input
-              type="number"
-              value={nueva.nroEmpresa}
-              onChange={(e) => setNueva({ ...nueva, nroEmpresa: Number(e.target.value) })}
-            />
-          </div>
-          <div>
-            <label>Nombre publico </label>
-            <input
-              value={nueva.nombrePublico}
-              onChange={(e) => setNueva({ ...nueva, nombrePublico: e.target.value })}
-            />
-          </div>
-          <div>
-            <label>Razon social </label>
-            <input
-              value={nueva.razonSocial}
-              onChange={(e) => setNueva({ ...nueva, razonSocial: e.target.value })}
-            />
-          </div>
-          <div>
-            <label>Direccion principal </label>
-            <input
-              value={nueva.direccionPrincipal}
-              onChange={(e) => setNueva({ ...nueva, direccionPrincipal: e.target.value })}
-            />
-          </div>
-          <div>
-            <label>Cedula del responsable </label>
-            <input
-              inputMode="numeric"
-              placeholder="Ingrese cédula"
-              value={formatCedula(nueva.cedulaResponsable)}
-              onChange={(e) => setNueva({ ...nueva, cedulaResponsable: onlyDigits(e.target.value) })}
-            />
-          </div>
-          <button type="submit">Guardar</button>
-          <button type="button" onClick={() => setCreando(false)}>
-            Cancelar
-          </button>
-        </form>
-      )}
-
-      <table border={1}>
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Nro. Empresa</th>
-            <th>Nombre publico</th>
-            <th>Razon social</th>
-            <th>Direccion principal</th>
-            <th>Fecha de alta</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lista.map((e) => (
-            <tr key={e.id}>
-              <td>{e.id}</td>
-              <td>{e.nroEmpresa}</td>
-              <td>{e.nombrePublico}</td>
-              <td>{e.razonSocial}</td>
-              <td>{e.direccionPrincipal}</td>
-              <td>{e.fechaAlta}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p>
-        <Link to="/">Volver al inicio</Link>
-      </p>
+        {esFuncionario && (
+          <SearchInput
+            placeholder="Buscar por nombre o razón social..."
+            value={nombre}
+            onChange={(v) => set('nombre', v)}
+          />
+        )}
+      </DataToolbar>
+      <Grid
+        columns={columnas}
+        items={resultado?.items ?? []}
+        rowKey={(e) => e.id}
+        empty="No hay empresas registradas."
+        page={resultado ?? undefined}
+        onPageChange={setPagina}
+        selected={seleccionada?.id}
+        onSelect={(e) => setIdSeleccionada(e?.id ?? null)}
+      />
     </div>
   )
 }

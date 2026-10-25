@@ -7,7 +7,9 @@ export type Empresa = {
   fechaAlta: string
 }
 
-export type EmpresaNueva = Omit<Empresa, 'id' | 'fechaAlta'> & {
+export type DatosEmpresa = Omit<Empresa, 'id' | 'fechaAlta'>
+
+export type EmpresaNueva = DatosEmpresa & {
   cedulaResponsable: string
 }
 

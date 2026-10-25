@@ -89,6 +89,27 @@ public class EmpresaDAO implements EmpresaDAOLocal {
     }
 
     @Override
+    public PaginaDto<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha, Paginacion paginacion) {
+        String vigente = " FROM Responsable r WHERE r.ciudadano.id = :idCiudadano"
+                + " AND r.fechaDesde <= :fecha AND (r.fechaHasta IS NULL OR r.fechaHasta >= :fecha)";
+        List<EmpresaDto> empresas = entityManager.createQuery(
+                        "SELECT r.empresa" + vigente + " ORDER BY r.empresa.nroEmpresa", Empresa.class)
+                .setParameter("idCiudadano", idCiudadano)
+                .setParameter("fecha", fecha)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultList()
+                .stream()
+                .map(Serializers::toDto)
+                .toList();
+        long total = entityManager.createQuery("SELECT COUNT(r)" + vigente, Long.class)
+                .setParameter("idCiudadano", idCiudadano)
+                .setParameter("fecha", fecha)
+                .getSingleResult();
+        return new PaginaDto<>(empresas, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
     public EmpresaDto addEmpresa(EmpresaDto empresaDto) {
         Empresa empresa = Serializers.toEntity(empresaDto);
         entityManager.persist(empresa);

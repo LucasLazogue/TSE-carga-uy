@@ -35,6 +35,13 @@ const groups: NavGroup[] = [
     title: 'Operación',
     items: [
       {
+        title: 'Empresas',
+        description: 'Empresas transportistas y sus datos.',
+        path: '/empresas',
+        icon: Building2,
+        profiles: ['RESPONSABLE', 'FUNCIONARIO'],
+      },
+      {
         title: 'Guías',
         description: 'Registrar guías de carga y consultar las existentes.',
         path: '/guias',
@@ -66,18 +73,6 @@ const groups: NavGroup[] = [
         path: '/permisos',
         icon: CalendarClock,
         profiles: ['RESPONSABLE', 'FUNCIONARIO'],
-      },
-    ],
-  },
-  {
-    title: 'Fiscalización',
-    items: [
-      {
-        title: 'Empresas',
-        description: 'Alta y consulta de empresas transportistas.',
-        path: '/empresas',
-        icon: Building2,
-        profiles: ['FUNCIONARIO'],
       },
     ],
   },
