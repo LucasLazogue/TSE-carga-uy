@@ -168,8 +168,66 @@ services:
     depends_on:
       - artemis
 
+  pg-balanzas-sur:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: balanzas
+      POSTGRES_USER: balanzas
+      POSTGRES_PASSWORD: balanzas
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    volumes:
+      - balanzassurdata:/var/lib/postgresql/data
+
+  balanzas-sur:
+    build: ../nodo-balanzas
+    ports:
+      - "8082:8080"
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      DB_HOST: pg-balanzas-sur
+      NODO_CLAVE_CENTRAL: ${BALANZAS_SUR_CLAVE_CENTRAL:-clave-central-balanzas-sur}
+      NODO_CLAVE_ADMIN: ${BALANZAS_SUR_CLAVE_ADMIN:-clave-admin-balanzas-sur}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      - pg-balanzas-sur
+
+  pg-balanzas-norte:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: balanzas
+      POSTGRES_USER: balanzas
+      POSTGRES_PASSWORD: balanzas
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    volumes:
+      - balanzasnortedata:/var/lib/postgresql/data
+
+  balanzas-norte:
+    build: ../nodo-balanzas
+    ports:
+      - "8083:8080"
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      DB_HOST: pg-balanzas-norte
+      NODO_CLAVE_CENTRAL: ${BALANZAS_NORTE_CLAVE_CENTRAL:-clave-central-balanzas-norte}
+      NODO_CLAVE_ADMIN: ${BALANZAS_NORTE_CLAVE_ADMIN:-clave-admin-balanzas-norte}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      - pg-balanzas-norte
+
 volumes:
   pgdata:
   mongodata:
   artemisdata:
   ldapdata:
+  balanzassurdata:
+  balanzasnortedata:
