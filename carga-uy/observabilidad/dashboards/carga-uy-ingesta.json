@@ -678,6 +678,159 @@
     },
     {
       "type": "row",
+      "title": "Integraciones (nodos de balanzas y LDAP)",
+      "id": 18,
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Corte abierto por integración",
+      "id": 19,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "1 mientras el corte (circuit breaker) está abierto y las llamadas responden \"no disponible\" sin salir; 0,5 medio abierto, probando de nuevo (AC13).",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 44
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "auto"
+          },
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (integracion) (label_replace(ft_circuitbreaker_state_current{state=\"open\"}, \"integracion\", \"$1\", \"method\", \".*\\\\.([A-Za-z]+)Client\\\\..*\")) + 0.5 * max by (integracion) (label_replace(ft_circuitbreaker_state_current{state=\"halfOpen\"}, \"integracion\", \"$1\", \"method\", \".*\\\\.([A-Za-z]+)Client\\\\..*\"))",
+          "legendFormat": "{{integracion}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Llamadas por resultado, por segundo",
+      "id": 20,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Resultado de cada llamada según el corte: éxito, falla (espera vencida o error) o rechazada porque el corte estaba abierto.",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 44
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (integracion, circuitBreakerResult) (label_replace(rate(ft_circuitbreaker_calls_total[1m]), \"integracion\", \"$1\", \"method\", \".*\\\\.([A-Za-z]+)Client\\\\..*\"))",
+          "legendFormat": "{{integracion}} {{circuitBreakerResult}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Reintentos por segundo",
+      "id": 21,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Reintentos de MicroProfile Fault Tolerance antes de dar la llamada por fallida.",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 44
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "fillOpacity": 10,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (integracion) (label_replace(rate(ft_retry_retries_total[1m]), \"integracion\", \"$1\", \"method\", \".*\\\\.([A-Za-z]+)Client\\\\..*\"))",
+          "legendFormat": "{{integracion}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
       "title": "Salud y logs",
       "id": 15,
       "collapsed": false,
@@ -685,7 +838,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 52
       }
     },
     {
@@ -700,7 +853,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 53
       },
       "description": "La plataforma consulta los health checks cada 15 s: 1 si respondio 2xx.",
       "fieldConfig": {
@@ -769,7 +922,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 59
       },
       "options": {
         "showTime": true,
@@ -780,7 +933,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{service_name=~\"carga-uy|nodo-tracking\"} | severity_text=~\"WARN.*|ERROR|SEVERE\"",
+          "expr": "{service_name=~\"carga-uy|carga-uy-movil|nodo-tracking|balanzas-.+\"} | severity_text=~\"WARN.*|ERROR|SEVERE\"",
           "datasource": {
             "type": "loki",
             "uid": "loki"
