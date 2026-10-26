@@ -21,6 +21,7 @@ y su puerto interno; por ejemplo, el central llega a PostgreSQL por `postgres:54
 | `artemis` | Broker externo de tracking | `61617` JMS con TLS; `8161` consola |
 | `observabilidad` | Colector, Prometheus, Tempo, Loki y Grafana | `3000` Grafana; `4317` OTLP gRPC; `4318` OTLP HTTP |
 | `nodo-tracking` | Generación y publicación de posiciones | `8081` salud y métricas |
+| `nodo-tracking-2` | Segundo nodo de tracking, con la otra mitad de la flota | `8084` salud y métricas |
 | `balanzas-sur` / `balanzas-norte` | API de cada operador de balanzas | `8082` / `8083` → `8080` |
 | `pg-balanzas-sur` / `pg-balanzas-norte` | Base propia de cada operador | Solo red interna, `5432` |
 

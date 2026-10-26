@@ -1,0 +1,4 @@
+[
+  {"matricula": "SCC9012", "origen": {"lat": -32.3214, "lon": -58.0756}, "destino": {"lat": -34.9011, "lon": -56.1645}, "velocidadKmh": 70},
+  {"matricula": "SDD3456", "origen": {"lat": -34.4626, "lon": -57.8400}, "destino": {"lat": -34.9011, "lon": -56.1645}, "velocidadKmh": 85}
+]

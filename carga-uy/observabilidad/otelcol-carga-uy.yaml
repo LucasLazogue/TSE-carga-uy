@@ -8,6 +8,7 @@ receivers:
       - endpoint: http://carga-uy:9990/health/ready
       - endpoint: http://carga-uy:8080/carga-uy/api/salud
       - endpoint: http://nodo-tracking:8081/health
+      - endpoint: http://nodo-tracking-2:8081/health
       - endpoint: http://balanzas-sur:9990/health/ready
       - endpoint: http://balanzas-norte:9990/health/ready
 

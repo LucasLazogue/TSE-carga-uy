@@ -160,12 +160,42 @@ services:
       NODO_DESORDENAR: ${NODO_DESORDENAR:-false}
       NODO_SIN_COBERTURA: ${NODO_SIN_COBERTURA:-}
       NODO_LOG_METRICAS_SEG: ${NODO_LOG_METRICAS_SEG:-60}
+      # la mitad de la flota de prueba; la otra mitad la reporta tracking-2
+      NODO_RUTAS: ${NODO_RUTAS:-flotas/flota-sur.json}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://observabilidad:4318}
       OTEL_TRACES_SAMPLER: traceidratio
       OTEL_TRACES_SAMPLER_ARG: ${OTEL_PROPORCION_TRAZAS:-1.0}
       OTEL_METRIC_EXPORT_INTERVAL: 10000
-      OTEL_RESOURCE_ATTRIBUTES: nodo.id=${NODO_ID:-tracking-1}
+      # service.instance.id: en las metricas, la etiqueta instance distingue los nodos
+      OTEL_RESOURCE_ATTRIBUTES: nodo.id=${NODO_ID:-tracking-1},service.instance.id=${NODO_ID:-tracking-1}
     # publica en el broker aunque el central no este: las posiciones esperan en la cola
+    depends_on:
+      - artemis
+
+  # Segundo nodo de tracking (otro proveedor de seguimiento): la otra mitad de la flota, con su propio usuario en
+  # el broker. Se registra y habilita en el central como tracking-2, igual que tracking-1
+  nodo-tracking-2:
+    build: ../nodo-tracking
+    ports:
+      - "8084:8081"
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      NODO_ID: tracking-2
+      NODO_JMS_URL: ${NODO_JMS_URL:-tcp://artemis:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev}
+      NODO_JMS_USUARIO: tracking-2
+      NODO_JMS_CLAVE: ${NODO_2_JMS_CLAVE:-tracking456}
+      NODO_INTERVALO_SEG: ${NODO_INTERVALO_SEG:-10}
+      NODO_ACELERAR: ${NODO_ACELERAR:-1}
+      NODO_VEHICULOS_EXTRA: ${NODO_2_VEHICULOS_EXTRA:-0}
+      NODO_DUPLICADOS: ${NODO_DUPLICADOS:-0}
+      NODO_DESORDENAR: ${NODO_DESORDENAR:-false}
+      NODO_LOG_METRICAS_SEG: ${NODO_LOG_METRICAS_SEG:-60}
+      NODO_RUTAS: flotas/flota-norte.json
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://observabilidad:4318}
+      OTEL_TRACES_SAMPLER: traceidratio
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_PROPORCION_TRAZAS:-1.0}
+      OTEL_METRIC_EXPORT_INTERVAL: 10000
+      OTEL_RESOURCE_ATTRIBUTES: nodo.id=tracking-2,service.instance.id=tracking-2
     depends_on:
       - artemis
 

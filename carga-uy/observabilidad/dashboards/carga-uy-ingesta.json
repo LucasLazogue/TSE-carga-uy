@@ -474,8 +474,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(nodo_eventos_generados_total[1m]))",
-          "legendFormat": "generadas",
+          "expr": "sum by (instance) (rate(nodo_eventos_generados_total[1m]))",
+          "legendFormat": "{{instance}} generadas",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
@@ -483,8 +483,8 @@
         },
         {
           "refId": "B",
-          "expr": "sum(rate(nodo_eventos_publicados_total[1m]))",
-          "legendFormat": "publicadas (con duplicados)",
+          "expr": "sum by (instance) (rate(nodo_eventos_publicados_total[1m]))",
+          "legendFormat": "{{instance}} publicadas (con duplicados)",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
@@ -532,8 +532,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(nodo_eventos_pendientes)",
-          "legendFormat": "pendientes de publicar",
+          "expr": "sum by (instance) (nodo_eventos_pendientes)",
+          "legendFormat": "{{instance}} pendientes de publicar",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
@@ -541,8 +541,8 @@
         },
         {
           "refId": "B",
-          "expr": "sum(nodo_eventos_retenidos)",
-          "legendFormat": "retenidas sin cobertura",
+          "expr": "sum by (instance) (nodo_eventos_retenidos)",
+          "legendFormat": "{{instance}} retenidas sin cobertura",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
@@ -550,8 +550,8 @@
         },
         {
           "refId": "C",
-          "expr": "sum(rate(nodo_publicacion_reintentos_total[1m]))",
-          "legendFormat": "reintentos por segundo",
+          "expr": "sum by (instance) (rate(nodo_publicacion_reintentos_total[1m]))",
+          "legendFormat": "{{instance}} reintentos por segundo",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
