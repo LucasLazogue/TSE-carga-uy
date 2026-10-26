@@ -13,6 +13,10 @@ public class Serializers {
         dto.setValidoHasta(permiso.getValidoHasta());
         dto.setIdVehiculo(permiso.getVehiculo().getId());
         dto.setMatricula(permiso.getVehiculo().getMatricula());
+        dto.setEstado(permiso.getEstado());
+        dto.setMotivoRechazo(permiso.getMotivoRechazo());
+        dto.setCedulaRevisor(permiso.getRevisor() == null ? null : permiso.getRevisor().getCedula());
+        dto.setFechaRevision(permiso.getFechaRevision());
         return dto;
     }
 
@@ -22,6 +26,7 @@ public class Serializers {
         permiso.setValidoDesde(dto.getValidoDesde());
         permiso.setValidoHasta(dto.getValidoHasta());
         permiso.setVehiculo(vehiculo);
+        permiso.setEstado(dto.getEstado());
         return permiso;
     }
 

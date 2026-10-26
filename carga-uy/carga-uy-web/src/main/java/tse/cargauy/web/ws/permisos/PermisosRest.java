@@ -11,9 +11,11 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import tse.cargauy.dtos.AprobacionPermisoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.RechazoPermisoDto;
+import tse.cargauy.dtos.SolicitudPermisoDto;
 import tse.cargauy.negocio.permiso.PermisoEJBLocal;
 import tse.cargauy.web.ws.PaginacionQuery;
 
@@ -30,14 +32,14 @@ public class PermisosRest {
     }
 
     @POST
-    public void createPermiso(PermisoDto permisoDto) {
-        permisoEJB.addPermiso(permisoDto);
+    public void createPermiso(SolicitudPermisoDto solicitud) {
+        permisoEJB.addPermiso(solicitud);
     }
 
     @Path("/{id}")
     @PUT
-    public void updatePermiso(@PathParam("id") Long id, PermisoDto permisoDto) {
-        permisoEJB.updatePermiso(id, permisoDto);
+    public void updatePermiso(@PathParam("id") Long id, SolicitudPermisoDto solicitud) {
+        permisoEJB.updatePermiso(id, solicitud);
     }
 
     @Path("/{id}")
@@ -46,12 +48,21 @@ public class PermisosRest {
         permisoEJB.deletePermiso(id);
     }
 
+    @POST
+    @Path("/{id}/aprobacion")
+    public void aprobar(@PathParam("id") Long id, AprobacionPermisoDto aprobacion) {
+        permisoEJB.aprobar(id, aprobacion);
+    }
+
+    @POST
+    @Path("/{id}/rechazo")
+    public void rechazar(@PathParam("id") Long id, RechazoPermisoDto rechazo) {
+        permisoEJB.rechazar(id, rechazo);
+    }
+
     @GET
-    public PaginaDto<PermisoDto> getPermisos(@QueryParam("idVehiculo") Long idVehiculo, @BeanParam PaginacionQuery paginacion) {
-        if (idVehiculo == null) {
-            return permisoEJB.getAll(paginacion.paginacion());
-        }
-        return permisoEJB.getByVehiculo(idVehiculo, paginacion.paginacion());
+    public PaginaDto<PermisoDto> getPermisos(@BeanParam PermisosQuery query, @BeanParam PaginacionQuery paginacion) {
+        return permisoEJB.listar(query.filtro(), paginacion.paginacion());
     }
 
     @Path("/{id}")

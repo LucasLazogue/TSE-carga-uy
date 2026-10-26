@@ -263,6 +263,32 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
     \end{tabular}
 \end{table}
 
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA11: Permisos aprobados por un funcionario}
+    \label{tab:da11}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA11 \\
+        \hline
+            \textbf{Nombre} & Permisos aprobados por un funcionario \\
+        \hline
+            \textbf{Categorías} & Servicios de negocio; CU-06; CU-07; CU-14. \\
+        \hline
+            \textbf{Problema} & La letra pide que el responsable cargue el Permiso Nacional de Circulación con su número y período de validez, y que los funcionarios fiscalicen los permisos. Si el permiso habilitara al vehículo apenas se carga, el responsable podría declarar cualquier fecha de fin y el vehículo quedaría habilitado para asignarle viajes sin ningún control. \\
+        \hline
+            \textbf{Alternativas} & Que el permiso habilite apenas se carga y se controle después en la fiscalización; que el responsable cargue todo el período y el funcionario solo apruebe o rechace; que el responsable cargue el número y la fecha de inicio y el funcionario, al aprobar, fije la fecha de fin. \\
+        \hline
+            \textbf{Decisión} & El permiso tiene estado: pendiente, aprobado o rechazado. El responsable carga el número y la fecha de inicio y el permiso queda pendiente, sin fecha de fin. Un funcionario lo revisa: lo aprueba fijando la fecha de fin, y puede corregir la de inicio, o lo rechaza con un motivo. Solo un permiso aprobado y vigente habilita al vehículo. Un permiso aprobado no se modifica ni se elimina; para renovarlo se carga uno nuevo. Un rechazado se puede corregir y volver a enviar. Las operaciones del responsable reciben solo los datos que puede declarar, así que la fecha de fin y el estado no se pueden fijar desde la API aunque se envíen. \\
+        \hline
+            \textbf{Justificación} & En la realidad el número y el vencimiento del permiso los fija el MTOP, no la empresa; la empresa solo informa un permiso ya emitido. Dejar la fecha de fin a cargo del funcionario evita que el responsable la declare a su conveniencia, y la aprobación deja registrado quién revisó cada permiso y cuándo. Se descartó controlarlo solo en la fiscalización porque el vehículo ya habría viajado. El estado sigue el mismo criterio que los nodos periféricos (DA08), que arrancan deshabilitados hasta que un administrador los habilita. \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA08, DA09 \\
+        \hline
+    \end{tabular}
+\end{table}
+
 \subsection{Decisiones Pendientes}
 
 La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y justificar, junto con otras decisiones que surgieron durante el desarrollo, que todavía no están definidas.

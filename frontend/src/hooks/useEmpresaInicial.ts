@@ -1,9 +1,13 @@
 import { useEffect } from 'react'
 import { EmpresasApi } from '@/api/empresas/empresas.api'
 
-export function useEmpresaInicial(idEmpresa: string | undefined, set: (name: 'idEmpresa', value: string) => void) {
+export function useEmpresaInicial(
+  idEmpresa: string | undefined,
+  set: (name: 'idEmpresa', value: string) => void,
+  habilitado = true,
+) {
   useEffect(() => {
-    if (idEmpresa) {
+    if (idEmpresa || !habilitado) {
       return
     }
     let vigente = true
@@ -15,5 +19,5 @@ export function useEmpresaInicial(idEmpresa: string | undefined, set: (name: 'id
     return () => {
       vigente = false
     }
-  }, [idEmpresa, set])
+  }, [idEmpresa, set, habilitado])
 }
