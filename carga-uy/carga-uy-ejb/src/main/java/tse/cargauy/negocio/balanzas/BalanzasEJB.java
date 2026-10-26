@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
+import io.opentelemetry.context.Context;
 import jakarta.annotation.Resource;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.EJB;
@@ -62,12 +64,15 @@ public class BalanzasEJB implements BalanzasEJBLocal {
         PesajesViajeDto resultado = new PesajesViajeDto();
         // cada nodo con la "promesa" de su respuesta, para saber despues que respuesta es de quien
         Map<NodoPerifericoDto, CompletableFuture<List<PesajeDto>>> consultas = new LinkedHashMap<>();
+        // los hilos del ejecutor no heredan la traza en curso: sin esto cada consulta a un nodo queda como una traza
+        // suelta en vez de colgar de la evaluacion del viaje
+        Executor conTraza = Context.current().wrap(ejecutor);
         for (NodoPerifericoDto nodo : nodoDAO.getHabilitados(TipoNodo.BALANZAS)) {
             try {
                 String clave = cifrado.descifrar(nodoDAO.getClaveCifrada(nodo.getId()), nodo.getIdentificador());
                 // supplyAsync larga la consulta en otro hilo del servidor y sigue sin esperarla
                 consultas.put(nodo, CompletableFuture.supplyAsync(
-                        () -> consultar(nodo, clave, viaje.getMatricula(), inicio.toLocalDate(), fin.toLocalDate()), ejecutor));
+                        () -> consultar(nodo, clave, viaje.getMatricula(), inicio.toLocalDate(), fin.toLocalDate()), conTraza));
             } catch (CargaUYException e) {
                 LOGGER.warning("balanzas consulta=FALLIDA nodo=" + nodo.getIdentificador() + " error=" + e.getCodigo());
                 resultado.getNodosSinResponder().add(nodo.getIdentificador());

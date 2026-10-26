@@ -1,0 +1,18 @@
+# Observabilidad del nodo de balanzas (AC21 y AC23): trazas, logs y metricas por OTLP a la Plataforma de
+# Observabilidad, igual que el componente central. Cada consulta del central trae su traza en el header traceparent y
+# WildFly la continua, asi que el fin de un viaje se ve de punta a punta: central, motor de fiscalizacion y nodos
+embed-server
+
+# trazas y logs. El nombre del servicio distingue los nodos (balanzas-sur, balanzas-norte); la proporcion de trazas
+# tiene que ser la misma que en el central para que las dos partes de una traza se muestreen igual
+/extension=org.wildfly.extension.opentelemetry:add
+/subsystem=opentelemetry:add(service-name="${env.OTEL_SERVICE_NAME:nodo-balanzas}", exporter-type=otlp, endpoint="${env.OTEL_ENDPOINT:http://observabilidad:4317}", sampler-type=ratio, ratio="${env.OTEL_PROPORCION_TRAZAS:1.0}")
+
+# metricas del servidor (JVM, undertow, datasources)
+/extension=org.wildfly.extension.micrometer:add
+/subsystem=micrometer:add(endpoint="${env.OTEL_ENDPOINT_METRICAS:http://observabilidad:4318/v1/metrics}", step=10, exposed-subsystems=["*"])
+
+# en la consola se agrega el trace_id a cada linea, como en el central
+/subsystem=logging/pattern-formatter=COLOR-PATTERN:write-attribute(name=pattern, value="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %X{trace_id} %s%e%n")
+
+stop-embedded-server

@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.opentelemetry.context.Context;
 import tse.cargauy.data.permiso.PermisoDAO;
 import tse.cargauy.data.posicion.EventoPosicionDAO;
 import tse.cargauy.data.vehiculo.VehiculoDAO;
@@ -150,7 +151,7 @@ class MotorFiscalizacionEJBTest {
 
     @Test
     void unaPosicionSinViajeGeneraUnCasoDeViajeSinGuia() {
-        motor.evaluarPosicion(3L, "ev-1");
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         List<CasoFiscalizacionDto> sinGuia = casosDe(TipoInfraccion.VIAJE_SIN_GUIA);
         assertEquals(1, sinGuia.size());
@@ -166,7 +167,7 @@ class MotorFiscalizacionEJBTest {
     void conUnViajeAsignadoNoHayCaso() {
         viajeAsignado = viaje(EstadoViaje.ASIGNADO, null);
 
-        motor.evaluarPosicion(3L, "ev-1");
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         assertTrue(casos.casos.isEmpty());
     }
@@ -175,7 +176,7 @@ class MotorFiscalizacionEJBTest {
     void conUnViajeEnCursoNoHayViajeSinGuia() {
         viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
 
-        motor.evaluarPosicion(3L, "ev-1");
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         assertTrue(casos.casos.isEmpty());
     }
@@ -185,7 +186,7 @@ class MotorFiscalizacionEJBTest {
         viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
         permiso = null;
 
-        motor.evaluarPosicion(3L, "ev-1");
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         List<CasoFiscalizacionDto> sinHabilitacion = casosDe(TipoInfraccion.SIN_HABILITACION);
         assertEquals(1, sinHabilitacion.size());
@@ -199,8 +200,8 @@ class MotorFiscalizacionEJBTest {
     void laMismaPosicionDosVecesNoDuplicaCasos() {
         permiso = null;
 
-        motor.evaluarPosicion(3L, "ev-1");
-        motor.evaluarPosicion(3L, "ev-1");
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         assertEquals(1, casosDe(TipoInfraccion.VIAJE_SIN_GUIA).size());
         assertEquals(1, casosDe(TipoInfraccion.SIN_HABILITACION).size());
@@ -213,11 +214,11 @@ class MotorFiscalizacionEJBTest {
         permiso = null;
         viaje = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 1, 8, 0));
 
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
         assertTrue(casos.casos.isEmpty());
 
         viaje.setEstado(EstadoViaje.FINALIZADO);
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         List<CasoFiscalizacionDto> sinHabilitacion = casosDe(TipoInfraccion.SIN_HABILITACION);
         assertEquals(1, sinHabilitacion.size());
@@ -231,7 +232,7 @@ class MotorFiscalizacionEJBTest {
         posicion.setIdVehiculo(null);
         permiso = null;
 
-        motor.evaluarPosicion(3L, "ev-1");
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         assertTrue(casos.casos.isEmpty());
     }
@@ -241,7 +242,7 @@ class MotorFiscalizacionEJBTest {
         viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
         pesajes.getPesajes().add(pesaje(SUR, 36500));
 
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         List<CasoFiscalizacionDto> exceso = casosDe(TipoInfraccion.EXCESO_CARGA);
         assertEquals(1, exceso.size());
@@ -260,7 +261,7 @@ class MotorFiscalizacionEJBTest {
         viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
         pesajes.getPesajes().add(pesaje(SUR, 33800));
 
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         assertTrue(casos.casos.isEmpty());
     }
@@ -271,13 +272,13 @@ class MotorFiscalizacionEJBTest {
         pesajes.getPesajes().add(pesaje(SUR, 36500));
         pesajes.getNodosSinResponder().add("balanzas-norte");
 
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         assertEquals(1, casosDe(TipoInfraccion.EXCESO_CARGA).size());
         assertEquals(AHORA.plusMinutes(1), proximaEvaluacion);
 
         pesajes.getNodosSinResponder().clear();
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         assertNull(proximaEvaluacion);
     }
@@ -287,11 +288,11 @@ class MotorFiscalizacionEJBTest {
         viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
         pesajes.getPesajes().add(pesaje(SUR, 36500));
         pesajes.getNodosSinResponder().add("balanzas-norte");
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         pesajes.getNodosSinResponder().clear();
         pesajes.getPesajes().add(pesaje(NORTE, 35900));
-        motor.evaluarViaje(21L);
+        motor.evaluarViaje(21L, Context.root());
 
         List<CasoFiscalizacionDto> exceso = casosDe(TipoInfraccion.EXCESO_CARGA);
         assertEquals(1, exceso.size());

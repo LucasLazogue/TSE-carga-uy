@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.Asynchronous;
 import jakarta.ejb.EJB;
@@ -15,6 +21,7 @@ import jakarta.ejb.Schedule;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import jakarta.inject.Inject;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.posicion.EventoPosicionDAOLocal;
@@ -68,8 +75,16 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     @EJB
     BalanzasEJBLocal balanzas;
 
+    // lo pone WildFly; en los tests queda uno que no registra nada
+    @Inject
+    Tracer tracer = OpenTelemetry.noop().getTracer("carga-uy");
+
     @Asynchronous
-    public void evaluarPosicion(Long idNodo, String idEvento) {
+    public void evaluarPosicion(Long idNodo, String idEvento, Context traza) {
+        enTraza("fiscalizacion evaluar posicion", traza, () -> reglasDePosicion(idNodo, idEvento));
+    }
+
+    private void reglasDePosicion(Long idNodo, String idEvento) {
         EventoPosicionDto posicion = eventoDAO.get(idNodo, idEvento);
         Long idVehiculo = posicion.getIdVehiculo();
         if (idVehiculo == null) {
@@ -89,13 +104,34 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     }
 
     @Asynchronous
-    public void evaluarViaje(Long idViaje) {
+    public void evaluarViaje(Long idViaje, Context traza) {
+        enTraza("fiscalizacion evaluar viaje", traza, () -> reglasDeViaje(idViaje));
+    }
+
+    private void reglasDeViaje(Long idViaje) {
+        Span.current().setAttribute("viaje.id", idViaje);
         ViajeDto viaje = viajeDAO.getViajeById(idViaje);
         if (viaje.getEstado() != EstadoViaje.FINALIZADO) {
             return;
         }
         evaluarPermiso(viaje.getIdVehiculo(), viaje.getFechaInicio(), idViaje, "viaje " + idViaje);
         evaluarCarga(viaje, ahora());
+    }
+
+    // cada evaluacion corre en otro hilo (@Asynchronous) y no hereda la traza en curso: se cuelga de la que trae el
+    // evento, asi el fin de un viaje se ve de punta a punta (movil, central y nodos de balanzas) y la deteccion desde
+    // el tracking queda en la traza de la posicion
+    private void enTraza(String nombre, Context traza, Runnable evaluacion) {
+        Span span = tracer.spanBuilder(nombre).setParent(traza).startSpan();
+        try (Scope alcance = span.makeCurrent()) {
+            evaluacion.run();
+        } catch (RuntimeException e) {
+            span.recordException(e);
+            span.setStatus(StatusCode.ERROR);
+            throw e;
+        } finally {
+            span.end();
+        }
     }
 
     // cada minuto vuelve a evaluar los viajes a los que les falto la respuesta de alguna balanza
