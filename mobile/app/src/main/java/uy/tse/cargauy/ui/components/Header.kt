@@ -3,6 +3,7 @@ package uy.tse.cargauy.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -22,6 +23,7 @@ fun Header(
     titulo: String,
     subtitulo: String? = null,
     onVolver: (() -> Unit)? = null,
+    onMenu: (() -> Unit)? = null,
     onSettings: (() -> Unit)? = null,
 ) {
     val barra = LocalColoresBarra.current
@@ -43,12 +45,12 @@ fun Header(
             }
         },
         navigationIcon = {
-            onVolver?.let { action ->
-                IconButton(onClick = action) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
-                    )
+            when {
+                onVolver != null -> IconButton(onClick = onVolver) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                }
+                onMenu != null -> IconButton(onClick = onMenu) {
+                    Icon(imageVector = Icons.Filled.Menu, contentDescription = "Abrir menú")
                 }
             }
         },

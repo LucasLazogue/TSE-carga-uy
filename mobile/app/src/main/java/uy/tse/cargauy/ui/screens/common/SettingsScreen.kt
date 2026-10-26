@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -20,14 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 
-import uy.tse.cargauy.data.auth.UsuarioDelToken
-import uy.tse.cargauy.data.cedulaLegible
-import uy.tse.cargauy.ui.components.BotonSecundario
-import uy.tse.cargauy.ui.components.DatoFila
+import uy.tse.cargauy.ui.components.ContenidoPantalla
 import uy.tse.cargauy.ui.components.Descripcion
-import uy.tse.cargauy.ui.components.Seccion
 import uy.tse.cargauy.ui.components.SoloDebug
-import uy.tse.cargauy.ui.components.Tarjeta
 import uy.tse.cargauy.ui.components.TituloSeccion
 import uy.tse.cargauy.ui.theme.Spacing
 
@@ -37,25 +31,16 @@ fun SettingsScreen(
     onCambiarTema: (Boolean) -> Unit,
     urlServidor: String,
     onGuardarUrl: (String) -> Unit,
-    onRestaurarUrl: () -> Unit,
-    // null sin sesion (por ejemplo, desde el login)
-    usuario: UsuarioDelToken?,
-    onCerrarSesion: (() -> Unit)?
+    onRestaurarUrl: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.padding(Spacing.md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-    ) {
-        if (usuario != null && onCerrarSesion != null) {
-            SeccionCuenta(usuario = usuario, onCerrarSesion = onCerrarSesion)
-        }
-
+    ContenidoPantalla {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            // con weight el texto se parte en renglones y la llave no se sale de la pantalla
+            Column(modifier = Modifier.weight(1f)) {
                 TituloSeccion(texto = "Tema oscuro")
                 Descripcion(texto = "Cambia los colores de la aplicación")
             }
@@ -73,17 +58,6 @@ fun SettingsScreen(
                 onRestaurarUrl = onRestaurarUrl
             )
         }
-    }
-}
-
-@Composable
-private fun SeccionCuenta(usuario: UsuarioDelToken, onCerrarSesion: () -> Unit) {
-    Seccion(titulo = "Cuenta") {
-        Tarjeta {
-            usuario.cedula?.let { DatoFila(etiqueta = "Cédula", valor = cedulaLegible(it)) }
-            usuario.correo?.let { DatoFila(etiqueta = "Correo", valor = it) }
-        }
-        BotonSecundario(texto = "Cerrar sesión", onClick = onCerrarSesion, modifier = Modifier.fillMaxWidth())
     }
 }
 

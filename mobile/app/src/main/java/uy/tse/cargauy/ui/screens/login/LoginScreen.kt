@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,6 +37,7 @@ import uy.tse.cargauy.ui.components.Descripcion
 import uy.tse.cargauy.ui.components.SoloDebug
 import uy.tse.cargauy.ui.components.TextoError
 import uy.tse.cargauy.ui.components.TituloSeccion
+import uy.tse.cargauy.ui.theme.Sizes
 import uy.tse.cargauy.ui.theme.Spacing
 
 @Composable
@@ -61,6 +64,8 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .wrapContentWidth()
+            .widthIn(max = Sizes.anchoMaximoContenido)
             .padding(Spacing.lg),
         verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally

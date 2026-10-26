@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,7 +62,7 @@ fun FilaEvento(evento: EventoPendiente, modifier: Modifier = Modifier) {
             text = momentoDelEvento(evento.timestampGeneracion),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(Sizes.columnaHora).alignByBaseline()
+            modifier = Modifier.widthIn(min = Sizes.columnaHora).alignByBaseline()
         )
         Column(
             modifier = Modifier.weight(1f).alignByBaseline(),

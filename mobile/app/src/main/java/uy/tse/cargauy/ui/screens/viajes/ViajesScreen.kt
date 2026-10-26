@@ -2,12 +2,10 @@ package uy.tse.cargauy.ui.screens.viajes
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,9 +38,11 @@ import uy.tse.cargauy.ui.components.Descripcion
 import uy.tse.cargauy.ui.components.EstadoVacio
 import uy.tse.cargauy.ui.components.EstadoViajeChip
 import uy.tse.cargauy.ui.components.FilaEvento
+import uy.tse.cargauy.ui.components.ListaPantalla
 import uy.tse.cargauy.ui.components.Tarjeta
 import uy.tse.cargauy.ui.components.TextoError
 import uy.tse.cargauy.ui.components.TituloSeccion
+import uy.tse.cargauy.ui.components.anchoCompleto
 import uy.tse.cargauy.ui.theme.Spacing
 import uy.tse.cargauy.ui.theme.coloresSemanticos
 
@@ -64,20 +64,16 @@ fun ViajesScreen(
         onRefresh = viewModel::actualizar,
         modifier = Modifier.fillMaxSize()
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(Spacing.md),
-            verticalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            item { EstadoDeConexion(conRed = conRed, pendientes = pendientes, error = error) }
+        ListaPantalla {
+            anchoCompleto { EstadoDeConexion(conRed = conRed, pendientes = pendientes, error = error) }
 
             when (val actual = viajes) {
-                is UiState.Loading -> item { Cargando() }
-                is UiState.Error -> item { TextoError(texto = actual.mensaje) }
+                is UiState.Loading -> anchoCompleto { Cargando() }
+                is UiState.Error -> anchoCompleto { TextoError(texto = actual.mensaje) }
                 is UiState.Success -> {
                     val lista = actual.data
                     if (lista.isEmpty()) {
-                        item {
+                        anchoCompleto {
                             EstadoVacio(
                                 titulo = "No tenés viajes asignados",
                                 descripcion = "Cuando te asignen uno, aparece acá. Deslizá hacia abajo para actualizar."
@@ -88,7 +84,7 @@ fun ViajesScreen(
                     }
                     val hoy = LocalDate.now()
                     grupos(lista).forEach { (titulo, delGrupo) ->
-                        item(key = "titulo-$titulo") { TituloSeccion(texto = titulo) }
+                        anchoCompleto(key = "titulo-$titulo") { TituloSeccion(texto = titulo) }
                         items(delGrupo, key = { it.idViaje }) { viaje ->
                             val otroEnCurso = lista.any { it.idViaje != viaje.idViaje && it.estado == EstadoViaje.EN_CURSO.name }
                             TarjetaViaje(
@@ -102,7 +98,7 @@ fun ViajesScreen(
             }
 
             if (noAplicados.isNotEmpty()) {
-                item { NoAplicados(eventos = noAplicados, onEntendido = viewModel::descartarNoAplicados) }
+                anchoCompleto { NoAplicados(eventos = noAplicados, onEntendido = viewModel::descartarNoAplicados) }
             }
         }
     }

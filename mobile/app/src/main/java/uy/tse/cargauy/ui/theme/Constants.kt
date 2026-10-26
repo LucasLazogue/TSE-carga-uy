@@ -47,6 +47,8 @@ object Radius {
 // texto secundario sobre la barra de color, que no tiene un rol on*Variant
 const val OPACIDAD_SECUNDARIA = 0.8f
 
+const val FRACCION_MENU_LATERAL = 0.7f
+
 /** Grosores de borde y divisores. */
 object Thickness {
     val hairline = 1.dp
@@ -59,6 +61,10 @@ object Sizes {
     val tactil = 48.dp
     val icono = 24.dp
     val iconoChico = 18.dp
-    // entra "24/10 21:59"
+    // minimo: con la letra grande del sistema crece
     val columnaHora = 76.dp
+    // en tablets o en horizontal el contenido no se estira de borde a borde (ventana compacta de material)
+    val anchoMaximoContenido = 600.dp
+    // las listas ponen tantas columnas como entren de este ancho: una en un telefono, dos o mas en tablet
+    val anchoMinimoColumna = 320.dp
 }
