@@ -20,6 +20,7 @@ import jakarta.persistence.criteria.Root;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroCasos;
+import tse.cargauy.dtos.NormaFiscalizacionDto;
 import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
@@ -251,6 +252,17 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     @Override
     public void addNorma(String clave, int valor, LocalDate vigenteDesde) {
         entityManager.persist(new NormaFiscalizacion(clave, valor, vigenteDesde));
+    }
+
+    @Override
+    public List<NormaFiscalizacionDto> getNormas(String clave) {
+        return entityManager.createQuery(
+                        "SELECT n FROM NormaFiscalizacion n WHERE n.clave = :clave ORDER BY n.vigenteDesde DESC, n.id DESC",
+                        NormaFiscalizacion.class)
+                .setParameter("clave", clave)
+                .getResultStream()
+                .map(Serializers::toDto)
+                .toList();
     }
 
     private void auditar(CasoFiscalizacion caso, String usuario, String rol, AccionAuditoria accion, EstadoCaso anterior,

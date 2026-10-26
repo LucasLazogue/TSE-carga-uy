@@ -7,6 +7,7 @@ import jakarta.ejb.Local;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroCasos;
+import tse.cargauy.dtos.NormaFiscalizacionDto;
 import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
@@ -31,4 +32,5 @@ public interface CasoFiscalizacionDAOLocal {
     void marcarLeidas(DestinatarioNotificacion destinatario, List<Long> idsEmpresa);
     Integer getNormaVigente(String clave, LocalDate fecha);
     void addNorma(String clave, int valor, LocalDate vigenteDesde);
+    List<NormaFiscalizacionDto> getNormas(String clave);
 }

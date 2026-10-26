@@ -188,6 +188,12 @@ public class DatosPrueba {
         if (casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, LocalDate.now()) == null) {
             casoDAO.addNorma(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, 10, LocalDate.of(2026, 1, 1));
         }
+        if (casoDAO.getNormaVigente(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, LocalDate.now()) == null) {
+            casoDAO.addNorma(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, LocalDate.of(2026, 1, 1));
+        }
+        if (casoDAO.getNormaVigente(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, LocalDate.now()) == null) {
+            casoDAO.addNorma(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, 2000, LocalDate.of(2026, 1, 1));
+        }
 
         // fechas relativas a hoy para que siempre haya un caso en plazo, uno vencido y uno en descargo
         if (casoDAO.buscar(new FiltroCasos(), new Paginacion(0, 1)).getTotal() == 0 && vehiculoDAO.getVehiculoByMatricula("SCC9012") != null) {

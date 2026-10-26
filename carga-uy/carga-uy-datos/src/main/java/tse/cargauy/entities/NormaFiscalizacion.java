@@ -7,11 +7,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
-// por ahora solo el plazo de descargo; se unifica con la parametrizacion de reglas cuando exista
 @Entity
 public class NormaFiscalizacion {
 
     public static final String PLAZO_DESCARGO_DIAS = "PLAZO_DESCARGO_DIAS";
+    public static final String TOLERANCIA_EXCESO_CARGA = "TOLERANCIA_EXCESO_CARGA";
+    public static final String DESVIO_RUTA_DISTANCIA = "DESVIO_RUTA_DISTANCIA";
 
     @Id @GeneratedValue
     private Long id;

@@ -3,12 +3,14 @@ package tse.cargauy.data.fiscalizacion;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.DescargoDto;
 import tse.cargauy.dtos.EvidenciaDto;
+import tse.cargauy.dtos.NormaFiscalizacionDto;
 import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.PistaAuditoriaDto;
 import tse.cargauy.dtos.ResolucionDto;
 import tse.cargauy.entities.CasoFiscalizacion;
 import tse.cargauy.entities.Descargo;
 import tse.cargauy.entities.Evidencia;
+import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.Notificacion;
 import tse.cargauy.entities.PistaAuditoria;
 import tse.cargauy.entities.Resolucion;
@@ -78,6 +80,15 @@ public class Serializers {
         dto.setEstadoNuevo(registro.getEstadoNuevo());
         dto.setFundamento(registro.getFundamento());
         dto.setFecha(registro.getFecha());
+        return dto;
+    }
+
+    public static NormaFiscalizacionDto toDto(NormaFiscalizacion norma) {
+        NormaFiscalizacionDto dto = new NormaFiscalizacionDto();
+        dto.setId(norma.getId());
+        dto.setClave(norma.getClave());
+        dto.setValor(norma.getValor());
+        dto.setVigenteDesde(norma.getVigenteDesde());
         return dto;
     }
 
