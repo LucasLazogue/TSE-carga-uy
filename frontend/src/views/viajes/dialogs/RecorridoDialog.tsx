@@ -113,7 +113,7 @@ function RecorridoDialog({ idEmpresa, viaje, close }: Props) {
         )}
         <Grid
           columns={columnas}
-          items={pesajes.pesajes}
+          items={[...pesajes.pesajes].sort((a, b) => a.fechaHora.localeCompare(b.fechaHora))}
           rowKey={(p) => p.idOrigen}
           empty="No hay pesajes de este viaje."
         />
