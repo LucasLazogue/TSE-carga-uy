@@ -95,7 +95,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
             return;
         }
         evaluarPermiso(viaje.getIdVehiculo(), viaje.getFechaInicio(), idViaje, "viaje " + idViaje);
-        evaluarCarga(viaje);
+        evaluarCarga(viaje, ahora());
     }
 
     // cada minuto vuelve a evaluar los viajes a los que les falto la respuesta de alguna balanza
@@ -104,7 +104,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         LocalDateTime ahora = ahora();
         for (Long idViaje : viajeDAO.reservarEvaluacionesCarga(ahora, ahora.plusMinutes(1), 20)) {
             try {
-                evaluarCarga(viajeDAO.getViajeById(idViaje));
+                evaluarCarga(viajeDAO.getViajeById(idViaje), ahora);
             } catch (RuntimeException e) {
                 LOGGER.warning("fiscalizacion evaluacion=FALLIDA viaje=" + idViaje + " error=" + e);
             }
@@ -124,7 +124,8 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
 
     // un caso por viaje, porque el viaje puede durar mas de un dia. si alguna balanza no respondio se evalua con lo
     // que llego y queda pendiente: lo que traiga despues se agrega al mismo caso
-    private void evaluarCarga(ViajeDto viaje) {
+    // la hora se toma antes de consultar las balanzas, que pueden demorar, para no saltear el proximo minuto
+    private void evaluarCarga(ViajeDto viaje, LocalDateTime ahora) {
         PesajesViajeDto resultado = balanzas.getPesajesDelViaje(viaje);
         VehiculoDto vehiculo = vehiculoDAO.getVehiculoById(viaje.getIdVehiculo());
         int maximo = vehiculo.getPesoVehiculo() + vehiculo.getCapacidadCarga();
@@ -145,7 +146,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
                 casoDAO.agregarEvidencias(registrado.getId(), evidencias);
             }
         }
-        viajeDAO.marcarEvaluacionCarga(viaje.getId(), resultado.isCompleto() ? null : ahora().plusMinutes(1));
+        viajeDAO.marcarEvaluacionCarga(viaje.getId(), resultado.isCompleto() ? null : ahora.plusMinutes(1));
     }
 
     // si el inicio del viaje todavia no llego desde el movil, el viaje sigue asignado y no es un caso

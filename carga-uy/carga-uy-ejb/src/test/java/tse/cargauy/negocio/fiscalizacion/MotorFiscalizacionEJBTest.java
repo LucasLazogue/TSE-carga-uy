@@ -209,6 +209,7 @@ class MotorFiscalizacionEJBTest {
 
     @Test
     void elViajeSeEvaluaRecienCuandoTermina() {
+        pesajes.getPesajes().add(pesaje(SUR, 36500));
         permiso = null;
         viaje = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 1, 8, 0));
 
