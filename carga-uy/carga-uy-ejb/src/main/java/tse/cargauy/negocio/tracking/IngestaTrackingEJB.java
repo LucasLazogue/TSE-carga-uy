@@ -3,7 +3,6 @@ package tse.cargauy.negocio.tracking;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
@@ -76,12 +75,9 @@ public class IngestaTrackingEJB implements IngestaTrackingEJBLocal {
         return ResultadoIngesta.COMPLETADO;
     }
 
-    // los pasos que van despues de guardar la posicion. Por ahora solo la marca de procesada
+    // los pasos que van despues de guardar la posicion, cuando se confirma la transaccion: la marca de procesada
+    // (MarcadorPosiciones) y la evaluacion de las reglas de fiscalizacion (DisparadorFiscalizacion)
     private void terminar(EventoPosicionDto posicion) {
         procesadas.fire(new PosicionProcesada(posicion.getIdNodo(), posicion.getIdEvento()));
-    }
-
-    public List<EventoPosicionDto> getRuta(String matricula) {
-        return eventoDAO.getRuta(matricula);
     }
 }
