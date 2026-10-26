@@ -111,7 +111,8 @@ public enum CodigoError {
     CASO_YA_REGISTRADO(9011, Categoria.CONFLICTO),
 
     BALANZAS_NO_DISPONIBLE(10001, Categoria.NO_DISPONIBLE),
-    BALANZAS_NODO_RECHAZO(10002, Categoria.CONFIGURACION);
+    BALANZAS_NODO_RECHAZO(10002, Categoria.CONFIGURACION),
+    PESAJE_YA_REGISTRADO(10003, Categoria.CONFLICTO);
 
     private final int codigo;
     private final Categoria categoria;
