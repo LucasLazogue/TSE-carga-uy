@@ -12,6 +12,8 @@ import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
 import tse.cargauy.dtos.NormaFiscalizacionDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
@@ -34,17 +36,14 @@ public class NormaFiscalizacionEJB implements NormaFiscalizacionEJBLocal {
     public List<NormaFiscalizacionDto> getVigentes() {
         LocalDate hoy = hoy();
         return NormaFiscalizacion.CLAVES.stream()
-                .map(clave -> casoDAO.getNormas(clave).stream()
-                        .filter(n -> !n.getVigenteDesde().isAfter(hoy))
-                        .findFirst()
-                        .orElse(null))
+                .map(clave -> casoDAO.getNorma(clave, hoy))
                 .filter(Objects::nonNull)
                 .toList();
     }
 
-    public List<NormaFiscalizacionDto> getHistorial(String clave) {
+    public PaginaDto<NormaFiscalizacionDto> getHistorial(String clave, Paginacion paginacion) {
         validarClave(clave);
-        return casoDAO.getNormas(clave);
+        return casoDAO.getNormas(clave, paginacion);
     }
 
     public void cambiarValor(String clave, int valor, LocalDate vigenteDesde) {

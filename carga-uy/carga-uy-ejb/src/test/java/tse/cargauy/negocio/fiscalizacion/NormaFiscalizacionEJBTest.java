@@ -17,6 +17,8 @@ import org.junit.jupiter.api.function.Executable;
 import jakarta.ejb.SessionContext;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAO;
 import tse.cargauy.dtos.NormaFiscalizacionDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -52,12 +54,18 @@ class NormaFiscalizacionEJBTest {
             }
 
             @Override
-            public List<NormaFiscalizacionDto> getNormas(String clave) {
-                return normas.stream()
-                        .filter(n -> n.getClave().equals(clave))
-                        .sorted(Comparator.comparing(NormaFiscalizacionDto::getVigenteDesde)
-                                .thenComparing(NormaFiscalizacionDto::getId).reversed())
+            public NormaFiscalizacionDto getNorma(String clave, LocalDate fecha) {
+                return historial(clave).stream().filter(n -> !n.getVigenteDesde().isAfter(fecha)).findFirst().orElse(null);
+            }
+
+            @Override
+            public PaginaDto<NormaFiscalizacionDto> getNormas(String clave, Paginacion paginacion) {
+                List<NormaFiscalizacionDto> todas = historial(clave);
+                List<NormaFiscalizacionDto> items = todas.stream()
+                        .skip(paginacion.getDesde())
+                        .limit(paginacion.getTamanio())
                         .toList();
+                return new PaginaDto<>(items, todas.size(), paginacion.getPagina(), paginacion.getTamanio());
             }
         };
         ejb.casoDAO.addNorma(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, LocalDate.of(2026, 1, 1));
@@ -78,8 +86,19 @@ class NormaFiscalizacionEJBTest {
         ejb.cambiarValor(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 3, HOY);
 
         assertEquals(3, ejb.getVigentes().get(0).getValor());
-        assertEquals(List.of(3, 5), ejb.getHistorial(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA).stream()
-                .map(NormaFiscalizacionDto::getValor).toList());
+        assertEquals(List.of(3, 5), ejb.getHistorial(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, new Paginacion(0, 10))
+                .getItems().stream().map(NormaFiscalizacionDto::getValor).toList());
+    }
+
+    @Test
+    void elHistorialSePagina() {
+        ejb.cambiarValor(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 4, HOY);
+        ejb.cambiarValor(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 3, HOY.plusDays(1));
+
+        PaginaDto<NormaFiscalizacionDto> pagina = ejb.getHistorial(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, new Paginacion(1, 2));
+
+        assertEquals(3, pagina.getTotal());
+        assertEquals(List.of(5), pagina.getItems().stream().map(NormaFiscalizacionDto::getValor).toList());
     }
 
     @Test
@@ -93,7 +112,7 @@ class NormaFiscalizacionEJBTest {
     @Test
     void rechazaUnaClaveQueNoEsNorma() {
         assertError(CodigoError.NORMA_NO_ENCONTRADA, () -> ejb.cambiarValor("OTRA", 1, HOY));
-        assertError(CodigoError.NORMA_NO_ENCONTRADA, () -> ejb.getHistorial(null));
+        assertError(CodigoError.NORMA_NO_ENCONTRADA, () -> ejb.getHistorial(null, new Paginacion(0, 10)));
     }
 
     @Test
@@ -108,7 +127,15 @@ class NormaFiscalizacionEJBTest {
                 () -> ejb.cambiarValor(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, HOY.minusDays(1)));
         assertError(CodigoError.NORMA_VIGENCIA_INVALIDA,
                 () -> ejb.cambiarValor(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, null));
-        assertEquals(1, ejb.getHistorial(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA).size());
+        assertEquals(1, ejb.getHistorial(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, new Paginacion(0, 10)).getTotal());
+    }
+
+    private List<NormaFiscalizacionDto> historial(String clave) {
+        return normas.stream()
+                .filter(n -> n.getClave().equals(clave))
+                .sorted(Comparator.comparing(NormaFiscalizacionDto::getVigenteDesde)
+                        .thenComparing(NormaFiscalizacionDto::getId).reversed())
+                .toList();
     }
 
     private static void assertError(CodigoError codigo, Executable accion) {

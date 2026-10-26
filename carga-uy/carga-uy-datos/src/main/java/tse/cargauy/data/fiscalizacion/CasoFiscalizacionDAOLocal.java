@@ -31,6 +31,7 @@ public interface CasoFiscalizacionDAOLocal {
     PaginaDto<NotificacionDto> getNotificaciones(DestinatarioNotificacion destinatario, List<Long> idsEmpresa, Paginacion paginacion);
     void marcarLeidas(DestinatarioNotificacion destinatario, List<Long> idsEmpresa);
     Integer getNormaVigente(String clave, LocalDate fecha);
+    NormaFiscalizacionDto getNorma(String clave, LocalDate fecha);
     void addNorma(String clave, int valor, LocalDate vigenteDesde);
-    List<NormaFiscalizacionDto> getNormas(String clave);
+    PaginaDto<NormaFiscalizacionDto> getNormas(String clave, Paginacion paginacion);
 }
