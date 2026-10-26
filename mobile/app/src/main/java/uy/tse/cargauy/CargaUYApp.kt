@@ -7,6 +7,7 @@ import uy.tse.cargauy.data.auth.ClaveDispositivo
 import uy.tse.cargauy.data.auth.RefreshTokens
 import uy.tse.cargauy.data.auth.SesionRepository
 import uy.tse.cargauy.data.local.CargaUYDatabase
+import uy.tse.cargauy.observabilidad.Telemetria
 
 class CargaUYApp : Application() {
 
@@ -17,4 +18,9 @@ class CargaUYApp : Application() {
     val sesion: SesionRepository by lazy { SesionRepository(this) }
     val refreshTokens: RefreshTokens by lazy { RefreshTokens(this) }
     val claveDispositivo: ClaveDispositivo by lazy { ClaveDispositivo() }
+
+    override fun onCreate() {
+        super.onCreate()
+        Telemetria.iniciar(BuildConfig.URL_OBSERVABILIDAD)
+    }
 }

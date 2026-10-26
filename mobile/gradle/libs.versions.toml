@@ -19,6 +19,7 @@ work = "2.12.0"
 browser = "1.10.0"
 nimbusJoseJwt = "10.10"
 coroutines = "1.9.0"
+opentelemetry = "1.48.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -47,6 +48,9 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 nimbus-jose-jwt = { group = "com.nimbusds", name = "nimbus-jose-jwt", version.ref = "nimbusJoseJwt" }
+opentelemetry-bom = { group = "io.opentelemetry", name = "opentelemetry-bom", version.ref = "opentelemetry" }
+opentelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk" }
+opentelemetry-exporter-otlp = { group = "io.opentelemetry", name = "opentelemetry-exporter-otlp" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 [plugins]

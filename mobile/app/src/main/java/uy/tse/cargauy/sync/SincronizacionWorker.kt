@@ -8,6 +8,7 @@ import retrofit2.HttpException
 
 import uy.tse.cargauy.CargaUYApp
 import uy.tse.cargauy.data.ViajeRepository
+import uy.tse.cargauy.observabilidad.Telemetria
 
 /** Envía al central los eventos guardados en Room. Lo corre WorkManager cuando hay red, aunque la app esté cerrada. */
 class SincronizacionWorker(contexto: Context, parametros: WorkerParameters) : CoroutineWorker(contexto, parametros) {
@@ -24,6 +25,9 @@ class SincronizacionWorker(contexto: Context, parametros: WorkerParameters) : Co
         } catch (e: IOException) {
             // hay red pero el central no responde: WorkManager reintenta con una espera cada vez mas larga
             Result.retry()
+        } finally {
+            // la app puede estar cerrada y el proceso terminar antes del proximo lote de spans
+            Telemetria.enviarPendientes()
         }
     }
 }
