@@ -9,7 +9,6 @@ import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,10 +35,10 @@ class CasoFiscalizacionDAOTest {
 
     private final CasoFiscalizacionDAO dao = new CasoFiscalizacionDAO();
     private RuntimeException alHacerFlush;
-    private final List<Object> persistidas = new ArrayList<>();
+    private Notificacion notificacion;
 
-    // sin base: find devuelve entidades vacias (salvo el caso, con su vehiculo y empresa), persist las guarda
-    // y el flush falla con lo que diga cada test
+    // sin base: find devuelve entidades vacias (salvo el caso, con su vehiculo y empresa), persist guarda la
+    // notificacion y el flush falla con lo que diga cada test
     @BeforeEach
     void preparar() throws Exception {
         EntityManager entityManager = (EntityManager) Proxy.newProxyInstance(getClass().getClassLoader(),
@@ -47,8 +46,8 @@ class CasoFiscalizacionDAOTest {
                     if (metodo.getName().equals("find")) {
                         return args[0] == CasoFiscalizacion.class ? caso() : ((Class<?>) args[0]).getConstructor().newInstance();
                     }
-                    if (metodo.getName().equals("persist")) {
-                        persistidas.add(args[0]);
+                    if (metodo.getName().equals("persist") && args[0] instanceof Notificacion n) {
+                        notificacion = n;
                     }
                     if (metodo.getName().equals("flush") && alHacerFlush != null) {
                         throw alHacerFlush;
@@ -66,10 +65,6 @@ class CasoFiscalizacionDAOTest {
         CasoFiscalizacion caso = new CasoFiscalizacion(TipoInfraccion.EXCESO_CARGA, "h1", AHORA, AHORA, vehiculo, null);
         caso.setId(7L);
         return caso;
-    }
-
-    private Notificacion notificacion() {
-        return persistidas.stream().filter(Notificacion.class::isInstance).map(Notificacion.class::cast).findFirst().orElseThrow();
     }
 
     private static PersistenceException errorDeBase(String estadoSql) {
@@ -115,15 +110,15 @@ class CasoFiscalizacionDAOTest {
     void elDescargoAvisaALosFuncionarios() {
         dao.presentarDescargo(7L, 2L, "texto", AHORA);
 
-        assertEquals(DestinatarioNotificacion.FUNCIONARIO, notificacion().getDestinatario());
-        assertEquals("Transportes Sur presento un descargo en el caso 7 (EXCESO_CARGA, vehiculo SBA1234).", notificacion().getMensaje());
+        assertEquals(DestinatarioNotificacion.FUNCIONARIO, notificacion.getDestinatario());
+        assertEquals("Transportes Sur presento un descargo en el caso 7 (EXCESO_CARGA, vehiculo SBA1234).", notificacion.getMensaje());
     }
 
     @Test
     void laResolucionAvisaALaEmpresa() {
         dao.resolver(7L, 2L, EstadoCaso.DESESTIMADA, "fundamento", AHORA);
 
-        assertEquals(DestinatarioNotificacion.EMPRESA, notificacion().getDestinatario());
-        assertEquals("El caso 7 (EXCESO_CARGA, vehiculo SBA1234) fue desestimado.", notificacion().getMensaje());
+        assertEquals(DestinatarioNotificacion.EMPRESA, notificacion.getDestinatario());
+        assertEquals("El caso 7 (EXCESO_CARGA, vehiculo SBA1234) fue desestimado.", notificacion.getMensaje());
     }
 }
