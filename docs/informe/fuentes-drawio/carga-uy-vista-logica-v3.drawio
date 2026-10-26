@@ -184,6 +184,9 @@
         <mxCell id="n3LUVrwLm8043RZZN8cL-35" edge="1" parent="1" source="n3LUVrwLm8043RZZN8cL-8" style="endArrow=open;endSize=9;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.968;entryY=0;entryDx=0;entryDy=0;" target="n3LUVrwLm8043RZZN8cL-9">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="reportes-mensajeria" edge="1" parent="1" source="n3LUVrwLm8043RZZN8cL-8" style="endArrow=open;endSize=9;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="n3LUVrwLm8043RZZN8cL-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="n3LUVrwLm8043RZZN8cL-36" edge="1" parent="1" source="n3LUVrwLm8043RZZN8cL-7" style="endArrow=open;endSize=9;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.0886;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="n3LUVrwLm8043RZZN8cL-13">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>

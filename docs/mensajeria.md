@@ -11,6 +11,7 @@ El alta asíncrona de empresas usa el broker embebido de WildFly.
 | Productor | Destino | Broker | Consumidor |
 | --- | --- | --- | --- |
 | Nodo de tracking | `queue_tracking` | Servicio `artemis` | `IngestaTrackingMDB` |
+| `InformeEJB` (exportación de reportes) | `queue_informes` | Servicio `artemis` | `InformesMDB` |
 | Cliente de consola | `queue_alta_empresa` | WildFly | `EmpresaQueueMDB` |
 
 ```mermaid
@@ -18,16 +19,20 @@ flowchart LR
     N[Nodo de tracking] -->|TLS / 61617| A[Artemis externo]
     A -->|queue_tracking| T[IngestaTrackingMDB]
     T --> I[IngestaTrackingEJB]
+    R[InformeEJB] -->|queue_informes| A
+    A -->|queue_informes| M[InformesMDB]
+    M --> G[GeneradorInformesEJB]
     C[Cliente de consola] --> W[Broker de WildFly]
     W -->|queue_alta_empresa| E[EmpresaQueueMDB]
     E --> B[EmpresaEJB]
 ```
 
 El central accede al broker externo por `artemis:61616`, con la connection factory
-`java:/jms/ArtemisCF`. El destino local es `java:/jms/queue/queue_tracking`.
+`java:/jms/ArtemisCF`. Los destinos locales son `java:/jms/queue/queue_tracking` y
+`java:/jms/queue/queue_informes`.
 [artemis.cli](../carga-uy/config/artemis.cli) configura la conexión y
 [jboss-ejb3.xml](../carga-uy/carga-uy-ejb/src/main/resources/META-INF/jboss-ejb3.xml)
-asocia el MDB de tracking al adaptador de recursos externo.
+asocia los MDB de tracking y de informes al adaptador de recursos externo.
 
 `queue_alta_empresa` se crea en el [Dockerfile](../carga-uy/Dockerfile), con entradas JNDI
 `java:/jms/queue/queue_alta_empresa` y `java:jboss/exported/jms/queue/queue_alta_empresa`.
@@ -101,6 +106,18 @@ La consola del broker está en http://localhost:8161/, con `artemis` / `artemis`
 Permite inspeccionar la cola y la DLQ; las métricas y la correlación con errores del consumidor
 están en [observabilidad](observabilidad.md). La simulación de duplicados, desorden y desconexión
 se configura desde el [nodo de tracking](../nodo-tracking/README.md#configuración).
+
+## Contrato de exportaciones de reportes
+
+`queue_informes` recibe un `TextMessage` con el id del `Informe` que la autoridad pidió desde el
+tablero (CU-16). `InformeEJB.exportar` guarda el informe en estado `PENDIENTE` y envía el mensaje
+dentro de la misma transacción, así que el broker solo lo entrega si el pedido quedó guardado.
+
+`InformesMDB` llama a `GeneradorInformesEJB`, que vuelve a calcular los indicadores con los filtros
+del informe, arma el CSV o el PDF y lo guarda con el estado `GENERADO`. Si el informe ya no está
+pendiente (un mensaje reentregado), no hace nada. Si falla la generación, el informe queda `FALLIDO` y
+la autoridad puede volver a pedirlo; si falla algo de infraestructura, la excepción sigue de largo y
+el broker reentrega el mensaje cada 60 segundos, hasta 3 veces, antes de pasarlo a `DLQ`.
 
 ## Contrato de alta de empresas
 
