@@ -1,32 +1,47 @@
-# React + TypeScript + Vite
+# Frontend de carga.uy
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Interfaz web en React y TypeScript, con Vite, Tailwind CSS y Oxlint.
 
-Currently, two official plugins are available:
+## Ejecutar en desarrollo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Requiere Node.js 24, npm y el [central levantado](../README.md#ejecución-local).
+Desde la raíz del repositorio, en PowerShell:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+cd frontend
+Copy-Item .env.example .env
+npm ci
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+En Bash, usar `cp .env.example .env` para la copia. La aplicación queda en http://localhost:5173/.
+
+## Configurar el backend
+
+El archivo [`.env.example`](.env.example) contiene la configuración local:
+
+```dotenv
+VITE_API_TARGET=http://localhost:8080/carga-uy
+```
+
+Vite reenvía los pedidos a `/api` hacia esa dirección. Para apuntar a un central remoto,
+crear `.env.local` con su URL y reiniciar `npm run dev`:
+
+```dotenv
+VITE_API_TARGET=https://URL_DEL_CENTRAL/carga-uy
+```
+
+Esta variable configura el proxy de desarrollo. El login también depende del callback y de
+`CARGAUY_FRONTEND_URL` en el central; ver la [documentación de seguridad](../docs/seguridad.md).
+
+## Verificar cambios
+
+Desde `frontend`:
+
+```sh
+npm run lint
+npm run build
+```
+
+El build comprueba los tipos con TypeScript y genera la aplicación en `dist/`.
+El [CI](../.github/workflows/ci.yml) ejecuta estas mismas verificaciones.
