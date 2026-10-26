@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { useSession } from '@/auth/useSession'
 import AppSidebar from './AppSidebar'
 import Logo from './Logo'
+import Notificaciones from './Notificaciones'
 import UserMenu from './UserMenu'
 
 function AppShell() {
@@ -14,7 +15,8 @@ function AppShell() {
       <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
         <SidebarTrigger />
         <Logo />
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          {(profile === 'FUNCIONARIO' || profile === 'RESPONSABLE') && <Notificaciones />}
           {session ? (
             <UserMenu session={session} />
           ) : (

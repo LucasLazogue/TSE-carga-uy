@@ -1,9 +1,11 @@
 package tse.cargauy.negocio.fiscalizacion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ import tse.cargauy.dtos.DescargoDto;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroCasos;
+import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ResolucionDto;
 import tse.cargauy.dtos.VehiculoDto;
@@ -276,6 +279,46 @@ class CasoFiscalizacionEJBTest {
         assertEquals(1, ejb.getNotificaciones(PAGINA).getTotal());
         usuario = 7777L;
         assertEquals(0, ejb.getNotificaciones(PAGINA).getTotal());
+    }
+
+    @Test
+    void elDescargoLesLlegaALosFuncionarios() {
+        Long id = ejb.registrarCaso(hecho("h1"), evidencia()).getId();
+        ejb.presentarDescargo(id, new DescargoDto("descargo"));
+
+        assertEquals(1, ejb.getNotificaciones(PAGINA).getTotal());
+        usuario = FUNCIONARIO;
+        List<NotificacionDto> avisos = ejb.getNotificacionesFuncionario(PAGINA).getItems();
+        assertEquals(1, avisos.size());
+        assertEquals(id, avisos.get(0).getIdCaso());
+        assertFalse(avisos.get(0).isLeida());
+    }
+
+    @Test
+    void laResolucionLeLlegaALaEmpresa() {
+        Long id = casos.agregar("v", EMPRESA, EstadoCaso.NOTIFICADA, AHORA.minusDays(1)).getId();
+        usuario = FUNCIONARIO;
+        ejb.resolver(id, new ResolucionDto(EstadoCaso.CONFIRMADA, "fundamento"));
+
+        assertEquals(0, ejb.getNotificacionesFuncionario(PAGINA).getTotal());
+        usuario = RESPONSABLE;
+        List<NotificacionDto> avisos = ejb.getNotificaciones(PAGINA).getItems();
+        assertEquals(1, avisos.size());
+        assertEquals(id, avisos.get(0).getIdCaso());
+    }
+
+    @Test
+    void marcarLeidasSoloTocaLasDeQuienLasLee() {
+        Long id = ejb.registrarCaso(hecho("h1"), evidencia()).getId();
+        ejb.presentarDescargo(id, new DescargoDto("descargo"));
+
+        ejb.marcarNotificacionesLeidas();
+
+        assertTrue(ejb.getNotificaciones(PAGINA).getItems().get(0).isLeida());
+        usuario = FUNCIONARIO;
+        assertFalse(ejb.getNotificacionesFuncionario(PAGINA).getItems().get(0).isLeida());
+        ejb.marcarNotificacionesFuncionarioLeidas();
+        assertTrue(ejb.getNotificacionesFuncionario(PAGINA).getItems().get(0).isLeida());
     }
 
     @Test

@@ -24,6 +24,7 @@ import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PistaAuditoriaDto;
 import tse.cargauy.dtos.ResolucionDto;
 import tse.cargauy.entities.AccionAuditoria;
+import tse.cargauy.entities.DestinatarioNotificacion;
 import tse.cargauy.entities.EstadoCaso;
 
 class CasosEnMemoria extends CasoFiscalizacionDAO {
@@ -31,6 +32,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     final Map<Long, CasoFiscalizacionDto> casos = new LinkedHashMap<>();
     final List<PistaAuditoriaDto> auditoria = new ArrayList<>();
     final List<NotificacionDto> notificaciones = new ArrayList<>();
+    final List<NotificacionDto> notificacionesFuncionario = new ArrayList<>();
     Integer plazoDescargo = 10;
     Long empresaDeLosVehiculos;
     FiltroCasos ultimoFiltro;
@@ -90,10 +92,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
         caso.setEstado(EstadoCaso.NOTIFICADA);
         caso.setFechaNotificacion(fecha);
         caso.setVenceDescargo(venceDescargo);
-        NotificacionDto notificacion = new NotificacionDto();
-        notificacion.setIdCaso(id);
-        notificacion.setIdEmpresa(caso.getIdEmpresa());
-        notificaciones.add(notificacion);
+        avisar(notificaciones, caso);
         auditar(caso, "SISTEMA", AccionAuditoria.NOTIFICAR, anterior);
     }
 
@@ -105,6 +104,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
         descargo.setCedulaPresentadoPor(String.valueOf(idCiudadano));
         caso.setDescargo(descargo);
         caso.setEstado(EstadoCaso.EN_DESCARGO);
+        avisar(notificacionesFuncionario, caso);
         auditar(caso, String.valueOf(idCiudadano), AccionAuditoria.PRESENTAR_DESCARGO, anterior);
     }
 
@@ -116,6 +116,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
         resolucion.setCedulaFuncionario(String.valueOf(idFuncionario));
         caso.setResolucion(resolucion);
         caso.setEstado(resultado);
+        avisar(notificaciones, caso);
         auditar(caso, String.valueOf(idFuncionario),
                 resultado == EstadoCaso.CONFIRMADA ? AccionAuditoria.CONFIRMAR : AccionAuditoria.DESESTIMAR, anterior);
     }
@@ -126,9 +127,14 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     }
 
     @Override
-    public PaginaDto<NotificacionDto> getNotificaciones(List<Long> idsEmpresa, Paginacion paginacion) {
-        List<NotificacionDto> items = notificaciones.stream().filter(n -> idsEmpresa.contains(n.getIdEmpresa())).toList();
+    public PaginaDto<NotificacionDto> getNotificaciones(DestinatarioNotificacion destinatario, List<Long> idsEmpresa, Paginacion paginacion) {
+        List<NotificacionDto> items = delDestinatario(destinatario, idsEmpresa).stream().map(CasosEnMemoria::copia).toList();
         return new PaginaDto<>(items, items.size(), paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public void marcarLeidas(DestinatarioNotificacion destinatario, List<Long> idsEmpresa) {
+        delDestinatario(destinatario, idsEmpresa).forEach(n -> n.setLeida(true));
     }
 
     @Override
@@ -164,6 +170,18 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private List<NotificacionDto> delDestinatario(DestinatarioNotificacion destinatario, List<Long> idsEmpresa) {
+        List<NotificacionDto> lista = destinatario == DestinatarioNotificacion.EMPRESA ? notificaciones : notificacionesFuncionario;
+        return lista.stream().filter(n -> idsEmpresa == null || idsEmpresa.contains(n.getIdEmpresa())).toList();
+    }
+
+    private static void avisar(List<NotificacionDto> lista, CasoFiscalizacionDto caso) {
+        NotificacionDto notificacion = new NotificacionDto();
+        notificacion.setIdCaso(caso.getId());
+        notificacion.setIdEmpresa(caso.getIdEmpresa());
+        lista.add(notificacion);
     }
 
     private void auditar(CasoFiscalizacionDto caso, String usuario, AccionAuditoria accion, EstadoCaso anterior) {

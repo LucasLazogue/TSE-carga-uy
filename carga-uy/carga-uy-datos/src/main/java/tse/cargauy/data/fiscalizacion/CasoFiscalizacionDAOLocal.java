@@ -11,6 +11,7 @@ import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PistaAuditoriaDto;
+import tse.cargauy.entities.DestinatarioNotificacion;
 import tse.cargauy.entities.EstadoCaso;
 
 @Local
@@ -25,7 +26,9 @@ public interface CasoFiscalizacionDAOLocal {
     void presentarDescargo(Long id, Long idCiudadano, String texto, LocalDateTime fecha);
     void resolver(Long id, Long idFuncionario, EstadoCaso resultado, String fundamento, LocalDateTime fecha);
     List<PistaAuditoriaDto> getAuditoria(Long idCaso);
-    PaginaDto<NotificacionDto> getNotificaciones(List<Long> idsEmpresa, Paginacion paginacion);
+    // idsEmpresa null: sin filtrar por empresa
+    PaginaDto<NotificacionDto> getNotificaciones(DestinatarioNotificacion destinatario, List<Long> idsEmpresa, Paginacion paginacion);
+    void marcarLeidas(DestinatarioNotificacion destinatario, List<Long> idsEmpresa);
     Integer getNormaVigente(String clave, LocalDate fecha);
     void addNorma(String clave, int valor, LocalDate vigenteDesde);
 }

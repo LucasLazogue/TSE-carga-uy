@@ -34,4 +34,10 @@ public interface CasoFiscalizacionEJBLocal {
     CasoFiscalizacionDto presentarDescargo(Long id, DescargoDto descargo);
 
     PaginaDto<NotificacionDto> getNotificaciones(Paginacion paginacion);
+
+    void marcarNotificacionesLeidas();
+
+    PaginaDto<NotificacionDto> getNotificacionesFuncionario(Paginacion paginacion);
+
+    void marcarNotificacionesFuncionarioLeidas();
 }

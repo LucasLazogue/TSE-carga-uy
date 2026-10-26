@@ -88,6 +88,7 @@ public class Serializers {
         dto.setIdEmpresa(notificacion.getEmpresa().getId());
         dto.setFecha(notificacion.getFecha());
         dto.setMensaje(notificacion.getMensaje());
+        dto.setLeida(notificacion.isLeida());
         return dto;
     }
 
