@@ -246,6 +246,25 @@ services:
       balanzas-norte:
         condition: service_healthy
 
+  simulador-balanzas:
+    image: alpine:3.22
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    volumes:
+      - ../nodo-balanzas/scripts:/scripts:ro
+      - ../nodo-balanzas/datos:/datos:ro
+      - balanzasclaves:/claves:ro
+    command:
+      - sh
+      - -c
+      - |
+        apk add -q curl jq tzdata
+        sh /scripts/simular.sh http://balanzas-sur:8080/nodo-balanzas /claves/balanzas-sur.json /datos/pasadas-sur.json
+        sh /scripts/simular.sh http://balanzas-norte:8080/nodo-balanzas /claves/balanzas-norte.json /datos/pasadas-norte.json
+    depends_on:
+      balanzas-alta:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
   mongodata:
