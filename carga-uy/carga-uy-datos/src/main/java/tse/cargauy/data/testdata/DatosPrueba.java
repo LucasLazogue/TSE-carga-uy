@@ -158,13 +158,13 @@ public class DatosPrueba {
             Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
 
             agregarCaso(TipoInfraccion.EXCESO_CARGA, scc, ahora.minusDays(3), ahora.minusDays(2),
-                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanza-r5-km30/1001", ahora.minusDays(3), "36500 kg", "33800 kg",
+                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanzas-sur/balanza-r5-km30/1001", ahora.minusDays(3), "36500 kg", "33800 kg",
                             "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 5 km 30 por encima del maximo."));
             agregarCaso(TipoInfraccion.DESVIO_RUTA, scc, ahora.minusDays(16), ahora.minusDays(15),
                     new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-1", ahora.minusDays(16), "12,4 km", "0 km",
                             "2 km", "Posiciones a mas de 2 km del recorrido esperado durante 40 minutos."));
             Long enDescargo = agregarCaso(TipoInfraccion.EXCESO_CARGA, scc, ahora.minusDays(7), ahora.minusDays(6),
-                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanza-r1-km45/2002", ahora.minusDays(7), "35100 kg", "33800 kg",
+                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanzas-sur/balanza-r1-km45/2002", ahora.minusDays(7), "35100 kg", "33800 kg",
                             "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 1 km 45 por encima del maximo."));
             agregarCaso(TipoInfraccion.VIAJE_SIN_GUIA, sbb, ahora.minusDays(2), ahora.minusDays(1),
                     new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-2", ahora.minusDays(2), "en movimiento", "sin viaje",
