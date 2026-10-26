@@ -9,9 +9,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(indexes = @Index(name = "ix_permiso_estado_vigencia", columnList = "estado, validoDesde, validoHasta"))
 public class Permiso {
 
     @Id @GeneratedValue
