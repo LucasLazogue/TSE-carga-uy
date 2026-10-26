@@ -43,7 +43,9 @@ public class InformeDAO implements InformeDAOLocal {
 
     private long habilitados(String campo, LocalDate fecha) {
         return consulta("SELECT COUNT(DISTINCT " + campo + ") FROM Permiso p WHERE p.estado = :aprobado"
-                        + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha", Long.class)
+                        + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha"
+                        + " AND EXISTS (SELECT i FROM Itv i WHERE i.vehiculo = p.vehiculo"
+                        + " AND i.fechaInspeccion <= :fecha AND i.fechaVencimiento >= :fecha)", Long.class)
                 .setParameter("aprobado", EstadoPermiso.APROBADO)
                 .setParameter("fecha", fecha)
                 .getSingleResult();
