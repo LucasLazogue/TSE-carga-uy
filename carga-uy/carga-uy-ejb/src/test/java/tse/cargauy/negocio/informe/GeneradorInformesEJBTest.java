@@ -105,6 +105,16 @@ class GeneradorInformesEJBTest {
     }
 
     @Test
+    void enPdfGeneraUnDocumento() {
+        informe.setFormato(FormatoInforme.PDF);
+
+        generador.generar(1L);
+
+        assertEquals("%PDF-", new String(guardado, 0, 5, StandardCharsets.US_ASCII));
+        assertFalse(fallido);
+    }
+
+    @Test
     void siYaNoEstaPendienteNoLoVuelveAGenerar() {
         informe.setEstado(EstadoInforme.GENERADO);
 

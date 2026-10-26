@@ -29,6 +29,7 @@ import tse.cargauy.entities.TipoInforme;
 public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
 
     private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final Locale URUGUAY = Locale.of("es", "UY");
 
     private static final Logger LOGGER = Logger.getLogger(GeneradorInformesEJB.class.getName());
@@ -45,7 +46,7 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         try {
             FiltroInforme filtro = new FiltroInforme(informe.getPeriodoDesde(), informe.getPeriodoHasta(), informe.getIdTipoCarga());
             IndicadoresDto indicadores = InformeEJB.calcular(informeDAO, filtro, ahora.toLocalDate());
-            byte[] contenido = exportar(informe, tabla(informe.getTipo(), indicadores));
+            byte[] contenido = exportar(informe, tabla(informe.getTipo(), indicadores), ahora);
             informeDAO.guardarContenido(idInforme, contenido, ahora());
             LOGGER.info("informe generacion=GENERADO informe=" + idInforme + " bytes=" + contenido.length);
         } catch (RuntimeException e) {
@@ -58,11 +59,15 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private static byte[] exportar(InformeDto informe, Tabla<?> tabla) {
+    private static byte[] exportar(InformeDto informe, Tabla<?> tabla, LocalDateTime ahora) {
         if (informe.getFormato() == FormatoInforme.CSV) {
             return ExportadorCsv.exportar(tabla);
         }
-        throw new UnsupportedOperationException("formato " + informe.getFormato());
+        String tipoCarga = informe.getTipoCarga() == null ? TextosInforme.resolver("informe.tipoCarga.todos") : informe.getTipoCarga();
+        return ExportadorPdf.exportar(informe.getTipo().getNombre(), List.of(
+                TextosInforme.resolver("informe.periodo", informe.getPeriodoDesde().format(DIA), informe.getPeriodoHasta().format(DIA)),
+                TextosInforme.resolver("informe.tipoCarga", tipoCarga),
+                TextosInforme.resolver("informe.generado", ahora.format(HORA))), tabla);
     }
 
     static Tabla<?> tabla(TipoInforme tipo, IndicadoresDto indicadores) {
