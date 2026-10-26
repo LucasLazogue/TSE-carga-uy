@@ -121,6 +121,7 @@ services:
       CARGAUY_API_URL: ${CARGAUY_API_URL:-}
       CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
       CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
+      CARGAUY_CLAVE_NODOS: ${CARGAUY_CLAVE_NODOS:-secreto-local-de-claves-de-nodos-solo-desarrollo}
       MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}
       MONGO_DB: ${MONGO_DB:-cargauy}
       ARTEMIS_HOST: ${ARTEMIS_HOST:-artemis}

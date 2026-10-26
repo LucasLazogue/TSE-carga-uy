@@ -13,5 +13,6 @@ public interface NodoPerifericoEJBLocal {
     void habilitar(Long id);
     void deshabilitar(Long id);
     void cambiarPuntoAcceso(Long id, String puntoAcceso);
+    void cambiarClave(Long id, String clave);
     void darDeBaja(Long id);
 }

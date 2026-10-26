@@ -30,6 +30,16 @@
                                          styleClass="ui-button-outlined" />
                     </div>
                 </p:column>
+                <p:column headerText="Clave">
+                    <div class="flex gap-2">
+                        <p:password id="clave" value="#{nodo.clave}" placeholder="Nueva clave" styleClass="flex-1"
+                                    inputStyleClass="w-full" redisplay="false" />
+                        <p:commandButton icon="pi pi-key" title="Cambiar clave"
+                                         action="#{nodoView.cambiarClave(nodo)}"
+                                         process="@this clave" update="@form"
+                                         styleClass="ui-button-outlined" />
+                    </div>
+                </p:column>
                 <p:column headerText="Estado">
                     <p:tag value="#{nodo.estado}" severity="#{nodoView.habilitado(nodo) ? 'success' : 'warning'}" />
                 </p:column>
@@ -73,6 +83,11 @@
                     <p:outputLabel for="puntoAcceso" value="Punto de acceso" styleClass="block mb-2" />
                     <p:inputText id="puntoAcceso" value="#{nodoView.nodo.puntoAcceso}" placeholder="https://..."
                                  styleClass="w-full" />
+                </div>
+                <div class="field">
+                    <p:outputLabel for="claveNueva" value="Clave del nodo (solo balanzas)" styleClass="block mb-2" />
+                    <p:password id="claveNueva" value="#{nodoView.nodo.clave}" styleClass="w-full"
+                                inputStyleClass="w-full" redisplay="false" />
                 </div>
                 <div class="flex justify-content-end gap-2">
                     <p:commandButton value="Cancelar" type="button" onclick="PF('registro').hide()"

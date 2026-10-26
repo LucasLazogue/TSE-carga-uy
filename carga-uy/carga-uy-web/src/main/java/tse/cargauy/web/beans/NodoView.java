@@ -63,6 +63,12 @@ public class NodoView implements Serializable {
         cargar();
     }
 
+    public void cambiarClave(NodoPerifericoDto n) {
+        nodoEJB.cambiarClave(n.getId(), n.getClave());
+        mensaje("Clave de " + n.getIdentificador() + " actualizada.");
+        cargar();
+    }
+
     public void darDeBaja(NodoPerifericoDto n) {
         nodoEJB.darDeBaja(n.getId());
         mensaje("Nodo " + n.getIdentificador() + " dado de baja.");

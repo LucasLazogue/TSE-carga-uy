@@ -9,6 +9,7 @@ import jakarta.persistence.PersistenceContext;
 import tse.cargauy.dtos.NodoPerifericoDto;
 import tse.cargauy.entities.EstadoNodo;
 import tse.cargauy.entities.NodoPeriferico;
+import tse.cargauy.entities.TipoNodo;
 
 @Stateless
 public class NodoPerifericoDAO implements NodoPerifericoDAOLocal {
@@ -42,8 +43,36 @@ public class NodoPerifericoDAO implements NodoPerifericoDAOLocal {
     }
 
     @Override
-    public void addNodo(NodoPerifericoDto nodoDto) {
-        entityManager.persist(Serializers.toEntity(nodoDto));
+    public List<NodoPerifericoDto> getHabilitados(TipoNodo tipo) {
+        List<NodoPerifericoDto> res = new ArrayList<>();
+        for (NodoPeriferico n : entityManager.createNamedQuery(NodoPeriferico.HABILITADOS_POR_TIPO, NodoPeriferico.class)
+                .setParameter("tipo", tipo)
+                .setParameter("habilitado", EstadoNodo.HABILITADO)
+                .getResultList()) {
+            res.add(Serializers.toDto(n));
+        }
+        return res;
+    }
+
+    @Override
+    public String getClaveCifrada(Long id) {
+        NodoPeriferico nodo = entityManager.find(NodoPeriferico.class, id);
+        return nodo == null ? null : nodo.getClaveCifrada();
+    }
+
+    @Override
+    public void addNodo(NodoPerifericoDto nodoDto, String claveCifrada) {
+        NodoPeriferico nodo = Serializers.toEntity(nodoDto);
+        nodo.setClaveCifrada(claveCifrada);
+        entityManager.persist(nodo);
+    }
+
+    @Override
+    public void cambiarClave(Long id, String claveCifrada) {
+        NodoPeriferico nodo = entityManager.find(NodoPeriferico.class, id);
+        if (nodo != null) {
+            nodo.setClaveCifrada(claveCifrada);
+        }
     }
 
     @Override

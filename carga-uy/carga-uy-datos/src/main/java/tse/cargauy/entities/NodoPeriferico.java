@@ -14,12 +14,15 @@ import jakarta.persistence.NamedQuery;
     @NamedQuery(name = NodoPeriferico.VIGENTES,
             query = "SELECT n FROM NodoPeriferico n WHERE n.estado <> :baja ORDER BY n.identificador"),
     @NamedQuery(name = NodoPeriferico.POR_IDENTIFICADOR,
-            query = "SELECT n FROM NodoPeriferico n WHERE n.identificador = :identificador")
+            query = "SELECT n FROM NodoPeriferico n WHERE n.identificador = :identificador"),
+    @NamedQuery(name = NodoPeriferico.HABILITADOS_POR_TIPO,
+            query = "SELECT n FROM NodoPeriferico n WHERE n.tipo = :tipo AND n.estado = :habilitado ORDER BY n.identificador")
 })
 public class NodoPeriferico {
 
     public static final String VIGENTES = "NodoPeriferico.vigentes";
     public static final String POR_IDENTIFICADOR = "NodoPeriferico.porIdentificador";
+    public static final String HABILITADOS_POR_TIPO = "NodoPeriferico.habilitadosPorTipo";
 
     @Id @GeneratedValue
     private Long id;
@@ -32,6 +35,7 @@ public class NodoPeriferico {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoNodo estado;
+    private String claveCifrada;
 
     public NodoPeriferico() {
     }
@@ -74,6 +78,14 @@ public class NodoPeriferico {
 
     public void setEstado(EstadoNodo estado) {
         this.estado = estado;
+    }
+
+    public String getClaveCifrada() {
+        return claveCifrada;
+    }
+
+    public void setClaveCifrada(String claveCifrada) {
+        this.claveCifrada = claveCifrada;
     }
 
 }

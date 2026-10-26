@@ -14,6 +14,7 @@ public class NodoPerifericoDto implements Serializable {
     private TipoNodo tipo;
     private String puntoAcceso;
     private EstadoNodo estado;
+    private String clave;
 
     public NodoPerifericoDto() {
     }
@@ -62,6 +63,14 @@ public class NodoPerifericoDto implements Serializable {
 
     public void setEstado(EstadoNodo estado) {
         this.estado = estado;
+    }
+
+    public String getClave() {
+        return clave;
+    }
+
+    public void setClave(String clave) {
+        this.clave = clave;
     }
 
 }
