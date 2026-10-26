@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import io.opentelemetry.context.Context;
 import tse.cargauy.data.nodo.NodoPerifericoDAO;
 import tse.cargauy.data.posicion.EventoPosicionDAO;
 import tse.cargauy.data.vehiculo.VehiculoDAO;
@@ -139,7 +140,7 @@ class IngestaTrackingEJBTest {
     void alTerminarAvisaQueLaPosicionSePuedeMarcarComoProcesada() {
         ejb.procesar(evento("ev-1", "tracking-1", "STA1234"));
 
-        assertEquals(List.of(new PosicionProcesada(3L, "ev-1")), terminadas.disparados);
+        assertEquals(List.of(new PosicionProcesada(3L, "ev-1", Context.root())), terminadas.disparados);
     }
 
     @Test
@@ -161,7 +162,7 @@ class IngestaTrackingEJBTest {
 
         assertEquals(ResultadoIngesta.COMPLETADO, ejb.procesar(evento("ev-1", "tracking-1", "STA1234")));
         assertEquals(1, guardados.size());
-        assertEquals(List.of(new PosicionProcesada(3L, "ev-1")), terminadas.disparados);
+        assertEquals(List.of(new PosicionProcesada(3L, "ev-1", Context.root())), terminadas.disparados);
     }
 
     // el id del evento lo genera cada nodo: dos nodos pueden repetirlo sin que sea el mismo evento

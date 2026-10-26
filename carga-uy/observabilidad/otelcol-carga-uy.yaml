@@ -1,13 +1,15 @@
 # Se suma a la configuracion del colector que trae la imagen (otelcol-config.yaml), que ya recibe trazas, metricas y
 # logs por OTLP del componente central y de los nodos.
 receivers:
-  # la plataforma consulta los health checks del componente central y del nodo de tracking
+  # la plataforma consulta los health checks del componente central y de los nodos perifericos
   http_check/salud:
     collection_interval: 15s
     targets:
       - endpoint: http://carga-uy:9990/health/ready
       - endpoint: http://carga-uy:8080/carga-uy/api/salud
       - endpoint: http://nodo-tracking:8081/health
+      - endpoint: http://balanzas-sur:9990/health/ready
+      - endpoint: http://balanzas-norte:9990/health/ready
 
 service:
   pipelines:

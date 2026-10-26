@@ -2,7 +2,7 @@
 
 [Proyecto](../README.md) · [Infraestructura](infraestructura.md) · [Mensajería](mensajeria.md)
 
-El central y el nodo de tracking envían métricas, trazas y logs a una plataforma basada en
+El central, el nodo de tracking y los nodos de balanzas envían métricas, trazas y logs a una plataforma basada en
 `grafana/otel-lgtm`. El colector OpenTelemetry recibe las señales; Prometheus, Tempo y Loki
 permiten consultarlas desde Grafana.
 
@@ -12,7 +12,8 @@ permiten consultarlas desde Grafana.
 flowchart LR
     C[Central / WildFly] -->|OTLP| O[Colector OpenTelemetry]
     N[Nodo de tracking] -->|OTLP HTTP| O
-    H[Health checks del central y tracking] -->|Consulta periódica| O
+    B[Nodos de balanzas / WildFly] -->|OTLP| O
+    H[Health checks del central y los nodos] -->|Consulta periódica| O
     O --> P[Prometheus: métricas]
     O --> T[Tempo: trazas]
     O --> L[Loki: logs]
@@ -21,11 +22,12 @@ flowchart LR
     L --> G
 ```
 
-La configuración de WildFly está en [observabilidad.cli](../carga-uy/config/observabilidad.cli).
+La configuración de WildFly está en [observabilidad.cli](../carga-uy/config/observabilidad.cli) para el central y en
+[observabilidad.cli](../nodo-balanzas/config/observabilidad.cli) para los nodos de balanzas, que se distinguen por
+`OTEL_SERVICE_NAME` (`balanzas-sur`, `balanzas-norte`).
 La imagen de la plataforma y su configuración están en [carga-uy/observabilidad](../carga-uy/observabilidad/).
 El [colector](../carga-uy/observabilidad/otelcol-carga-uy.yaml) consulta cada 15 segundos la salud
-de WildFly, la API del central y tracking. Los nodos de balanzas tienen checks de arranque en Compose;
-esta configuración del colector no los incluye en el monitoreo periódico.
+de WildFly, la API del central, tracking y los nodos de balanzas.
 
 ## Métricas
 
@@ -50,6 +52,19 @@ Si esa consulta falla, publica un valor no disponible (`NaN`) en lugar de conser
 WildFly instrumenta las llamadas REST. Tracking abre una traza por lote publicado y agrega
 `traceparent` a las propiedades de cada mensaje JMS. `IngestaTrackingMDB` extrae ese contexto
 y crea el span de consumo; así se puede seguir una posición desde el nodo hasta el central.
+
+La fiscalización corre en otro hilo (`@Asynchronous`), que no hereda la traza: `DisparadorFiscalizacion` le pasa la
+del evento y `MotorFiscalizacionEJB` abre ahí su span. Las consultas a las balanzas corren en el ejecutor del
+servidor, al que `BalanzasEJB` le pasa la traza; WildFly instrumenta el cliente REST y agrega `traceparent` a cada
+consulta, y cada nodo de balanzas continúa la traza. Quedan así dos recorridos completos:
+
+| Recorrido | Spans |
+| --- | --- |
+| Posición de tracking | `publish queue_tracking` (nodo) → `process queue_tracking` → `fiscalizacion evaluar posicion` |
+| Fin de un viaje (AC23) | `POST /api/movil/sync` → `fiscalizacion evaluar viaje` → `GET` a cada nodo → `GET /api/pesajes` en `balanzas-sur` y `balanzas-norte` |
+| Reevaluación de una carga pendiente | `fiscalizacion reevaluar carga` (temporizador, cada minuto mientras falte algún nodo) → `GET` a cada nodo → `GET /api/pesajes` |
+
+En Grafana, **Explore → Tempo**, buscar por ejemplo `{name="fiscalizacion evaluar viaje"}` y abrir la traza.
 
 La ingesta agrega a los logs `trace_id`, `span_id` e `id_evento`. En la consola de WildFly,
 `trace_id` aparece después del nombre del hilo. El envío por OTLP permite correlacionar los

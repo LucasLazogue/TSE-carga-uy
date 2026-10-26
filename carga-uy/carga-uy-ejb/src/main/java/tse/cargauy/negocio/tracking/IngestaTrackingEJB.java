@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import io.opentelemetry.context.Context;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.enterprise.event.Event;
@@ -78,6 +79,6 @@ public class IngestaTrackingEJB implements IngestaTrackingEJBLocal {
     // los pasos que van despues de guardar la posicion, cuando se confirma la transaccion: la marca de procesada
     // (MarcadorPosiciones) y la evaluacion de las reglas de fiscalizacion (DisparadorFiscalizacion)
     private void terminar(EventoPosicionDto posicion) {
-        procesadas.fire(new PosicionProcesada(posicion.getIdNodo(), posicion.getIdEvento()));
+        procesadas.fire(new PosicionProcesada(posicion.getIdNodo(), posicion.getIdEvento(), Context.current()));
     }
 }

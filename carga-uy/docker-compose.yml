@@ -188,6 +188,11 @@ services:
       DB_HOST: pg-balanzas-sur
       NODO_CLAVE_CENTRAL: ${BALANZAS_SUR_CLAVE_CENTRAL:-clave-central-balanzas-sur}
       NODO_CLAVE_ADMIN: ${BALANZAS_SUR_CLAVE_ADMIN:-clave-admin-balanzas-sur}
+      # trazas, logs y metricas hacia la Plataforma de Observabilidad, con la misma proporcion de trazas que el central
+      OTEL_SERVICE_NAME: balanzas-sur
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
+      OTEL_ENDPOINT_METRICAS: ${OTEL_ENDPOINT_METRICAS:-http://observabilidad:4318/v1/metrics}
+      OTEL_PROPORCION_TRAZAS: ${OTEL_PROPORCION_TRAZAS:-1.0}
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
       interval: 5s
@@ -216,6 +221,11 @@ services:
       DB_HOST: pg-balanzas-norte
       NODO_CLAVE_CENTRAL: ${BALANZAS_NORTE_CLAVE_CENTRAL:-clave-central-balanzas-norte}
       NODO_CLAVE_ADMIN: ${BALANZAS_NORTE_CLAVE_ADMIN:-clave-admin-balanzas-norte}
+      # trazas, logs y metricas hacia la Plataforma de Observabilidad, con la misma proporcion de trazas que el central
+      OTEL_SERVICE_NAME: balanzas-norte
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
+      OTEL_ENDPOINT_METRICAS: ${OTEL_ENDPOINT_METRICAS:-http://observabilidad:4318/v1/metrics}
+      OTEL_PROPORCION_TRAZAS: ${OTEL_PROPORCION_TRAZAS:-1.0}
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
       interval: 5s

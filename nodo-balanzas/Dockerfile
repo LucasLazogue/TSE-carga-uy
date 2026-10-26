@@ -30,6 +30,9 @@ RUN $CLI --commands='embed-server,\
 /subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false),\
 stop-embedded-server'
 
+COPY --chown=jboss:jboss config/observabilidad.cli /opt/jboss/observabilidad.cli
+RUN $CLI --file=/opt/jboss/observabilidad.cli
+
 RUN rm -rf /opt/jboss/wildfly/standalone/configuration/standalone_xml_history
 
 COPY --from=build /app/target/nodo-balanzas.war /opt/jboss/wildfly/standalone/deployments/
