@@ -12,5 +12,7 @@ COPY --from=build /app/target/nodo-tracking.jar .
 COPY --from=build /app/target/lib lib
 # certificado del broker de desarrollo, para la conexion con TLS
 COPY tls tls
+# flotas de los nodos del compose (NODO_RUTAS); sin NODO_RUTAS, la de prueba completa
+COPY flotas flotas
 EXPOSE 8081
 CMD ["java", "-cp", "nodo-tracking.jar:lib/*", "tse.cargauy.nodotracking.NodoTracking"]

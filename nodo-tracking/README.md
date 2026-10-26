@@ -12,17 +12,20 @@ publicar en esa cola.
 - Si el broker no responde, los eventos quedan pendientes y se publican cuando vuelve. Si el que no
   responde es WildFly, el nodo publica igual y las posiciones esperan en la cola.
 - La flota por defecto (`src/main/resources/rutas-prueba.json`) coincide con los datos de prueba
-  del central.
+  del central. El compose levanta dos nodos, como dos proveedores de seguimiento, y la reparte:
+  `tracking-1` con `flotas/flota-sur.json` (STA1234, SBB5678) y `tracking-2` con
+  `flotas/flota-norte.json` (SCC9012, SDD3456). Cada uno tiene su usuario en el broker.
 
 ## Cómo levantarlo
 
 Preparar el [entorno local](../README.md#ejecución-local); el Compose ya incluye este nodo.
 
-El nodo tiene que estar registrado y habilitado en el central con el identificador de `NODO_ID`
-(`tracking-1` en el compose); si no, la ingesta descarta sus eventos. Hay que hacerlo una vez, y de
+Cada nodo tiene que estar registrado y habilitado en el central con el identificador de `NODO_ID`
+(`tracking-1` y `tracking-2` en el compose); si no, la ingesta descarta sus eventos
+(`NODO_DESCONOCIDO` o `NODO_NO_HABILITADO`) y los del otro nodo siguen entrando. Hay que hacerlo una vez, y de
 nuevo después de cada `docker compose down -v`. Desde el backoffice, en
 http://localhost:8080/carga-uy/admin/nodos.xhtml, ingresar con el administrador LDAP configurado
-en el README principal, registrar el identificador `tracking-1` con tipo `TRACKING` y habilitarlo.
+en el README principal, registrar los identificadores `tracking-1` y `tracking-2` con tipo `TRACKING` y habilitarlos.
 La API `/api/nodos` también requiere una sesión con rol `ADMINISTRADOR`.
 
 El contrato de posiciones, la persistencia y las reentregas están documentados en

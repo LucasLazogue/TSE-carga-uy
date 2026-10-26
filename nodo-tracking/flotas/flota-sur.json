@@ -1,0 +1,4 @@
+[
+  {"matricula": "STA1234", "origen": {"lat": -34.9011, "lon": -56.1645}, "destino": {"lat": -30.9053, "lon": -55.5508}, "velocidadKmh": 80},
+  {"matricula": "SBB5678", "origen": {"lat": -34.9011, "lon": -56.1645}, "destino": {"lat": -31.3833, "lon": -57.9667}, "velocidadKmh": 75}
+]
