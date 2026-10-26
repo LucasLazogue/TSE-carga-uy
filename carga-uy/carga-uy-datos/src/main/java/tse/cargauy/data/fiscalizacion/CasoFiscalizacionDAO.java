@@ -20,6 +20,7 @@ import jakarta.persistence.criteria.Root;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroCasos;
+import tse.cargauy.dtos.NormaFiscalizacionDto;
 import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
@@ -237,13 +238,20 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
 
     @Override
     public Integer getNormaVigente(String clave, LocalDate fecha) {
+        NormaFiscalizacionDto norma = getNorma(clave, fecha);
+        return norma == null ? null : norma.getValor();
+    }
+
+    @Override
+    public NormaFiscalizacionDto getNorma(String clave, LocalDate fecha) {
         return entityManager.createQuery(
-                        "SELECT n.valor FROM NormaFiscalizacion n WHERE n.clave = :clave AND n.vigenteDesde <= :fecha"
-                                + " ORDER BY n.vigenteDesde DESC, n.id DESC", Integer.class)
+                        "SELECT n FROM NormaFiscalizacion n WHERE n.clave = :clave AND n.vigenteDesde <= :fecha"
+                                + " ORDER BY n.vigenteDesde DESC, n.id DESC", NormaFiscalizacion.class)
                 .setParameter("clave", clave)
                 .setParameter("fecha", fecha)
                 .setMaxResults(1)
                 .getResultStream()
+                .map(Serializers::toDto)
                 .findFirst()
                 .orElse(null);
     }
@@ -251,6 +259,23 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     @Override
     public void addNorma(String clave, int valor, LocalDate vigenteDesde) {
         entityManager.persist(new NormaFiscalizacion(clave, valor, vigenteDesde));
+    }
+
+    @Override
+    public PaginaDto<NormaFiscalizacionDto> getNormas(String clave, Paginacion paginacion) {
+        List<NormaFiscalizacionDto> items = entityManager.createQuery(
+                        "SELECT n FROM NormaFiscalizacion n WHERE n.clave = :clave ORDER BY n.vigenteDesde DESC, n.id DESC",
+                        NormaFiscalizacion.class)
+                .setParameter("clave", clave)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultStream()
+                .map(Serializers::toDto)
+                .toList();
+        long total = entityManager.createQuery("SELECT COUNT(n) FROM NormaFiscalizacion n WHERE n.clave = :clave", Long.class)
+                .setParameter("clave", clave)
+                .getSingleResult();
+        return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     private void auditar(CasoFiscalizacion caso, String usuario, String rol, AccionAuditoria accion, EstadoCaso anterior,

@@ -1,0 +1,79 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/backoffice.xhtml">
+
+    <ui:define name="titulo">Reglas de fiscalización</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="reglas">
+            <p:dataTable id="tabla" value="#{normaView.vigentes}" var="norma" rowKey="#{norma.clave}"
+                         emptyMessage="No hay normas vigentes.">
+                <p:column headerText="Norma">#{normaView.nombre(norma.clave)}</p:column>
+                <p:column headerText="Valor">#{norma.valor} #{normaView.unidad(norma.clave)}</p:column>
+                <p:column headerText="Vigente desde">
+                    <h:outputText value="#{norma.vigenteDesde}">
+                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Acciones">
+                    <div class="flex gap-2">
+                        <p:commandButton icon="pi pi-pencil" title="Cambiar valor" action="#{normaView.editar(norma)}"
+                                         process="@this" update=":cambio" resetValues="true"
+                                         oncomplete="PF('cambio').show()" styleClass="ui-button-outlined" />
+                        <p:commandButton icon="pi pi-history" title="Historial" action="#{normaView.verHistorial(norma)}"
+                                         process="@this" update=":historial" oncomplete="PF('historial').show()"
+                                         styleClass="ui-button-outlined ui-button-secondary" />
+                    </div>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog header="Cambiar valor" widgetVar="cambio" modal="true" resizable="false"
+                  responsive="true" width="30rem">
+            <h:form id="cambio">
+                <p class="mt-0">#{normaView.nombre(normaView.clave)}</p>
+                <div class="field">
+                    <p:outputLabel for="valor" value="Valor (#{normaView.unidad(normaView.clave)})" styleClass="block mb-2" />
+                    <p:inputNumber id="valor" value="#{normaView.valor}" decimalPlaces="0" minValue="0" required="true"
+                                   requiredMessage="Debe indicar el valor." styleClass="w-full" inputStyleClass="w-full" />
+                </div>
+                <div class="field">
+                    <p:outputLabel for="desde" value="Vigente desde" styleClass="block mb-2" />
+                    <p:datePicker id="desde" value="#{normaView.vigenteDesde}" pattern="dd/MM/yyyy"
+                                  mindate="#{normaView.hoy}" required="true"
+                                  requiredMessage="Debe indicar desde cuándo rige." styleClass="w-full"
+                                  inputStyleClass="w-full" />
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <p:commandButton value="Cancelar" type="button" onclick="PF('cambio').hide()"
+                                     styleClass="ui-button-secondary ui-button-flat" />
+                    <p:commandButton value="Guardar" icon="pi pi-check" action="#{normaView.guardar}"
+                                     update="@form :reglas"
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed) PF('cambio').hide()" />
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Historial" widgetVar="historial" modal="true" resizable="false"
+                  responsive="true" width="36rem">
+            <h:form id="historial">
+                <p class="mt-0">#{normaView.nombre(normaView.clave)}</p>
+                <p:dataTable value="#{normaView.historial}" var="version" rowKey="#{version.id}"
+                             rendered="#{not empty normaView.clave}"
+                             lazy="true" paginator="true" rows="10" paginatorPosition="bottom"
+                             emptyMessage="No hay versiones.">
+                    <p:column headerText="Valor">#{version.valor} #{normaView.unidad(version.clave)}</p:column>
+                    <p:column headerText="Vigente desde">
+                        <h:outputText value="#{version.vigenteDesde}">
+                            <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

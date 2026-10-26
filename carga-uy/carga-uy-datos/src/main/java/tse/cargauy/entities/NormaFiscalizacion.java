@@ -1,17 +1,20 @@
 package tse.cargauy.entities;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
-// por ahora solo el plazo de descargo; se unifica con la parametrizacion de reglas cuando exista
 @Entity
 public class NormaFiscalizacion {
 
     public static final String PLAZO_DESCARGO_DIAS = "PLAZO_DESCARGO_DIAS";
+    public static final String TOLERANCIA_EXCESO_CARGA = "TOLERANCIA_EXCESO_CARGA";
+    public static final String DESVIO_RUTA_DISTANCIA = "DESVIO_RUTA_DISTANCIA";
+    public static final List<String> CLAVES = List.of(TOLERANCIA_EXCESO_CARGA, DESVIO_RUTA_DISTANCIA, PLAZO_DESCARGO_DIAS);
 
     @Id @GeneratedValue
     private Long id;

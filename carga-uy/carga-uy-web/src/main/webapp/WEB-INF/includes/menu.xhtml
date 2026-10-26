@@ -8,6 +8,8 @@
                             styleClass="#{view.viewId eq '/admin/usuarios.xhtml' ? 'ui-state-active' : ''}" />
                 <p:menuitem value="Nodos periféricos" icon="pi pi-server" outcome="/admin/nodos"
                             styleClass="#{view.viewId eq '/admin/nodos.xhtml' ? 'ui-state-active' : ''}" />
+                <p:menuitem value="Reglas de fiscalización" icon="pi pi-sliders-h" outcome="/admin/reglas"
+                            styleClass="#{view.viewId eq '/admin/reglas.xhtml' ? 'ui-state-active' : ''}" />
             </p:submenu>
             <p:submenu label="Autoridad" rendered="#{request.isUserInRole('AUTORIDAD')}">
                 <p:menuitem value="Reportes" icon="pi pi-chart-bar" outcome="/autoridad/reportes"

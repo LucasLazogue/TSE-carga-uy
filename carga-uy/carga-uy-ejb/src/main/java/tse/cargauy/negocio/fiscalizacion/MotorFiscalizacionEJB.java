@@ -38,6 +38,7 @@ import tse.cargauy.dtos.PesajesViajeDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
+import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.TipoEvidencia;
 import tse.cargauy.entities.TipoInfraccion;
 import tse.cargauy.exceptions.CargaUYException;
@@ -184,10 +185,12 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         int maximo = vehiculo.getPesoVehiculo() + vehiculo.getCapacidadCarga();
         List<EvidenciaDto> evidencias = new ArrayList<>();
         for (PesajeDto pesaje : resultado.getPesajes()) {
-            if (pesaje.getPesoRegistrado() > maximo) {
+            int tolerancia = toleranciaExceso(pesaje.getFechaHora().toLocalDate());
+            int limite = maximo + maximo * tolerancia / 100;
+            if (pesaje.getPesoRegistrado() > limite) {
                 evidencias.add(new EvidenciaDto(TipoEvidencia.PESAJE, pesaje.getIdOrigen(), pesaje.getFechaHora(),
-                        pesaje.getPesoRegistrado() + " kg", maximo + " kg", "peso del vehiculo + capacidad declarada",
-                        "Pesada en " + pesaje.getNombrePeaje() + " por encima del maximo."));
+                        pesaje.getPesoRegistrado() + " kg", maximo + " kg", limite + " kg (" + tolerancia + "% de tolerancia)",
+                        "Pesada en " + pesaje.getNombrePeaje() + " por encima del maximo con la tolerancia."));
             }
         }
         if (!evidencias.isEmpty()) {
@@ -200,6 +203,15 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
             }
         }
         viajeDAO.marcarEvaluacionCarga(viaje.getId(), resultado.isCompleto() ? null : ahora.plusMinutes(1));
+    }
+
+    // la vigente a la fecha del pesaje, no la de hoy: reevaluar un viaje viejo no cambia el criterio con que se juzga
+    private int toleranciaExceso(LocalDate fecha) {
+        Integer tolerancia = casoDAO.getNormaVigente(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, fecha);
+        if (tolerancia == null) {
+            throw new CargaUYException(CodigoError.NORMA_NO_VIGENTE, NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA);
+        }
+        return tolerancia;
     }
 
     // si el inicio del viaje todavia no llego desde el movil, el viaje sigue asignado y no es un caso
