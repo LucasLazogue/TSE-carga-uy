@@ -51,6 +51,12 @@ public class NodosRest {
         nodoEJB.cambiarPuntoAcceso(id, nodoDto.getPuntoAcceso());
     }
 
+    @Path("/{id}/clave")
+    @PUT
+    public void cambiarClave(@PathParam("id") Long id, NodoPerifericoDto nodoDto) {
+        nodoEJB.cambiarClave(id, nodoDto.getClave());
+    }
+
     @Path("/{id}/habilitar")
     @POST
     public void habilitar(@PathParam("id") Long id) {

@@ -1,0 +1,8 @@
+[
+  {
+    "balanza": "balanza-r5-km250",
+    "lecturas": [
+      { "idRegistro": "1", "matricula": "STA1234", "fecha": "2026-10-15", "hora": "11:55", "pesoRegistrado": 26400 }
+    ]
+  }
+]

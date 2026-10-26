@@ -121,6 +121,7 @@ services:
       CARGAUY_API_URL: ${CARGAUY_API_URL:-}
       CARGAUY_MOBILE_REDIRECT: ${CARGAUY_MOBILE_REDIRECT:-cargauy://ingreso}
       CARGAUY_JWT_SECRET: ${CARGAUY_JWT_SECRET:-secreto-local-solo-para-desarrollo}
+      CARGAUY_CLAVE_CIFRADO: ${CARGAUY_CLAVE_CIFRADO:-CKuP6o0GEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIKJ+jG4eVk75SBQBKzLBb0ZNlX4XSY8KQVqS8w5WdreOGAEQARirj+qNBiAB}
       MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}
       MONGO_DB: ${MONGO_DB:-cargauy}
       ARTEMIS_HOST: ${ARTEMIS_HOST:-artemis}
@@ -168,8 +169,108 @@ services:
     depends_on:
       - artemis
 
+  pg-balanzas-sur:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: balanzas
+      POSTGRES_USER: balanzas
+      POSTGRES_PASSWORD: balanzas
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    volumes:
+      - balanzassurdata:/var/lib/postgresql/data
+
+  balanzas-sur:
+    build: ../nodo-balanzas
+    ports:
+      - "8082:8080"
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      DB_HOST: pg-balanzas-sur
+      NODO_CLAVE_CENTRAL: ${BALANZAS_SUR_CLAVE_CENTRAL:-clave-central-balanzas-sur}
+      NODO_CLAVE_ADMIN: ${BALANZAS_SUR_CLAVE_ADMIN:-clave-admin-balanzas-sur}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      - pg-balanzas-sur
+
+  pg-balanzas-norte:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: balanzas
+      POSTGRES_USER: balanzas
+      POSTGRES_PASSWORD: balanzas
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    volumes:
+      - balanzasnortedata:/var/lib/postgresql/data
+
+  balanzas-norte:
+    build: ../nodo-balanzas
+    ports:
+      - "8083:8080"
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      DB_HOST: pg-balanzas-norte
+      NODO_CLAVE_CENTRAL: ${BALANZAS_NORTE_CLAVE_CENTRAL:-clave-central-balanzas-norte}
+      NODO_CLAVE_ADMIN: ${BALANZAS_NORTE_CLAVE_ADMIN:-clave-admin-balanzas-norte}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      - pg-balanzas-norte
+
+  balanzas-alta:
+    image: alpine:3.22
+    environment:
+      BALANZAS_SUR_CLAVE_ADMIN: ${BALANZAS_SUR_CLAVE_ADMIN:-clave-admin-balanzas-sur}
+      BALANZAS_NORTE_CLAVE_ADMIN: ${BALANZAS_NORTE_CLAVE_ADMIN:-clave-admin-balanzas-norte}
+    volumes:
+      - ../nodo-balanzas/scripts:/scripts:ro
+      - ../nodo-balanzas/datos:/datos:ro
+      - balanzasclaves:/claves
+    command:
+      - sh
+      - -c
+      - |
+        apk add -q curl jq
+        sh /scripts/alta.sh http://balanzas-sur:8080/nodo-balanzas "$$BALANZAS_SUR_CLAVE_ADMIN" /datos/balanzas-sur.json /claves/balanzas-sur.json
+        sh /scripts/alta.sh http://balanzas-norte:8080/nodo-balanzas "$$BALANZAS_NORTE_CLAVE_ADMIN" /datos/balanzas-norte.json /claves/balanzas-norte.json
+    depends_on:
+      balanzas-sur:
+        condition: service_healthy
+      balanzas-norte:
+        condition: service_healthy
+
+  simulador-balanzas:
+    image: alpine:3.22
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+    volumes:
+      - ../nodo-balanzas/scripts:/scripts:ro
+      - ../nodo-balanzas/datos:/datos:ro
+      - balanzasclaves:/claves:ro
+    command:
+      - sh
+      - -c
+      - |
+        apk add -q curl jq tzdata
+        sh /scripts/simular.sh http://balanzas-sur:8080/nodo-balanzas /claves/balanzas-sur.json /datos/pasadas-sur.json
+        sh /scripts/simular.sh http://balanzas-norte:8080/nodo-balanzas /claves/balanzas-norte.json /datos/pasadas-norte.json
+    depends_on:
+      balanzas-alta:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
   mongodata:
   artemisdata:
   ldapdata:
+  balanzassurdata:
+  balanzasnortedata:
+  balanzasclaves:

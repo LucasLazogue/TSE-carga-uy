@@ -1,0 +1,25 @@
+[
+  {
+    "codigo": "R5-250",
+    "nombre": "Peaje Ruta 5 km 250",
+    "ruta": "5",
+    "km": 250,
+    "latitud": -32.8203,
+    "longitud": -56.5117,
+    "balanzas": [
+      { "codigo": "balanza-r5-km250", "sentido": "HACIA_EL_INTERIOR" }
+    ]
+  },
+  {
+    "codigo": "R3-230",
+    "nombre": "Peaje Ruta 3 km 230",
+    "ruta": "3",
+    "km": 230,
+    "latitud": -32.9536,
+    "longitud": -57.0261,
+    "balanzas": [
+      { "codigo": "balanza-r3-km230", "sentido": "HACIA_MONTEVIDEO" },
+      { "codigo": "balanza-r3-km230-int", "sentido": "HACIA_EL_INTERIOR" }
+    ]
+  }
+]
