@@ -18,15 +18,24 @@ const VARIANTES_RESULTADO: Record<ResultadoEvento, ComponentProps<typeof Badge>[
   RECHAZADO: 'destructive',
 }
 
+// lo que cargo el chofer: "3.500 kg · Entregado en el deposito", o solo una de las dos partes
+function detalleDelChofer(e: EventoViaje): string {
+  const partes = [e.kilos != null ? `${e.kilos.toLocaleString('es-UY')} kg` : null, e.descripcion]
+  return partes.filter(Boolean).join(' · ') || '-'
+}
+
 const columnas: GridColumn<EventoViaje>[] = [
   { header: 'Evento', cell: (e) => NOMBRES_TIPO_EVENTO[e.tipo], className: 'font-medium' },
+  { header: 'Detalle', cell: detalleDelChofer, className: 'min-w-56 whitespace-normal' },
+  // en un viaje reasignado hay eventos de los dos choferes
+  { header: 'Chofer', cell: (e) => e.cedulaChofer ?? '-' },
   { header: 'Generado', cell: (e) => momento(e.timestampGeneracion) },
   { header: 'Recibido', cell: (e) => momento(e.timestampRecepcion) },
   {
     header: 'Resultado',
     cell: (e) => <Badge variant={VARIANTES_RESULTADO[e.resultado]}>{NOMBRES_RESULTADO[e.resultado]}</Badge>,
   },
-  { header: 'Motivo', cell: (e) => e.detalle ?? '-', className: 'whitespace-normal text-muted-foreground' },
+  { header: 'Motivo', cell: (e) => e.detalle ?? '-', className: 'min-w-48 whitespace-normal text-muted-foreground' },
 ]
 
 type Props = {

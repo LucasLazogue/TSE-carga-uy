@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Version;
 
 // si un viaje del vehiculo quedo sin fin registrado y empezo otro, una posicion es del que empezo ultimo
 @Entity
@@ -47,6 +48,12 @@ public class Viaje {
 
     @ManyToOne(optional = false)
     private Chofer chofer;
+
+    // la web y el sync del celular pueden cambiar el mismo viaje a la vez: la segunda en confirmar pierde.
+    // el default es para las filas que ya existian cuando se agrego la columna (schema-generation en update)
+    @Version
+    @Column(nullable = false, columnDefinition = "bigint default 0")
+    private long version;
 
     public Viaje() {
     }

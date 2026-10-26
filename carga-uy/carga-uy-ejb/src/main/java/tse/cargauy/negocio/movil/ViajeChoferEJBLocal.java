@@ -10,7 +10,7 @@ import tse.cargauy.dtos.ViajeMovilDto;
 @Local
 public interface ViajeChoferEJBLocal {
 
-    ViajeMovilDto getViajeActual();
+    List<ViajeMovilDto> getViajes();
 
     SyncRespuestaDto sincronizar(List<EventoViajeDto> eventos);
 }

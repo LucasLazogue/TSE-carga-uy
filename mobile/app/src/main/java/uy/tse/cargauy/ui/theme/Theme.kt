@@ -118,10 +118,14 @@ fun CargaUYTheme(
         else -> LightColorScheme
     }
 
-    CompositionLocalProvider(LocalColoresBarra provides coloresBarra(colorScheme, darkTheme)) {
+    CompositionLocalProvider(
+        LocalColoresBarra provides coloresBarra(colorScheme, darkTheme),
+        LocalColoresSemanticos provides coloresSemanticos(colorScheme, darkTheme)
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
+            shapes = Shapes,
             content = content
         )
     }

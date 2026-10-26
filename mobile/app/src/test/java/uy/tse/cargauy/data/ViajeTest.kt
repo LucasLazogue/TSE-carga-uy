@@ -11,7 +11,7 @@ import uy.tse.cargauy.data.remote.ViajeMovilDto
 
 class ViajeTest {
 
-    // las mismas transiciones que AplicadorEventosEJB.transicion en el backend
+    // la parte de AplicadorEventosEJB que depende solo del estado
     @Test
     fun estadoTras_sigueLaMaquinaDeEstadosDelBackend() {
         assertEquals("EN_CURSO", estadoTras("ASIGNADO", TipoEvento.INICIO))
@@ -35,6 +35,19 @@ class ViajeTest {
         assertEquals("2026-10-11T14:03:22.123Z", dto.timestampGeneracion)
         assertEquals(2L, dto.idViaje)
         assertEquals("INICIO", dto.tipo)
+        assertNull(dto.descripcion)
+        assertNull(dto.kilos)
+    }
+
+    @Test
+    fun aEventoDto_mandaLaDescripcionYLosKilos() {
+        val evento = EventoPendiente(
+            "e1", idUsuario = 2, idViaje = 2, tipo = "DESCARGA_PARCIAL", timestampGeneracion = 1_791_727_402_123,
+            descripcion = "Deposito de Salto", kilos = 400
+        )
+        val dto = aEventoDto(evento)
+        assertEquals("Deposito de Salto", dto.descripcion)
+        assertEquals(400, dto.kilos)
     }
 
     @Test
@@ -50,5 +63,15 @@ class ViajeTest {
         assertEquals("STA1234", local.matricula)
         assertEquals("", local.rubro)
         assertEquals(0.0, local.origenLat, 0.0)
+        assertNull(local.fechaInicio)
+    }
+
+    @Test
+    fun aViajeLocal_guardaLaHoraDeInicioDelCentral() {
+        val dto = ViajeMovilDto(
+            viaje = ViajeDto(id = 9001, estado = "EN_CURSO", fechaInicio = "2026-10-24T21:59:46.156"),
+            guia = GuiaDto(id = 9001)
+        )
+        assertEquals("2026-10-24T21:59:46.156", aViajeLocal(dto, idUsuario = 2).fechaInicio)
     }
 }

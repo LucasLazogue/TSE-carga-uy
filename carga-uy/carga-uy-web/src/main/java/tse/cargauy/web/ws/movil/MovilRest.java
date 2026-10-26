@@ -10,7 +10,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.SyncRespuestaDto;
 import tse.cargauy.dtos.ViajeMovilDto;
@@ -25,11 +24,11 @@ public class MovilRest {
     @EJB
     ViajeChoferEJBLocal viajeChoferEJB;
 
+    // sin viajes responde una lista vacia
     @GET
-    @Path("/viaje")
-    public Response getViaje() {
-        ViajeMovilDto viaje = viajeChoferEJB.getViajeActual();
-        return viaje == null ? Response.noContent().build() : Response.ok(viaje).build();
+    @Path("/viajes")
+    public List<ViajeMovilDto> getViajes() {
+        return viajeChoferEJB.getViajes();
     }
 
     @POST

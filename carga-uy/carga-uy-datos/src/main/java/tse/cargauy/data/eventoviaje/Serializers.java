@@ -9,8 +9,11 @@ import tse.cargauy.entities.ResultadoEvento;
 public class Serializers {
     public static EventoViaje toEntity(EventoViajeDto dto, Long idChofer, Instant recepcion,
             ResultadoEvento resultado, String detalle) {
-        return new EventoViaje(dto.getIdEvento(), dto.getIdViaje(), idChofer, dto.getTipo(),
+        EventoViaje entity = new EventoViaje(dto.getIdEvento(), dto.getIdViaje(), idChofer, dto.getTipo(),
                 dto.getTimestampGeneracion(), recepcion, resultado, detalle);
+        entity.setDescripcion(dto.getDescripcion());
+        entity.setKilos(dto.getKilos());
+        return entity;
     }
 
     public static EventoViajeDto toDto(EventoViaje entity) {
@@ -22,6 +25,8 @@ public class Serializers {
         dto.setTimestampRecepcion(entity.getTimestampRecepcion());
         dto.setResultado(entity.getResultado());
         dto.setDetalle(entity.getDetalle());
+        dto.setDescripcion(entity.getDescripcion());
+        dto.setKilos(entity.getKilos());
         return dto;
     }
 }

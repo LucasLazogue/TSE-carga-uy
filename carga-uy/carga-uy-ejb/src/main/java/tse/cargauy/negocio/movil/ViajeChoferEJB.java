@@ -34,9 +34,13 @@ public class ViajeChoferEJB implements ViajeChoferEJBLocal, ViajeChoferEJBRemote
     @Resource
     SessionContext contexto;
 
-    public ViajeMovilDto getViajeActual() {
-        ViajeDto viaje = viajeDAO.getActualDelChofer(idUsuario());
-        return viaje == null ? null : new ViajeMovilDto(viaje, guiaDAO.getGuiaById(viaje.getIdGuia()));
+    // puede tener varios asignados; en curso, como mucho uno (AplicadorEventosEJB)
+    public List<ViajeMovilDto> getViajes() {
+        List<ViajeMovilDto> viajes = new ArrayList<>();
+        for (ViajeDto viaje : viajeDAO.getActivosDelChofer(idUsuario())) {
+            viajes.add(new ViajeMovilDto(viaje, guiaDAO.getGuiaById(viaje.getIdGuia())));
+        }
+        return viajes;
     }
 
     // se aplican en el orden en que se generaron en el celular, no en el que llegaron
@@ -48,7 +52,7 @@ public class ViajeChoferEJB implements ViajeChoferEJBLocal, ViajeChoferEJBRemote
         for (EventoViajeDto evento : ordenados) {
             resultados.add(aplicador.aplicar(evento, idChofer));
         }
-        return new SyncRespuestaDto(resultados, getViajeActual());
+        return new SyncRespuestaDto(resultados, getViajes());
     }
 
     // package-private para sobrescribirlo en los tests

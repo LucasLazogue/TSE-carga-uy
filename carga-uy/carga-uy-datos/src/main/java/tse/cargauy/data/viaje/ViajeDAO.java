@@ -7,7 +7,10 @@ import java.util.List;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -28,6 +31,8 @@ import tse.cargauy.entities.Vehiculo_;
 import tse.cargauy.entities.Viaje;
 import tse.cargauy.entities.Viaje_;
 import tse.cargauy.entities.VinculoEmpresa_;
+import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.CodigoError;
 
 @Stateless
 public class ViajeDAO implements ViajeDAOLocal {
@@ -117,6 +122,7 @@ public class ViajeDAO implements ViajeDAOLocal {
         if (viaje != null) {
             viaje.setVehiculo(entityManager.find(Vehiculo.class, viajeDto.getIdVehiculo()));
             viaje.setChofer(getChofer(viajeDto.getIdChofer(), viaje.getGuia()));
+            flush(id);
         }
     }
 
@@ -126,16 +132,67 @@ public class ViajeDAO implements ViajeDAOLocal {
         if (viaje != null) {
             viaje.getGuia().setViaje(null);
             entityManager.remove(viaje);
+            flush(id);
+        }
+    }
+
+    // el que esta en curso primero; despues los asignados por fecha de la guia, el mas proximo arriba
+    @Override
+    public List<ViajeDto> getActivosDelChofer(Long idCiudadano) {
+        List<Viaje> viajes = new ArrayList<>(delChofer(idCiudadano, EstadoViaje.EN_CURSO));
+        viajes.addAll(delChofer(idCiudadano, EstadoViaje.ASIGNADO));
+        return toDtos(viajes);
+    }
+
+    // bloquea la fila hasta que termine la transaccion: dos envios sobre el mismo viaje se aplican uno detras del
+    // otro, y el segundo ve lo que dejo el primero. el bloqueo es de postgres, asi que vale entre instancias
+    @Override
+    public ViajeDto getViajeParaActualizar(Long id) {
+        Viaje viaje = entityManager.find(Viaje.class, id, LockModeType.PESSIMISTIC_WRITE);
+        return viaje == null ? null : Serializers.toDto(viaje);
+    }
+
+    @Override
+    public void corregirInicio(Long id, LocalDateTime fecha) {
+        Viaje viaje = entityManager.find(Viaje.class, id);
+        if (viaje != null) {
+            viaje.setFechaInicio(fecha);
         }
     }
 
     @Override
-    public ViajeDto getActualDelChofer(Long idCiudadano) {
-        Viaje viaje = primeroDelChofer(idCiudadano, EstadoViaje.EN_CURSO);
-        if (viaje == null) {
-            viaje = primeroDelChofer(idCiudadano, EstadoViaje.ASIGNADO);
+    public boolean choferConOtroEnCurso(Long idViaje, Long idCiudadano, LocalDateTime desde, LocalDateTime hasta) {
+        return hayOtroEnCurso("v.chofer.ciudadano.id", idViaje, idCiudadano, desde, hasta);
+    }
+
+    @Override
+    public boolean vehiculoConOtroEnCurso(Long idViaje, Long idVehiculo, LocalDateTime desde, LocalDateTime hasta) {
+        return hayOtroEnCurso("v.vehiculo.id", idViaje, idVehiculo, desde, hasta);
+    }
+
+    // otro viaje que empezo y seguia en curso en algun momento de [desde, hasta); hasta null es sin fin
+    private boolean hayOtroEnCurso(String campo, Long idViaje, Long id, LocalDateTime desde, LocalDateTime hasta) {
+        TypedQuery<Long> query = entityManager.createQuery(
+                        "SELECT COUNT(v) FROM Viaje v WHERE v.id <> :idViaje AND " + campo + " = :id"
+                                + " AND v.fechaInicio IS NOT NULL AND (v.fechaFin IS NULL OR v.fechaFin > :desde)"
+                                + (hasta == null ? "" : " AND v.fechaInicio < :hasta"), Long.class)
+                .setParameter("idViaje", idViaje)
+                .setParameter("id", id)
+                .setParameter("desde", desde);
+        if (hasta != null) {
+            query.setParameter("hasta", hasta);
         }
-        return viaje == null ? null : Serializers.toDto(viaje);
+        return query.getSingleResult() > 0;
+    }
+
+    // con @Version, una modificacion sobre una version vieja falla al confirmar; con el flush falla aca y se
+    // devuelve el error del dominio (409) en lugar de un error inesperado
+    private void flush(Long id) {
+        try {
+            entityManager.flush();
+        } catch (OptimisticLockException e) {
+            throw new CargaUYException(CodigoError.VIAJE_MODIFICADO, String.valueOf(id));
+        }
     }
 
     // la fecha llega del evento del celular, no es la de ahora: el viaje empezo cuando el chofer toco el boton
@@ -171,15 +228,13 @@ public class ViajeDAO implements ViajeDAOLocal {
     }
 
     // fecha de guia ascendente: getAll ordena al reves (lo que quiere el listado) y le daria al chofer el viaje mas lejano
-    private Viaje primeroDelChofer(Long idCiudadano, EstadoViaje estado) {
-        List<Viaje> viajes = entityManager.createQuery(
+    private List<Viaje> delChofer(Long idCiudadano, EstadoViaje estado) {
+        return entityManager.createQuery(
                         "SELECT v FROM Viaje v WHERE v.chofer.ciudadano.id = :idCiudadano AND v.estado = :estado"
                                 + " ORDER BY v.guia.fecha, v.id", Viaje.class)
                 .setParameter("idCiudadano", idCiudadano)
                 .setParameter("estado", estado)
-                .setMaxResults(1)
                 .getResultList();
-        return viajes.isEmpty() ? null : viajes.get(0);
     }
 
     private Chofer getChofer(Long idCiudadano, Guia guia) {

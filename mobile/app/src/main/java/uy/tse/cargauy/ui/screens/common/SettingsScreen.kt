@@ -4,10 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -21,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 
+import uy.tse.cargauy.ui.components.ContenidoPantalla
 import uy.tse.cargauy.ui.components.Descripcion
 import uy.tse.cargauy.ui.components.SoloDebug
 import uy.tse.cargauy.ui.components.TituloSeccion
@@ -32,19 +31,16 @@ fun SettingsScreen(
     onCambiarTema: (Boolean) -> Unit,
     urlServidor: String,
     onGuardarUrl: (String) -> Unit,
-    onRestaurarUrl: () -> Unit,
-    onCerrarSesion: (() -> Unit)?
+    onRestaurarUrl: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.padding(Spacing.md),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
-    ) {
+    ContenidoPantalla {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            // con weight el texto se parte en renglones y la llave no se sale de la pantalla
+            Column(modifier = Modifier.weight(1f)) {
                 TituloSeccion(texto = "Tema oscuro")
                 Descripcion(texto = "Cambia los colores de la aplicación")
             }
@@ -61,16 +57,6 @@ fun SettingsScreen(
                 onGuardarUrl = onGuardarUrl,
                 onRestaurarUrl = onRestaurarUrl
             )
-        }
-
-        // null cuando no hay sesion (por ejemplo, si se entra a Configuracion desde el login)
-        if (onCerrarSesion != null) {
-            OutlinedButton(
-                onClick = onCerrarSesion,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Cerrar sesión")
-            }
         }
     }
 }
