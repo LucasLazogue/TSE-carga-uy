@@ -1,8 +1,11 @@
-## Nodo periférico de balanzas
+# Nodo periférico de balanzas
+
+[Volver al proyecto](../README.md)
 
 Simula el Sistema de Balanzas de un operador de peajes. Cada operador tiene su propio nodo, con su propia
-base: sus peajes, las balanzas de cada peaje y los pesajes que registran. El componente central le pide al
-nodo los pesajes de un vehículo en una fecha (consulta sincrónica, CU-11).
+base: sus peajes, las balanzas de cada peaje y los pesajes que registran. Expone una API para consultar
+los pesajes de un vehículo en una fecha. Esta guía cubre la API del nodo y su registro en el central;
+la consulta desde el central todavía no está implementada.
 
     Peaje (R5-30, Ruta 5 km 30)
      ├─ Balanza balanza-r5-km30   (hacia Montevideo)
@@ -17,7 +20,7 @@ nodo los pesajes de un vehículo en una fecha (consulta sincrónica, CU-11).
 Es un WAR sobre WildFly 41, con la misma organización que el central: `entities`, `dtos`, `data`, `negocio`,
 `ws`, `exceptions` y `seguridad`.
 
-### Quién puede hacer qué
+## Quién puede hacer qué
 
 Todas las llamadas llevan `Authorization: Bearer <clave>`. Según la clave, el nodo sabe quién llama:
 
@@ -29,11 +32,9 @@ Todas las llamadas llevan `Authorization: Bearer <clave>`. Según la clave, el n
 
 Sin clave o con una clave que no existe: `401`. Con una clave válida pero sin permiso para esa operación: `403`.
 
-### Cómo levantarlo con el resto
+## Cómo levantarlo con el resto
 
-Junto al central, desde `carga-uy`:
-
-    docker compose up --build -d
+Preparar el [entorno local](../README.md#ejecución-local); el Compose ya incluye los nodos de balanzas.
 
 Levanta dos nodos, cada uno con su base, y los carga para la demo:
 
@@ -51,7 +52,7 @@ correrlos no duplica nada.
 Las claves de desarrollo son `clave-admin-balanzas-sur`, `clave-central-balanzas-sur` y las mismas con
 `norte`; se cambian con `BALANZAS_SUR_CLAVE_ADMIN`, `BALANZAS_SUR_CLAVE_CENTRAL`, etc.
 
-### Cómo levantar un nodo suelto
+## Cómo levantar un nodo suelto
 
 Necesita una base PostgreSQL propia. Por ejemplo, con Docker (desde `nodo-balanzas`):
 
@@ -62,7 +63,7 @@ Necesita una base PostgreSQL propia. Por ejemplo, con Docker (desde `nodo-balanz
 
 Las tablas las crea Hibernate al arrancar. La API queda en `http://localhost:8082/nodo-balanzas/api`.
 
-### Configuración
+## Configuración
 
 | Variable | Por defecto | Para qué |
 | --- | --- | --- |
@@ -71,9 +72,10 @@ Las tablas las crea Hibernate al arrancar. La API queda en `http://localhost:808
 | `DB_HOST` / `DB_PORT` / `DB_NAME` | `localhost` / `5432` / `balanzas` | Base del nodo |
 | `DB_USER` / `DB_PASSWORD` | `balanzas` / `balanzas` | Usuario de la base |
 
-Las claves no van en el repositorio: se pasan como variables de entorno al desplegar.
+El Compose incluye claves predeterminadas para desarrollo. Para otro despliegue, configurar
+las claves mediante variables de entorno.
 
-### Crear un peaje
+## Crear un peaje
 
     curl -X POST -H "Authorization: Bearer <clave-admin>" -H "Content-Type: application/json" \
       -d '{"codigo":"R5-30","nombre":"Peaje Ruta 5 km 30","ruta":"5","km":30,"latitud":-34.62,"longitud":-56.25}' \
@@ -81,7 +83,7 @@ Las claves no van en el repositorio: se pasan como variables de entorno al despl
 
 `codigo`, `nombre` y `ruta` son obligatorios, el km no puede ser negativo y el código no se puede repetir.
 
-### Agregarle una balanza
+## Agregarle una balanza
 
     curl -X POST -H "Authorization: Bearer <clave-admin>" -H "Content-Type: application/json" \
       -d '{"codigo":"balanza-r5-km30","sentido":"HACIA_MONTEVIDEO"}' \
@@ -99,7 +101,7 @@ Para ver los peajes con sus balanzas:
 
     curl -H "Authorization: Bearer <clave-admin>" http://localhost:8082/nodo-balanzas/api/peajes
 
-### Enviar pesajes (lo hace la balanza)
+## Enviar pesajes (lo hace la balanza)
 
 La balanza manda una o varias lecturas juntas, por ejemplo las que acumuló mientras estuvo sin conexión:
 
@@ -113,7 +115,7 @@ La balanza manda una o varias lecturas juntas, por ejemplo las que acumuló mien
   ninguna.
 - El nodo guarda además cuándo recibió cada lectura.
 
-### Consultar pesajes (lo hace el central)
+## Consultar pesajes
 
     curl -H "Authorization: Bearer <clave-central>" \
       "http://localhost:8082/nodo-balanzas/api/pesajes?matricula=SCC9012&fecha=2026-10-20"
@@ -127,29 +129,33 @@ Devuelve todos los pesajes de esa matrícula en ese día, con su balanza y su pe
 Cada pesaje se identifica por `balanza/idRegistro` (por ejemplo `balanza-r5-km30/1001`). Si no hubo pesajes
 ese día devuelve `[]`.
 
-### Agregar un nodo nuevo
+## Agregar un nodo nuevo
 
 Por ejemplo `balanzas-este`, para otro operador. No hay que tocar código ni el compose:
 
 1. Desplegar la misma imagen con su propia base, y con `NODO_CLAVE_ADMIN` y `NODO_CLAVE_CENTRAL` nuevas
    (por ejemplo `openssl rand -base64 32`).
-2. Registrarlo en el central como nodo de tipo `BALANZAS`, con su URL, y habilitarlo.
+2. Registrarlo en el backoffice del central como nodo de tipo `BALANZAS`, con su URL y su
+   `NODO_CLAVE_CENTRAL`, y habilitarlo. Requiere el administrador LDAP descrito en la
+   [documentación de seguridad](../docs/seguridad.md#identidades-y-autorización).
 3. Dar de alta sus peajes y balanzas, a mano o con el script y un inventario propio:
 
        sh scripts/alta.sh https://balanzas-este.../nodo-balanzas <clave-admin> balanzas-este.json claves-este.json
 
    `claves-este.json` queda con la clave de cada balanza, para configurarla en el equipo.
 
-### Errores
+## Errores
 
 Igual que en el central: `{"codigo": 2005, "mensaje": "Ya existe un peaje con el codigo R5-30."}`, con el
 status HTTP según el caso (400 datos inválidos, 401 sin clave, 403 sin permiso, 404 no existe, 409 repetido).
 Los códigos y mensajes están en `CodigoError` y `mensajes-error.properties`.
 
-### Cómo ver que está vivo
+## Cómo ver que está vivo
 
-`GET http://localhost:9992/health/ready` (puerto de administración de WildFly, el 9990 del contenedor): `200` si el WAR está desplegado.
+En el despliegue independiente del ejemplo, `GET http://localhost:9992/health/ready` usa el puerto
+de administración de WildFly (`9990` del contenedor). El Compose conjunto comprueba esa URL dentro
+de cada contenedor y no publica ese puerto en el host.
 
-### Tests
+## Tests
 
     mvn verify

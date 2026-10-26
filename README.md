@@ -1,143 +1,78 @@
+# carga.uy
+
+Sistema de gestión y fiscalización del transporte de carga. El componente central reúne la API REST,
+el backoffice y la lógica de negocio; la web, la app Android y los nodos periféricos se conectan a él
+para gestionar empresas, vehículos, permisos, viajes y datos de fiscalización.
+
+## Componentes
+
+| Directorio | Responsabilidad |
+| --- | --- |
+| [carga-uy](carga-uy/) | Backend Jakarta EE sobre WildFly: datos, EJB, API REST y backoffice JSF. Incluye el Compose del entorno local |
+| [frontend](frontend/README.md) | Interfaz web en React y TypeScript |
+| [mobile](mobile/README.md) | App Android para choferes, con trabajo sin conexión y sincronización |
+| [nodo-tracking](nodo-tracking/README.md) | Simulación de flota y publicación de posiciones por JMS |
+| [nodo-balanzas](nodo-balanzas/README.md) | Peajes, balanzas y API de pesajes de cada operador |
+| [carga-uy-client](carga-uy-client/README.md) | Cliente de consola EJB/JMS; su guía detalla el estado de la autenticación remota |
+
 ## Requisitos
-- Docker
-- Maven
-- JDK 24
-- Node 24
-- CLI oc (solo para apuntar al remoto)
 
-## Ejecutar
+- Docker con Docker Compose para el central y sus servicios.
+- Node.js 24 y npm para el frontend.
+- Maven y JDK 24 para compilar o probar Java fuera de Docker.
+- Para Android, los [requisitos de la app](mobile/README.md#requisitos).
 
-Desde carga-uy copiar .env.example a .env y ejecutar
-- docker compose up
+## Ejecución local
 
-El dockerfile ya crea un usuario en el wildfly con credenciales u: admin p: admin123
+Desde la raíz del repositorio, copiar [carga-uy/.env.example](carga-uy/.env.example) a
+`carga-uy/.env`. En PowerShell:
 
-Backoffice JSF corre en el puerto 8080:
-- http://localhost:8080/carga-uy/
+```powershell
+Copy-Item carga-uy/.env.example carga-uy/.env
+```
 
-API REST:
-- http://localhost:8080/carga-uy/api/empresas
-- http://localhost:8080/carga-uy/api/vehiculos
-- http://localhost:8080/carga-uy/api/permisos
+En Bash, usar `cp carga-uy/.env.example carga-uy/.env`. Editar el archivo copiado para usar
+el login simulado y crear el administrador inicial del backoffice:
 
-### Login con gub.uy
-Por defecto se usa el login simulado. En carga-uy/.env:
+```dotenv
+GUBUY_MOCK=true
+GUBUY_REDIRECT_URI=http://localhost:8080/carga-uy/api/auth/callback
+CARGAUY_JWT_SECRET=secreto-local-solo-para-desarrollo
+LDAP_ADMIN_USUARIO=admin-local
+LDAP_ADMIN_PASSWORD=admin-local-123
+```
 
-    GUBUY_MOCK=true
+Estos valores son de desarrollo. El archivo de ejemplo trae el login simulado desactivado.
+Luego levantar el entorno:
 
-La pantalla de ingreso del frontend (http://localhost:5173) muestra un campo de cedula y se entra
-con esa cedula. 11111111 es un funcionario precargado, 55555555 un chofer y cualquier otra entra
-como ciudadano.
+```sh
+cd carga-uy
+docker compose up --build -d
+```
 
-Para probar con gub.uy de testing, cambiar en carga-uy/.env:
+El backoffice queda en http://localhost:8080/carga-uy/, con el usuario LDAP configurado arriba.
+Los servicios, puertos y volúmenes están descritos en [infraestructura](docs/infraestructura.md).
 
-    GUBUY_CLIENT_ID=<pedirlo al grupo>
-    GUBUY_CLIENT_SECRET=<pedirlo al grupo>
-    GUBUY_MOCK=false
-    GUBUY_REDIRECT_URI=http://localhost:8080
+En otra terminal, iniciar el [frontend](frontend/README.md#ejecutar-en-desarrollo). Con login
+simulado, `11111111` corresponde al funcionario de prueba y `55555555` al chofer Carlos.
+Para usar un celular o emulador, seguir la [configuración de Android](mobile/README.md#configuración).
 
-y despues de docker compose up -d cargar esta regla en WildFly (desde bash), que reenvia la vuelta
-de gub.uy al callback de la API:
+El Compose incluye los nodos, pero su registro y habilitación en el central se realizan desde
+el backoffice. Las guías de [tracking](nodo-tracking/README.md#cómo-levantarlo) y
+[balanzas](nodo-balanzas/README.md#agregar-un-nodo-nuevo) explican ese paso y sus simulaciones.
 
-    MSYS_NO_PATHCONV=1 docker exec -i carga-uy-carga-uy-1 /opt/jboss/wildfly/bin/jboss-cli.sh --connect --user=admin --password=admin123 <<'EOF'
-    /subsystem=undertow/configuration=filter/expression-filter=gubuy-callback:add(expression="path('/') and (exists('%{q,code}') or exists('%{q,error}')) -> redirect('/carga-uy/api/auth/callback%q')")
-    /subsystem=undertow/server=default-server/host=default-host/filter-ref=gubuy-callback:add
-    EOF
+## Documentación técnica
 
-Se ingresa con un usuario de https://mi-testing.iduruguay.gub.uy (hay que crear la cuenta ahi).
+| Área | Contenido |
+| --- | --- |
+| [Seguridad](docs/seguridad.md) | Identidades, roles, sesiones, gub.uy, LDAP, secretos, cifrado y acceso de los nodos |
+| [Observabilidad](docs/observabilidad.md) | Métricas, trazas, logs, muestreo, dashboards y diagnóstico |
+| [Mensajería](docs/mensajeria.md) | Brokers, destinos JMS, contratos, persistencia, deduplicación y reentregas |
+| [Infraestructura](docs/infraestructura.md) | Servicios, dependencias, puertos, volúmenes, configuración y acceso remoto |
 
-Para volver al simulado, poner GUBUY_MOCK=true y sacar GUBUY_REDIRECT_URI.
+## Verificación
 
-La sesion es un JWT firmado con CARGAUY_JWT_SECRET. En la web viaja en la cookie HttpOnly
-cargauy_token; el logout es POST /api/auth/logout.
-
-La autorizacion se hace en los EJB con @RolesAllowed. En cada request JwtAuthenticationMechanism
-(Jakarta Security) lee el JWT de la cookie o del header Authorization: Bearer y le pasa al
-contenedor el id del usuario y sus roles; con eso funcionan @RolesAllowed y SessionContext en los
-EJB. Para que WildFly acepte esa identidad sin buscar al usuario en su propio realm, el Dockerfile
-pone integrated-jaspi=false en el dominio de seguridad de undertow. Si se corre WildFly fuera de
-Docker hay que aplicar lo mismo una vez con jboss-cli:
-
-    /subsystem=undertow/application-security-domain=other:write-attribute(name=integrated-jaspi,value=false)
-
-Sin esa configuracion el mecanismo corre pero WildFly trata los requests como anonimos y todos los
-endpoints protegidos responden 403.
-
-Login mobile: la app abre en el navegador /api/auth/login?cliente=mobile&code_challenge=X, donde X es
-el SHA-256 en base64url de un code_verifier aleatorio. Al terminar vuelve a cargauy://ingreso?code=C
-(configurable con CARGAUY_MOBILE_REDIRECT) y la app hace POST /api/auth/token con
-grant_type=authorization_code, code=C y code_verifier; la respuesta trae access_token, token_type y
-expires_in, y el token se manda como Authorization: Bearer.
-
-Si el login falla se vuelve al front o a la app con ?error=CODIGO (los de CodigoError).
-
-Alta asincronica: cola JMS queue_alta_empresa, mensaje de texto
-nroEmpresa|nombrePublico|razonSocial|direccionPrincipal
-
-### Remoto
-Una vez desplegada en OpenShift, obtener la URL con
-- oc get route carga-uy
-
-Nodos perifericos (CU-19): pantalla del backoffice en http://localhost:8080/carga-uy/admin/nodos.xhtml y API
-en /api/nodos. Posiciones recibidas del tracking (CU-10):
-/api/posiciones?matricula=X. Las posiciones se guardan en MongoDB (servicio mongo del compose, en el
-puerto 27018 desde el host), en la coleccion posiciones de la base cargauy. El nodo de tracking, que
-simula la flota y publica sus posiciones, esta en nodo-tracking (ver su README).
-
-La cola de tracking esta en un broker Artemis en su propio contenedor (carga-uy/artemis), que comparten
-todas las instancias de WildFly; sus mensajes quedan en un volumen. Consola en http://localhost:8161
-(usuario artemis, clave artemis). Los nodos se conectan por el puerto 61617, con TLS, con un usuario que
-solo puede publicar. Los usuarios, las claves y el certificado son de desarrollo y estan en el repositorio
-hasta que se saquen antes de la entrega.
-
-### Observabilidad
-Todo va a la Plataforma de Observabilidad (carga-uy/observabilidad, imagen grafana/otel-lgtm: colector
-OpenTelemetry, Prometheus, Tempo, Loki y Grafana), que levanta el compose.
-- Grafana en http://localhost:3000, carpeta carga.uy, tablero "carga.uy · ingesta, nodo y API": ritmo de
-  ingesta por resultado, errores por tipo, tiempos (procesamiento, espera en la cola y antiguedad), tamano
-  de la cola, el nodo de tracking, tiempos de la API REST con el percentil 95 y los health checks.
-- Trazas: WildFly traza los pedidos REST. El nodo de tracking abre una traza por lote que publica y cada
-  mensaje lleva su contexto (traceparent), asi que el procesamiento de cada posicion en el central queda en
-  la misma traza. OTEL_PROPORCION_TRAZAS (1.0 por defecto) baja la proporcion que se guarda, para la prueba
-  de carga.
-- Logs: WildFly y el nodo los mandan por OTLP con el trace_id, que es el identificador de correlacion. En
-  la consola de WildFly el trace_id aparece despues del nombre del hilo.
-- Health checks: /health, /health/live y /health/ready en el puerto 9990 (servidor), y
-  http://localhost:8080/carga-uy/api/salud (base de datos y MongoDB; 503 si falta alguna).
-
-## Ejecutar aplicacion consola
-Desde carga-uy-client ejecutar
-- mvn compile "exec:java" "-Dexec.mainClass=tse.cargauy.App"
-
-### Remoto
-El cliente se conecta por EJB remoto a localhost:8080, asi que hay que hacer un tunel al pod.
-
-Bajar el docker compose para liberar el puerto 8080 y ejecutar
-- oc login --token=TOKEN --server=SERVER
-- oc project lucaslaz-dev
-- oc port-forward svc/carga-uy 8080:8080
-
-El token sale de la consola de OpenShift, en Copy login command.
-
-Dejar el tunel corriendo y levantar el cliente en otra terminal. Si el Service no tiene
-endpoints, usar oc port-forward deploy/carga-uy 8080:8080
-
-## Ejecutar frontend
-Desde frontend ejecutar
-- npm install
-- npm run dev
-
-Corre en el puerto 5173:
-- http://localhost:5173/
-
-La URL del backend se configura en el archivo .env (ver .env.example)
-
-### Remoto
-Crear un archivo .env.local (no se commitea) con la URL de OpenShift:
-- VITE_API_TARGET=https://URL_DE_LA_RUTA/carga-uy
-
-Reiniciar npm run dev para que tome el cambio.
-
-## Ejecutar app mobile
-Ver mobile/README.md. El celular o emulador llega al backend por la IP de la maquina, no por
-localhost, asi que hay que poner esa IP en GUBUY_REDIRECT_URI (carga-uy/.env) y en la app.
+Desde la raíz, ejecutar las pruebas y el análisis del central con `mvn -f carga-uy/pom.xml verify -Pci`.
+Las verificaciones específicas están en los README de cada componente. El
+[workflow de CI](.github/workflows/ci.yml) define los checks de Java, frontend, Android e imágenes
+Docker que se ejecutan según los componentes modificados.

@@ -1,4 +1,6 @@
-## Nodo periférico de tracking
+# Nodo periférico de tracking
+
+[Volver al proyecto](../README.md)
 
 Simula el Sistema de Tracking: cada vehículo de la flota avanza sobre su ruta y, cada intervalo, el
 nodo publica su posición en la cola `queue_tracking` del componente central (CU-10). Publica directo
@@ -12,22 +14,20 @@ publicar en esa cola.
 - La flota por defecto (`src/main/resources/rutas-prueba.json`) coincide con los datos de prueba
   del central.
 
-### Cómo levantarlo
+## Cómo levantarlo
 
-Junto al central, desde `carga-uy`:
-
-    docker compose up --build -d
+Preparar el [entorno local](../README.md#ejecución-local); el Compose ya incluye este nodo.
 
 El nodo tiene que estar registrado y habilitado en el central con el identificador de `NODO_ID`
 (`tracking-1` en el compose); si no, la ingesta descarta sus eventos. Hay que hacerlo una vez, y de
 nuevo después de cada `docker compose down -v`. Desde el backoffice, en
-http://localhost:8080/carga-uy/admin/nodos.xhtml (identificador `tracking-1`, tipo `TRACKING`, y
-habilitarlo), o con la API:
+http://localhost:8080/carga-uy/admin/nodos.xhtml, ingresar con el administrador LDAP configurado
+en el README principal, registrar el identificador `tracking-1` con tipo `TRACKING` y habilitarlo.
+La API `/api/nodos` también requiere una sesión con rol `ADMINISTRADOR`.
 
-    curl -X POST -H 'Content-Type: application/json' \
-      -d '{"identificador":"tracking-1","tipo":"TRACKING","puntoAcceso":"http://localhost:8081"}' \
-      http://localhost:8080/carga-uy/api/nodos
-    curl -X POST http://localhost:8080/carga-uy/api/nodos/1/habilitar
+El contrato de posiciones, la persistencia y las reentregas están documentados en
+[mensajería](../docs/mensajeria.md). Los permisos del broker y la conexión TLS se describen en
+[seguridad](../docs/seguridad.md#seguridad-de-los-nodos).
 
 Fuera de Docker (PowerShell, desde `nodo-tracking`, con el central levantado). Por defecto se conecta
 a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado de desarrollo de
@@ -37,7 +37,7 @@ a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado d
     $env:NODO_ID="tracking-1"; $env:NODO_JMS_USUARIO="tracking-1"; $env:NODO_JMS_CLAVE="tracking123"
     java -cp "target/nodo-tracking.jar;target/lib/*" tse.cargauy.nodotracking.NodoTracking
 
-### Configuración
+## Configuración
 
 | Variable | Por defecto | Para qué |
 | --- | --- | --- |
@@ -62,7 +62,7 @@ Por ejemplo, desde `carga-uy`:
 
     NODO_ACELERAR=60 NODO_DUPLICADOS=0.3 NODO_DESORDENAR=true docker compose up -d nodo-tracking
 
-### Cómo ver lo que hace
+## Cómo ver lo que hace
 
 - `GET http://localhost:8081/health`: `200 {"estado":"UP"}` si está conectado al broker; si no,
   `503 {"estado":"DOWN"}`.
@@ -75,12 +75,15 @@ Por ejemplo, desde `carga-uy`:
 - Qué hizo la ingesta con cada evento: `docker compose logs carga-uy | grep ingesta`
 
 Al detenerlo (`docker compose stop nodo-tracking`) publica lo pendiente e imprime las métricas
-finales. `generados` tiene que coincidir con los documentos nuevos de la colección `posiciones` de
-MongoDB (desde `carga-uy`):
+finales. Para contar las posiciones almacenadas en MongoDB, desde `carga-uy`:
 
     docker compose exec mongo mongosh -u cargauy -p cargauy --quiet --eval 'db.getSiblingDB("cargauy").posiciones.countDocuments()'
 
-### Tests
+El recuento depende también de los datos anteriores, los eventos rechazados y la deduplicación;
+no equivale por sí solo al contador `generados`. Para correlacionar lo publicado con lo procesado,
+usar las métricas y trazas de la [documentación de observabilidad](../docs/observabilidad.md).
+
+## Tests
 
     mvn verify
 
