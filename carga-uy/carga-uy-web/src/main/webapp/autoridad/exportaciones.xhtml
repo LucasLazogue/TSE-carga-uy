@@ -34,7 +34,7 @@
                     <p:tag value="#{informe.estado.nombre}" severity="#{informeView.severidad(informe)}" />
                 </p:column>
                 <p:column headerText="#{textos['columna.archivo']}">
-                    <p:commandButton icon="pi pi-download" title="Descargar" rendered="#{informe.estado == 'GENERADO'}"
+                    <p:commandButton icon="pi pi-download" title="Descargar" ajax="false" rendered="#{informe.estado == 'GENERADO'}"
                                      styleClass="ui-button-outlined">
                         <p:fileDownload value="#{informeView.archivo(informe)}" />
                     </p:commandButton>

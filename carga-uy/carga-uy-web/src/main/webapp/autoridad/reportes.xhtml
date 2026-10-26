@@ -7,11 +7,13 @@
 
     <ui:define name="titulo">Reportes</ui:define>
 
-    <ui:define name="contenido">
+    <ui:define name="metadata">
         <f:metadata>
             <f:viewAction action="#{informeView.consultar}" />
         </f:metadata>
+    </ui:define>
 
+    <ui:define name="contenido">
         <h:form id="reporte">
             <p:toolbar styleClass="mb-3">
                 <p:toolbarGroup>
