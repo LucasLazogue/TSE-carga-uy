@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import jakarta.annotation.security.PermitAll;
 import jakarta.ejb.EJB;
+import jakarta.ejb.Schedule;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
@@ -26,6 +27,8 @@ import tse.cargauy.entities.FormatoInforme;
 @PermitAll
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
+
+    static final int DIAS_RETENCION = 30;
 
     private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -51,6 +54,14 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         } catch (RuntimeException e) {
             informeDAO.marcarFallido(idInforme);
             LOGGER.warning("informe generacion=FALLIDA informe=" + idInforme + " error=" + e);
+        }
+    }
+
+    @Schedule(hour = "4", minute = "30", persistent = false)
+    public void vencerViejos() {
+        int vencidos = informeDAO.vencer(ahora().minusDays(DIAS_RETENCION));
+        if (vencidos > 0) {
+            LOGGER.info("informe vencimiento vencidos=" + vencidos);
         }
     }
 

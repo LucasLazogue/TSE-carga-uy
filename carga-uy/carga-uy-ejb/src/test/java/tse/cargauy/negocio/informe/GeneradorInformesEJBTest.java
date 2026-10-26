@@ -32,6 +32,7 @@ class GeneradorInformesEJBTest {
     private final InformeDto informe = new InformeDto();
     private byte[] guardado;
     private boolean fallido;
+    private LocalDateTime limiteVencimiento;
     private RuntimeException alContarRubros;
 
     private final GeneradorInformesEJB generador = new GeneradorInformesEJB() {
@@ -88,6 +89,12 @@ class GeneradorInformesEJBTest {
             }
 
             @Override
+            public int vencer(LocalDateTime generadosAntesDe) {
+                limiteVencimiento = generadosAntesDe;
+                return 2;
+            }
+
+            @Override
             public void marcarFallido(Long id) {
                 fallido = true;
             }
@@ -130,6 +137,13 @@ class GeneradorInformesEJBTest {
 
         assertNull(guardado);
         assertTrue(fallido);
+    }
+
+    @Test
+    void venceLosArchivosGeneradosHaceMasDeTreintaDias() {
+        generador.vencerViejos();
+
+        assertEquals(AHORA.minusDays(GeneradorInformesEJB.DIAS_RETENCION), limiteVencimiento);
     }
 
     @Test

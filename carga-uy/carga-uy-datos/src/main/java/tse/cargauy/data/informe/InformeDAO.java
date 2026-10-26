@@ -170,6 +170,16 @@ public class InformeDAO implements InformeDAOLocal {
     }
 
     @Override
+    public int vencer(LocalDateTime generadosAntesDe) {
+        return entityManager.createQuery("UPDATE Informe i SET i.estado = :vencido, i.contenido = NULL"
+                        + " WHERE i.estado = :generado AND i.fechaGeneracion < :limite")
+                .setParameter("vencido", EstadoInforme.VENCIDO)
+                .setParameter("generado", EstadoInforme.GENERADO)
+                .setParameter("limite", generadosAntesDe)
+                .executeUpdate();
+    }
+
+    @Override
     public byte[] getContenido(Long id) {
         Informe informe = entityManager.find(Informe.class, id);
         return informe == null ? null : informe.getContenido();

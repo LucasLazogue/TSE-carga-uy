@@ -26,5 +26,6 @@ public interface InformeDAOLocal {
     boolean tienePendientes(Long idSolicitante);
     void guardarContenido(Long id, byte[] contenido, LocalDateTime fecha);
     void marcarFallido(Long id);
+    int vencer(LocalDateTime generadosAntesDe);
     byte[] getContenido(Long id);
 }
