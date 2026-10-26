@@ -2,7 +2,6 @@ package tse.cargauy.web.beans;
 
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
@@ -28,8 +27,7 @@ public class LoginView {
     public String ingresar() {
         UsuarioDto backoffice = usuarioEJB.loginBackoffice(usuario, clave);
         TokenDto token = usuarioEJB.crearToken(backoffice);
-        FacesContext faces = FacesContext.getCurrentInstance();
-        ExternalContext contexto = faces.getExternalContext();
+        ExternalContext contexto = FacesContext.getCurrentInstance().getExternalContext();
         Cookie cookie = new Cookie(COOKIE_SESION, token.getToken());
         cookie.setPath("/");
         cookie.setHttpOnly(true);
@@ -38,9 +36,7 @@ public class LoginView {
         if (backoffice.getRoles().contains(Rol.ADMINISTRADOR)) {
             return "/admin/nodos?faces-redirect=true";
         }
-        faces.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO,
-                "Ingresaste como autoridad. El tablero de reportes todavia no esta disponible.", null));
-        return null;
+        return "/autoridad/reportes?faces-redirect=true";
     }
 
     public String getUsuario() {

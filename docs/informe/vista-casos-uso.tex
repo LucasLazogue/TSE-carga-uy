@@ -49,7 +49,7 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
         \hline
         CU-11 Detectar un incumplimiento y generar el caso & Ingesta de Eventos o Servicios de Negocio (fin del viaje registrado desde el Componente Móvil), Motor de Fiscalización, Almacén de Posiciones, Adaptador Balanzas, Nodo Periférico Balanzas, Persistencia, Notificaciones y Servicio de correo. \\
         \hline
-        CU-16 Consultar reportes gerenciales y exportarlos & Backoffice, Generación de Reportes y Persistencia. \\
+        CU-16 Consultar reportes gerenciales y exportarlos & Backoffice, Generación de Reportes, Mensajería y Persistencia. \\
         \hline
         CU-19 Gestionar nodos periféricos & Backoffice, Servicios de Negocio y Persistencia; el registro de nodos condiciona además al Adaptador Balanzas y a la Ingesta de Eventos. \\
         \hline
@@ -354,17 +354,20 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item El sistema presenta los indicadores obligatorios.
     \item La autoridad filtra por carga, ubicación y período.
     \item El sistema recalcula los indicadores.
-    \item La autoridad solicita una exportación en CSV o PDF.
-    \item El sistema genera el archivo y lo pone a disposición.
+    \item La autoridad solicita la exportación del tablero completo en CSV o PDF, con los filtros aplicados.
+    \item El sistema registra la solicitud y genera el archivo en segundo plano.
+    \item La autoridad descarga el archivo desde Mis exportaciones cuando está disponible.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item Un rango muy amplio genera una advertencia o una limitación del período.
-    \item Una exportación grande se genera en segundo plano.
-    \item Si no existen datos, se informa explícitamente.
+    \item Un período de más de 12 meses genera una advertencia; el período no puede superar los cinco años.
+    \item Si no existen datos, se informa explícitamente en el tablero y en el archivo.
+    \item Si la generación falla, la exportación queda fallida y puede volver a solicitarse.
+    \item El archivo se conserva 30 días; después vence y la solicitud sigue registrada.
+    \item Solo quien solicitó una exportación la ve y la descarga.
     \item El umbral de agregación pública no limita los reportes internos del MTOP.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} La autoridad visualizó los indicadores y, si corresponde, obtuvo el archivo. El acceso quedó registrado. \\ \hline
+\textbf{\underline{Postcondiciones:}} La autoridad visualizó los indicadores y, si corresponde, obtuvo el archivo. La consulta, la solicitud y cada descarga quedaron registradas. \\ \hline
 \end{tabular}
 \end{table}
 

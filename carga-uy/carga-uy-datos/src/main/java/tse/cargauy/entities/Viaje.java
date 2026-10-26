@@ -8,15 +8,18 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 // si un viaje del vehiculo quedo sin fin registrado y empezo otro, una posicion es del que empezo ultimo
 @Entity
+@Table(indexes = @Index(name = "ix_viaje_estado_fin", columnList = "estado, fechaFin"))
 @NamedQueries({
     @NamedQuery(name = Viaje.EN_CURSO_DEL_VEHICULO,
             query = "SELECT v FROM Viaje v WHERE v.vehiculo.id = :idVehiculo AND v.fechaInicio <= :momento"

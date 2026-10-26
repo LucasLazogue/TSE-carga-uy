@@ -98,6 +98,7 @@ public class GuiaEJB implements GuiaEJBLocal, GuiaEJBRemote {
         return guiaDAO.getRubros();
     }
 
+    @RolesAllowed({ Rol.RESPONSABLE, Rol.FUNCIONARIO, Rol.AUTORIDAD })
     public List<TipoCargaDto> getTiposCarga() {
         return guiaDAO.getTiposCarga();
     }

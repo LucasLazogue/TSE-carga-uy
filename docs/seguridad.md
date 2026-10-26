@@ -22,6 +22,10 @@ y entrega al contenedor el identificador del usuario y sus roles. Los EJB aplica
 y, cuando corresponde, verifican el acceso a los datos de la empresa. Registrar, habilitar o
 modificar nodos requiere `ADMINISTRADOR`.
 
+El tablero de reportes (`/autoridad/*` en `web.xml`) y `InformeEJB` requieren `AUTORIDAD`. Cada
+autoridad solo ve y descarga sus propias exportaciones; la de otra se responde como inexistente. La
+consulta del tablero, cada exportación y cada descarga quedan en el log con el usuario y los filtros.
+
 El administrador inicial de LDAP se crea con `LDAP_ADMIN_USUARIO` y `LDAP_ADMIN_PASSWORD` al
 arrancar el servicio. El alta se ejecuta si la cuenta no existe; cambiar esas variables no actualiza
 la contraseña de una cuenta persistida. El Compose configura bloqueo tras cinco intentos fallidos,

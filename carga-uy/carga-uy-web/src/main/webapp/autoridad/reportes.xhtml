@@ -1,0 +1,153 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/backoffice.xhtml">
+
+    <ui:define name="titulo">Reportes</ui:define>
+
+    <ui:define name="metadata">
+        <f:metadata>
+            <f:viewAction action="#{informeView.consultar}" />
+        </f:metadata>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="reporte">
+            <p:toolbar styleClass="mb-3">
+                <p:toolbarGroup>
+                    <div class="flex flex-wrap align-items-end gap-3">
+                        <div>
+                            <p:outputLabel for="desde" value="#{textos['filtro.desde']}" styleClass="block mb-2" />
+                            <p:datePicker id="desde" value="#{informeView.desde}" pattern="dd/MM/yyyy">
+                                <p:ajax event="dateSelect" listener="#{informeView.consultar}" process="@form" update="@form" />
+                            </p:datePicker>
+                        </div>
+                        <div>
+                            <p:outputLabel for="hasta" value="#{textos['filtro.hasta']}" styleClass="block mb-2" />
+                            <p:datePicker id="hasta" value="#{informeView.hasta}" pattern="dd/MM/yyyy">
+                                <p:ajax event="dateSelect" listener="#{informeView.consultar}" process="@form" update="@form" />
+                            </p:datePicker>
+                        </div>
+                        <div>
+                            <p:outputLabel for="tipoCarga" value="#{textos['filtro.tipoCarga']}" styleClass="block mb-2" />
+                            <p:selectOneMenu id="tipoCarga" value="#{informeView.idTipoCarga}">
+                                <f:selectItem itemLabel="#{textos['informe.tipoCarga.todos']}" noSelectionOption="true" />
+                                <f:selectItems value="#{informeView.tiposCarga}" var="tipo" itemValue="#{tipo.id}"
+                                               itemLabel="#{tipo.nombre}" />
+                                <p:ajax listener="#{informeView.consultar}" process="@form" update="@form" />
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+                </p:toolbarGroup>
+                <p:toolbarGroup align="right">
+                    <p:menuButton icon="pi pi-download" value="#{textos['tablero.exportar']}">
+                        <p:menuitem value="CSV" action="#{informeView.exportar('CSV')}" process="@form" update="@none" />
+                        <p:menuitem value="PDF" action="#{informeView.exportar('PDF')}" process="@form" update="@none" />
+                    </p:menuButton>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <h:panelGroup layout="block" rendered="#{informeView.indicadores != null}">
+                <p:staticMessage severity="warn" styleClass="w-full mb-3" rendered="#{informeView.indicadores.periodoAmplio}"
+                                 summary="#{textos['tablero.periodoAmplio']}" />
+                <p:staticMessage severity="info" styleClass="w-full mb-3" rendered="#{informeView.indicadores.sinDatos}"
+                                 summary="#{textos['tablero.sinDatos']}" />
+                <p:staticMessage severity="info" styleClass="w-full mb-3"
+                                 rendered="#{informeView.indicadores.filtro.idTipoCarga != null}"
+                                 summary="#{textos['tablero.filtroTipoCarga']}" />
+
+                <div class="grid">
+                    <div class="col-12 lg:col-6">
+                        <p:panel header="#{textos['seccion.habilitados']}" styleClass="h-full">
+                            <div class="grid">
+                                <div class="col-6">
+                                    <div class="text-sm font-medium opacity-70 white-space-nowrap">#{textos['tablero.empresas']}</div>
+                                    <h:outputText styleClass="text-3xl font-semibold" value="#{informeView.indicadores.empresasHabilitadas}">
+                                        <f:convertNumber groupingUsed="true" />
+                                    </h:outputText>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-sm font-medium opacity-70 white-space-nowrap">#{textos['tablero.vehiculos']}</div>
+                                    <h:outputText styleClass="text-3xl font-semibold" value="#{informeView.indicadores.vehiculosHabilitados}">
+                                        <f:convertNumber groupingUsed="true" />
+                                    </h:outputText>
+                                </div>
+                            </div>
+                            <h:outputFormat styleClass="text-sm opacity-70" value="#{textos['tablero.habilitadosAl']}">
+                                <f:param value="#{informeView.habilitadosAl}" />
+                            </h:outputFormat>
+                        </p:panel>
+                    </div>
+                    <div class="col-12 lg:col-6">
+                        <p:panel header="#{textos['seccion.tasa']}" styleClass="h-full">
+                            <div class="mb-2">
+                                <h:outputText styleClass="text-3xl font-semibold" value="#{informeView.indicadores.tasaConfirmadas}"
+                                              rendered="#{informeView.indicadores.tasaConfirmadas != null}">
+                                    <f:convertNumber type="percent" maxFractionDigits="1" />
+                                </h:outputText>
+                                <h:outputText styleClass="text-3xl font-semibold" value="-"
+                                              rendered="#{informeView.indicadores.tasaConfirmadas == null}" />
+                            </div>
+                            <h:outputFormat styleClass="text-sm opacity-70" value="#{textos['tablero.tasaDetalle']}">
+                                <f:param value="#{informeView.indicadores.confirmadas}" />
+                                <f:param value="#{informeView.indicadores.detectadas}" />
+                                <f:param value="#{informeView.indicadores.pendientes}" />
+                            </h:outputFormat>
+                        </p:panel>
+                    </div>
+
+                    <div class="col-12">
+                        <p:panel header="#{textos['seccion.viajes']}">
+                            <div class="grid">
+                                <div class="col-12 lg:col-8">
+                                    <p:chart value="#{informeView.graficoViajes}" style="height: 18rem" />
+                                </div>
+                                <div class="col-12 lg:col-4">
+                                    <p:dataTable value="#{informeView.indicadores.viajes}" var="viajes" size="small" stripedRows="true"
+                                                 scrollable="true" scrollHeight="18rem" emptyMessage="#{textos['tablero.sinViajes']}">
+                                        <p:column headerText="#{textos['columna.periodo']}">#{informeView.indicadores.periodo(viajes)}</p:column>
+                                        <p:column headerText="#{textos['columna.viajes']}" styleClass="text-right">
+                                            <h:outputText value="#{viajes.cantidad}">
+                                                <f:convertNumber groupingUsed="true" />
+                                            </h:outputText>
+                                        </p:column>
+                                    </p:dataTable>
+                                </div>
+                            </div>
+                        </p:panel>
+                    </div>
+
+                    <div class="col-12 xl:col-6">
+                        <p:panel header="#{textos['seccion.volumen']}" styleClass="h-full">
+                            <p:chart value="#{informeView.graficoVolumen}" style="height: 14rem" />
+                            <p:dataTable value="#{informeView.indicadores.volumenPorRubro}" var="volumen" size="small"
+                                         stripedRows="true" styleClass="mt-3" emptyMessage="#{textos['tablero.sinVolumen']}">
+                                <p:column headerText="#{textos['columna.rubro']}">#{volumen.rubro}</p:column>
+                                <p:column headerText="#{textos['columna.volumen']}" styleClass="text-right">
+                                    <h:outputText value="#{volumen.volumen}">
+                                        <f:convertNumber groupingUsed="true" />
+                                    </h:outputText>
+                                </p:column>
+                            </p:dataTable>
+                        </p:panel>
+                    </div>
+                    <div class="col-12 xl:col-6">
+                        <p:panel header="#{textos['seccion.infracciones']}" styleClass="h-full">
+                            <p:chart value="#{informeView.graficoInfracciones}" style="height: 14rem" />
+                            <p:dataTable value="#{informeView.indicadores.infracciones}" var="infracciones" size="small"
+                                         stripedRows="true" styleClass="mt-3">
+                                <p:column headerText="#{textos['columna.tipo']}">#{infracciones.tipo.nombre}</p:column>
+                                <p:column headerText="#{textos['columna.detectadas']}" styleClass="text-right">#{infracciones.detectadas}</p:column>
+                                <p:column headerText="#{textos['columna.confirmadas']}" styleClass="text-right">#{infracciones.confirmadas}</p:column>
+                                <p:column headerText="#{textos['columna.desestimadas']}" styleClass="text-right">#{infracciones.desestimadas}</p:column>
+                                <p:column headerText="#{textos['columna.pendientes']}" styleClass="text-right">#{infracciones.pendientes}</p:column>
+                            </p:dataTable>
+                        </p:panel>
+                    </div>
+                </div>
+            </h:panelGroup>
+        </h:form>
+    </ui:define>
+</ui:composition>

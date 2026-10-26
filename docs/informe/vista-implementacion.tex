@@ -16,7 +16,7 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \textbf{Componente} & \textbf{Tecnología} & \textbf{Subsistemas que implementa} \\
     \hline
     \endhead
-    \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, Java 24. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. Los adaptadores usan MicroProfile Fault Tolerance (AC13) y el acceso al Almacén de Posiciones, el controlador de MongoDB. Logs, métricas y trazas, con los subsistemas de OpenTelemetry y de Micrometer de WildFly (AC21 a AC24). & API REST, Backoffice, Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización, adaptadores (gub.uy, PDI, rutas, balanzas y notificaciones) y acceso a la Persistencia y al Almacén de Posiciones. \\
+    \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, Java 24. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Exportación de reportes con Apache Commons CSV 1.14 y OpenPDF 1.4, y gráficos del backoffice con el componente \texttt{p:chart} de PrimeFaces 16 (Chart.js). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. Los adaptadores usan MicroProfile Fault Tolerance (AC13) y el acceso al Almacén de Posiciones, el controlador de MongoDB. Logs, métricas y trazas, con los subsistemas de OpenTelemetry y de Micrometer de WildFly (AC21 a AC24). & API REST, Backoffice, Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización, adaptadores (gub.uy, PDI, rutas, balanzas y notificaciones) y acceso a la Persistencia y al Almacén de Posiciones. \\
     \hline
     Frontend web & React 19 con TypeScript, Tailwind CSS 4 y componentes shadcn/ui, construido con Vite 8. & Frontoffice, un único artefacto para el público, los ciudadanos y los funcionarios. \\
     \hline
@@ -26,7 +26,7 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \hline
     Almacén de posiciones & MongoDB (opcional 10). & Almacén de Posiciones. \\
     \hline
-    Broker de mensajería & Apache Artemis 2.57 en su propio contenedor, con los mensajes en un volumen y la cola \texttt{queue\_tracking}. Acepta a las instancias de WildFly en la red interna y a los nodos con TLS. & Mensajería. \\
+    Broker de mensajería & Apache Artemis 2.57 en su propio contenedor, con los mensajes en un volumen y las colas \texttt{queue\_tracking} y \texttt{queue\_informes}. Acepta a las instancias de WildFly en la red interna y a los nodos con TLS. & Mensajería. \\
     \hline
     Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS de Artemis. Incluye el generador de carga. Expone \texttt{/health} y \texttt{/metricas}, guarda los eventos mientras el broker no responde y exporta logs, métricas y trazas con el SDK de OpenTelemetry. & Nodo Periférico Tracking. \\
     \hline
