@@ -39,6 +39,9 @@ jobs:
             nodo-tracking:
               - 'nodo-tracking/**'
               - '.github/workflows/**'
+            nodo-balanzas:
+              - 'nodo-balanzas/**'
+              - '.github/workflows/**'
             frontend:
               - 'frontend/**'
               - '.github/workflows/**'
@@ -53,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [carga-uy, carga-uy-client, nodo-tracking]
+        module: [carga-uy, carga-uy-client, nodo-tracking, nodo-balanzas]
         include:
           - module: carga-uy
             perfil: -Pci
@@ -121,7 +124,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        imagen: [carga-uy, nodo-tracking]
+        imagen: [carga-uy, nodo-tracking, nodo-balanzas]
     env:
       CAMBIOS: ${{ contains(fromJSON(needs.cambios.outputs.cambios), matrix.imagen) }}
     steps:
