@@ -17,6 +17,10 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
+import jakarta.jms.JMSConnectionFactory;
+import jakarta.jms.JMSContext;
+import jakarta.jms.Queue;
 import tse.cargauy.data.informe.InformeDAOLocal;
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.Granularidad;
@@ -51,11 +55,21 @@ public class InformeEJB implements InformeEJBLocal {
     @Resource
     SessionContext contexto;
 
+    @Inject
+    @JMSConnectionFactory("java:/jms/ArtemisCF")
+    JMSContext jms;
+
+    @Resource(lookup = "java:/jms/queue/queue_informes")
+    Queue cola;
+
     public IndicadoresDto consultar(FiltroInforme filtro) {
         validar(filtro);
         LOGGER.info("informe consulta usuario=" + idUsuario() + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
                 + " tipoCarga=" + filtro.getIdTipoCarga());
-        LocalDate hoy = hoy();
+        return calcular(informeDAO, filtro, hoy());
+    }
+
+    static IndicadoresDto calcular(InformeDAOLocal informeDAO, FiltroInforme filtro, LocalDate hoy) {
         LocalDate habilitadosAl = filtro.getHasta().isAfter(hoy) ? hoy : filtro.getHasta();
         Granularidad granularidad = granularidad(filtro);
 
@@ -91,7 +105,30 @@ public class InformeEJB implements InformeEJBLocal {
         LOGGER.info("informe exportacion usuario=" + idUsuario() + " informe=" + registrado.getId() + " tipo=" + tipo
                 + " formato=" + formato + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
                 + " tipoCarga=" + filtro.getIdTipoCarga());
+        encolar(registrado.getId());
         return registrado;
+    }
+
+    public boolean tienePendientes() {
+        return informeDAO.tienePendientes(idUsuario());
+    }
+
+    public byte[] descargar(Long id) {
+        InformeDto informe = informeDAO.getInformeById(id);
+        if (informe == null || !informe.getIdSolicitante().equals(idUsuario())) {
+            throw new CargaUYException(CodigoError.INFORME_NO_ENCONTRADO, String.valueOf(id));
+        }
+        byte[] contenido = informe.getEstado() == EstadoInforme.GENERADO ? informeDAO.getContenido(id) : null;
+        if (contenido == null) {
+            throw new CargaUYException(CodigoError.INFORME_NO_DISPONIBLE, String.valueOf(id));
+        }
+        LOGGER.info("informe descarga usuario=" + idUsuario() + " informe=" + id + " tipo=" + informe.getTipo()
+                + " formato=" + informe.getFormato());
+        return contenido;
+    }
+
+    void encolar(Long idInforme) {
+        jms.createProducer().send(cola, String.valueOf(idInforme));
     }
 
     Long idUsuario() {

@@ -1,0 +1,46 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/backoffice.xhtml">
+
+    <ui:define name="titulo">Mis exportaciones</ui:define>
+
+    <ui:define name="contenido">
+        <h:form id="exportaciones">
+            <p:poll interval="5" process="@this" update="@form" autoStart="#{informeView.tienePendientes}"
+                    stop="#{not informeView.tienePendientes}" />
+            <p:dataTable value="#{informeView.informes}" var="informe" rowKey="#{informe.id}"
+                         lazy="true" paginator="true" rows="10" paginatorPosition="bottom"
+                         emptyMessage="No hay exportaciones.">
+                <p:column headerText="Reporte">#{informe.tipo.nombre}</p:column>
+                <p:column headerText="Período">
+                    <h:outputText value="#{informe.periodoDesde}">
+                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
+                    </h:outputText>
+                    -
+                    <h:outputText value="#{informe.periodoHasta}">
+                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Tipo de carga">#{informe.tipoCarga != null ? informe.tipoCarga : 'Todos'}</p:column>
+                <p:column headerText="Formato">#{informe.formato}</p:column>
+                <p:column headerText="Solicitado">
+                    <h:outputText value="#{informe.fechaSolicitud}">
+                        <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm" />
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Estado">
+                    <p:tag value="#{informe.estado.nombre}" severity="#{informeView.severidad(informe)}" />
+                </p:column>
+                <p:column headerText="Archivo">
+                    <p:commandButton icon="pi pi-download" title="Descargar" rendered="#{informe.estado == 'GENERADO'}"
+                                     styleClass="ui-button-outlined">
+                        <p:fileDownload value="#{informeView.archivo(informe)}" />
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </ui:define>
+</ui:composition>

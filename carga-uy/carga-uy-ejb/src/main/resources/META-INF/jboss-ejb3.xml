@@ -13,5 +13,9 @@
             <ejb-name>IngestaTrackingMDB</ejb-name>
             <mdb:resource-adapter-name>artemis</mdb:resource-adapter-name>
         </mdb:resource-adapter-binding>
+        <mdb:resource-adapter-binding>
+            <ejb-name>InformesMDB</ejb-name>
+            <mdb:resource-adapter-name>artemis</mdb:resource-adapter-name>
+        </mdb:resource-adapter-binding>
     </assembly-descriptor>
 </jboss:ejb-jar>

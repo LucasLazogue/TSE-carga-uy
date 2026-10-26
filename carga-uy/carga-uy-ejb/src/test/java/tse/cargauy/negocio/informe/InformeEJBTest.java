@@ -1,5 +1,6 @@
 package tse.cargauy.negocio.informe;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -9,7 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +44,9 @@ class InformeEJBTest {
     private LocalDate fechaHabilitados;
     private final List<InformeDto> registrados = new ArrayList<>();
     private Long solicitanteListado;
+    private final Map<Long, InformeDto> informes = new HashMap<>();
+    private final List<Long> encolados = new ArrayList<>();
+    private byte[] contenido = { 1, 2, 3 };
 
     private final InformeEJB ejb = new InformeEJB() {
         @Override
@@ -56,6 +62,11 @@ class InformeEJBTest {
         @Override
         LocalDateTime ahora() {
             return AHORA;
+        }
+
+        @Override
+        void encolar(Long idInforme) {
+            encolados.add(idInforme);
         }
     };
 
@@ -93,6 +104,16 @@ class InformeEJBTest {
                 informe.setId(1L);
                 registrados.add(informe);
                 return informe;
+            }
+
+            @Override
+            public InformeDto getInformeById(Long id) {
+                return informes.get(id);
+            }
+
+            @Override
+            public byte[] getContenido(Long id) {
+                return contenido;
             }
 
             @Override
@@ -238,6 +259,7 @@ class InformeEJBTest {
         assertEquals(idTipoCarga, informe.getIdTipoCarga());
         assertEquals(9L, informe.getIdSolicitante());
         assertEquals(AHORA, informe.getFechaSolicitud());
+        assertEquals(List.of(1L), encolados);
     }
 
     @Test
@@ -245,6 +267,7 @@ class InformeEJBTest {
         assertThrows(CargaUYException.class,
                 () -> ejb.exportar(new FiltroInforme(HOY, HOY.minusDays(1), null), TipoInforme.HABILITADOS, FormatoInforme.PDF));
         assertTrue(registrados.isEmpty());
+        assertTrue(encolados.isEmpty());
     }
 
     @Test
@@ -252,5 +275,48 @@ class InformeEJBTest {
         ejb.getMisInformes(new Paginacion(0, 10));
 
         assertEquals(9L, solicitanteListado);
+    }
+
+    private void informe(Long id, Long idSolicitante, EstadoInforme estado) {
+        InformeDto informe = new InformeDto();
+        informe.setId(id);
+        informe.setTipo(TipoInforme.HABILITADOS);
+        informe.setFormato(FormatoInforme.CSV);
+        informe.setEstado(estado);
+        informe.setIdSolicitante(idSolicitante);
+        informes.put(id, informe);
+    }
+
+    private void noSeDescarga(CodigoError codigo, Long id) {
+        assertEquals(codigo, assertThrows(CargaUYException.class, () -> ejb.descargar(id)).getCodigo());
+    }
+
+    @Test
+    void laAutoridadDescargaSuInformeGenerado() {
+        informe(1L, 9L, EstadoInforme.GENERADO);
+
+        assertArrayEquals(contenido, ejb.descargar(1L));
+    }
+
+    @Test
+    void elInformeDeOtraAutoridadNoSeEncuentra() {
+        informe(1L, 8L, EstadoInforme.GENERADO);
+
+        noSeDescarga(CodigoError.INFORME_NO_ENCONTRADO, 1L);
+        noSeDescarga(CodigoError.INFORME_NO_ENCONTRADO, 2L);
+    }
+
+    @Test
+    void soloSeDescargaUnInformeGeneradoQueConservaSuArchivo() {
+        informe(1L, 9L, EstadoInforme.PENDIENTE);
+        informe(2L, 9L, EstadoInforme.FALLIDO);
+        informe(3L, 9L, EstadoInforme.VENCIDO);
+        noSeDescarga(CodigoError.INFORME_NO_DISPONIBLE, 1L);
+        noSeDescarga(CodigoError.INFORME_NO_DISPONIBLE, 2L);
+        noSeDescarga(CodigoError.INFORME_NO_DISPONIBLE, 3L);
+
+        informe(4L, 9L, EstadoInforme.GENERADO);
+        contenido = null;
+        noSeDescarga(CodigoError.INFORME_NO_DISPONIBLE, 4L);
     }
 }

@@ -37,33 +37,33 @@
                         <p:menuButton value="Exportar" icon="pi pi-download">
                             <p:submenu label="Habilitados">
                                 <p:menuitem value="CSV" action="#{informeView.exportar('HABILITADOS', 'CSV')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                                 <p:menuitem value="PDF" action="#{informeView.exportar('HABILITADOS', 'PDF')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                             </p:submenu>
                             <p:submenu label="Viajes realizados">
                                 <p:menuitem value="CSV" action="#{informeView.exportar('VIAJES_POR_PERIODO', 'CSV')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                                 <p:menuitem value="PDF" action="#{informeView.exportar('VIAJES_POR_PERIODO', 'PDF')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                             </p:submenu>
                             <p:submenu label="Volumen por rubro">
                                 <p:menuitem value="CSV" action="#{informeView.exportar('VOLUMEN_POR_RUBRO', 'CSV')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                                 <p:menuitem value="PDF" action="#{informeView.exportar('VOLUMEN_POR_RUBRO', 'PDF')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                             </p:submenu>
                             <p:submenu label="Infracciones por tipo">
                                 <p:menuitem value="CSV" action="#{informeView.exportar('INFRACCIONES_POR_TIPO', 'CSV')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                                 <p:menuitem value="PDF" action="#{informeView.exportar('INFRACCIONES_POR_TIPO', 'PDF')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                             </p:submenu>
                             <p:submenu label="Tasa de confirmación">
                                 <p:menuitem value="CSV" action="#{informeView.exportar('TASA_CONFIRMACION', 'CSV')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                                 <p:menuitem value="PDF" action="#{informeView.exportar('TASA_CONFIRMACION', 'PDF')}"
-                                            process="@form" update=":exportaciones" />
+                                            process="@form" />
                             </p:submenu>
                         </p:menuButton>
                     </div>
@@ -118,7 +118,7 @@
                     <div class="col-12 lg:col-4">
                         <p:dataTable value="#{informeView.indicadores.viajes}" var="viajes" emptyMessage="No hay viajes realizados.">
                             <f:facet name="header">Viajes realizados</f:facet>
-                            <p:column headerText="Periodo">#{informeView.periodo(viajes)}</p:column>
+                            <p:column headerText="Periodo">#{informeView.indicadores.periodo(viajes)}</p:column>
                             <p:column headerText="Viajes">#{viajes.cantidad}</p:column>
                         </p:dataTable>
                     </div>
@@ -147,31 +147,5 @@
                 </div>
             </h:panelGroup>
         </h:panelGroup>
-
-        <h:form id="exportaciones">
-            <p:dataTable value="#{informeView.informes}" var="informe" rowKey="#{informe.id}" styleClass="mt-3"
-                         lazy="true" paginator="true" rows="10" paginatorPosition="bottom"
-                         emptyMessage="No hay exportaciones.">
-                <f:facet name="header">Mis exportaciones</f:facet>
-                <p:column headerText="Reporte">#{informe.tipo}</p:column>
-                <p:column headerText="Periodo">
-                    <h:outputText value="#{informe.periodoDesde}">
-                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
-                    </h:outputText>
-                    -
-                    <h:outputText value="#{informe.periodoHasta}">
-                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
-                    </h:outputText>
-                </p:column>
-                <p:column headerText="Tipo de carga">#{informe.tipoCarga != null ? informe.tipoCarga : 'Todos'}</p:column>
-                <p:column headerText="Formato">#{informe.formato}</p:column>
-                <p:column headerText="Solicitado">
-                    <h:outputText value="#{informe.fechaSolicitud}">
-                        <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm" />
-                    </h:outputText>
-                </p:column>
-                <p:column headerText="Estado">#{informe.estado}</p:column>
-            </p:dataTable>
-        </h:form>
     </ui:define>
 </ui:composition>

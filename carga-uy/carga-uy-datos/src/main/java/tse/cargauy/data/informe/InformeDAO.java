@@ -1,6 +1,7 @@
 package tse.cargauy.data.informe;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.ejb.Stateless;
@@ -15,6 +16,7 @@ import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoCaso;
+import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.EstadoViaje;
 import tse.cargauy.entities.Informe;
@@ -127,6 +129,48 @@ public class InformeDAO implements InformeDAOLocal {
                 .setParameter("idSolicitante", idSolicitante)
                 .getSingleResult();
         return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public InformeDto getInformeById(Long id) {
+        Informe informe = entityManager.find(Informe.class, id);
+        return informe == null ? null : Serializers.toDto(informe);
+    }
+
+    @Override
+    public boolean tienePendientes(Long idSolicitante) {
+        return entityManager.createQuery(
+                        "SELECT COUNT(i) FROM Informe i WHERE i.solicitante.id = :idSolicitante AND i.estado = :pendiente", Long.class)
+                .setParameter("idSolicitante", idSolicitante)
+                .setParameter("pendiente", EstadoInforme.PENDIENTE)
+                .getSingleResult() > 0;
+    }
+
+    @Override
+    public void guardarContenido(Long id, byte[] contenido, LocalDateTime fecha) {
+        entityManager.createQuery("UPDATE Informe i SET i.estado = :generado, i.contenido = :contenido, i.fechaGeneracion = :fecha"
+                        + " WHERE i.id = :id AND i.estado = :pendiente")
+                .setParameter("generado", EstadoInforme.GENERADO)
+                .setParameter("contenido", contenido)
+                .setParameter("fecha", fecha)
+                .setParameter("id", id)
+                .setParameter("pendiente", EstadoInforme.PENDIENTE)
+                .executeUpdate();
+    }
+
+    @Override
+    public void marcarFallido(Long id) {
+        entityManager.createQuery("UPDATE Informe i SET i.estado = :fallido WHERE i.id = :id AND i.estado = :pendiente")
+                .setParameter("fallido", EstadoInforme.FALLIDO)
+                .setParameter("id", id)
+                .setParameter("pendiente", EstadoInforme.PENDIENTE)
+                .executeUpdate();
+    }
+
+    @Override
+    public byte[] getContenido(Long id) {
+        Informe informe = entityManager.find(Informe.class, id);
+        return informe == null ? null : informe.getContenido();
     }
 
     private <T> TypedQuery<T> consulta(String jpql, Class<T> tipo) {

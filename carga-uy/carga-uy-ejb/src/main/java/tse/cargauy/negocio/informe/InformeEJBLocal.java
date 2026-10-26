@@ -14,4 +14,6 @@ public interface InformeEJBLocal {
     IndicadoresDto consultar(FiltroInforme filtro);
     PaginaDto<InformeDto> getMisInformes(Paginacion paginacion);
     InformeDto exportar(FiltroInforme filtro, TipoInforme tipo, FormatoInforme formato);
+    boolean tienePendientes();
+    byte[] descargar(Long id);
 }

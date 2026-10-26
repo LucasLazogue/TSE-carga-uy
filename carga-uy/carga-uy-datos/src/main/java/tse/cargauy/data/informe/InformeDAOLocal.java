@@ -1,6 +1,7 @@
 package tse.cargauy.data.informe;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.ejb.Local;
@@ -21,4 +22,9 @@ public interface InformeDAOLocal {
     List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro);
     InformeDto addInforme(InformeDto informeDto);
     PaginaDto<InformeDto> getBySolicitante(Long idSolicitante, Paginacion paginacion);
+    InformeDto getInformeById(Long id);
+    boolean tienePendientes(Long idSolicitante);
+    void guardarContenido(Long id, byte[] contenido, LocalDateTime fecha);
+    void marcarFallido(Long id);
+    byte[] getContenido(Long id);
 }

@@ -1,7 +1,7 @@
 package tse.cargauy.web.beans;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -10,11 +10,14 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
+
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.IndicadoresDto;
 import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.TipoCargaDto;
-import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.negocio.guia.GuiaEJBLocal;
@@ -23,9 +26,6 @@ import tse.cargauy.negocio.informe.InformeEJBLocal;
 @Named
 @RequestScoped
 public class InformeView {
-
-    private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final DateTimeFormatter MES = DateTimeFormatter.ofPattern("MM/yyyy");
 
     @EJB
     private InformeEJBLocal informeEJB;
@@ -50,17 +50,32 @@ public class InformeView {
         indicadores = informeEJB.consultar(new FiltroInforme(desde, hasta, idTipoCarga));
     }
 
-    public String periodo(ViajesPorPeriodoDto viajes) {
-        return switch (indicadores.getGranularidad()) {
-            case DIA -> viajes.getInicio().format(DIA);
-            case SEMANA -> "Semana del " + viajes.getInicio().format(DIA);
-            case MES -> viajes.getInicio().format(MES);
+    public void exportar(TipoInforme tipo, FormatoInforme formato) {
+        informeEJB.exportar(new FiltroInforme(desde, hasta, idTipoCarga), tipo, formato);
+        mensaje("Se está generando el reporte. Lo vas a encontrar en Mis exportaciones.");
+    }
+
+    public StreamedContent archivo(InformeDto informe) {
+        byte[] contenido = informeEJB.descargar(informe.getId());
+        return DefaultStreamedContent.builder()
+                .name(informe.getTipo().name().toLowerCase() + "_" + informe.getPeriodoDesde() + "_" + informe.getPeriodoHasta()
+                        + "." + informe.getFormato().name().toLowerCase())
+                .contentType(informe.getFormato() == FormatoInforme.PDF ? "application/pdf" : "text/csv; charset=UTF-8")
+                .stream(() -> new ByteArrayInputStream(contenido))
+                .build();
+    }
+
+    public String severidad(InformeDto informe) {
+        return switch (informe.getEstado()) {
+            case PENDIENTE -> "info";
+            case GENERADO -> "success";
+            case FALLIDO -> "danger";
+            case VENCIDO -> "secondary";
         };
     }
 
-    public void exportar(TipoInforme tipo, FormatoInforme formato) {
-        informeEJB.exportar(new FiltroInforme(desde, hasta, idTipoCarga), tipo, formato);
-        mensaje("Se esta generando el reporte. Lo vas a encontrar en Mis exportaciones.");
+    public boolean isTienePendientes() {
+        return informeEJB.tienePendientes();
     }
 
     public ModeloPaginado<InformeDto> getInformes() {

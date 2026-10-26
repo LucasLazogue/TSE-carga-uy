@@ -2,12 +2,16 @@ package tse.cargauy.dtos;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class IndicadoresDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    private static final DateTimeFormatter DIA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter MES = DateTimeFormatter.ofPattern("MM/yyyy");
 
     private FiltroInforme filtro;
     private boolean periodoAmplio;
@@ -41,6 +45,14 @@ public class IndicadoresDto implements Serializable {
 
     public boolean isSinDatos() {
         return viajes.isEmpty() && getDetectadas() == 0;
+    }
+
+    public String periodo(ViajesPorPeriodoDto viajes) {
+        return switch (granularidad) {
+            case DIA -> viajes.getInicio().format(DIA);
+            case SEMANA -> "Semana del " + viajes.getInicio().format(DIA);
+            case MES -> viajes.getInicio().format(MES);
+        };
     }
 
     public FiltroInforme getFiltro() {

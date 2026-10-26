@@ -48,6 +48,12 @@
             <permission type="manage" roles="amq"/>
          </security-setting>
          <!-- los mensajes que no se pudieron procesar los revisa y reprocesa un administrador -->
+         <security-setting match="queue_informes">
+            <permission type="send" roles="central,amq"/>
+            <permission type="consume" roles="central,amq"/>
+            <permission type="browse" roles="central,amq"/>
+            <permission type="manage" roles="amq"/>
+         </security-setting>
          <security-setting match="DLQ">
             <permission type="consume" roles="amq"/>
             <permission type="browse" roles="amq"/>
@@ -98,6 +104,14 @@
             <auto-create-queues>false</auto-create-queues>
             <auto-create-addresses>false</auto-create-addresses>
          </address-setting>
+         <address-setting match="queue_informes">
+            <dead-letter-address>DLQ</dead-letter-address>
+            <expiry-address>ExpiryQueue</expiry-address>
+            <max-delivery-attempts>3</max-delivery-attempts>
+            <redelivery-delay>60000</redelivery-delay>
+            <auto-create-queues>false</auto-create-queues>
+            <auto-create-addresses>false</auto-create-addresses>
+         </address-setting>
          <address-setting match="activemq.management.#">
             <dead-letter-address>DLQ</dead-letter-address>
             <expiry-address>ExpiryQueue</expiry-address>
@@ -131,6 +145,11 @@
          <address name="queue_tracking">
             <anycast>
                <queue name="queue_tracking"/>
+            </anycast>
+         </address>
+         <address name="queue_informes">
+            <anycast>
+               <queue name="queue_informes"/>
             </anycast>
          </address>
          <address name="DLQ">
