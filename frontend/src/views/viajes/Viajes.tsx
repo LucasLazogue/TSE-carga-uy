@@ -97,7 +97,7 @@ function Viajes() {
             <History />
             <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver eventos</span>
           </Button>
-          {esFuncionario && (
+          {esFuncionario && v.estado !== 'ASIGNADO' && (
             <Button size="sm" variant="outline" onClick={() => verRecorrido(v)}>
               <MapPinned />
               <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver recorrido</span>
