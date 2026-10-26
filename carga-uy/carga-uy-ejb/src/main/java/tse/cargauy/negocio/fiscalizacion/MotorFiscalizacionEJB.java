@@ -23,6 +23,7 @@ import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
+import tse.cargauy.data.itv.ItvDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.posicion.EventoPosicionDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
@@ -64,6 +65,9 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     PermisoDAOLocal permisoDAO;
 
     @EJB
+    ItvDAOLocal itvDAO;
+
+    @EJB
     CasoFiscalizacionEJBLocal casoEJB;
 
     @EJB
@@ -100,7 +104,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
                     posicion.getLatitud() + ", " + posicion.getLongitud(), "sin viaje en curso", null,
                     "El vehiculo circulaba sin un viaje en curso.")));
         }
-        evaluarPermiso(idVehiculo, momento, null, origen);
+        evaluarHabilitacion(idVehiculo, momento, null, origen);
     }
 
     @Asynchronous
@@ -114,7 +118,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         if (viaje.getEstado() != EstadoViaje.FINALIZADO) {
             return;
         }
-        evaluarPermiso(viaje.getIdVehiculo(), viaje.getFechaInicio(), idViaje, "viaje " + idViaje);
+        evaluarHabilitacion(viaje.getIdVehiculo(), viaje.getFechaInicio(), idViaje, "viaje " + idViaje);
         evaluarCarga(viaje, ahora());
     }
 
@@ -152,15 +156,24 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         }
     }
 
-    private void evaluarPermiso(Long idVehiculo, LocalDateTime momento, Long idViaje, String origen) {
+    // un solo caso con una evidencia por lo que falte ese dia: el permiso, la ITV o los dos
+    private void evaluarHabilitacion(Long idVehiculo, LocalDateTime momento, Long idViaje, String origen) {
         LocalDate fecha = momento.toLocalDate();
-        if (permisoDAO.getVigente(idVehiculo, fecha) != null) {
+        List<EvidenciaDto> evidencias = new ArrayList<>();
+        if (permisoDAO.getVigente(idVehiculo, fecha) == null) {
+            evidencias.add(new EvidenciaDto(TipoEvidencia.PERMISO, origen, momento, "sin permiso aprobado vigente",
+                    fecha.toString(), null, "El vehiculo circulaba sin un permiso vigente."));
+        }
+        if (itvDAO.getVigente(idVehiculo, fecha) == null) {
+            evidencias.add(new EvidenciaDto(TipoEvidencia.ITV, origen, momento, "sin ITV vigente",
+                    fecha.toString(), null, "El vehiculo circulaba sin una ITV vigente."));
+        }
+        if (evidencias.isEmpty()) {
             return;
         }
         CasoFiscalizacionDto caso = new CasoFiscalizacionDto(TipoInfraccion.SIN_HABILITACION,
                 clave(TipoInfraccion.SIN_HABILITACION, idVehiculo, fecha), momento, idVehiculo, idViaje);
-        registrar(caso, List.of(new EvidenciaDto(TipoEvidencia.PERMISO, origen, momento, "sin permiso aprobado vigente",
-                fecha.toString(), null, "El vehiculo circulaba sin un permiso vigente.")));
+        registrar(caso, evidencias);
     }
 
     // un caso por viaje (puede durar mas de un dia). si alguna balanza no respondio queda pendiente y lo que llegue

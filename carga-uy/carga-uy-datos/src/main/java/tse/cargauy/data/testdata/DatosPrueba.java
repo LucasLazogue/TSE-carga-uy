@@ -11,6 +11,7 @@ import jakarta.ejb.Startup;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
+import tse.cargauy.data.itv.ItvDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
@@ -20,6 +21,7 @@ import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroCasos;
 import tse.cargauy.dtos.GuiaDto;
+import tse.cargauy.dtos.ItvDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.RubroDto;
@@ -45,6 +47,9 @@ public class DatosPrueba {
 
     @EJB
     private PermisoDAOLocal permisoDAO;
+
+    @EJB
+    private ItvDAOLocal itvDAO;
 
     @EJB
     private UsuarioDAOLocal usuarioDAO;
@@ -86,6 +91,19 @@ public class DatosPrueba {
             permisoDAO.addPermiso(new PermisoDto("PNC-1003", LocalDate.of(2026, 3, 1), LocalDate.of(2027, 2, 28), sbb, EstadoPermiso.APROBADO));
             permisoDAO.addPermiso(new PermisoDto("PNC-1004", LocalDate.of(2026, 2, 1), LocalDate.of(2027, 1, 31), scc, EstadoPermiso.APROBADO));
             permisoDAO.addPermiso(new PermisoDto("PNC-1005", LocalDate.of(2025, 6, 1), LocalDate.of(2026, 5, 31), sdd, EstadoPermiso.APROBADO));
+        }
+
+        // vigentes en las fechas de las guias de los viajes; la de SDD3456 vencio, igual que su permiso
+        if (itvDAO.getAll(new Paginacion(0, 1)).getTotal() == 0 && vehiculoDAO.getAll(new Paginacion(0, 1)).getTotal() >= 4) {
+            Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
+            Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
+            Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();
+            Long sdd = vehiculoDAO.getVehiculoByMatricula("SDD3456").getId();
+
+            itvDAO.addItv(new ItvDto(sta, LocalDate.of(2026, 1, 15), LocalDate.of(2027, 1, 15)));
+            itvDAO.addItv(new ItvDto(sbb, LocalDate.of(2026, 1, 15), LocalDate.of(2027, 1, 15)));
+            itvDAO.addItv(new ItvDto(scc, LocalDate.of(2026, 1, 15), LocalDate.of(2027, 1, 15)));
+            itvDAO.addItv(new ItvDto(sdd, LocalDate.of(2025, 4, 10), LocalDate.of(2026, 4, 10)));
         }
 
         if (usuarioDAO.getRoles().isEmpty()) {
