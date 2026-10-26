@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -18,12 +19,13 @@ import uy.tse.cargauy.data.local.EventoPendiente
 import uy.tse.cargauy.data.local.ViajeLocal
 import uy.tse.cargauy.data.remote.hayRed
 import uy.tse.cargauy.ui.UiState
+import uy.tse.cargauy.ui.navigation.Rutas
 
-// navigation deja el id de la ruta en el SavedStateHandle
+// navigation deja la ruta en el SavedStateHandle
 class ViajeViewModel(application: Application, estado: SavedStateHandle) : AndroidViewModel(application) {
 
     private val repositorio = ViajeRepository(application as CargaUYApp)
-    private val idViaje: Long = checkNotNull(estado[ARGUMENTO])
+    private val idViaje: Long = estado.toRoute<Rutas.Viaje>().idViaje
 
     // null si el viaje salio de la lista
     val viaje: StateFlow<UiState<ViajeLocal?>> = repositorio.viaje(idViaje)
@@ -42,9 +44,5 @@ class ViajeViewModel(application: Application, estado: SavedStateHandle) : Andro
 
     fun registrar(tipo: TipoEvento, descripcion: String? = null, kilos: Int? = null) {
         viewModelScope.launch { repositorio.registrarEvento(idViaje, tipo, descripcion, kilos) }
-    }
-
-    companion object {
-        const val ARGUMENTO = "idViaje"
     }
 }
