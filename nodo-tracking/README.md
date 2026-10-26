@@ -71,7 +71,7 @@ Por ejemplo, desde `carga-uy`:
   lote publicado (el contexto viaja en la propiedad `traceparent` de cada mensaje) y los logs.
   Las mismas métricas quedan en el log cada `NODO_LOG_METRICAS_SEG` segundos
   (`docker compose logs nodo-tracking`).
-- Ruta de un vehículo en el central: http://localhost:8080/carga-uy/api/posiciones?matricula=STA1234
+- Ruta de un viaje en el central: en el frontend, como funcionario, **Ver recorrido** en la grilla de viajes
 - Qué hizo la ingesta con cada evento: `docker compose logs carga-uy | grep ingesta`
 
 Al detenerlo (`docker compose stop nodo-tracking`) publica lo pendiente e imprime las métricas
