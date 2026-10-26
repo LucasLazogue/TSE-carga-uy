@@ -80,10 +80,22 @@ y [EventoPosicionDAO](../carga-uy/carga-uy-datos/src/main/java/tse/cargauy/data/
 | Fallo inesperado durante el procesamiento | Se relanza la excepción para permitir la reentrega |
 | Se alcanza el límite de entregas | El broker deriva el mensaje a `DLQ` |
 
-Para `queue_tracking`, [broker.xml](../carga-uy/artemis/etc/broker.xml) configura un máximo de
-10 intentos de entrega, demora de reentrega de `0`, dirección de mensajes muertos `DLQ` y
-dirección de expiración `ExpiryQueue`. La política `PAGE` lleva mensajes a disco al superar
-el umbral de memoria configurado de `10M`.
+Para `queue_tracking`, [broker.xml](../carga-uy/artemis/etc/broker.xml) reentrega con una espera que
+se duplica en cada intento (1 s, 2 s, 4 s… hasta 60 s) y hasta 20 entregas: el central puede estar
+unos 14 minutos sin poder procesar (por ejemplo, con PostgreSQL caído) sin perder posiciones. Cada
+mensaje espera por su cuenta, así que la espera no frena al resto. Recién después pasa a `DLQ`. La
+dirección de expiración es `ExpiryQueue`. La política `PAGE` lleva mensajes a disco al superar el
+umbral de memoria configurado de `10M`.
+
+Sin espera entre reentregas, los intentos se agotaban en segundos: con PostgreSQL detenido 20 s,
+12 posiciones terminaban en `DLQ`.
+
+### Mensajes muertos
+
+El tablero muestra los mensajes de `DLQ` en el panel **Cola de tracking** (`cola_mensajes` con
+`cola="DLQ"`); en funcionamiento normal es 0. Para volver a procesarlos, una vez resuelta la causa: en
+la consola del broker, **Queues → DLQ**, seleccionar los mensajes y **Retry**, que los devuelve a su
+cola de origen. Reprocesar es seguro: la ingesta descarta los duplicados (DA07).
 
 La consola del broker está en http://localhost:8161/, con `artemis` / `artemis` en desarrollo.
 Permite inspeccionar la cola y la DLQ; las métricas y la correlación con errores del consumidor

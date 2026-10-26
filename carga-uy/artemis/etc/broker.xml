@@ -78,16 +78,23 @@
       <address-settings>
          <!-- AC17: ante una saturacion las posiciones esperan en la cola sin perder ninguna. Cuando la cola pasa de
               10 MB en memoria, el broker guarda las nuevas en disco (paging) y las entrega en orden a medida que
-              se libera. La espera entre reintentos y la cola de mensajes muertos siguen con los valores por
-              defecto: estan pendientes (D2) -->
+              se libera.
+              DA02: si el procesamiento falla (por ejemplo, la base no responde), el broker reentrega la posicion
+              con una espera que se duplica: 1 s, 2 s, 4 s... hasta 1 minuto. Con 20 entregas aguanta unos 14 minutos
+              de falla antes de pasarla a la cola de mensajes muertos (DLQ); sin espera, los 10 intentos se gastaban
+              en segundos y una caida corta de PostgreSQL mandaba posiciones a la DLQ. La espera no frena al resto:
+              cada mensaje espera por su cuenta. Lo que llega a la DLQ se ve en el tablero (cola_mensajes con
+              cola=DLQ) y se vuelve a procesar desde la consola del broker (docs/mensajeria.md) -->
          <address-setting match="queue_tracking">
             <address-full-policy>PAGE</address-full-policy>
             <max-size-bytes>10M</max-size-bytes>
             <page-size-bytes>10M</page-size-bytes>
             <dead-letter-address>DLQ</dead-letter-address>
             <expiry-address>ExpiryQueue</expiry-address>
-            <max-delivery-attempts>10</max-delivery-attempts>
-            <redelivery-delay>0</redelivery-delay>
+            <max-delivery-attempts>20</max-delivery-attempts>
+            <redelivery-delay>1000</redelivery-delay>
+            <redelivery-delay-multiplier>2.0</redelivery-delay-multiplier>
+            <max-redelivery-delay>60000</max-redelivery-delay>
             <auto-create-queues>false</auto-create-queues>
             <auto-create-addresses>false</auto-create-addresses>
          </address-setting>

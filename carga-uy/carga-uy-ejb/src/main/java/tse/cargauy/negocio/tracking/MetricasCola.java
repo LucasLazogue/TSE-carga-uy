@@ -22,6 +22,8 @@ import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 
 // tamano de la cola de tracking y cantidad de consumidores (AC22). El broker esta en su propio contenedor y no
@@ -33,8 +35,8 @@ public class MetricasCola {
     private static final Logger LOGGER = Logger.getLogger(MetricasCola.class.getName());
 
     private static final String COLA = "queue_tracking";
-    private static final String MBEAN = "org.apache.activemq.artemis:broker=\"carga-uy\",component=addresses,address=\""
-            + COLA + "\",subcomponent=queues,routing-type=\"anycast\",queue=\"" + COLA + "\"";
+    // los mensajes que agotaron sus reentregas (DA02): tiene que quedar en 0
+    private static final String MUERTOS = "DLQ";
     // -1 = no se pudo consultar; la metrica queda sin valor en lugar de mostrar un dato viejo
     private static final long DESCONOCIDO = -1;
 
@@ -43,6 +45,7 @@ public class MetricasCola {
 
     private final AtomicLong mensajes = new AtomicLong(DESCONOCIDO);
     private final AtomicLong consumidores = new AtomicLong(DESCONOCIDO);
+    private final AtomicLong muertos = new AtomicLong(DESCONOCIDO);
     private HttpClient cliente;
     private URI jolokia;
     private String autorizacion;
@@ -61,15 +64,19 @@ public class MetricasCola {
                 .description("Consumidores conectados a la cola; cada instancia del central abre varios")
                 .tag("cola", COLA)
                 .register(registro);
+        Gauge.builder("cola.mensajes", muertos, MetricasCola::valor)
+                .description("Mensajes esperando en la cola")
+                .tag("cola", MUERTOS)
+                .register(registro);
     }
 
     @Schedule(second = "*/10", minute = "*", hour = "*", persistent = false)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     void consultar() {
-        String pedido = Json.createObjectBuilder()
-                .add("type", "read")
-                .add("mbean", MBEAN)
-                .add("attribute", Json.createArrayBuilder().add("MessageCount").add("ConsumerCount"))
+        // las dos colas en un solo pedido (bulk de Jolokia): la respuesta es una lista en el mismo orden
+        String pedido = Json.createArrayBuilder()
+                .add(lectura(COLA, Json.createArrayBuilder().add("MessageCount").add("ConsumerCount")))
+                .add(lectura(MUERTOS, Json.createArrayBuilder().add("MessageCount")))
                 .build()
                 .toString();
         try {
@@ -79,17 +86,29 @@ public class MetricasCola {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(pedido))
                     .build(), HttpResponse.BodyHandlers.ofString());
-            JsonObject valor = Json.createReader(new StringReader(respuesta.body())).readObject().getJsonObject("value");
-            mensajes.set(valor.getJsonNumber("MessageCount").longValue());
-            consumidores.set(valor.getJsonNumber("ConsumerCount").longValue());
+            JsonArray valores = Json.createReader(new StringReader(respuesta.body())).readArray();
+            JsonObject cola = valores.getJsonObject(0).getJsonObject("value");
+            mensajes.set(cola.getJsonNumber("MessageCount").longValue());
+            consumidores.set(cola.getJsonNumber("ConsumerCount").longValue());
+            muertos.set(valores.getJsonObject(1).getJsonObject("value").getJsonNumber("MessageCount").longValue());
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
             mensajes.set(DESCONOCIDO);
             consumidores.set(DESCONOCIDO);
+            muertos.set(DESCONOCIDO);
             LOGGER.log(Level.FINE, "no se pudo consultar la cola en el broker", e);
         }
+    }
+
+    private static JsonObject lectura(String cola, JsonArrayBuilder atributos) {
+        return Json.createObjectBuilder()
+                .add("type", "read")
+                .add("mbean", "org.apache.activemq.artemis:broker=\"carga-uy\",component=addresses,address=\"" + cola
+                        + "\",subcomponent=queues,routing-type=\"anycast\",queue=\"" + cola + "\"")
+                .add("attribute", atributos)
+                .build();
     }
 
     private static double valor(AtomicLong medida) {
