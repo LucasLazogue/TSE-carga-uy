@@ -1,0 +1,119 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="primefaces"
+                template="/WEB-INF/templates/backoffice.xhtml">
+
+    <ui:define name="titulo">Reportes</ui:define>
+
+    <ui:define name="contenido">
+        <f:metadata>
+            <f:viewAction action="#{informeView.consultar}" />
+        </f:metadata>
+
+        <h:form id="filtros">
+            <p:toolbar styleClass="mb-3">
+                <p:toolbarGroup>
+                    <div class="flex flex-wrap align-items-end gap-3">
+                        <div>
+                            <p:outputLabel for="desde" value="Desde" styleClass="block mb-2" />
+                            <p:datePicker id="desde" value="#{informeView.desde}" pattern="dd/MM/yyyy" />
+                        </div>
+                        <div>
+                            <p:outputLabel for="hasta" value="Hasta" styleClass="block mb-2" />
+                            <p:datePicker id="hasta" value="#{informeView.hasta}" pattern="dd/MM/yyyy" />
+                        </div>
+                        <div>
+                            <p:outputLabel for="tipoCarga" value="Tipo de carga" styleClass="block mb-2" />
+                            <p:selectOneMenu id="tipoCarga" value="#{informeView.idTipoCarga}">
+                                <f:selectItem itemLabel="Todos" noSelectionOption="true" />
+                                <f:selectItems value="#{informeView.tiposCarga}" var="tipo" itemValue="#{tipo.id}"
+                                               itemLabel="#{tipo.nombre}" />
+                            </p:selectOneMenu>
+                        </div>
+                        <p:commandButton value="Consultar" icon="pi pi-search" action="#{informeView.consultar}"
+                                         process="@form" update=":resultados" />
+                    </div>
+                </p:toolbarGroup>
+            </p:toolbar>
+        </h:form>
+
+        <h:panelGroup id="resultados" layout="block">
+            <h:panelGroup layout="block" rendered="#{informeView.indicadores != null}">
+                <p:staticMessage severity="warn" styleClass="w-full mb-3" rendered="#{informeView.indicadores.periodoAmplio}"
+                                 summary="Periodo amplio"
+                                 detail="El periodo supera los 12 meses: la consulta puede demorar." />
+                <p:staticMessage severity="info" styleClass="w-full mb-3" rendered="#{informeView.indicadores.sinDatos}"
+                                 summary="Sin datos" detail="No hay viajes ni infracciones para los filtros seleccionados." />
+                <p:staticMessage severity="info" styleClass="w-full mb-3"
+                                 rendered="#{informeView.indicadores.filtro.idTipoCarga != null}" summary="Tipo de carga"
+                                 detail="Los habilitados no dependen del tipo de carga, y solo se cuentan las infracciones de viajes con guía." />
+
+                <div class="grid mb-3">
+                    <div class="col-12 md:col-3">
+                        <p:card title="Empresas habilitadas">
+                            <span class="text-3xl">#{informeView.indicadores.empresasHabilitadas}</span>
+                        </p:card>
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <p:card title="Vehículos habilitados">
+                            <span class="text-3xl">#{informeView.indicadores.vehiculosHabilitados}</span>
+                        </p:card>
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <p:card title="Tasa de confirmación">
+                            <h:outputText styleClass="text-3xl" value="#{informeView.indicadores.tasaConfirmadas}"
+                                          rendered="#{informeView.indicadores.tasaConfirmadas != null}">
+                                <f:convertNumber type="percent" maxFractionDigits="1" />
+                            </h:outputText>
+                            <h:outputText styleClass="text-3xl" value="-" rendered="#{informeView.indicadores.tasaConfirmadas == null}" />
+                        </p:card>
+                    </div>
+                    <div class="col-12 md:col-3">
+                        <p:card title="Pendientes de resolución">
+                            <span class="text-3xl">#{informeView.indicadores.pendientes}</span>
+                        </p:card>
+                    </div>
+                </div>
+                <p class="mt-0 mb-3 text-sm">
+                    Habilitados al&#160;<h:outputText value="#{informeView.indicadores.habilitadosAl}">
+                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
+                    </h:outputText>.
+                </p>
+
+                <div class="grid">
+                    <div class="col-12 lg:col-4">
+                        <p:dataTable value="#{informeView.indicadores.viajes}" var="viajes" emptyMessage="No hay viajes realizados.">
+                            <f:facet name="header">Viajes realizados</f:facet>
+                            <p:column headerText="Periodo">#{informeView.periodo(viajes)}</p:column>
+                            <p:column headerText="Viajes">#{viajes.cantidad}</p:column>
+                        </p:dataTable>
+                    </div>
+                    <div class="col-12 lg:col-4">
+                        <p:dataTable value="#{informeView.indicadores.volumenPorRubro}" var="volumen"
+                                     emptyMessage="No hay carga transportada.">
+                            <f:facet name="header">Volumen transportado por rubro</f:facet>
+                            <p:column headerText="Rubro">#{volumen.rubro}</p:column>
+                            <p:column headerText="Volumen (kg)">
+                                <h:outputText value="#{volumen.volumen}">
+                                    <f:convertNumber groupingUsed="true" />
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                    <div class="col-12 lg:col-4">
+                        <p:dataTable value="#{informeView.indicadores.infracciones}" var="infracciones">
+                            <f:facet name="header">Infracciones por tipo</f:facet>
+                            <p:column headerText="Tipo">#{infracciones.tipo}</p:column>
+                            <p:column headerText="Detectadas">#{infracciones.detectadas}</p:column>
+                            <p:column headerText="Confirmadas">#{infracciones.confirmadas}</p:column>
+                            <p:column headerText="Desestimadas">#{infracciones.desestimadas}</p:column>
+                            <p:column headerText="Pendientes">#{infracciones.pendientes}</p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </h:panelGroup>
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

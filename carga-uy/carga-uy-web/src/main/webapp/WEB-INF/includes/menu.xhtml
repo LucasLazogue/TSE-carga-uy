@@ -9,6 +9,10 @@
                 <p:menuitem value="Nodos periféricos" icon="pi pi-server" outcome="/admin/nodos"
                             styleClass="#{view.viewId eq '/admin/nodos.xhtml' ? 'ui-state-active' : ''}" />
             </p:submenu>
+            <p:submenu label="Autoridad" rendered="#{request.isUserInRole('AUTORIDAD')}">
+                <p:menuitem value="Reportes" icon="pi pi-chart-bar" outcome="/autoridad/reportes"
+                            styleClass="#{view.viewId eq '/autoridad/reportes.xhtml' ? 'ui-state-active' : ''}" />
+            </p:submenu>
         </p:menu>
     </nav>
 </ui:composition>

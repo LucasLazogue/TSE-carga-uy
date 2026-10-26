@@ -8,9 +8,12 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
+import jakarta.annotation.Resource;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
+import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.informe.InformeDAOLocal;
 import tse.cargauy.dtos.FiltroInforme;
@@ -32,11 +35,18 @@ public class InformeEJB implements InformeEJBLocal {
     static final int MESES_POR_DIA = 2;
     static final int MESES_POR_SEMANA = 6;
 
+    private static final Logger LOGGER = Logger.getLogger(InformeEJB.class.getName());
+
     @EJB
     InformeDAOLocal informeDAO;
 
+    @Resource
+    SessionContext contexto;
+
     public IndicadoresDto consultar(FiltroInforme filtro) {
         validar(filtro);
+        LOGGER.info("informe consulta usuario=" + idUsuario() + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
+                + " tipoCarga=" + filtro.getIdTipoCarga());
         LocalDate hoy = hoy();
         LocalDate habilitadosAl = filtro.getHasta().isAfter(hoy) ? hoy : filtro.getHasta();
         Granularidad granularidad = granularidad(filtro);
@@ -52,6 +62,10 @@ public class InformeEJB implements InformeEJBLocal {
         indicadores.setVolumenPorRubro(informeDAO.sumarVolumenPorRubro(filtro));
         indicadores.setInfracciones(porTipo(informeDAO.contarInfracciones(filtro)));
         return indicadores;
+    }
+
+    Long idUsuario() {
+        return Long.valueOf(contexto.getCallerPrincipal().getName());
     }
 
     LocalDate hoy() {

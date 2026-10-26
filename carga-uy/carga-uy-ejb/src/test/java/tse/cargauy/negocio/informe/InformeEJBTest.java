@@ -34,6 +34,11 @@ class InformeEJBTest {
 
     private final InformeEJB ejb = new InformeEJB() {
         @Override
+        Long idUsuario() {
+            return 9L;
+        }
+
+        @Override
         LocalDate hoy() {
             return HOY;
         }
