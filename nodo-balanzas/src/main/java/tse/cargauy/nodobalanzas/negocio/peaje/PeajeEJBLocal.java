@@ -10,5 +10,5 @@ import tse.cargauy.nodobalanzas.dtos.PeajeDto;
 public interface PeajeEJBLocal {
     List<PeajeDto> getPeajes();
     void addPeaje(PeajeDto peajeDto);
-    void addBalanza(String codigoPeaje, BalanzaDto balanzaDto);
+    BalanzaDto addBalanza(String codigoPeaje, BalanzaDto balanzaDto);
 }

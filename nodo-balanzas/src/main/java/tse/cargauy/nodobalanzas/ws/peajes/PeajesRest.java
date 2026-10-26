@@ -38,7 +38,7 @@ public class PeajesRest {
 
     @Path("/{codigo}/balanzas")
     @POST
-    public void createBalanza(@PathParam("codigo") String codigoPeaje, BalanzaDto balanzaDto) {
-        peajeEJB.addBalanza(codigoPeaje, balanzaDto);
+    public BalanzaDto createBalanza(@PathParam("codigo") String codigoPeaje, BalanzaDto balanzaDto) {
+        return peajeEJB.addBalanza(codigoPeaje, balanzaDto);
     }
 }

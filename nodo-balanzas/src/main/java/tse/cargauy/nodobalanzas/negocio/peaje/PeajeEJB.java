@@ -1,5 +1,7 @@
 package tse.cargauy.nodobalanzas.negocio.peaje;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.List;
 
 import jakarta.annotation.security.RolesAllowed;
@@ -17,7 +19,7 @@ import tse.cargauy.nodobalanzas.seguridad.Sha256;
 @RolesAllowed(Rol.ADMINISTRADOR)
 public class PeajeEJB implements PeajeEJBLocal {
 
-    private static final int LARGO_MINIMO_CLAVE = 16;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     @EJB
     PeajeDAOLocal peajeDAO;
@@ -45,7 +47,7 @@ public class PeajeEJB implements PeajeEJBLocal {
         peajeDAO.addPeaje(peajeDto);
     }
 
-    public void addBalanza(String codigoPeaje, BalanzaDto balanzaDto) {
+    public BalanzaDto addBalanza(String codigoPeaje, BalanzaDto balanzaDto) {
         if (peajeDAO.getPeajeByCodigo(codigoPeaje) == null) {
             throw new NodoBalanzasException(CodigoError.PEAJE_NO_ENCONTRADO, codigoPeaje);
         }
@@ -55,20 +57,17 @@ public class PeajeEJB implements PeajeEJBLocal {
         if (balanzaDto.getSentido() == null) {
             throw new NodoBalanzasException(CodigoError.BALANZA_SENTIDO_REQUERIDO);
         }
-        if (balanzaDto.getClave() == null || balanzaDto.getClave().length() < LARGO_MINIMO_CLAVE) {
-            throw new NodoBalanzasException(CodigoError.BALANZA_CLAVE_CORTA, String.valueOf(LARGO_MINIMO_CLAVE));
-        }
         if (peajeDAO.getBalanzaByCodigo(balanzaDto.getCodigo()) != null) {
             throw new NodoBalanzasException(CodigoError.BALANZA_CODIGO_DUPLICADO, balanzaDto.getCodigo());
         }
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        String clave = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         // no se guarda la clave, se guarda su hash: si alguien se roba la base no puede hacerse pasar por la balanza.
         // cuando la balanza manda un pesaje se hashea la clave que trae y se busca la balanza con ese hash.
-        // no lleva salt como una contrasenia porque la clave es larga y al azar, no se puede adivinar probando
-        String claveHash = Sha256.base64Url(balanzaDto.getClave());
-        if (peajeDAO.getCodigoBalanzaByClave(claveHash) != null) {
-            throw new NodoBalanzasException(CodigoError.BALANZA_CLAVE_EN_USO);
-        }
-        peajeDAO.addBalanza(codigoPeaje, balanzaDto, claveHash);
+        // no lleva salt como una contrasenia porque la clave la genera el nodo al azar, no se puede adivinar probando
+        peajeDAO.addBalanza(codigoPeaje, balanzaDto, Sha256.base64Url(clave));
+        return new BalanzaDto(balanzaDto.getCodigo(), balanzaDto.getSentido(), clave);
     }
 
     private static boolean vacio(String valor) {

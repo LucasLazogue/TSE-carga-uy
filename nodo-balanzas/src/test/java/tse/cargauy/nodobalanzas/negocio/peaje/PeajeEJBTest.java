@@ -17,10 +17,9 @@ import tse.cargauy.nodobalanzas.dtos.PeajeDto;
 import tse.cargauy.nodobalanzas.entities.Sentido;
 import tse.cargauy.nodobalanzas.exceptions.CodigoError;
 import tse.cargauy.nodobalanzas.exceptions.NodoBalanzasException;
+import tse.cargauy.nodobalanzas.seguridad.Sha256;
 
 class PeajeEJBTest {
-
-    private static final String CLAVE = "clave-de-la-balanza-1";
 
     private final PeajeEJB ejb = new PeajeEJB();
     private final Map<String, PeajeDto> peajes = new HashMap<>();
@@ -42,11 +41,6 @@ class PeajeEJBTest {
             @Override
             public BalanzaDto getBalanzaByCodigo(String codigo) {
                 return clavesDeBalanzas.containsValue(codigo) ? new BalanzaDto(codigo, Sentido.HACIA_MONTEVIDEO, null) : null;
-            }
-
-            @Override
-            public String getCodigoBalanzaByClave(String claveHash) {
-                return clavesDeBalanzas.get(claveHash);
             }
 
             @Override
@@ -76,47 +70,44 @@ class PeajeEJBTest {
 
     @Test
     void balanzaEnPeajeInexistenteFalla() {
-        assertError(CodigoError.PEAJE_NO_ENCONTRADO,
-                () -> ejb.addBalanza("R9-99", new BalanzaDto("balanza-r9-km99", Sentido.HACIA_MONTEVIDEO, CLAVE)));
+        assertError(CodigoError.PEAJE_NO_ENCONTRADO, () -> ejb.addBalanza("R9-99", balanza("balanza-r9-km99")));
     }
 
     @Test
     void balanzaSinSentidoFalla() {
         assertError(CodigoError.BALANZA_SENTIDO_REQUERIDO,
-                () -> ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", null, CLAVE)));
-    }
-
-    @Test
-    void balanzaConClaveCortaFalla() {
-        assertError(CodigoError.BALANZA_CLAVE_CORTA,
-                () -> ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", Sentido.HACIA_MONTEVIDEO, "corta")));
+                () -> ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", null, null)));
     }
 
     @Test
     void balanzaRepetidaFalla() {
-        ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", Sentido.HACIA_MONTEVIDEO, CLAVE));
-        assertError(CodigoError.BALANZA_CODIGO_DUPLICADO,
-                () -> ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", Sentido.HACIA_EL_INTERIOR, "otra-clave-de-balanza")));
+        ejb.addBalanza("R5-30", balanza("balanza-r5-km30"));
+        assertError(CodigoError.BALANZA_CODIGO_DUPLICADO, () -> ejb.addBalanza("R5-30", balanza("balanza-r5-km30")));
     }
 
     @Test
-    void dosBalanzasConLaMismaClaveFalla() {
-        ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", Sentido.HACIA_MONTEVIDEO, CLAVE));
-        assertError(CodigoError.BALANZA_CLAVE_EN_USO,
-                () -> ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30-b", Sentido.HACIA_EL_INTERIOR, CLAVE)));
+    void elNodoGeneraLaClaveYGuardaSoloSuHash() {
+        String clave = ejb.addBalanza("R5-30", balanza("balanza-r5-km30")).getClave();
+
+        assertEquals(43, clave.length());
+        assertEquals("balanza-r5-km30", clavesDeBalanzas.get(Sha256.base64Url(clave)));
+        assertNotEquals(clave, clavesDeBalanzas.keySet().iterator().next());
     }
 
     @Test
-    void laClaveDeLaBalanzaSeGuardaHasheada() {
-        ejb.addBalanza("R5-30", new BalanzaDto("balanza-r5-km30", Sentido.HACIA_MONTEVIDEO, CLAVE));
+    void cadaBalanzaRecibeUnaClaveDistinta() {
+        String primera = ejb.addBalanza("R5-30", balanza("balanza-r5-km30")).getClave();
+        String segunda = ejb.addBalanza("R5-30", balanza("balanza-r5-km30-b")).getClave();
 
-        String guardada = clavesDeBalanzas.keySet().iterator().next();
-        assertNotEquals(CLAVE, guardada);
-        assertEquals("balanza-r5-km30", clavesDeBalanzas.get(guardada));
+        assertNotEquals(primera, segunda);
     }
 
     private static PeajeDto peaje(String codigo) {
         return new PeajeDto(codigo, "Peaje Ruta 5 km 30", "5", 30, -34.62, -56.25);
+    }
+
+    private static BalanzaDto balanza(String codigo) {
+        return new BalanzaDto(codigo, Sentido.HACIA_MONTEVIDEO, null);
     }
 
     private static void assertError(CodigoError codigo, Executable accion) {
