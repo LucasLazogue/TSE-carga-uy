@@ -1,6 +1,7 @@
 package tse.cargauy.negocio.viaje;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
+import tse.cargauy.dtos.PesajesViajeDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -79,6 +81,27 @@ class ViajeEJBTest {
     @Test
     void noDevuelveEventosDeUnViajeInexistente() {
         CargaUYException error = assertThrows(CargaUYException.class, () -> ejb.getEventos(EMPRESA, 99L, PAGINA));
+        assertEquals(CodigoError.VIAJE_NO_ENCONTRADO, error.getCodigo());
+    }
+
+    @Test
+    void devuelveLosPesajesDelViajeConsultandoALasBalanzas() {
+        PesajesViajeDto pesajes = new PesajesViajeDto();
+        ejb.balanzas = viaje -> {
+            assertEquals(GUIA, viaje.getIdGuia());
+            return pesajes;
+        };
+
+        assertSame(pesajes, ejb.getPesajes(EMPRESA, VIAJE));
+    }
+
+    @Test
+    void noConsultaPesajesDeUnViajeDeOtraEmpresa() {
+        ejb.balanzas = viaje -> {
+            throw new AssertionError("no tenia que consultar las balanzas");
+        };
+
+        CargaUYException error = assertThrows(CargaUYException.class, () -> ejb.getPesajes(OTRA_EMPRESA, VIAJE));
         assertEquals(CodigoError.VIAJE_NO_ENCONTRADO, error.getCodigo());
     }
 }

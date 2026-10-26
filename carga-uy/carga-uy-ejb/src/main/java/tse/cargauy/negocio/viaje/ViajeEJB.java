@@ -16,12 +16,14 @@ import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
+import tse.cargauy.dtos.PesajesViajeDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.balanzas.BalanzasEJBLocal;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
 @Stateless
@@ -49,6 +51,9 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
     @EJB
     EventoViajeDAOLocal eventoViajeDAO;
 
+    @EJB
+    BalanzasEJBLocal balanzas;
+
     public PaginaDto<ViajeDto> listar(Long idEmpresa, FiltroViajes filtro, Paginacion paginacion) {
         empresaEJB.validarAcceso(idEmpresa);
         filtro.setIdsEmpresa(List.of(idEmpresa));
@@ -64,6 +69,12 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         empresaEJB.validarAcceso(idEmpresa);
         getDeEmpresa(idEmpresa, id);
         return eventoViajeDAO.getByViaje(id, paginacion);
+    }
+
+    @RolesAllowed(Rol.FUNCIONARIO)
+    public PesajesViajeDto getPesajes(Long idEmpresa, Long id) {
+        empresaEJB.validarAcceso(idEmpresa);
+        return balanzas.getPesajesDelViaje(getDeEmpresa(idEmpresa, id));
     }
 
     @RolesAllowed(Rol.RESPONSABLE)
