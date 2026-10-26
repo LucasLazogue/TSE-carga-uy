@@ -45,10 +45,14 @@ android {
         debug {
             // url inicial del servidor; en debug se puede cambiar desde Configuracion sin recompilar
             buildConfigField("String", "URL_SERVIDOR", "\"${propiedadesLocales.getProperty("cargauy.url", "")}\"")
+            // Plataforma de Observabilidad (OTLP por HTTP, puerto 4318); vacia, las trazas no se exportan
+            buildConfigField("String", "URL_OBSERVABILIDAD", "\"${propiedadesLocales.getProperty("cargauy.observabilidad", "")}\"")
         }
         release {
             // fija: en release no se muestra ni se lee la url de Configuracion
             buildConfigField("String", "URL_SERVIDOR", "\"$urlProduccion\"")
+            // TODO: la de la Plataforma de Observabilidad cuando este desplegada; hasta entonces no se exportan trazas
+            buildConfigField("String", "URL_OBSERVABILIDAD", "\"\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -99,6 +103,10 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.browser)
     implementation(libs.nimbus.jose.jwt)
+    // trazado distribuido hasta el central (AC23)
+    implementation(platform(libs.opentelemetry.bom))
+    implementation(libs.opentelemetry.sdk)
+    implementation(libs.opentelemetry.exporter.otlp)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)

@@ -19,6 +19,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import uy.tse.cargauy.BuildConfig
 import uy.tse.cargauy.data.auth.RefreshTokens
 import uy.tse.cargauy.data.auth.SesionRepository
+import uy.tse.cargauy.observabilidad.TrazadoInterceptor
 
 object ApiClient {
 
@@ -81,6 +82,8 @@ object ApiClient {
 
     private fun construir(urlServidor: String, autenticacion: Interceptor?, renovacion: Authenticator?): Retrofit {
         val cliente = base.newBuilder()
+        // primero: el span de cada pedido abarca la autenticacion y su renovacion
+        cliente.addInterceptor(TrazadoInterceptor())
         autenticacion?.let { cliente.addInterceptor(it) }
         renovacion?.let { cliente.authenticator(it) }
         cliente.addInterceptor(log)

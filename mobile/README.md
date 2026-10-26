@@ -35,6 +35,14 @@ El celular o el emulador no llegan a la PC por `localhost`: hay que usar la IP d
 
    En debug se puede cambiar después en Configuración, sin recompilar.
 
+3. Opcional, en el mismo `local.properties`, la Plataforma de Observabilidad (OTLP por HTTP), para ver en
+   Grafana la traza que empieza en el celular:
+
+       cargauy.observabilidad=http://<IP>:4318
+
+   Cada pedido al central abre un span y le pasa la traza en el header `traceparent`. Sin esta URL los spans
+   no se exportan, pero el header se manda igual. Ver la [documentación de observabilidad](../docs/observabilidad.md).
+
 ## Ejecutar
 
 Abrir `mobile/` en Android Studio, esperar el sync de Gradle y correr `app`.
