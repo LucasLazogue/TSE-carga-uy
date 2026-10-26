@@ -26,7 +26,7 @@ function detalleDelChofer(e: EventoViaje): string {
 
 const columnas: GridColumn<EventoViaje>[] = [
   { header: 'Evento', cell: (e) => NOMBRES_TIPO_EVENTO[e.tipo], className: 'font-medium' },
-  { header: 'Detalle', cell: detalleDelChofer, className: 'whitespace-normal' },
+  { header: 'Detalle', cell: detalleDelChofer, className: 'min-w-56 whitespace-normal' },
   // en un viaje reasignado hay eventos de los dos choferes
   { header: 'Chofer', cell: (e) => e.cedulaChofer ?? '-' },
   { header: 'Generado', cell: (e) => momento(e.timestampGeneracion) },
@@ -35,7 +35,7 @@ const columnas: GridColumn<EventoViaje>[] = [
     header: 'Resultado',
     cell: (e) => <Badge variant={VARIANTES_RESULTADO[e.resultado]}>{NOMBRES_RESULTADO[e.resultado]}</Badge>,
   },
-  { header: 'Motivo', cell: (e) => e.detalle ?? '-', className: 'whitespace-normal text-muted-foreground' },
+  { header: 'Motivo', cell: (e) => e.detalle ?? '-', className: 'min-w-48 whitespace-normal text-muted-foreground' },
 ]
 
 type Props = {
