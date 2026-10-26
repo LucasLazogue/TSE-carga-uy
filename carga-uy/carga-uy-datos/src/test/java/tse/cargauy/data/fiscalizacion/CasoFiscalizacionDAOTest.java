@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,8 +19,13 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
+import tse.cargauy.entities.CasoFiscalizacion;
+import tse.cargauy.entities.DestinatarioNotificacion;
+import tse.cargauy.entities.Empresa;
 import tse.cargauy.entities.EstadoCaso;
+import tse.cargauy.entities.Notificacion;
 import tse.cargauy.entities.TipoInfraccion;
+import tse.cargauy.entities.Vehiculo;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -29,14 +35,19 @@ class CasoFiscalizacionDAOTest {
 
     private final CasoFiscalizacionDAO dao = new CasoFiscalizacionDAO();
     private RuntimeException alHacerFlush;
+    private Notificacion notificacion;
 
-    // sin base: find devuelve entidades vacias y el flush falla con lo que diga cada test
+    // sin base: find devuelve entidades vacias (salvo el caso, con su vehiculo y empresa), persist guarda la
+    // notificacion y el flush falla con lo que diga cada test
     @BeforeEach
     void preparar() throws Exception {
         EntityManager entityManager = (EntityManager) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class<?>[] { EntityManager.class }, (proxy, metodo, args) -> {
                     if (metodo.getName().equals("find")) {
-                        return ((Class<?>) args[0]).getConstructor().newInstance();
+                        return args[0] == CasoFiscalizacion.class ? caso() : ((Class<?>) args[0]).getConstructor().newInstance();
+                    }
+                    if (metodo.getName().equals("persist") && args[0] instanceof Notificacion n) {
+                        notificacion = n;
                     }
                     if (metodo.getName().equals("flush") && alHacerFlush != null) {
                         throw alHacerFlush;
@@ -46,6 +57,14 @@ class CasoFiscalizacionDAOTest {
         Field campo = CasoFiscalizacionDAO.class.getDeclaredField("entityManager");
         campo.setAccessible(true);
         campo.set(dao, entityManager);
+    }
+
+    private static CasoFiscalizacion caso() {
+        Empresa empresa = new Empresa(1, "Transportes Sur", "Transportes Sur SA", "Ruta 5 km 30", LocalDate.of(2020, 1, 1));
+        Vehiculo vehiculo = new Vehiculo("SBA1234", "Volvo", "FH", 9000, 30000, empresa);
+        CasoFiscalizacion caso = new CasoFiscalizacion(TipoInfraccion.EXCESO_CARGA, "h1", AHORA, AHORA, vehiculo, null);
+        caso.setId(7L);
+        return caso;
     }
 
     private static PersistenceException errorDeBase(String estadoSql) {
@@ -85,5 +104,21 @@ class CasoFiscalizacionDAOTest {
 
         assertSame(error, assertThrows(PersistenceException.class,
                 () -> dao.resolver(1L, 2L, EstadoCaso.CONFIRMADA, "fundamento", AHORA)));
+    }
+
+    @Test
+    void elDescargoAvisaALosFuncionarios() {
+        dao.presentarDescargo(7L, 2L, "texto", AHORA);
+
+        assertEquals(DestinatarioNotificacion.FUNCIONARIO, notificacion.getDestinatario());
+        assertEquals("Transportes Sur presento un descargo en el caso 7 (EXCESO_CARGA, vehiculo SBA1234).", notificacion.getMensaje());
+    }
+
+    @Test
+    void laResolucionAvisaALaEmpresa() {
+        dao.resolver(7L, 2L, EstadoCaso.DESESTIMADA, "fundamento", AHORA);
+
+        assertEquals(DestinatarioNotificacion.EMPRESA, notificacion.getDestinatario());
+        assertEquals("El caso 7 (EXCESO_CARGA, vehiculo SBA1234) fue desestimado.", notificacion.getMensaje());
     }
 }

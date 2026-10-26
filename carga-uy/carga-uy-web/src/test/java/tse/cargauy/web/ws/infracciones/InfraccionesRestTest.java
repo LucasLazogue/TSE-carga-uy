@@ -60,4 +60,12 @@ class InfraccionesRestTest {
         assertEquals(409, respuesta.getStatus());
         assertTrue(respuesta.getContentAsString().contains("9008"));
     }
+
+    @Test
+    void marcarNotificacionesLeidas() throws Exception {
+        MockHttpResponse respuesta = api.post("/infracciones/notificaciones/lectura", "");
+
+        assertEquals(204, respuesta.getStatus());
+        assertTrue(ejb.leyoEmpresa);
+    }
 }

@@ -77,4 +77,20 @@ class CasosRestTest {
         assertEquals(409, respuesta.getStatus());
         assertTrue(respuesta.getContentAsString().contains("9004"));
     }
+
+    @Test
+    void notificacionesDelFuncionario() throws Exception {
+        MockHttpResponse respuesta = api.get("/casos/notificaciones?tamanio=5");
+
+        assertEquals(200, respuesta.getStatus());
+        assertEquals(5, ejb.ultimaPaginacion.getTamanio());
+    }
+
+    @Test
+    void marcarNotificacionesLeidas() throws Exception {
+        MockHttpResponse respuesta = api.post("/casos/notificaciones/lectura", "");
+
+        assertEquals(204, respuesta.getStatus());
+        assertTrue(ejb.leyoFuncionario);
+    }
 }

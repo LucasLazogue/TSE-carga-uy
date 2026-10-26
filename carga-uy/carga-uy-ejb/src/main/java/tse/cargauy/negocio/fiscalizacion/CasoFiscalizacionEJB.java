@@ -25,6 +25,7 @@ import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PistaAuditoriaDto;
 import tse.cargauy.dtos.ResolucionDto;
+import tse.cargauy.entities.DestinatarioNotificacion;
 import tse.cargauy.entities.EstadoCaso;
 import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.Rol;
@@ -134,7 +135,20 @@ public class CasoFiscalizacionEJB implements CasoFiscalizacionEJBLocal {
 
     @RolesAllowed(Rol.RESPONSABLE)
     public PaginaDto<NotificacionDto> getNotificaciones(Paginacion paginacion) {
-        return casoDAO.getNotificaciones(empresasDelResponsable(), paginacion);
+        return casoDAO.getNotificaciones(DestinatarioNotificacion.EMPRESA, empresasDelResponsable(), paginacion);
+    }
+
+    @RolesAllowed(Rol.RESPONSABLE)
+    public void marcarNotificacionesLeidas() {
+        casoDAO.marcarLeidas(DestinatarioNotificacion.EMPRESA, empresasDelResponsable());
+    }
+
+    public PaginaDto<NotificacionDto> getNotificacionesFuncionario(Paginacion paginacion) {
+        return casoDAO.getNotificaciones(DestinatarioNotificacion.FUNCIONARIO, null, paginacion);
+    }
+
+    public void marcarNotificacionesFuncionarioLeidas() {
+        casoDAO.marcarLeidas(DestinatarioNotificacion.FUNCIONARIO, null);
     }
 
     private CasoFiscalizacionDto buscarCaso(Long id) {

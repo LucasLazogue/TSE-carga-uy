@@ -41,6 +41,12 @@ public class InfraccionesRest {
         return casoEJB.getNotificaciones(paginacion.paginacion());
     }
 
+    @POST
+    @Path("/notificaciones/lectura")
+    public void marcarNotificacionesLeidas() {
+        casoEJB.marcarNotificacionesLeidas();
+    }
+
     @GET
     @Path("/{id}")
     public CasoFiscalizacionDto getInfraccion(@PathParam("id") Long id) {

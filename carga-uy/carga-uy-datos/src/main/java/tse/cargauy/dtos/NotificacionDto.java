@@ -12,6 +12,7 @@ public class NotificacionDto implements Serializable {
     private Long idEmpresa;
     private LocalDateTime fecha;
     private String mensaje;
+    private boolean leida;
 
     public Long getId() {
         return id;
@@ -51,5 +52,13 @@ public class NotificacionDto implements Serializable {
 
     public void setMensaje(String mensaje) {
         this.mensaje = mensaje;
+    }
+
+    public boolean isLeida() {
+        return leida;
+    }
+
+    public void setLeida(boolean leida) {
+        this.leida = leida;
     }
 }

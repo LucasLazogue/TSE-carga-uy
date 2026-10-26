@@ -14,6 +14,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
+import tse.cargauy.dtos.NotificacionDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PistaAuditoriaDto;
 import tse.cargauy.dtos.ResolucionDto;
@@ -32,6 +33,18 @@ public class CasosRest {
     @GET
     public PaginaDto<CasoFiscalizacionDto> getCasos(@BeanParam CasosQuery query, @BeanParam PaginacionQuery paginacion) {
         return casoEJB.listar(query.filtro(), paginacion.paginacion());
+    }
+
+    @GET
+    @Path("/notificaciones")
+    public PaginaDto<NotificacionDto> getNotificaciones(@BeanParam PaginacionQuery paginacion) {
+        return casoEJB.getNotificacionesFuncionario(paginacion.paginacion());
+    }
+
+    @POST
+    @Path("/notificaciones/lectura")
+    public void marcarNotificacionesLeidas() {
+        casoEJB.marcarNotificacionesFuncionarioLeidas();
     }
 
     @GET

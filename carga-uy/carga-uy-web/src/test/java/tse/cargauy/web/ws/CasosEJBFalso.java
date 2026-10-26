@@ -24,6 +24,8 @@ public class CasosEJBFalso implements CasoFiscalizacionEJBLocal {
     public EstadoCaso ultimoEstado;
     public ResolucionDto ultimaResolucion;
     public DescargoDto ultimoDescargo;
+    public boolean leyoEmpresa;
+    public boolean leyoFuncionario;
     public CargaUYException error;
 
     @Override
@@ -75,6 +77,22 @@ public class CasosEJBFalso implements CasoFiscalizacionEJBLocal {
     @Override
     public PaginaDto<NotificacionDto> getNotificaciones(Paginacion paginacion) {
         return new PaginaDto<>(List.of(), 0, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public void marcarNotificacionesLeidas() {
+        leyoEmpresa = true;
+    }
+
+    @Override
+    public PaginaDto<NotificacionDto> getNotificacionesFuncionario(Paginacion paginacion) {
+        ultimaPaginacion = paginacion;
+        return new PaginaDto<>(List.of(), 0, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public void marcarNotificacionesFuncionarioLeidas() {
+        leyoFuncionario = true;
     }
 
     private CasoFiscalizacionDto caso(Long id, EstadoCaso estado) {

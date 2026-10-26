@@ -11,6 +11,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceException;
+import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -27,6 +29,7 @@ import tse.cargauy.entities.CasoFiscalizacion;
 import tse.cargauy.entities.CasoFiscalizacion_;
 import tse.cargauy.entities.Ciudadano;
 import tse.cargauy.entities.Descargo;
+import tse.cargauy.entities.DestinatarioNotificacion;
 import tse.cargauy.entities.Empresa_;
 import tse.cargauy.entities.EstadoCaso;
 import tse.cargauy.entities.Evidencia;
@@ -154,7 +157,7 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         caso.setEstado(EstadoCaso.NOTIFICADA);
         caso.setFechaNotificacion(fecha);
         caso.setVenceDescargo(venceDescargo);
-        entityManager.persist(new Notificacion(caso, fecha, mensaje));
+        entityManager.persist(new Notificacion(caso, DestinatarioNotificacion.EMPRESA, fecha, mensaje));
         auditar(caso, PistaAuditoria.SISTEMA, PistaAuditoria.SISTEMA, AccionAuditoria.NOTIFICAR, anterior, mensaje, fecha);
         flush();
     }
@@ -168,6 +171,9 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         entityManager.persist(descargo);
         caso.setDescargo(descargo);
         caso.setEstado(EstadoCaso.EN_DESCARGO);
+        String mensaje = caso.getEmpresa().getNombrePublico() + " presento un descargo en el caso " + caso.getId() + " (" + caso.getTipo()
+                + ", vehiculo " + caso.getVehiculo().getMatricula() + ").";
+        entityManager.persist(new Notificacion(caso, DestinatarioNotificacion.FUNCIONARIO, fecha, mensaje));
         auditar(caso, ciudadano.getCedula(), Rol.RESPONSABLE, AccionAuditoria.PRESENTAR_DESCARGO, anterior, texto, fecha);
         flush();
     }
@@ -181,6 +187,9 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         entityManager.persist(resolucion);
         caso.setResolucion(resolucion);
         caso.setEstado(resultado);
+        String mensaje = "El caso " + caso.getId() + " (" + caso.getTipo() + ", vehiculo " + caso.getVehiculo().getMatricula() + ") fue "
+                + (resultado == EstadoCaso.CONFIRMADA ? "confirmado" : "desestimado") + ".";
+        entityManager.persist(new Notificacion(caso, DestinatarioNotificacion.EMPRESA, fecha, mensaje));
         AccionAuditoria accion = resultado == EstadoCaso.CONFIRMADA ? AccionAuditoria.CONFIRMAR : AccionAuditoria.DESESTIMAR;
         auditar(caso, funcionario.getCedula(), Rol.FUNCIONARIO, accion, anterior, fundamento, fecha);
         flush();
@@ -197,22 +206,33 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     }
 
     @Override
-    public PaginaDto<NotificacionDto> getNotificaciones(List<Long> idsEmpresa, Paginacion paginacion) {
-        if (idsEmpresa.isEmpty()) {
+    public PaginaDto<NotificacionDto> getNotificaciones(DestinatarioNotificacion destinatario, List<Long> idsEmpresa, Paginacion paginacion) {
+        if (idsEmpresa != null && idsEmpresa.isEmpty()) {
             return new PaginaDto<>(List.of(), 0, paginacion.getPagina(), paginacion.getTamanio());
         }
-        List<NotificacionDto> items = entityManager.createQuery(
-                        "SELECT n FROM Notificacion n WHERE n.empresa.id IN :ids ORDER BY n.fecha DESC, n.id DESC", Notificacion.class)
-                .setParameter("ids", idsEmpresa)
+        TypedQuery<Notificacion> query = entityManager.createQuery(
+                "SELECT n FROM Notificacion n" + filtroNotificaciones(idsEmpresa) + " ORDER BY n.fecha DESC, n.id DESC", Notificacion.class);
+        parametrosNotificaciones(query, destinatario, idsEmpresa);
+        List<NotificacionDto> items = query
                 .setFirstResult(paginacion.getDesde())
                 .setMaxResults(paginacion.getTamanio())
                 .getResultStream()
                 .map(Serializers::toDto)
                 .toList();
-        long total = entityManager.createQuery("SELECT COUNT(n) FROM Notificacion n WHERE n.empresa.id IN :ids", Long.class)
-                .setParameter("ids", idsEmpresa)
-                .getSingleResult();
+        TypedQuery<Long> conteo = entityManager.createQuery("SELECT COUNT(n) FROM Notificacion n" + filtroNotificaciones(idsEmpresa), Long.class);
+        parametrosNotificaciones(conteo, destinatario, idsEmpresa);
+        long total = conteo.getSingleResult();
         return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    @Override
+    public void marcarLeidas(DestinatarioNotificacion destinatario, List<Long> idsEmpresa) {
+        if (idsEmpresa != null && idsEmpresa.isEmpty()) {
+            return;
+        }
+        Query update = entityManager.createQuery("UPDATE Notificacion n SET n.leida = true" + filtroNotificaciones(idsEmpresa));
+        parametrosNotificaciones(update, destinatario, idsEmpresa);
+        update.executeUpdate();
     }
 
     @Override
@@ -236,6 +256,17 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     private void auditar(CasoFiscalizacion caso, String usuario, String rol, AccionAuditoria accion, EstadoCaso anterior,
             String fundamento, LocalDateTime fecha) {
         entityManager.persist(new PistaAuditoria(caso.getId(), usuario, rol, accion, anterior, caso.getEstado(), fundamento, fecha));
+    }
+
+    private static String filtroNotificaciones(List<Long> idsEmpresa) {
+        return " WHERE n.destinatario = :destinatario" + (idsEmpresa == null ? "" : " AND n.empresa.id IN :ids");
+    }
+
+    private static void parametrosNotificaciones(Query query, DestinatarioNotificacion destinatario, List<Long> idsEmpresa) {
+        query.setParameter("destinatario", destinatario);
+        if (idsEmpresa != null) {
+            query.setParameter("ids", idsEmpresa);
+        }
     }
 
     // dos transacciones sobre la misma version del caso: la segunda en confirmar pierde
