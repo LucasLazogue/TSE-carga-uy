@@ -1,7 +1,6 @@
 package tse.cargauy.negocio.nodo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -18,25 +17,23 @@ import tse.cargauy.entities.EstadoNodo;
 import tse.cargauy.entities.TipoNodo;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
-import tse.cargauy.seguridad.Aes;
+import tse.cargauy.seguridad.Cifrado;
 
 class NodoPerifericoEJBTest {
 
-    private static final String SECRETO = "secreto-de-prueba-de-al-menos-32-bytes";
-
     private final Map<String, NodoPerifericoDto> nodos = new HashMap<>();
     private final Map<Long, String> claves = new HashMap<>();
-    private String secreto = SECRETO;
-
-    private final NodoPerifericoEJB ejb = new NodoPerifericoEJB() {
+    private final NodoPerifericoEJB ejb = new NodoPerifericoEJB();
+    private final Cifrado cifrado = new Cifrado() {
         @Override
-        String leerSecreto() {
-            return secreto;
+        public String cifrar(String texto, String asociado) {
+            return asociado + ":" + texto;
         }
     };
 
     @BeforeEach
     void iniciar() {
+        ejb.cifrado = cifrado;
         ejb.nodoDAO = new NodoPerifericoDAO() {
             @Override
             public NodoPerifericoDto getById(Long id) {
@@ -76,20 +73,10 @@ class NodoPerifericoEJBTest {
     }
 
     @Test
-    void laClaveSeGuardaCifradaYSePuedeRecuperar() {
+    void laClaveSeGuardaCifradaConElIdentificadorDelNodo() {
         ejb.addNodo(nodo("balanzas-sur", TipoNodo.BALANZAS, "clave-central-balanzas-sur"));
 
-        String guardada = claves.get(1L);
-        assertNotEquals("clave-central-balanzas-sur", guardada);
-        assertEquals("clave-central-balanzas-sur", Aes.descifrar(guardada, SECRETO));
-    }
-
-    @Test
-    void sinSecretoNoSeGuardaLaClave() {
-        secreto = null;
-
-        assertError(CodigoError.NODO_SECRETO_NO_CONFIGURADO,
-                () -> ejb.addNodo(nodo("balanzas-sur", TipoNodo.BALANZAS, "clave-central-balanzas-sur")));
+        assertEquals("balanzas-sur:clave-central-balanzas-sur", claves.get(1L));
     }
 
     @Test
@@ -98,7 +85,7 @@ class NodoPerifericoEJBTest {
 
         ejb.cambiarClave(1L, "clave-nueva");
 
-        assertEquals("clave-nueva", Aes.descifrar(claves.get(1L), SECRETO));
+        assertEquals("balanzas-sur:clave-nueva", claves.get(1L));
     }
 
     @Test

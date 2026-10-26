@@ -1,11 +1,11 @@
 package tse.cargauy.negocio.nodo;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 import tse.cargauy.data.nodo.NodoPerifericoDAOLocal;
 import tse.cargauy.dtos.NodoPerifericoDto;
 import tse.cargauy.entities.EstadoNodo;
@@ -13,7 +13,7 @@ import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoNodo;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
-import tse.cargauy.seguridad.Aes;
+import tse.cargauy.seguridad.Cifrado;
 
 // CU-19. El administrador habilita el nodo sin una verificacion previa de conectividad: la letra no la pide y la
 // integracion con tracking es one-way, el central no le pregunta nada al nodo
@@ -21,10 +21,15 @@ import tse.cargauy.seguridad.Aes;
 @RolesAllowed(Rol.ADMINISTRADOR)
 public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
 
-    private static final int LARGO_MINIMO_SECRETO = 32;
-
     @EJB
     NodoPerifericoDAOLocal nodoDAO;
+
+    // la clave con la que el central consulta al nodo se guarda cifrada y no hasheada como las de las balanzas:
+    // el central la tiene que mandar en cada consulta, asi que necesita poder recuperarla.
+    // el identificador del nodo va como dato asociado: si alguien copia la clave cifrada de un nodo a otro en la
+    // base, al descifrarla falla
+    @Inject
+    Cifrado cifrado;
 
     public List<NodoPerifericoDto> getVigentes() {
         return nodoDAO.getVigentes();
@@ -53,7 +58,7 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
         }
         // todo nodo nuevo arranca deshabilitado: un nodo mal configurado no da error, da silencio
         nodoDto.setEstado(EstadoNodo.DESHABILITADO);
-        nodoDAO.addNodo(nodoDto, vacio(nodoDto.getClave()) ? null : cifrar(nodoDto.getClave()));
+        nodoDAO.addNodo(nodoDto, vacio(nodoDto.getClave()) ? null : cifrado.cifrar(nodoDto.getClave(), nodoDto.getIdentificador()));
     }
 
     public void habilitar(Long id) {
@@ -74,7 +79,8 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
         if (vacio(clave)) {
             throw new CargaUYException(CodigoError.NODO_CLAVE_REQUERIDA);
         }
-        nodoDAO.cambiarClave(vigente(id).getId(), cifrar(clave));
+        NodoPerifericoDto nodo = vigente(id);
+        nodoDAO.cambiarClave(nodo.getId(), cifrado.cifrar(clave, nodo.getIdentificador()));
     }
 
     // baja logica: las posiciones y pesajes que reporto siguen siendo evidencia de casos
@@ -88,22 +94,6 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
             throw new CargaUYException(CodigoError.NODO_DADO_DE_BAJA, nodo.getIdentificador());
         }
         return nodo;
-    }
-
-    // la clave con la que el central consulta al nodo se guarda cifrada y no hasheada como las de las balanzas:
-    // el central la tiene que mandar en cada consulta, asi que necesita poder recuperarla.
-    // cifrada, quien se robe la base no la puede usar sin el secreto CARGAUY_CLAVE_NODOS
-    private String cifrar(String clave) {
-        String secreto = leerSecreto();
-        if (secreto == null || secreto.getBytes(StandardCharsets.UTF_8).length < LARGO_MINIMO_SECRETO) {
-            throw new CargaUYException(CodigoError.NODO_SECRETO_NO_CONFIGURADO, String.valueOf(LARGO_MINIMO_SECRETO));
-        }
-        return Aes.cifrar(clave, secreto);
-    }
-
-    // aparte para poder reemplazarlo en los tests
-    String leerSecreto() {
-        return System.getenv("CARGAUY_CLAVE_NODOS");
     }
 
     private static boolean vacio(String valor) {
