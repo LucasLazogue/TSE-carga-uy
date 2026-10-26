@@ -11,7 +11,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 // copia de un pesaje que devolvio un nodo de balanzas. el peaje y la balanza se guardan como vinieron:
-// son datos del operador y la evidencia tiene que mostrar donde se peso aunque despues cambien en el nodo
+// son datos del operador y la evidencia tiene que mostrar donde se peso aunque despues cambien en el nodo.
+//
+// la restriccion unica de idOrigen es para no guardar dos veces el mismo pesaje: si el central consulta otra vez
+// el mismo dia (un reintento, una reevaluacion), el nodo devuelve los mismos pesajes y la base rechaza el repetido.
+// el indice (idVehiculo, fechaHora) es para buscar rapido "los pesajes del vehiculo 3 en este viaje": los tiene
+// ordenados como una guia telefonica, primero por vehiculo y adentro por fecha, y no recorre toda la tabla
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(name = "uk_pesaje_origen", columnNames = {"idOrigen"}),
         indexes = @Index(name = "ix_pesaje_vehiculo_fecha", columnList = "idVehiculo, fechaHora"))
