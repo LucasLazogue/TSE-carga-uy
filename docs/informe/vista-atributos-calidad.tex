@@ -30,7 +30,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC07 & Escalabilidad & El componente central escala horizontalmente en la capa web o de aplicaciones, sin estado de sesión almacenado localmente en las instancias. \\
     \hline
-    AC08 & Performance & La plataforma sostiene, sin pérdida de eventos, un volumen de ingesta de tracking de \pendiente{estimar y justificar: cantidad de vehículos reportando en forma concurrente y frecuencia de reporte}, y picos de al menos tres veces ese volumen. \\
+    AC08 & Performance & La plataforma sostiene, sin pérdida de eventos, un volumen de ingesta de tracking de 500 posiciones por segundo (15.000 vehículos reportando en forma concurrente, cada 30 segundos), y picos de al menos tres veces ese volumen, 1.500 posiciones por segundo. La estimación se justifica en la Sección \ref{sec:volumen-objetivo}. \\
     \hline
     AC09 & Performance & El percentil 95 del tiempo de respuesta de las consultas del frontoffice es menor a 500 ms. \\
     \hline
@@ -88,3 +88,17 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     AC27 & Mantenibilidad & El pipeline de integración continua ejecuta un análisis estático de calidad de código. \\
     \hline
 \end{longtable}
+
+\subsection{Volumen objetivo de tracking}\label{sec:volumen-objetivo}
+
+La letra pide estimar y justificar la cantidad de vehículos que reportan en forma concurrente y la frecuencia de reporte, considerando picos de al menos tres veces ese volumen \cite{LINS2026}. No hay una cifra oficial actualizada del parque; las referencias disponibles hablan de unos 45.000 vehículos de carga registrados, de los cuales unos 20.000 son de carga profesional \cite{ElObservador2022}, en un mercado de unas 2.400 empresas \cite{BID2022}.
+
+\begin{itemize}
+    \item \textbf{Vehículos concurrentes: 15.000.} Un tercio del parque registrado en viaje al mismo tiempo, como cota superior de la hora pico: cubre a toda la carga profesional y deja margen para la no profesional y el crecimiento del parque.
+    \item \textbf{Frecuencia: una posición cada 30 segundos} por vehículo en viaje, un valor habitual en el seguimiento de flotas. A 80~km/h son unos 670~m entre posiciones, suficiente para reconstruir la ruta y evaluar desvíos.
+    \item \textbf{Volumen objetivo: 500 posiciones por segundo} (15.000 vehículos / 30 segundos), unos 43 millones por día en el peor caso.
+    \item \textbf{Pico: 1.500 posiciones por segundo} durante algunos minutos, cuando un conjunto de vehículos recupera cobertura y descarga lo acumulado. El nodo de tracking lo simula (\texttt{NODO\_SIN\_COBERTURA}). Lo que el componente central no procesa en el momento espera en la cola (AC17).
+\end{itemize}
+
+Este volumen es el que usa la prueba de performance (AC09 a AC11): el generador de carga del nodo de tracking suma vehículos simulados hasta alcanzarlo.
+
