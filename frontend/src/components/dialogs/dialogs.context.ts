@@ -1,7 +1,7 @@
 import { createContext } from 'react'
 import type { ReactNode } from 'react'
 
-export type DialogSize = 'sm' | 'md' | 'lg'
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
 
 export type OpenOptions = {
   title: string

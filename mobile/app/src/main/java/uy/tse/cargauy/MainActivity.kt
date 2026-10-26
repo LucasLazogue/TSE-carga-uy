@@ -42,6 +42,7 @@ class MainActivity : ComponentActivity() {
             val urlServidor by preferencias.urlServidor.collectAsStateWithLifecycle(initialValue = "")
             val haySesion by sesion.haySesion.collectAsStateWithLifecycle<Boolean?>(initialValue = null)
             val sesionVencida by sesion.vencida.collectAsStateWithLifecycle(initialValue = false)
+            val usuario by sesion.usuario.collectAsStateWithLifecycle(initialValue = null)
             val uriIngreso by ingreso.collectAsStateWithLifecycle()
             val conRed by remember { hayRed(applicationContext) }.collectAsStateWithLifecycle(initialValue = false)
             val scope = rememberCoroutineScope()
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
                         scope.launch { preferencias.restaurarUrlServidor() }
                     },
                     haySesion = haySesion,
+                    usuario = usuario,
                     sesionVencida = sesionVencida,
                     ingreso = uriIngreso,
                     onIngresoProcesado = { ingreso.value = null },

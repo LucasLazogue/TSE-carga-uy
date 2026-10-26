@@ -46,7 +46,10 @@ data class EventoSyncDto(
     val idEvento: String,
     val idViaje: Long,
     val tipo: String,
-    val timestampGeneracion: String // ISO-8601 en UTC, por ejemplo 2026-10-15T11:00:00Z
+    val timestampGeneracion: String, // ISO-8601 en UTC, por ejemplo 2026-10-15T11:00:00Z
+    // los null no se mandan (encodeDefaults en false)
+    val descripcion: String? = null,
+    val kilos: Int? = null
 )
 
 @Serializable
@@ -55,7 +58,7 @@ data class ResultadoEventoDto(val idEvento: String, val resultado: String, val m
 @Serializable
 data class SyncRespuestaDto(
     val resultados: List<ResultadoEventoDto> = emptyList(),
-    val viaje: ViajeMovilDto? = null
+    val viajes: List<ViajeMovilDto> = emptyList()
 )
 
 // lo que responde el backend cuando algo falla: {"codigo": 4002, "mensaje": "..."}

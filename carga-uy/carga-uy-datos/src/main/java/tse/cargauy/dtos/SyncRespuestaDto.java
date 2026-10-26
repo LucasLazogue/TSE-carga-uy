@@ -7,14 +7,15 @@ public class SyncRespuestaDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private List<ResultadoEventoDto> resultados;
-    private ViajeMovilDto viaje;
+    // los viajes del chofer como quedaron despues de aplicar los eventos: el celular los adopta (AC20)
+    private List<ViajeMovilDto> viajes;
 
     public SyncRespuestaDto() {
     }
 
-    public SyncRespuestaDto(List<ResultadoEventoDto> resultados, ViajeMovilDto viaje) {
+    public SyncRespuestaDto(List<ResultadoEventoDto> resultados, List<ViajeMovilDto> viajes) {
         this.resultados = resultados;
-        this.viaje = viaje;
+        this.viajes = viajes;
     }
 
     public List<ResultadoEventoDto> getResultados() {
@@ -25,11 +26,11 @@ public class SyncRespuestaDto implements Serializable {
         this.resultados = resultados;
     }
 
-    public ViajeMovilDto getViaje() {
-        return viaje;
+    public List<ViajeMovilDto> getViajes() {
+        return viajes;
     }
 
-    public void setViaje(ViajeMovilDto viaje) {
-        this.viaje = viaje;
+    public void setViajes(List<ViajeMovilDto> viajes) {
+        this.viajes = viajes;
     }
 }

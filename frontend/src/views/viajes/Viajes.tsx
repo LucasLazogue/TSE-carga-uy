@@ -68,7 +68,7 @@ function Viajes() {
   function verEventos(viaje: Viaje) {
     open({
       title: 'Eventos del viaje',
-      size: 'lg',
+      size: 'xl',
       content: (close) => <EventosViajeDialog idEmpresa={Number(idEmpresa)} viaje={viaje} close={close} />,
     })
   }

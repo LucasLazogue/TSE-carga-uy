@@ -22,7 +22,12 @@ const sizes: Record<DialogSize, string> = {
   sm: 'sm:max-w-sm',
   md: 'sm:max-w-lg',
   lg: 'sm:max-w-3xl',
+  xl: 'sm:max-w-5xl',
 }
+
+// nunca mas alto que la pantalla (scroll adentro), y la columna puede achicarse: sin minmax(0, 1fr) una tabla
+// ancha estira el dialogo en lugar de usar su propio scroll horizontal
+const contenido = 'max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] overflow-y-auto'
 
 function DialogsProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<Entry[]>([])
@@ -62,7 +67,7 @@ function DialogsProvider({ children }: { children: ReactNode }) {
       {stack.map((entry) =>
         entry.kind === 'content' ? (
           <Dialog key={entry.id} open onOpenChange={(isOpen) => !isOpen && remove(entry.id)}>
-            <DialogContent className={sizes[entry.options.size ?? 'md']}>
+            <DialogContent className={`${contenido} ${sizes[entry.options.size ?? 'md']}`}>
               <DialogHeader>
                 <DialogTitle>{entry.options.title}</DialogTitle>
                 {entry.options.description && <DialogDescription>{entry.options.description}</DialogDescription>}

@@ -33,15 +33,21 @@ public class EventoViajeDAO implements EventoViajeDAOLocal {
         entityManager.persist(Serializers.toEntity(evento, idChofer, Instant.now(), resultado, detalle));
     }
 
+    // el evento guarda el id del chofer sin relacion (puede ser de un viaje ya borrado): la cedula sale de un join explicito
     @Override
     public PaginaDto<EventoViajeDto> getByViaje(Long idViaje, Paginacion paginacion) {
         List<EventoViajeDto> eventos = entityManager.createQuery(
-                        "SELECT e FROM EventoViaje e WHERE e.idViaje = :idViaje ORDER BY e.timestampGeneracion, e.id", EventoViaje.class)
+                        "SELECT e, c.cedula FROM EventoViaje e LEFT JOIN Ciudadano c ON c.id = e.idChofer"
+                                + " WHERE e.idViaje = :idViaje ORDER BY e.timestampGeneracion, e.id", Object[].class)
                 .setParameter("idViaje", idViaje)
                 .setFirstResult(paginacion.getDesde())
                 .setMaxResults(paginacion.getTamanio())
                 .getResultStream()
-                .map(Serializers::toDto)
+                .map(fila -> {
+                    EventoViajeDto dto = Serializers.toDto((EventoViaje) fila[0]);
+                    dto.setCedulaChofer((String) fila[1]);
+                    return dto;
+                })
                 .toList();
         long total = entityManager.createQuery(
                         "SELECT COUNT(e) FROM EventoViaje e WHERE e.idViaje = :idViaje", Long.class)

@@ -33,4 +33,7 @@ export type EventoViaje = {
   timestampRecepcion: string
   resultado: ResultadoEvento
   detalle: string | null
+  descripcion: string | null
+  kilos: number | null
+  cedulaChofer: string | null
 }

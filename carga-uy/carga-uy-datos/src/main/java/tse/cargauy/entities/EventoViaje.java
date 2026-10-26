@@ -23,6 +23,10 @@ public class EventoViaje {
     @Column(nullable = false) private Instant timestampRecepcion;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private ResultadoEvento resultado;
     private String detalle;
+    @Column(length = DESCRIPCION_MAXIMA) private String descripcion;    // lo que escribio el chofer
+    private Integer kilos;                                              // solo en cargas y descargas parciales
+
+    public static final int DESCRIPCION_MAXIMA = 500;
 
     public EventoViaje() {
     }
@@ -108,5 +112,21 @@ public class EventoViaje {
 
     public void setDetalle(String detalle) {
         this.detalle = detalle;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public Integer getKilos() {
+        return kilos;
+    }
+
+    public void setKilos(Integer kilos) {
+        this.kilos = kilos;
     }
 }
