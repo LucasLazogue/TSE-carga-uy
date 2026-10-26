@@ -15,6 +15,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.PesajesViajeDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.negocio.viaje.ViajeEJBLocal;
 import tse.cargauy.web.ws.PaginacionQuery;
@@ -48,6 +49,12 @@ public class ViajesRest {
     @Path("/{id}/eventos")
     public PaginaDto<EventoViajeDto> getEventos(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id, @BeanParam PaginacionQuery paginacion) {
         return viajeEJB.getEventos(idEmpresa, id, paginacion.paginacion());
+    }
+
+    @GET
+    @Path("/{id}/pesajes")
+    public PesajesViajeDto getPesajes(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id) {
+        return viajeEJB.getPesajes(idEmpresa, id);
     }
 
     @PUT
