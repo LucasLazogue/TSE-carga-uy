@@ -140,7 +140,12 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         LocalDateTime ahora = ahora();
         for (Long idViaje : viajeDAO.reservarEvaluacionesCarga(ahora, ahora.plusMinutes(1), 20)) {
             try {
-                evaluarCarga(viajeDAO.getViajeById(idViaje), ahora);
+                // lo dispara el temporizador, sin traza en curso: cada reevaluacion abre la suya, con las consultas a
+                // los nodos adentro, en vez de dejar cada consulta como una traza suelta
+                enTraza("fiscalizacion reevaluar carga", Context.root(), () -> {
+                    Span.current().setAttribute("viaje.id", idViaje);
+                    evaluarCarga(viajeDAO.getViajeById(idViaje), ahora);
+                });
             } catch (RuntimeException e) {
                 LOGGER.warning("fiscalizacion evaluacion=FALLIDA viaje=" + idViaje + " error=" + e);
             }

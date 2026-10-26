@@ -62,6 +62,7 @@ consulta, y cada nodo de balanzas continúa la traza. Quedan así dos recorridos
 | --- | --- |
 | Posición de tracking | `publish queue_tracking` (nodo) → `process queue_tracking` → `fiscalizacion evaluar posicion` |
 | Fin de un viaje (AC23) | `POST /api/movil/sync` → `fiscalizacion evaluar viaje` → `GET` a cada nodo → `GET /api/pesajes` en `balanzas-sur` y `balanzas-norte` |
+| Reevaluación de una carga pendiente | `fiscalizacion reevaluar carga` (temporizador, cada minuto mientras falte algún nodo) → `GET` a cada nodo → `GET /api/pesajes` |
 
 En Grafana, **Explore → Tempo**, buscar por ejemplo `{name="fiscalizacion evaluar viaje"}` y abrir la traza.
 
