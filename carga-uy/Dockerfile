@@ -14,6 +14,8 @@ RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 /subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=org.postgresql,driver-class-name=org.postgresql.Driver,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource),\
 stop-embedded-server'
 
+# el pool valida cada conexion antes de entregarla y descarta las que fallan: si PostgreSQL se reinicia, el
+# central vuelve a andar solo (sin esto seguia usando las conexiones cerradas hasta reiniciar WildFly)
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 data-source add --name=CargaUyDS \
 --jndi-name=java:jboss/datasources/CargaUyDS \
@@ -22,7 +24,11 @@ data-source add --name=CargaUyDS \
 --user-name=${env.DB_USER:cargauy} \
 --password=${env.DB_PASSWORD:cargauy} \
 --enabled=true \
---use-java-context=true,\
+--use-java-context=true \
+--valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker \
+--exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter \
+--validate-on-match=true \
+--background-validation=false,\
 stop-embedded-server'
 
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\

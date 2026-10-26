@@ -314,7 +314,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Leidos del broker cada 10 s. Cada instancia del componente central abre varios consumidores.",
+      "description": "Leidos del broker cada 10 s. Cada instancia del componente central abre varios consumidores. Lo que agota sus reentregas pasa a la DLQ: tiene que quedar en 0.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -346,7 +346,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max(cola_mensajes)",
+          "expr": "max(cola_mensajes{cola=\"queue_tracking\"})",
           "legendFormat": "mensajes esperando",
           "datasource": {
             "type": "prometheus",
@@ -357,6 +357,15 @@
           "refId": "B",
           "expr": "max(cola_consumidores)",
           "legendFormat": "consumidores",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "max(cola_mensajes{cola=\"DLQ\"})",
+          "legendFormat": "mensajes muertos (DLQ)",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
