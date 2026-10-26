@@ -1,6 +1,9 @@
 package tse.cargauy.negocio.viaje;
 
+import java.util.List;
+
 import jakarta.ejb.Local;
+import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.PaginaDto;
@@ -17,6 +20,7 @@ public interface ViajeEJBLocal {
 
     PaginaDto<EventoViajeDto> getEventos(Long idEmpresa, Long id, Paginacion paginacion);
     PesajesViajeDto getPesajes(Long idEmpresa, Long id);
+    List<EventoPosicionDto> getPosiciones(Long idEmpresa, Long id);
 
     ViajeDto asignarViaje(Long idEmpresa, ViajeDto viajeDto);
 

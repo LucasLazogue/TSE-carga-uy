@@ -78,6 +78,17 @@ public class EventoPosicionDAO implements EventoPosicionDAOLocal {
         return res;
     }
 
+    @Override
+    public List<EventoPosicionDto> getRutaDelViaje(Long idViaje) {
+        List<EventoPosicionDto> res = new ArrayList<>();
+        for (Document d : almacen.posiciones()
+                .find(Filters.eq("idViaje", idViaje))
+                .sort(Sorts.ascending("timestampGeneracion"))) {
+            res.add(Serializers.toDto(d));
+        }
+        return res;
+    }
+
     // los mismos campos del indice unico
     private static Bson origen(Long idNodo, String idEvento) {
         return Filters.and(Filters.eq("idNodo", idNodo), Filters.eq("idEvento", idEvento));

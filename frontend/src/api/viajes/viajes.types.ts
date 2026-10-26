@@ -37,3 +37,23 @@ export type EventoViaje = {
   kilos: number | null
   cedulaChofer: string | null
 }
+
+export type Posicion = {
+  latitud: number
+  longitud: number
+  timestampGeneracion: string
+}
+
+export type Pesaje = {
+  idOrigen: string
+  fechaHora: string
+  pesoRegistrado: number
+  codigoBalanza: string
+  nombrePeaje: string
+}
+
+export type PesajesViaje = {
+  pesajes: Pesaje[]
+  nodosSinResponder: string[]
+  completo: boolean
+}
