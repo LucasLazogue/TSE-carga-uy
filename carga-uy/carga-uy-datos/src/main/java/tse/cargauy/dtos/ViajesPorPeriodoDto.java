@@ -3,27 +3,27 @@ package tse.cargauy.dtos;
 import java.io.Serializable;
 import java.time.LocalDate;
 
-public class ViajesPorDiaDto implements Serializable {
+public class ViajesPorPeriodoDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private LocalDate dia;
+    private LocalDate inicio;
     private long cantidad;
 
-    public ViajesPorDiaDto() {
+    public ViajesPorPeriodoDto() {
     }
 
-    public ViajesPorDiaDto(LocalDate dia, long cantidad) {
-        this.dia = dia;
+    public ViajesPorPeriodoDto(LocalDate inicio, long cantidad) {
+        this.inicio = inicio;
         this.cantidad = cantidad;
     }
 
-    public LocalDate getDia() {
-        return dia;
+    public LocalDate getInicio() {
+        return inicio;
     }
 
-    public void setDia(LocalDate dia) {
-        this.dia = dia;
+    public void setInicio(LocalDate inicio) {
+        this.inicio = inicio;
     }
 
     public long getCantidad() {

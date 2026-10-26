@@ -11,13 +11,20 @@ public class InfraccionesPorTipoDto implements Serializable {
     private TipoInfraccion tipo;
     private long detectadas;
     private long confirmadas;
-    private long pendientes;
+    private long desestimadas;
 
     public InfraccionesPorTipoDto() {
     }
 
-    public InfraccionesPorTipoDto(TipoInfraccion tipo) {
+    public InfraccionesPorTipoDto(TipoInfraccion tipo, long detectadas, long confirmadas, long desestimadas) {
         this.tipo = tipo;
+        this.detectadas = detectadas;
+        this.confirmadas = confirmadas;
+        this.desestimadas = desestimadas;
+    }
+
+    public long getPendientes() {
+        return detectadas - confirmadas - desestimadas;
     }
 
     public TipoInfraccion getTipo() {
@@ -44,11 +51,11 @@ public class InfraccionesPorTipoDto implements Serializable {
         this.confirmadas = confirmadas;
     }
 
-    public long getPendientes() {
-        return pendientes;
+    public long getDesestimadas() {
+        return desestimadas;
     }
 
-    public void setPendientes(long pendientes) {
-        this.pendientes = pendientes;
+    public void setDesestimadas(long desestimadas) {
+        this.desestimadas = desestimadas;
     }
 }

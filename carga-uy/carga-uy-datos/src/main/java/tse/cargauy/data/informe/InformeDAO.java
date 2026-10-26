@@ -1,23 +1,19 @@
 package tse.cargauy.data.informe;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import tse.cargauy.dtos.ConteoDto;
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.InfraccionesPorTipoDto;
-import tse.cargauy.dtos.ViajesPorDiaDto;
+import tse.cargauy.dtos.ViajesPorPeriodoDto;
+import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoCaso;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.EstadoViaje;
-import tse.cargauy.entities.TipoInfraccion;
 
 @Stateless
 public class InformeDAO implements InformeDAOLocal {
@@ -46,64 +42,59 @@ public class InformeDAO implements InformeDAOLocal {
     }
 
     @Override
-    public List<ViajesPorDiaDto> contarViajesPorDia(FiltroInforme filtro) {
-        return viajesRealizados("SELECT EXTRACT(DATE FROM v.fechaFin), COUNT(v)", filtro,
-                " GROUP BY EXTRACT(DATE FROM v.fechaFin) ORDER BY EXTRACT(DATE FROM v.fechaFin)")
-                .getResultStream()
-                .map(f -> new ViajesPorDiaDto((LocalDate) f[0], (Long) f[1]))
-                .toList();
+    public List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro) {
+        String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND v.guia.tipoCarga.id = :idTipoCarga";
+        TypedQuery<ViajesPorPeriodoDto> query = consulta(
+                        "SELECT NEW tse.cargauy.dtos.ViajesPorPeriodoDto(EXTRACT(DATE FROM v.fechaFin), COUNT(v))"
+                                + " FROM Viaje v WHERE v.estado = :finalizado"
+                                + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta" + tipoCarga
+                                + " GROUP BY EXTRACT(DATE FROM v.fechaFin) ORDER BY EXTRACT(DATE FROM v.fechaFin)",
+                        ViajesPorPeriodoDto.class)
+                .setParameter("finalizado", EstadoViaje.FINALIZADO)
+                .setParameter("desde", filtro.getDesde().atStartOfDay())
+                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
+        if (filtro.getIdTipoCarga() != null) {
+            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
+        }
+        return query.getResultList();
     }
 
     @Override
-    public List<ConteoDto> sumarVolumenPorRubro(FiltroInforme filtro) {
-        return viajesRealizados("SELECT v.guia.rubro.nombre, SUM(v.guia.volumen)", filtro,
-                " GROUP BY v.guia.rubro.nombre ORDER BY SUM(v.guia.volumen) DESC, v.guia.rubro.nombre")
-                .getResultStream()
-                .map(f -> new ConteoDto((String) f[0], (Long) f[1]))
-                .toList();
-    }
-
-    private TypedQuery<Object[]> viajesRealizados(String select, FiltroInforme filtro, String agrupar) {
+    public List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro) {
         String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND v.guia.tipoCarga.id = :idTipoCarga";
-        TypedQuery<Object[]> query = consulta(select + " FROM Viaje v WHERE v.estado = :finalizado"
-                        + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta" + tipoCarga + agrupar, Object[].class)
-                .setParameter("finalizado", EstadoViaje.FINALIZADO);
-        return periodo(query, filtro);
+        TypedQuery<VolumenPorRubroDto> query = consulta(
+                        "SELECT NEW tse.cargauy.dtos.VolumenPorRubroDto(v.guia.rubro.nombre, SUM(v.guia.volumen))"
+                                + " FROM Viaje v WHERE v.estado = :finalizado"
+                                + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta" + tipoCarga
+                                + " GROUP BY v.guia.rubro.nombre ORDER BY SUM(v.guia.volumen) DESC, v.guia.rubro.nombre",
+                        VolumenPorRubroDto.class)
+                .setParameter("finalizado", EstadoViaje.FINALIZADO)
+                .setParameter("desde", filtro.getDesde().atStartOfDay())
+                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
+        if (filtro.getIdTipoCarga() != null) {
+            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
+        }
+        return query.getResultList();
     }
 
     @Override
     public List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro) {
         String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND c.viaje.guia.tipoCarga.id = :idTipoCarga";
-        List<Object[]> filas = periodo(consulta("SELECT c.tipo, c.estado, COUNT(c) FROM CasoFiscalizacion c"
-                        + " WHERE c.fechaDeteccion >= :desde AND c.fechaDeteccion < :hasta" + tipoCarga
-                        + " GROUP BY c.tipo, c.estado", Object[].class), filtro)
-                .getResultList();
-
-        Map<TipoInfraccion, InfraccionesPorTipoDto> porTipo = new EnumMap<>(TipoInfraccion.class);
-        for (TipoInfraccion tipo : TipoInfraccion.values()) {
-            porTipo.put(tipo, new InfraccionesPorTipoDto(tipo));
-        }
-        for (Object[] f : filas) {
-            InfraccionesPorTipoDto infracciones = porTipo.get((TipoInfraccion) f[0]);
-            EstadoCaso estado = (EstadoCaso) f[1];
-            long cantidad = (Long) f[2];
-            infracciones.setDetectadas(infracciones.getDetectadas() + cantidad);
-            if (estado == EstadoCaso.CONFIRMADA) {
-                infracciones.setConfirmadas(infracciones.getConfirmadas() + cantidad);
-            } else if (estado != EstadoCaso.DESESTIMADA) {
-                infracciones.setPendientes(infracciones.getPendientes() + cantidad);
-            }
-        }
-        return new ArrayList<>(porTipo.values());
-    }
-
-    private <T> TypedQuery<T> periodo(TypedQuery<T> query, FiltroInforme filtro) {
-        query.setParameter("desde", filtro.getDesde().atStartOfDay())
+        TypedQuery<InfraccionesPorTipoDto> query = consulta(
+                        "SELECT NEW tse.cargauy.dtos.InfraccionesPorTipoDto(c.tipo, COUNT(c),"
+                                + " SUM(CASE WHEN c.estado = :confirmada THEN 1 ELSE 0 END),"
+                                + " SUM(CASE WHEN c.estado = :desestimada THEN 1 ELSE 0 END))"
+                                + " FROM CasoFiscalizacion c"
+                                + " WHERE c.fechaDeteccion >= :desde AND c.fechaDeteccion < :hasta" + tipoCarga
+                                + " GROUP BY c.tipo", InfraccionesPorTipoDto.class)
+                .setParameter("confirmada", EstadoCaso.CONFIRMADA)
+                .setParameter("desestimada", EstadoCaso.DESESTIMADA)
+                .setParameter("desde", filtro.getDesde().atStartOfDay())
                 .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
         if (filtro.getIdTipoCarga() != null) {
             query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
         }
-        return query;
+        return query.getResultList();
     }
 
     private <T> TypedQuery<T> consulta(String jpql, Class<T> tipo) {
