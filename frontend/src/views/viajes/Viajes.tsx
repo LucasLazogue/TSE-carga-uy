@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { ComponentProps } from 'react'
-import { History, RefreshCw } from 'lucide-react'
+import { History, MapPinned, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -13,11 +13,13 @@ import { Button } from '@/components/ui/button'
 import type { Page } from '@/api/page'
 import { ViajesApi } from '@/api/viajes/viajes.api'
 import type { EstadoViaje, Viaje } from '@/api/viajes/viajes.types'
+import { useSession } from '@/auth/useSession'
 import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fechaHora } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
 import EventosViajeDialog from './dialogs/EventosViajeDialog'
+import RecorridoDialog from './dialogs/RecorridoDialog'
 import { NOMBRES_ESTADO, OPCIONES_ESTADO } from './viajes.constants'
 
 const VARIANTES_ESTADO: Record<EstadoViaje, ComponentProps<typeof Badge>['variant']> = {
@@ -42,6 +44,8 @@ function Viajes() {
   const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
   const [version, setVersion] = useState(0)
   const { open } = useDialogs()
+  const { profile } = useSession()
+  const esFuncionario = profile === 'FUNCIONARIO'
   const { idEmpresa, estado } = values
 
   useEmpresaInicial(idEmpresa, set)
@@ -73,6 +77,14 @@ function Viajes() {
     })
   }
 
+  function verRecorrido(viaje: Viaje) {
+    open({
+      title: 'Recorrido del viaje',
+      size: 'xl',
+      content: (close) => <RecorridoDialog idEmpresa={Number(idEmpresa)} viaje={viaje} close={close} />,
+    })
+  }
+
   const columnasConAcciones: GridColumn<Viaje>[] = [
     ...columnas,
     {
@@ -80,10 +92,18 @@ function Viajes() {
       hideHeader: true,
       className: 'sticky right-0 w-px bg-background text-right',
       cell: (v) => (
-        <Button size="sm" variant="outline" onClick={() => verEventos(v)}>
-          <History />
-          <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver eventos</span>
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={() => verEventos(v)}>
+            <History />
+            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver eventos</span>
+          </Button>
+          {esFuncionario && v.estado !== 'ASIGNADO' && (
+            <Button size="sm" variant="outline" onClick={() => verRecorrido(v)}>
+              <MapPinned />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver recorrido</span>
+            </Button>
+          )}
+        </div>
       ),
     },
   ]

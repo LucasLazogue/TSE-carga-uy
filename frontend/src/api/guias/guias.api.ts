@@ -6,6 +6,8 @@ export const GuiasApi = {
   findAll: async (idEmpresa: number, filtro: FiltroGuias = {}, paginacion: Paginacion = {}) =>
     (await http.get<Page<Guia>>(`/empresas/${idEmpresa}/guias`, { params: { ...filtro, ...paginacion } })).data,
 
+  find: async (idEmpresa: number, id: number) => (await http.get<Guia>(`/empresas/${idEmpresa}/guias/${id}`)).data,
+
   create: async (idEmpresa: number, guia: GuiaNueva) =>
     (await http.post<Guia>(`/empresas/${idEmpresa}/guias`, guia)).data,
 

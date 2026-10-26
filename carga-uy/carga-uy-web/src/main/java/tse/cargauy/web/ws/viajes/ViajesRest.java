@@ -1,5 +1,7 @@
 package tse.cargauy.web.ws.viajes;
 
+import java.util.List;
+
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.BeanParam;
@@ -13,6 +15,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.PesajesViajeDto;
@@ -55,6 +58,12 @@ public class ViajesRest {
     @Path("/{id}/pesajes")
     public PesajesViajeDto getPesajes(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id) {
         return viajeEJB.getPesajes(idEmpresa, id);
+    }
+
+    @GET
+    @Path("/{id}/posiciones")
+    public List<EventoPosicionDto> getPosiciones(@PathParam("empresa") Long idEmpresa, @PathParam("id") Long id) {
+        return viajeEJB.getPosiciones(idEmpresa, id);
     }
 
     @PUT

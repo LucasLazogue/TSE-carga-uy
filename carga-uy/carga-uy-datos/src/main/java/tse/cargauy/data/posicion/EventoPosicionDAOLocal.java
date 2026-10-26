@@ -17,4 +17,5 @@ public interface EventoPosicionDAOLocal {
     // hasta null = sin limite. Les pone tambien el vehiculo, por si se registro despues de recibirlas
     void asociarAViaje(String matricula, Long idVehiculo, Instant desde, Instant hasta, Long idViaje);
     List<EventoPosicionDto> getRuta(String matricula);
+    List<EventoPosicionDto> getRutaDelViaje(Long idViaje);
 }

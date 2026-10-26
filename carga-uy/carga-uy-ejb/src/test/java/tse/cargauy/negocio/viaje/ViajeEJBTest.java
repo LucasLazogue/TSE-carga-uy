@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 
 import tse.cargauy.data.eventoviaje.EventoViajeDAO;
 import tse.cargauy.data.guia.GuiaDAO;
+import tse.cargauy.data.posicion.EventoPosicionDAO;
 import tse.cargauy.data.viaje.ViajeDAO;
+import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.EventoViajeDto;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.PaginaDto;
@@ -103,5 +105,19 @@ class ViajeEJBTest {
 
         CargaUYException error = assertThrows(CargaUYException.class, () -> ejb.getPesajes(OTRA_EMPRESA, VIAJE));
         assertEquals(CodigoError.VIAJE_NO_ENCONTRADO, error.getCodigo());
+    }
+
+    @Test
+    void devuelveLasPosicionesDelViaje() {
+        EventoPosicionDto posicion = new EventoPosicionDto();
+        ejb.posicionDAO = new EventoPosicionDAO() {
+            @Override
+            public List<EventoPosicionDto> getRutaDelViaje(Long idViaje) {
+                assertEquals(VIAJE, idViaje);
+                return List.of(posicion);
+            }
+        };
+
+        assertEquals(List.of(posicion), ejb.getPosiciones(EMPRESA, VIAJE));
     }
 }
