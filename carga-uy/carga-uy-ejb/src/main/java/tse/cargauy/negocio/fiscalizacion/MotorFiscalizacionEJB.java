@@ -122,9 +122,8 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
                 fecha.toString(), null, "El vehiculo circulaba sin un permiso vigente.")));
     }
 
-    // un caso por viaje, porque el viaje puede durar mas de un dia. si alguna balanza no respondio se evalua con lo
-    // que llego y queda pendiente: lo que traiga despues se agrega al mismo caso
-    // la hora se toma antes de consultar las balanzas, que pueden demorar, para no saltear el proximo minuto
+    // un caso por viaje (puede durar mas de un dia). si alguna balanza no respondio queda pendiente y lo que llegue
+    // despues se agrega al mismo caso. 'ahora' se toma antes de consultar las balanzas, que pueden demorar
     private void evaluarCarga(ViajeDto viaje, LocalDateTime ahora) {
         PesajesViajeDto resultado = balanzas.getPesajesDelViaje(viaje);
         VehiculoDto vehiculo = vehiculoDAO.getVehiculoById(viaje.getIdVehiculo());

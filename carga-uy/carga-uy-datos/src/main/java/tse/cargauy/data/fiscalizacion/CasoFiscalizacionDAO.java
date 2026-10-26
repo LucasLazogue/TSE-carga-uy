@@ -133,7 +133,6 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         return Serializers.toDto(caso, true);
     }
 
-    // volver a evaluar el mismo hecho no duplica las evidencias que ya tiene
     @Override
     public void agregarEvidencias(Long idCaso, List<EvidenciaDto> evidencias) {
         CasoFiscalizacion caso = entityManager.find(CasoFiscalizacion.class, idCaso);
