@@ -227,6 +227,30 @@ public class ViajeDAO implements ViajeDAOLocal {
                 .getResultList());
     }
 
+    // con un UPDATE directo no cambia la version del viaje, asi no choca con los eventos del chofer
+    @Override
+    public void marcarEvaluacionCarga(Long id, LocalDateTime proxima) {
+        entityManager.createQuery("UPDATE Viaje v SET v.proximaEvaluacionCarga = :proxima WHERE v.id = :id")
+                .setParameter("proxima", proxima)
+                .setParameter("id", id)
+                .executeUpdate();
+    }
+
+    // con varias instancias del central cada viaje lo toma una sola: SKIP LOCKED saltea las filas que otra ya bloqueo,
+    // y correr la marca a 'hasta' lo reserva. si la instancia se cae, la marca vence y lo toma otra
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Long> reservarEvaluacionesCarga(LocalDateTime ahora, LocalDateTime hasta, int maximo) {
+        return entityManager.createNativeQuery(
+                        "UPDATE viaje SET proximaEvaluacionCarga = :hasta WHERE id IN (SELECT id FROM viaje"
+                                + " WHERE proximaEvaluacionCarga <= :ahora ORDER BY proximaEvaluacionCarga LIMIT :maximo"
+                                + " FOR UPDATE SKIP LOCKED) RETURNING id", Long.class)
+                .setParameter("hasta", hasta)
+                .setParameter("ahora", ahora)
+                .setParameter("maximo", maximo)
+                .getResultList();
+    }
+
     // fecha de guia ascendente: getAll ordena al reves (lo que quiere el listado) y le daria al chofer el viaje mas lejano
     private List<Viaje> delChofer(Long idCiudadano, EstadoViaje estado) {
         return entityManager.createQuery(

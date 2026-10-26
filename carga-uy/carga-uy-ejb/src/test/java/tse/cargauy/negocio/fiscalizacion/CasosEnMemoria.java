@@ -74,6 +74,16 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     }
 
     @Override
+    public void agregarEvidencias(Long idCaso, List<EvidenciaDto> evidencias) {
+        List<EvidenciaDto> delCaso = casos.get(idCaso).getEvidencias();
+        for (EvidenciaDto e : evidencias) {
+            if (delCaso.stream().noneMatch(d -> d.getIdOrigen().equals(e.getIdOrigen()))) {
+                delCaso.add(e);
+            }
+        }
+    }
+
+    @Override
     public void notificar(Long id, LocalDateTime fecha, LocalDateTime venceDescargo) {
         CasoFiscalizacionDto caso = casos.get(id);
         EstadoCaso anterior = caso.getEstado();

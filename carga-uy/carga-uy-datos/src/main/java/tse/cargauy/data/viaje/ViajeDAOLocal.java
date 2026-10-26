@@ -31,4 +31,8 @@ public interface ViajeDAOLocal {
     ViajeDto getEnCursoDelVehiculo(Long idVehiculo, LocalDateTime momento);
     // los viajes del vehiculo que empezaron y seguian en curso en 'desde' o empezaron despues, por fecha de inicio
     List<ViajeDto> getIniciadosDelVehiculo(Long idVehiculo, LocalDateTime desde);
+    // null = sin evaluacion de carga pendiente
+    void marcarEvaluacionCarga(Long id, LocalDateTime proxima);
+    // los viajes con la evaluacion de carga vencida, reservados hasta 'hasta' para que no los tome otra instancia
+    List<Long> reservarEvaluacionesCarga(LocalDateTime ahora, LocalDateTime hasta, int maximo);
 }
