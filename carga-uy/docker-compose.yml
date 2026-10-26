@@ -224,6 +224,28 @@ services:
     depends_on:
       - pg-balanzas-norte
 
+  balanzas-alta:
+    image: alpine:3.22
+    environment:
+      BALANZAS_SUR_CLAVE_ADMIN: ${BALANZAS_SUR_CLAVE_ADMIN:-clave-admin-balanzas-sur}
+      BALANZAS_NORTE_CLAVE_ADMIN: ${BALANZAS_NORTE_CLAVE_ADMIN:-clave-admin-balanzas-norte}
+    volumes:
+      - ../nodo-balanzas/scripts:/scripts:ro
+      - ../nodo-balanzas/datos:/datos:ro
+      - balanzasclaves:/claves
+    command:
+      - sh
+      - -c
+      - |
+        apk add -q curl jq
+        sh /scripts/alta.sh http://balanzas-sur:8080/nodo-balanzas "$$BALANZAS_SUR_CLAVE_ADMIN" /datos/balanzas-sur.json /claves/balanzas-sur.json
+        sh /scripts/alta.sh http://balanzas-norte:8080/nodo-balanzas "$$BALANZAS_NORTE_CLAVE_ADMIN" /datos/balanzas-norte.json /claves/balanzas-norte.json
+    depends_on:
+      balanzas-sur:
+        condition: service_healthy
+      balanzas-norte:
+        condition: service_healthy
+
 volumes:
   pgdata:
   mongodata:
@@ -231,3 +253,4 @@ volumes:
   ldapdata:
   balanzassurdata:
   balanzasnortedata:
+  balanzasclaves:

@@ -1,0 +1,25 @@
+[
+  {
+    "codigo": "R5-30",
+    "nombre": "Peaje Ruta 5 km 30",
+    "ruta": "5",
+    "km": 30,
+    "latitud": -34.6617,
+    "longitud": -56.2186,
+    "balanzas": [
+      { "codigo": "balanza-r5-km30", "sentido": "HACIA_MONTEVIDEO" },
+      { "codigo": "balanza-r5-km30-int", "sentido": "HACIA_EL_INTERIOR" }
+    ]
+  },
+  {
+    "codigo": "R1-45",
+    "nombre": "Peaje Ruta 1 km 45",
+    "ruta": "1",
+    "km": 45,
+    "latitud": -34.6447,
+    "longitud": -56.6083,
+    "balanzas": [
+      { "codigo": "balanza-r1-km45", "sentido": "HACIA_MONTEVIDEO" }
+    ]
+  }
+]
