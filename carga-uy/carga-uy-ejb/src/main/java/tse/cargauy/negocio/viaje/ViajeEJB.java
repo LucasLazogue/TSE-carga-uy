@@ -7,6 +7,7 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import tse.cargauy.data.eventoviaje.EventoViajeDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
+import tse.cargauy.data.itv.ItvDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.posicion.EventoPosicionDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
@@ -43,6 +44,9 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
 
     @EJB
     PermisoDAOLocal permisoDAO;
+
+    @EJB
+    ItvDAOLocal itvDAO;
 
     @EJB
     UsuarioDAOLocal usuarioDAO;
@@ -161,6 +165,9 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         }
         if (permisoDAO.getVigente(vehiculo.getId(), guia.getFecha()) == null) {
             throw new CargaUYException(CodigoError.VIAJE_VEHICULO_SIN_PERMISO, vehiculo.getMatricula(), guia.getFecha().toString());
+        }
+        if (itvDAO.getVigente(vehiculo.getId(), guia.getFecha()) == null) {
+            throw new CargaUYException(CodigoError.VIAJE_VEHICULO_SIN_ITV, vehiculo.getMatricula(), guia.getFecha().toString());
         }
         if (usuarioDAO.getChoferVigente(viajeDto.getIdChofer(), guia.getIdEmpresa(), guia.getFecha()) == null) {
             throw new CargaUYException(CodigoError.VIAJE_CHOFER_INVALIDO, String.valueOf(viajeDto.getIdChofer()), guia.getFecha().toString());

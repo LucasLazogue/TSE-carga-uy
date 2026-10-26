@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.opentelemetry.context.Context;
+import tse.cargauy.data.itv.ItvDAO;
 import tse.cargauy.data.permiso.PermisoDAO;
 import tse.cargauy.data.posicion.EventoPosicionDAO;
 import tse.cargauy.data.vehiculo.VehiculoDAO;
@@ -22,6 +23,7 @@ import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroViajes;
+import tse.cargauy.dtos.ItvDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
@@ -55,6 +57,7 @@ class MotorFiscalizacionEJBTest {
     private ViajeDto viajeAsignado;
     private ViajeDto viaje;
     private PermisoDto permiso = new PermisoDto();
+    private ItvDto itv = new ItvDto();
     private List<Long> reservados = List.of();
     private LocalDateTime reservadoHasta;
     private LocalDateTime proximaEvaluacion;
@@ -108,6 +111,12 @@ class MotorFiscalizacionEJBTest {
             @Override
             public PermisoDto getVigente(Long idVehiculo, LocalDate fecha) {
                 return permiso;
+            }
+        };
+        motor.itvDAO = new ItvDAO() {
+            @Override
+            public ItvDto getVigente(Long idVehiculo, LocalDate fecha) {
+                return itv;
             }
         };
         // 15000 kg de peso y 18800 kg de capacidad: el maximo es 33800 kg
@@ -193,6 +202,35 @@ class MotorFiscalizacionEJBTest {
         assertEquals("SIN_HABILITACION|11|" + DIA, sinHabilitacion.get(0).getClaveDeduplicacion());
         assertEquals(TipoEvidencia.PERMISO, sinHabilitacion.get(0).getEvidencias().get(0).getTipo());
         assertNull(sinHabilitacion.get(0).getIdViaje());
+        assertEquals(1, casos.casos.size());
+    }
+
+    @Test
+    void conPermisoPeroSinItvElCasoTieneLaEvidenciaDeLaItv() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        itv = null;
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        List<CasoFiscalizacionDto> sinHabilitacion = casosDe(TipoInfraccion.SIN_HABILITACION);
+        assertEquals(1, sinHabilitacion.size());
+        assertEquals("SIN_HABILITACION|11|" + DIA, sinHabilitacion.get(0).getClaveDeduplicacion());
+        assertEquals(List.of(TipoEvidencia.ITV),
+                sinHabilitacion.get(0).getEvidencias().stream().map(EvidenciaDto::getTipo).toList());
+    }
+
+    @Test
+    void sinPermisoNiItvHayUnSoloCasoConLasDosEvidencias() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        permiso = null;
+        itv = null;
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        List<CasoFiscalizacionDto> sinHabilitacion = casosDe(TipoInfraccion.SIN_HABILITACION);
+        assertEquals(1, sinHabilitacion.size());
+        assertEquals(List.of(TipoEvidencia.PERMISO, TipoEvidencia.ITV),
+                sinHabilitacion.get(0).getEvidencias().stream().map(EvidenciaDto::getTipo).toList());
         assertEquals(1, casos.casos.size());
     }
 

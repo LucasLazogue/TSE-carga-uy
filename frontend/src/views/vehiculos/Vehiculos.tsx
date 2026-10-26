@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { CalendarCheck, Plus, RefreshCw } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button'
 import type { Page } from '@/api/page'
 import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
+import { useSession } from '@/auth/useSession'
 import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
+import ItvDialog from './dialogs/ItvDialog'
 import NuevoVehiculoDialog from './dialogs/NuevoVehiculoDialog'
 
 const columnas: GridColumn<Vehiculo>[] = [
@@ -34,6 +36,8 @@ function Vehiculos() {
   const [resultado, setResultado] = useState<Page<Vehiculo> | null>(null)
   const [version, setVersion] = useState(0)
   const { open } = useDialogs()
+  const { profile } = useSession()
+  const esFuncionario = profile === 'FUNCIONARIO'
   const { idEmpresa } = values
 
   useEmpresaInicial(idEmpresa, set)
@@ -78,6 +82,29 @@ function Vehiculos() {
     })
   }
 
+  function verItv(vehiculo: Vehiculo) {
+    open({
+      title: 'ITV del vehículo',
+      size: 'lg',
+      content: (close) => <ItvDialog vehiculo={vehiculo} soloLectura={esFuncionario} close={close} />,
+    })
+  }
+
+  const columnasConAcciones: GridColumn<Vehiculo>[] = [
+    ...columnas,
+    {
+      header: 'Acciones',
+      hideHeader: true,
+      className: 'sticky right-0 w-px bg-background text-right',
+      cell: (v) => (
+        <Button size="sm" variant="outline" onClick={() => verItv(v)}>
+          <CalendarCheck />
+          <span className="sr-only md:not-sr-only md:whitespace-nowrap">ITV</span>
+        </Button>
+      ),
+    },
+  ]
+
   return (
     <div>
       <PageHeader
@@ -106,7 +133,7 @@ function Vehiculos() {
         />
       </DataToolbar>
       <Grid
-        columns={columnas}
+        columns={columnasConAcciones}
         items={resultado?.items ?? []}
         rowKey={(v) => v.id}
         empty="No hay vehículos registrados."

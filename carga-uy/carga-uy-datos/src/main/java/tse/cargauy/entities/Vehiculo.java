@@ -25,6 +25,8 @@ public class Vehiculo {
     private Empresa empresa;
     @OneToMany(mappedBy = "vehiculo", cascade = CascadeType.REMOVE)
     private List<Permiso> permisos;
+    @OneToMany(mappedBy = "vehiculo", cascade = CascadeType.REMOVE)
+    private List<Itv> itvs;
 
     public Vehiculo() {
     }
@@ -100,6 +102,14 @@ public class Vehiculo {
 
     public void setPermisos(List<Permiso> permisos) {
         this.permisos = permisos;
+    }
+
+    public List<Itv> getItvs() {
+        return itvs;
+    }
+
+    public void setItvs(List<Itv> itvs) {
+        this.itvs = itvs;
     }
 
 }
