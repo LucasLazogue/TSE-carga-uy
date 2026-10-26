@@ -20,6 +20,7 @@ import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroCasos;
+import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.ItvDto;
 import tse.cargauy.dtos.Paginacion;
@@ -29,7 +30,9 @@ import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
+import tse.cargauy.entities.EstadoCaso;
 import tse.cargauy.entities.EstadoPermiso;
+import tse.cargauy.entities.EstadoViaje;
 import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoEvidencia;
@@ -165,6 +168,23 @@ public class DatosPrueba {
             viajeDAO.addViaje(new ViajeDto(frayBentosMontevideo.getId(), sbb, chofer));
         }
 
+        if (viajeDAO.getAll(new FiltroViajes(null, null, EstadoViaje.FINALIZADO), new Paginacion(0, 1)).getTotal() == 0
+                && empresas.size() >= 3) {
+            List<RubroDto> rubros = guiaDAO.getRubros();
+            List<TipoCargaDto> tipos = guiaDAO.getTiposCarga();
+            Long chofer = carlos.getId();
+            Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
+            Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
+            for (int mes = 2; mes <= 9; mes++) {
+                agregarViajeRealizado(LocalDate.of(2026, mes, 5), sta, chofer, empresas.get(0).getId(),
+                        rubros.get(mes % rubros.size()).getId(), tipos.get(mes % tipos.size()).getId(), 12000 + mes * 1000);
+                if (mes >= 3) {
+                    agregarViajeRealizado(LocalDate.of(2026, mes, 20), sbb, chofer, empresas.get(0).getId(),
+                            rubros.get((mes + 2) % rubros.size()).getId(), tipos.get((mes + 1) % tipos.size()).getId(), 18000 + mes * 500);
+                }
+            }
+        }
+
         if (casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, LocalDate.now()) == null) {
             casoDAO.addNorma(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, 10, LocalDate.of(2026, 1, 1));
         }
@@ -191,6 +211,37 @@ public class DatosPrueba {
             casoDAO.presentarDescargo(enDescargo, ana.getId(),
                     "La balanza estaba descalibrada ese dia; adjuntamos el ticket del pesaje en planta.", ahora.minusDays(3));
         }
+
+        if (casoDAO.buscar(new FiltroCasos(EstadoCaso.CONFIRMADA, null, null, null), new Paginacion(0, 1)).getTotal() == 0
+                && vehiculoDAO.getVehiculoByMatricula("SCC9012") != null) {
+            Long scc = vehiculoDAO.getVehiculoByMatricula("SCC9012").getId();
+            Long sdd = vehiculoDAO.getVehiculoByMatricula("SDD3456").getId();
+            Long funcionario = usuarioDAO.getFuncionarioByCedula("11111111").getId();
+
+            Long exceso = agregarCaso(TipoInfraccion.EXCESO_CARGA, scc, LocalDateTime.of(2026, 4, 8, 10, 30), LocalDateTime.of(2026, 4, 8, 11, 0),
+                    new EvidenciaDto(TipoEvidencia.PESAJE, "balanzas-norte/balanza-r5-km390/3003", LocalDateTime.of(2026, 4, 8, 10, 30),
+                            "35900 kg", "33800 kg", "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 5 km 390 por encima del maximo."));
+            casoDAO.resolver(exceso, funcionario, EstadoCaso.CONFIRMADA, "El pesaje supera el maximo y no hubo descargo.",
+                    LocalDateTime.of(2026, 4, 25, 9, 0));
+            Long desvio = agregarCaso(TipoInfraccion.DESVIO_RUTA, scc, LocalDateTime.of(2026, 6, 12, 15, 0), LocalDateTime.of(2026, 6, 12, 15, 30),
+                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-3", LocalDateTime.of(2026, 6, 12, 15, 0), "8,1 km", "0 km",
+                            "2 km", "Posiciones a mas de 2 km del recorrido esperado durante 25 minutos."));
+            casoDAO.resolver(desvio, funcionario, EstadoCaso.CONFIRMADA, "El desvio no tiene justificacion.", LocalDateTime.of(2026, 6, 30, 9, 0));
+            Long sinHabilitacion = agregarCaso(TipoInfraccion.SIN_HABILITACION, sdd, LocalDateTime.of(2026, 5, 3, 8, 0),
+                    LocalDateTime.of(2026, 5, 3, 8, 30), new EvidenciaDto(TipoEvidencia.ITV, "itv-sdd3456", LocalDateTime.of(2026, 5, 3, 8, 0),
+                            "vencida", "vigente", null, "La ITV del vehiculo vencio el 10/04/2026."));
+            casoDAO.resolver(sinHabilitacion, funcionario, EstadoCaso.DESESTIMADA, "La ITV se renovo antes del viaje; el registro estaba atrasado.",
+                    LocalDateTime.of(2026, 5, 20, 9, 0));
+        }
+    }
+
+    private void agregarViajeRealizado(LocalDate fecha, Long idVehiculo, Long idChofer, Long idEmpresa, Long idRubro, Long idTipoCarga,
+            int volumen) {
+        GuiaDto guia = guiaDAO.addGuia(new GuiaDto(fecha, -34.9011, -56.1645, -30.9053, -55.5508, volumen, idEmpresa, idChofer, idRubro,
+                idTipoCarga));
+        Long idViaje = viajeDAO.addViaje(new ViajeDto(guia.getId(), idVehiculo, idChofer)).getId();
+        viajeDAO.cambiarEstado(idViaje, EstadoViaje.EN_CURSO, fecha.atTime(8, 0));
+        viajeDAO.cambiarEstado(idViaje, EstadoViaje.FINALIZADO, fecha.atTime(18, 0));
     }
 
     private Long agregarCaso(TipoInfraccion tipo, Long idVehiculo, LocalDateTime fechaHecho, LocalDateTime fechaNotificacion,
