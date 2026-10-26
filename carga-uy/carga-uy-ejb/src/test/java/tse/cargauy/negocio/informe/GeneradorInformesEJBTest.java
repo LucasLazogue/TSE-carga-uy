@@ -23,7 +23,6 @@ import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
-import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.entities.TipoInfraccion;
 
 class GeneradorInformesEJBTest {
@@ -45,7 +44,6 @@ class GeneradorInformesEJBTest {
     @BeforeEach
     void iniciar() {
         informe.setId(1L);
-        informe.setTipo(TipoInforme.VOLUMEN_POR_RUBRO);
         informe.setFormato(FormatoInforme.CSV);
         informe.setEstado(EstadoInforme.PENDIENTE);
         informe.setPeriodoDesde(LocalDate.of(2026, 10, 1));
@@ -100,7 +98,7 @@ class GeneradorInformesEJBTest {
     void generaElArchivoYLoGuarda() {
         generador.generar(1L);
 
-        assertTrue(new String(guardado, StandardCharsets.UTF_8).contains("\"Agropecuario\";\"18000\""));
+        assertTrue(new String(guardado, StandardCharsets.UTF_8).contains("\"Volumen transportado por rubro\";\"Agropecuario\";\"Volumen (kg)\";\"18000\""));
         assertFalse(fallido);
     }
 
@@ -135,7 +133,7 @@ class GeneradorInformesEJBTest {
     }
 
     @Test
-    void cadaReporteTieneSusColumnas() {
+    void cadaSeccionTieneSusColumnas() {
         IndicadoresDto indicadores = new IndicadoresDto();
         indicadores.setHabilitadosAl(LocalDate.of(2026, 10, 26));
         indicadores.setEmpresasHabilitadas(3);
@@ -144,24 +142,29 @@ class GeneradorInformesEJBTest {
         indicadores.setViajes(List.of(new ViajesPorPeriodoDto(LocalDate.of(2026, 9, 1), 7)));
         indicadores.setInfracciones(List.of(new InfraccionesPorTipoDto(TipoInfraccion.EXCESO_CARGA, 8, 3, 1)));
 
-        assertEquals(List.of("26/10/2026", "3", "4"), fila(TipoInforme.HABILITADOS, indicadores));
-        assertEquals(List.of("09/2026", "7"), fila(TipoInforme.VIAJES_POR_PERIODO, indicadores));
-        assertEquals(List.of("Exceso de carga", "8", "3", "1", "4"), fila(TipoInforme.INFRACCIONES_POR_TIPO, indicadores));
-        assertEquals(List.of("8", "3", "37,5 %"), fila(TipoInforme.TASA_CONFIRMACION, indicadores));
+        assertEquals(List.of("26/10/2026", "3", "4"), fila(0, indicadores));
+        assertEquals(List.of("09/2026", "7"), fila(2, indicadores));
+        assertEquals(List.of("Exceso de carga", "8", "3", "1", "4"), fila(4, indicadores));
+        assertEquals(List.of("01/10/2026 al 26/10/2026", "8", "3", "37,5 %"), fila(1, indicadores));
     }
 
     @Test
     void losEncabezadosSalenDelBundle() {
         assertEquals(List.of("Rubro", "Volumen (kg)"),
-                GeneradorInformesEJB.tabla(TipoInforme.VOLUMEN_POR_RUBRO, new IndicadoresDto()).getEncabezados());
+                GeneradorInformesEJB.secciones(conFiltro(new IndicadoresDto())).get(3).getTabla().getEncabezados());
     }
 
     @Test
     void sinCasosLaTasaQuedaVacia() {
-        assertEquals(List.of("0", "0", ""), fila(TipoInforme.TASA_CONFIRMACION, new IndicadoresDto()));
+        assertEquals(List.of("01/10/2026 al 26/10/2026", "0", "0", ""), fila(1, new IndicadoresDto()));
     }
 
-    private static List<String> fila(TipoInforme tipo, IndicadoresDto indicadores) {
-        return List.of(GeneradorInformesEJB.tabla(tipo, indicadores).getValores().get(0));
+    private static IndicadoresDto conFiltro(IndicadoresDto indicadores) {
+        indicadores.setFiltro(new FiltroInforme(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 26), null));
+        return indicadores;
+    }
+
+    private static List<String> fila(int seccion, IndicadoresDto indicadores) {
+        return List.of(GeneradorInformesEJB.secciones(conFiltro(indicadores)).get(seccion).getTabla().getValores().get(0));
     }
 }

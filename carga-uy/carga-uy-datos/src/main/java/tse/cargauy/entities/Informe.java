@@ -20,10 +20,6 @@ public class Informe {
     @Id @GeneratedValue
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TipoInforme tipo;
-
     @Column(nullable = false)
     private LocalDate periodoDesde;
     @Column(nullable = false)
@@ -58,14 +54,6 @@ public class Informe {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public TipoInforme getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(TipoInforme tipo) {
-        this.tipo = tipo;
     }
 
     public LocalDate getPeriodoDesde() {

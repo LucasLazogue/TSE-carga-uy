@@ -9,6 +9,10 @@
         <locale-config>
             <default-locale>es</default-locale>
         </locale-config>
+        <resource-bundle>
+            <base-name>informes</base-name>
+            <var>textos</var>
+        </resource-bundle>
     </application>
 
     <factory>

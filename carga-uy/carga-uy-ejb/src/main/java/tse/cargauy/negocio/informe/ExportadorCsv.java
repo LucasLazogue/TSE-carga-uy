@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -23,19 +24,29 @@ public final class ExportadorCsv {
     private ExportadorCsv() {
     }
 
-    public static byte[] exportar(Tabla<?> tabla) {
+    public static byte[] exportar(List<Seccion> secciones) {
         ByteArrayOutputStream salida = new ByteArrayOutputStream();
         try (Writer escritor = new OutputStreamWriter(salida, StandardCharsets.UTF_8);
              CSVPrinter impresora = new CSVPrinter(escritor, FORMATO)) {
             escritor.write(0xFEFF);
-            impresora.printRecord(tabla.getEncabezados().stream().map(ExportadorCsv::neutralizar).toList());
-            for (String[] fila : tabla.getValores()) {
-                impresora.printRecord(Arrays.stream(fila).map(ExportadorCsv::neutralizar).toList());
+            imprimir(impresora, TextosInforme.resolver("columna.reporte"), TextosInforme.resolver("columna.concepto"),
+                    TextosInforme.resolver("columna.medida"), TextosInforme.resolver("columna.valor"));
+            for (Seccion seccion : secciones) {
+                List<String> encabezados = seccion.getTabla().getEncabezados();
+                for (String[] fila : seccion.getTabla().getValores()) {
+                    for (int j = 1; j < fila.length; j++) {
+                        imprimir(impresora, seccion.getTitulo(), fila[0], encabezados.get(j), fila[j]);
+                    }
+                }
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
         return salida.toByteArray();
+    }
+
+    private static void imprimir(CSVPrinter impresora, String... celdas) throws IOException {
+        impresora.printRecord(Arrays.stream(celdas).map(ExportadorCsv::neutralizar).toList());
     }
 
     static String neutralizar(String celda) {

@@ -30,7 +30,6 @@ import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.TipoInfraccion;
-import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -247,11 +246,10 @@ class InformeEJBTest {
     void exportarRegistraLaSolicitudPendienteDelUsuario() {
         Long idTipoCarga = 2L;
 
-        ejb.exportar(new FiltroInforme(LocalDate.of(2026, 1, 1), HOY, idTipoCarga), TipoInforme.VOLUMEN_POR_RUBRO, FormatoInforme.CSV);
+        ejb.exportar(new FiltroInforme(LocalDate.of(2026, 1, 1), HOY, idTipoCarga), FormatoInforme.CSV);
 
         assertEquals(1, registrados.size());
         InformeDto informe = registrados.get(0);
-        assertEquals(TipoInforme.VOLUMEN_POR_RUBRO, informe.getTipo());
         assertEquals(FormatoInforme.CSV, informe.getFormato());
         assertEquals(EstadoInforme.PENDIENTE, informe.getEstado());
         assertEquals(LocalDate.of(2026, 1, 1), informe.getPeriodoDesde());
@@ -265,7 +263,7 @@ class InformeEJBTest {
     @Test
     void exportarValidaElPeriodo() {
         assertThrows(CargaUYException.class,
-                () -> ejb.exportar(new FiltroInforme(HOY, HOY.minusDays(1), null), TipoInforme.HABILITADOS, FormatoInforme.PDF));
+                () -> ejb.exportar(new FiltroInforme(HOY, HOY.minusDays(1), null), FormatoInforme.PDF));
         assertTrue(registrados.isEmpty());
         assertTrue(encolados.isEmpty());
     }
@@ -280,7 +278,6 @@ class InformeEJBTest {
     private void informe(Long id, Long idSolicitante, EstadoInforme estado) {
         InformeDto informe = new InformeDto();
         informe.setId(id);
-        informe.setTipo(TipoInforme.HABILITADOS);
         informe.setFormato(FormatoInforme.CSV);
         informe.setEstado(estado);
         informe.setIdSolicitante(idSolicitante);

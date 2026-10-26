@@ -34,7 +34,6 @@ import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoInfraccion;
-import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -90,10 +89,9 @@ public class InformeEJB implements InformeEJBLocal {
         return informeDAO.getBySolicitante(idUsuario(), paginacion);
     }
 
-    public InformeDto exportar(FiltroInforme filtro, TipoInforme tipo, FormatoInforme formato) {
+    public InformeDto exportar(FiltroInforme filtro, FormatoInforme formato) {
         validar(filtro);
         InformeDto informe = new InformeDto();
-        informe.setTipo(tipo);
         informe.setPeriodoDesde(filtro.getDesde());
         informe.setPeriodoHasta(filtro.getHasta());
         informe.setIdTipoCarga(filtro.getIdTipoCarga());
@@ -102,8 +100,8 @@ public class InformeEJB implements InformeEJBLocal {
         informe.setFechaSolicitud(ahora());
         informe.setIdSolicitante(idUsuario());
         InformeDto registrado = informeDAO.addInforme(informe);
-        LOGGER.info("informe exportacion usuario=" + idUsuario() + " informe=" + registrado.getId() + " tipo=" + tipo
-                + " formato=" + formato + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
+        LOGGER.info("informe exportacion usuario=" + idUsuario() + " informe=" + registrado.getId() + " formato=" + formato
+                + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
                 + " tipoCarga=" + filtro.getIdTipoCarga());
         encolar(registrado.getId());
         return registrado;
@@ -122,8 +120,7 @@ public class InformeEJB implements InformeEJBLocal {
         if (contenido == null) {
             throw new CargaUYException(CodigoError.INFORME_NO_DISPONIBLE, String.valueOf(id));
         }
-        LOGGER.info("informe descarga usuario=" + idUsuario() + " informe=" + id + " tipo=" + informe.getTipo()
-                + " formato=" + informe.getFormato());
+        LOGGER.info("informe descarga usuario=" + idUsuario() + " informe=" + id + " formato=" + informe.getFormato());
         return contenido;
     }
 

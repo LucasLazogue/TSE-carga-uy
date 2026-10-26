@@ -19,6 +19,7 @@ import com.lowagie.text.pdf.PdfWriter;
 public final class ExportadorPdf {
 
     private static final Font TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+    private static final Font SECCION = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
     private static final Font DETALLE = FontFactory.getFont(FontFactory.HELVETICA, 10);
     private static final Font ENCABEZADO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
     private static final Font CELDA = FontFactory.getFont(FontFactory.HELVETICA, 10);
@@ -26,7 +27,7 @@ public final class ExportadorPdf {
     private ExportadorPdf() {
     }
 
-    public static byte[] exportar(String titulo, List<String> detalles, Tabla<?> tabla) {
+    public static byte[] exportar(String titulo, List<String> detalles, List<Seccion> secciones) {
         ByteArrayOutputStream salida = new ByteArrayOutputStream();
         Document documento = new Document(PageSize.A4);
         PdfWriter escritor = PdfWriter.getInstance(documento, salida);
@@ -37,12 +38,15 @@ public final class ExportadorPdf {
         for (String detalle : detalles) {
             documento.add(new Paragraph(detalle, DETALLE));
         }
-        if (tabla.isVacia()) {
-            Paragraph sinDatos = new Paragraph(TextosInforme.resolver("informe.sinDatos"), DETALLE);
-            sinDatos.setSpacingBefore(12);
-            documento.add(sinDatos);
-        } else {
-            documento.add(tabla(tabla));
+        for (Seccion seccion : secciones) {
+            Paragraph encabezado = new Paragraph(seccion.getTitulo(), SECCION);
+            encabezado.setSpacingBefore(16);
+            documento.add(encabezado);
+            if (seccion.getTabla().isVacia()) {
+                documento.add(new Paragraph(TextosInforme.resolver("informe.sinDatos"), DETALLE));
+            } else {
+                documento.add(tabla(seccion.getTabla()));
+            }
         }
         documento.close();
         return salida.toByteArray();
@@ -51,7 +55,7 @@ public final class ExportadorPdf {
     private static PdfPTable tabla(Tabla<?> tabla) {
         PdfPTable pdf = new PdfPTable(tabla.getEncabezados().size());
         pdf.setWidthPercentage(100);
-        pdf.setSpacingBefore(12);
+        pdf.setSpacingBefore(6);
         pdf.setHeaderRows(1);
         for (String encabezado : tabla.getEncabezados()) {
             pdf.addCell(celda(encabezado, ENCABEZADO, false));

@@ -13,9 +13,8 @@
                     stop="#{not informeView.tienePendientes}" />
             <p:dataTable value="#{informeView.informes}" var="informe" rowKey="#{informe.id}"
                          lazy="true" paginator="true" rows="10" paginatorPosition="bottom"
-                         emptyMessage="No hay exportaciones.">
-                <p:column headerText="Reporte">#{informe.tipo.nombre}</p:column>
-                <p:column headerText="Período">
+                         emptyMessage="#{textos['exportaciones.vacia']}">
+                <p:column headerText="#{textos['columna.periodo']}">
                     <h:outputText value="#{informe.periodoDesde}">
                         <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
                     </h:outputText>
@@ -24,17 +23,17 @@
                         <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
                     </h:outputText>
                 </p:column>
-                <p:column headerText="Tipo de carga">#{informe.tipoCarga != null ? informe.tipoCarga : 'Todos'}</p:column>
-                <p:column headerText="Formato">#{informe.formato}</p:column>
-                <p:column headerText="Solicitado">
+                <p:column headerText="#{textos['filtro.tipoCarga']}">#{informe.tipoCarga != null ? informe.tipoCarga : textos['informe.tipoCarga.todos']}</p:column>
+                <p:column headerText="#{textos['columna.formato']}">#{informe.formato}</p:column>
+                <p:column headerText="#{textos['columna.solicitado']}">
                     <h:outputText value="#{informe.fechaSolicitud}">
                         <f:convertDateTime type="localDateTime" pattern="dd/MM/yyyy HH:mm" />
                     </h:outputText>
                 </p:column>
-                <p:column headerText="Estado">
+                <p:column headerText="#{textos['columna.estado']}">
                     <p:tag value="#{informe.estado.nombre}" severity="#{informeView.severidad(informe)}" />
                 </p:column>
-                <p:column headerText="Archivo">
+                <p:column headerText="#{textos['columna.archivo']}">
                     <p:commandButton icon="pi pi-download" title="Descargar" rendered="#{informe.estado == 'GENERADO'}"
                                      styleClass="ui-button-outlined">
                         <p:fileDownload value="#{informeView.archivo(informe)}" />

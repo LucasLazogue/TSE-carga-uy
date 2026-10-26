@@ -21,7 +21,6 @@ import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
-import tse.cargauy.entities.TipoInforme;
 
 @Stateless
 @PermitAll
@@ -46,7 +45,7 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         try {
             FiltroInforme filtro = new FiltroInforme(informe.getPeriodoDesde(), informe.getPeriodoHasta(), informe.getIdTipoCarga());
             IndicadoresDto indicadores = InformeEJB.calcular(informeDAO, filtro, ahora.toLocalDate());
-            byte[] contenido = exportar(informe, tabla(informe.getTipo(), indicadores), ahora);
+            byte[] contenido = exportar(informe, secciones(indicadores), ahora);
             informeDAO.guardarContenido(idInforme, contenido, ahora());
             LOGGER.info("informe generacion=GENERADO informe=" + idInforme + " bytes=" + contenido.length);
         } catch (RuntimeException e) {
@@ -59,40 +58,43 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private static byte[] exportar(InformeDto informe, Tabla<?> tabla, LocalDateTime ahora) {
+    private static byte[] exportar(InformeDto informe, List<Seccion> secciones, LocalDateTime ahora) {
         if (informe.getFormato() == FormatoInforme.CSV) {
-            return ExportadorCsv.exportar(tabla);
+            return ExportadorCsv.exportar(secciones);
         }
         String tipoCarga = informe.getTipoCarga() == null ? TextosInforme.resolver("informe.tipoCarga.todos") : informe.getTipoCarga();
-        return ExportadorPdf.exportar(informe.getTipo().getNombre(), List.of(
-                TextosInforme.resolver("informe.periodo", informe.getPeriodoDesde().format(DIA), informe.getPeriodoHasta().format(DIA)),
+        return ExportadorPdf.exportar(TextosInforme.resolver("informe.titulo"), List.of(
+                TextosInforme.resolver("informe.periodo", TextosInforme.resolver("informe.rango",
+                        informe.getPeriodoDesde().format(DIA), informe.getPeriodoHasta().format(DIA))),
                 TextosInforme.resolver("informe.tipoCarga", tipoCarga),
-                TextosInforme.resolver("informe.generado", ahora.format(HORA))), tabla);
+                TextosInforme.resolver("informe.generado", ahora.format(HORA))), secciones);
     }
 
-    static Tabla<?> tabla(TipoInforme tipo, IndicadoresDto indicadores) {
-        return switch (tipo) {
-            case HABILITADOS -> new Tabla<>(List.of(indicadores), List.of(
-                    new Columna<IndicadoresDto>("columna.fecha", i -> i.getHabilitadosAl().format(DIA)),
-                    new Columna<IndicadoresDto>("columna.empresasHabilitadas", IndicadoresDto::getEmpresasHabilitadas),
-                    new Columna<IndicadoresDto>("columna.vehiculosHabilitados", IndicadoresDto::getVehiculosHabilitados)));
-            case VIAJES_POR_PERIODO -> new Tabla<>(indicadores.getViajes(), List.of(
-                    new Columna<ViajesPorPeriodoDto>("columna.periodo", indicadores::periodo),
-                    new Columna<ViajesPorPeriodoDto>("columna.viajes", ViajesPorPeriodoDto::getCantidad)));
-            case VOLUMEN_POR_RUBRO -> new Tabla<>(indicadores.getVolumenPorRubro(), List.of(
-                    new Columna<VolumenPorRubroDto>("columna.rubro", VolumenPorRubroDto::getRubro),
-                    new Columna<VolumenPorRubroDto>("columna.volumen", VolumenPorRubroDto::getVolumen)));
-            case INFRACCIONES_POR_TIPO -> new Tabla<>(indicadores.getInfracciones(), List.of(
-                    new Columna<InfraccionesPorTipoDto>("columna.tipo", i -> i.getTipo().getNombre()),
-                    new Columna<InfraccionesPorTipoDto>("columna.detectadas", InfraccionesPorTipoDto::getDetectadas),
-                    new Columna<InfraccionesPorTipoDto>("columna.confirmadas", InfraccionesPorTipoDto::getConfirmadas),
-                    new Columna<InfraccionesPorTipoDto>("columna.desestimadas", InfraccionesPorTipoDto::getDesestimadas),
-                    new Columna<InfraccionesPorTipoDto>("columna.pendientes", InfraccionesPorTipoDto::getPendientes)));
-            case TASA_CONFIRMACION -> new Tabla<>(List.of(indicadores), List.of(
-                    new Columna<IndicadoresDto>("columna.detectadas", IndicadoresDto::getDetectadas),
-                    new Columna<IndicadoresDto>("columna.confirmadas", IndicadoresDto::getConfirmadas),
-                    new Columna<IndicadoresDto>("columna.tasa", i -> i.getTasaConfirmadas() == null ? null
-                            : String.format(URUGUAY, "%.1f %%", i.getTasaConfirmadas() * 100))));
-        };
+    static List<Seccion> secciones(IndicadoresDto indicadores) {
+        String periodo = TextosInforme.resolver("informe.rango", indicadores.getFiltro().getDesde().format(DIA),
+                indicadores.getFiltro().getHasta().format(DIA));
+        return List.of(
+                new Seccion("seccion.habilitados", new Tabla<>(List.of(indicadores), List.of(
+                        new Columna<IndicadoresDto>("columna.fecha", i -> i.getHabilitadosAl().format(DIA)),
+                        new Columna<IndicadoresDto>("columna.empresasHabilitadas", IndicadoresDto::getEmpresasHabilitadas),
+                        new Columna<IndicadoresDto>("columna.vehiculosHabilitados", IndicadoresDto::getVehiculosHabilitados)))),
+                new Seccion("seccion.tasa", new Tabla<>(List.of(indicadores), List.of(
+                        new Columna<IndicadoresDto>("columna.periodo", i -> periodo),
+                        new Columna<IndicadoresDto>("columna.detectadas", IndicadoresDto::getDetectadas),
+                        new Columna<IndicadoresDto>("columna.confirmadas", IndicadoresDto::getConfirmadas),
+                        new Columna<IndicadoresDto>("columna.tasa", i -> i.getTasaConfirmadas() == null ? null
+                                : String.format(URUGUAY, "%.1f %%", i.getTasaConfirmadas() * 100))))),
+                new Seccion("seccion.viajes", new Tabla<>(indicadores.getViajes(), List.of(
+                        new Columna<ViajesPorPeriodoDto>("columna.periodo", indicadores::periodo),
+                        new Columna<ViajesPorPeriodoDto>("columna.viajes", ViajesPorPeriodoDto::getCantidad)))),
+                new Seccion("seccion.volumen", new Tabla<>(indicadores.getVolumenPorRubro(), List.of(
+                        new Columna<VolumenPorRubroDto>("columna.rubro", VolumenPorRubroDto::getRubro),
+                        new Columna<VolumenPorRubroDto>("columna.volumen", VolumenPorRubroDto::getVolumen)))),
+                new Seccion("seccion.infracciones", new Tabla<>(indicadores.getInfracciones(), List.of(
+                        new Columna<InfraccionesPorTipoDto>("columna.tipo", i -> i.getTipo().getNombre()),
+                        new Columna<InfraccionesPorTipoDto>("columna.detectadas", InfraccionesPorTipoDto::getDetectadas),
+                        new Columna<InfraccionesPorTipoDto>("columna.confirmadas", InfraccionesPorTipoDto::getConfirmadas),
+                        new Columna<InfraccionesPorTipoDto>("columna.desestimadas", InfraccionesPorTipoDto::getDesestimadas),
+                        new Columna<InfraccionesPorTipoDto>("columna.pendientes", InfraccionesPorTipoDto::getPendientes)))));
     }
 }

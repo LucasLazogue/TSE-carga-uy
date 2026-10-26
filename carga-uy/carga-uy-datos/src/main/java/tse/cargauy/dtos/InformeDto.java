@@ -6,14 +6,12 @@ import java.time.LocalDateTime;
 
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
-import tse.cargauy.entities.TipoInforme;
 
 public class InformeDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    private TipoInforme tipo;
     private LocalDate periodoDesde;
     private LocalDate periodoHasta;
     private Long idTipoCarga;
@@ -33,14 +31,6 @@ public class InformeDto implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public TipoInforme getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(TipoInforme tipo) {
-        this.tipo = tipo;
     }
 
     public LocalDate getPeriodoDesde() {

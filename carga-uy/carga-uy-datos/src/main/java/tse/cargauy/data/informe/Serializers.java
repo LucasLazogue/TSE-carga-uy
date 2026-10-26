@@ -9,7 +9,6 @@ public class Serializers {
     public static InformeDto toDto(Informe informe) {
         InformeDto dto = new InformeDto();
         dto.setId(informe.getId());
-        dto.setTipo(informe.getTipo());
         dto.setPeriodoDesde(informe.getPeriodoDesde());
         dto.setPeriodoHasta(informe.getPeriodoHasta());
         dto.setIdTipoCarga(informe.getTipoCarga() == null ? null : informe.getTipoCarga().getId());
@@ -24,7 +23,6 @@ public class Serializers {
 
     public static Informe toEntity(InformeDto dto, TipoCarga tipoCarga, UsuarioBackoffice solicitante) {
         Informe informe = new Informe();
-        informe.setTipo(dto.getTipo());
         informe.setPeriodoDesde(dto.getPeriodoDesde());
         informe.setPeriodoHasta(dto.getPeriodoHasta());
         informe.setTipoCarga(tipoCarga);

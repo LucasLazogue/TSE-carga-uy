@@ -7,13 +7,12 @@ import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.FormatoInforme;
-import tse.cargauy.entities.TipoInforme;
 
 @Local
 public interface InformeEJBLocal {
     IndicadoresDto consultar(FiltroInforme filtro);
     PaginaDto<InformeDto> getMisInformes(Paginacion paginacion);
-    InformeDto exportar(FiltroInforme filtro, TipoInforme tipo, FormatoInforme formato);
+    InformeDto exportar(FiltroInforme filtro, FormatoInforme formato);
     boolean tienePendientes();
     byte[] descargar(Long id);
 }
