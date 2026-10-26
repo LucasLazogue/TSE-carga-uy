@@ -44,6 +44,9 @@ resultado.getNodosSinResponder(); // cuales
   consultar no lo duplica.
 - Un nodo deshabilitado no se consulta: el resultado sale completo sin él.
 
+El funcionario los ve con `GET /api/empresas/{empresa}/viajes/{id}/pesajes` (CU-15), que devuelve el
+mismo `PesajesViajeDto`.
+
 ## Tolerancia a fallas
 
 `BalanzasClient` usa las anotaciones de MicroProfile Fault Tolerance, como `LdapClient`:
