@@ -7,7 +7,6 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -24,12 +23,13 @@ public final class ExportadorCsv {
     private ExportadorCsv() {
     }
 
-    public static byte[] exportar(List<String[]> filas) {
+    public static byte[] exportar(Tabla<?> tabla) {
         ByteArrayOutputStream salida = new ByteArrayOutputStream();
         try (Writer escritor = new OutputStreamWriter(salida, StandardCharsets.UTF_8);
              CSVPrinter impresora = new CSVPrinter(escritor, FORMATO)) {
-            escritor.write('﻿');
-            for (String[] fila : filas) {
+            escritor.write(0xFEFF);
+            impresora.printRecord(tabla.getEncabezados().stream().map(ExportadorCsv::neutralizar).toList());
+            for (String[] fila : tabla.getValores()) {
                 impresora.printRecord(Arrays.stream(fila).map(ExportadorCsv::neutralizar).toList());
             }
         } catch (IOException e) {

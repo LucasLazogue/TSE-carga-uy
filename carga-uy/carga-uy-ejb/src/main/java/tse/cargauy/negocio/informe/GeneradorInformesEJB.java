@@ -3,7 +3,6 @@ package tse.cargauy.negocio.informe;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Logger;
@@ -46,7 +45,7 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         try {
             FiltroInforme filtro = new FiltroInforme(informe.getPeriodoDesde(), informe.getPeriodoHasta(), informe.getIdTipoCarga());
             IndicadoresDto indicadores = InformeEJB.calcular(informeDAO, filtro, ahora.toLocalDate());
-            byte[] contenido = exportar(informe.getFormato(), filas(informe.getTipo(), indicadores));
+            byte[] contenido = exportar(informe, tabla(informe.getTipo(), indicadores));
             informeDAO.guardarContenido(idInforme, contenido, ahora());
             LOGGER.info("informe generacion=GENERADO informe=" + idInforme + " bytes=" + contenido.length);
         } catch (RuntimeException e) {
@@ -59,48 +58,36 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private static byte[] exportar(FormatoInforme formato, List<String[]> filas) {
-        if (formato == FormatoInforme.CSV) {
-            return ExportadorCsv.exportar(filas);
+    private static byte[] exportar(InformeDto informe, Tabla<?> tabla) {
+        if (informe.getFormato() == FormatoInforme.CSV) {
+            return ExportadorCsv.exportar(tabla);
         }
-        throw new UnsupportedOperationException("formato " + formato);
+        throw new UnsupportedOperationException("formato " + informe.getFormato());
     }
 
-    static List<String[]> filas(TipoInforme tipo, IndicadoresDto indicadores) {
-        List<String[]> filas = new ArrayList<>();
-        switch (tipo) {
-            case HABILITADOS -> {
-                filas.add(new String[] { "Fecha", "Empresas habilitadas", "Vehículos habilitados" });
-                filas.add(new String[] { indicadores.getHabilitadosAl().format(DIA),
-                        String.valueOf(indicadores.getEmpresasHabilitadas()), String.valueOf(indicadores.getVehiculosHabilitados()) });
-            }
-            case VIAJES_POR_PERIODO -> {
-                filas.add(new String[] { "Período", "Viajes" });
-                for (ViajesPorPeriodoDto viajes : indicadores.getViajes()) {
-                    filas.add(new String[] { indicadores.periodo(viajes), String.valueOf(viajes.getCantidad()) });
-                }
-            }
-            case VOLUMEN_POR_RUBRO -> {
-                filas.add(new String[] { "Rubro", "Volumen (kg)" });
-                for (VolumenPorRubroDto volumen : indicadores.getVolumenPorRubro()) {
-                    filas.add(new String[] { volumen.getRubro(), String.valueOf(volumen.getVolumen()) });
-                }
-            }
-            case INFRACCIONES_POR_TIPO -> {
-                filas.add(new String[] { "Tipo", "Detectadas", "Confirmadas", "Desestimadas", "Pendientes" });
-                for (InfraccionesPorTipoDto infracciones : indicadores.getInfracciones()) {
-                    filas.add(new String[] { infracciones.getTipo().getNombre(), String.valueOf(infracciones.getDetectadas()),
-                            String.valueOf(infracciones.getConfirmadas()), String.valueOf(infracciones.getDesestimadas()),
-                            String.valueOf(infracciones.getPendientes()) });
-                }
-            }
-            case TASA_CONFIRMACION -> {
-                Double tasa = indicadores.getTasaConfirmadas();
-                filas.add(new String[] { "Detectadas", "Confirmadas", "Tasa" });
-                filas.add(new String[] { String.valueOf(indicadores.getDetectadas()), String.valueOf(indicadores.getConfirmadas()),
-                        tasa == null ? "" : String.format(URUGUAY, "%.1f %%", tasa * 100) });
-            }
-        }
-        return filas;
+    static Tabla<?> tabla(TipoInforme tipo, IndicadoresDto indicadores) {
+        return switch (tipo) {
+            case HABILITADOS -> new Tabla<>(List.of(indicadores), List.of(
+                    new Columna<IndicadoresDto>("columna.fecha", i -> i.getHabilitadosAl().format(DIA)),
+                    new Columna<IndicadoresDto>("columna.empresasHabilitadas", IndicadoresDto::getEmpresasHabilitadas),
+                    new Columna<IndicadoresDto>("columna.vehiculosHabilitados", IndicadoresDto::getVehiculosHabilitados)));
+            case VIAJES_POR_PERIODO -> new Tabla<>(indicadores.getViajes(), List.of(
+                    new Columna<ViajesPorPeriodoDto>("columna.periodo", indicadores::periodo),
+                    new Columna<ViajesPorPeriodoDto>("columna.viajes", ViajesPorPeriodoDto::getCantidad)));
+            case VOLUMEN_POR_RUBRO -> new Tabla<>(indicadores.getVolumenPorRubro(), List.of(
+                    new Columna<VolumenPorRubroDto>("columna.rubro", VolumenPorRubroDto::getRubro),
+                    new Columna<VolumenPorRubroDto>("columna.volumen", VolumenPorRubroDto::getVolumen)));
+            case INFRACCIONES_POR_TIPO -> new Tabla<>(indicadores.getInfracciones(), List.of(
+                    new Columna<InfraccionesPorTipoDto>("columna.tipo", i -> i.getTipo().getNombre()),
+                    new Columna<InfraccionesPorTipoDto>("columna.detectadas", InfraccionesPorTipoDto::getDetectadas),
+                    new Columna<InfraccionesPorTipoDto>("columna.confirmadas", InfraccionesPorTipoDto::getConfirmadas),
+                    new Columna<InfraccionesPorTipoDto>("columna.desestimadas", InfraccionesPorTipoDto::getDesestimadas),
+                    new Columna<InfraccionesPorTipoDto>("columna.pendientes", InfraccionesPorTipoDto::getPendientes)));
+            case TASA_CONFIRMACION -> new Tabla<>(List.of(indicadores), List.of(
+                    new Columna<IndicadoresDto>("columna.detectadas", IndicadoresDto::getDetectadas),
+                    new Columna<IndicadoresDto>("columna.confirmadas", IndicadoresDto::getConfirmadas),
+                    new Columna<IndicadoresDto>("columna.tasa", i -> i.getTasaConfirmadas() == null ? null
+                            : String.format(URUGUAY, "%.1f %%", i.getTasaConfirmadas() * 100))));
+        };
     }
 }

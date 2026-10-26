@@ -1,11 +1,11 @@
 package tse.cargauy.negocio.informe;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -100,8 +100,7 @@ class GeneradorInformesEJBTest {
     void generaElArchivoYLoGuarda() {
         generador.generar(1L);
 
-        assertArrayEquals(ExportadorCsv.exportar(List.of(new String[] { "Rubro", "Volumen (kg)" },
-                new String[] { "Agropecuario", "18000" })), guardado);
+        assertTrue(new String(guardado, StandardCharsets.UTF_8).contains("\"Agropecuario\";\"18000\""));
         assertFalse(fallido);
     }
 
@@ -142,11 +141,17 @@ class GeneradorInformesEJBTest {
     }
 
     @Test
+    void losEncabezadosSalenDelBundle() {
+        assertEquals(List.of("Rubro", "Volumen (kg)"),
+                GeneradorInformesEJB.tabla(TipoInforme.VOLUMEN_POR_RUBRO, new IndicadoresDto()).getEncabezados());
+    }
+
+    @Test
     void sinCasosLaTasaQuedaVacia() {
         assertEquals(List.of("0", "0", ""), fila(TipoInforme.TASA_CONFIRMACION, new IndicadoresDto()));
     }
 
     private static List<String> fila(TipoInforme tipo, IndicadoresDto indicadores) {
-        return List.of(GeneradorInformesEJB.filas(tipo, indicadores).get(1));
+        return List.of(GeneradorInformesEJB.tabla(tipo, indicadores).getValores().get(0));
     }
 }
