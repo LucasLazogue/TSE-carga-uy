@@ -43,6 +43,8 @@ class SesionRepository(
     // el usuario logueado, sacado del token: cada evento y viaje guardado queda a su nombre
     val idUsuario: Flow<Long?> = token.map { it?.let(::idUsuarioDelToken) }
 
+    val usuario: Flow<UsuarioDelToken?> = token.map { it?.let(::usuarioDelToken) }.distinctUntilChanged()
+
     // true cuando vence el refresh token, no el access token, que se renueva solo
     val vencida: Flow<Boolean> = vencimiento(dataStore.data.map { prefs -> prefs[expiraKey] }, ahora)
 

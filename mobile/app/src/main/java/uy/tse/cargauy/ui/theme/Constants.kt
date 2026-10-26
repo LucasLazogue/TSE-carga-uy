@@ -25,6 +25,7 @@ object LineHeight {
 
 /** Espaciados: paddings, márgenes, separación entre elementos. */
 object Spacing {
+    val xxs = 2.dp
     val xs = 4.dp
     val sm = 8.dp
     val md = 16.dp
@@ -37,12 +38,27 @@ object Spacing {
 object Radius {
     val sm = 4.dp
     val md = 8.dp
-    val lg = 16.dp
+    val lg = 12.dp
+    val xl = 16.dp
+    val xxl = 28.dp
     val full = 999.dp
 }
+
+// texto secundario sobre la barra de color, que no tiene un rol on*Variant
+const val OPACIDAD_SECUNDARIA = 0.8f
 
 /** Grosores de borde y divisores. */
 object Thickness {
     val hairline = 1.dp
     val thin = 2.dp
+}
+
+/** Tamaños fijos de componentes. */
+object Sizes {
+    // area tactil minima de material
+    val tactil = 48.dp
+    val icono = 24.dp
+    val iconoChico = 18.dp
+    // entra "24/10 21:59"
+    val columnaHora = 76.dp
 }

@@ -1,12 +1,14 @@
 package uy.tse.cargauy.data.remote
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DtosTest {
 
-    // respuesta real de GET /api/movil/viaje: trae campos que la app no usa y omite los null (fechaInicio)
+    // un viaje de la respuesta real de GET /api/movil/viajes: trae campos que la app no usa y omite los null (fechaInicio)
     @Test
     fun viajeMovil_seLeeDelJsonDelBackend() {
         val json = """
@@ -51,11 +53,47 @@ class DtosTest {
     }
 
     @Test
-    fun sync_sinViajeDejaViajeEnNull() {
+    fun viajes_seLeeLaListaEnElOrdenDelCentral() {
+        val json = """
+            [{"guia":{"id":9001,"nroGuia":"G-009001","volumen":1000},
+              "viaje":{"id":9001,"estado":"EN_CURSO","fechaInicio":"2026-10-24T21:59:46.156"}},
+             {"guia":{"id":52,"nroGuia":"G-000052","volumen":12000},"viaje":{"id":52,"estado":"ASIGNADO"}}]
+        """.trimIndent()
+
+        val viajes = ApiClient.json.decodeFromString<List<ViajeMovilDto>>(json)
+
+        assertEquals(listOf(9001L, 52L), viajes.map { it.viaje.id })
+        assertEquals("2026-10-24T21:59:46.156", viajes[0].viaje.fechaInicio)
+    }
+
+    @Test
+    fun sync_traeLosViajesComoQuedaron() {
+        val dto = ApiClient.json.decodeFromString<SyncRespuestaDto>(
+            """{"resultados":[{"idEvento":"e1","resultado":"APLICADO"}],
+               "viajes":[{"guia":{"id":52},"viaje":{"id":52,"estado":"EN_CURSO"}}]}"""
+        )
+        assertEquals("EN_CURSO", dto.viajes.single().viaje.estado)
+    }
+
+    @Test
+    fun sync_sinViajesDejaLaListaVacia() {
         val dto = ApiClient.json.decodeFromString<SyncRespuestaDto>(
             """{"resultados":[{"idEvento":"e1","resultado":"CONFLICTO","mensaje":"El viaje 2 ya no esta asignado a este chofer."}]}"""
         )
         assertEquals("CONFLICTO", dto.resultados.single().resultado)
-        assertNull(dto.viaje)
+        assertTrue(dto.viajes.isEmpty())
+    }
+
+    @Test
+    fun evento_mandaDescripcionYKilosSoloSiEstan() {
+        val conDatos = EventoSyncDto("e1", 2, "DESCARGA_PARCIAL", "2026-10-25T12:00:00Z", "Deposito de Salto", 400)
+        val sinDatos = EventoSyncDto("e2", 2, "INICIO", "2026-10-25T12:00:00Z")
+
+        val json = ApiClient.json.encodeToString(conDatos)
+        assertTrue(json.contains("\"descripcion\":\"Deposito de Salto\""))
+        assertTrue(json.contains("\"kilos\":400"))
+        val vacio = ApiClient.json.encodeToString(sinDatos)
+        assertFalse(vacio.contains("descripcion"))
+        assertFalse(vacio.contains("kilos"))
     }
 }

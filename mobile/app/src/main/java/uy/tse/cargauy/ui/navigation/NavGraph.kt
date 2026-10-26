@@ -12,18 +12,27 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
+import uy.tse.cargauy.data.auth.UsuarioDelToken
+import uy.tse.cargauy.data.cedulaLegible
 import uy.tse.cargauy.ui.components.Aviso
 import uy.tse.cargauy.ui.components.Header
 import uy.tse.cargauy.ui.screens.common.SettingsScreen
-import uy.tse.cargauy.ui.screens.inicio.InicioScreen
 import uy.tse.cargauy.ui.screens.login.LoginScreen
+import uy.tse.cargauy.ui.screens.viaje.ViajeScreen
+import uy.tse.cargauy.ui.screens.viaje.ViajeViewModel
+import uy.tse.cargauy.ui.screens.viajes.ViajesScreen
 import uy.tse.cargauy.ui.theme.Spacing
 
 object Rutas {
     const val LOGIN = "login"
-    const val INICIO = "inicio"
+    const val VIAJES = "viajes"
+    const val VIAJE = "viaje/{${ViajeViewModel.ARGUMENTO}}"
     const val SETTINGS = "settings"
+
+    fun viaje(idViaje: Long) = "viaje/$idViaje"
 }
 
 @Composable
@@ -34,6 +43,7 @@ fun NavGraph(
     onGuardarUrl: (String) -> Unit,
     onRestaurarUrl: () -> Unit,
     haySesion: Boolean?,
+    usuario: UsuarioDelToken?,
     sesionVencida: Boolean,
     ingreso: Uri?,
     onIngresoProcesado: () -> Unit,
@@ -45,11 +55,12 @@ fun NavGraph(
     val navController = rememberNavController()
     val rutaActual by navController.currentBackStackEntryAsState()
     val ruta = rutaActual?.destination?.route
+    val logueado = if (haySesion) identidad(usuario) else null
 
     // al ingresar o al perder la sesion (cerrar sesion o un 401) se va a la pantalla que corresponde,
     // sin dejar historial: con el boton atras no se vuelve al login ni a una pantalla sin sesion
     LaunchedEffect(haySesion) {
-        val destino = if (haySesion) Rutas.INICIO else Rutas.LOGIN
+        val destino = if (haySesion) Rutas.VIAJES else Rutas.LOGIN
         if (navController.currentDestination?.route != destino) {
             navController.navigate(destino) {
                 popUpTo(navController.graph.id) { inclusive = true }
@@ -60,12 +71,23 @@ fun NavGraph(
     Scaffold(
         topBar = {
             when (ruta) {
-                Rutas.LOGIN, Rutas.INICIO -> Header(
+                Rutas.LOGIN -> Header(
                     titulo = "Carga UY",
                     onSettings = { navController.navigate(Rutas.SETTINGS) }
                 )
+                Rutas.VIAJES -> Header(
+                    titulo = "Mis viajes",
+                    subtitulo = logueado,
+                    onSettings = { navController.navigate(Rutas.SETTINGS) }
+                )
+                Rutas.VIAJE -> Header(
+                    titulo = "Viaje",
+                    subtitulo = logueado,
+                    onVolver = { navController.popBackStack() }
+                )
                 Rutas.SETTINGS -> Header(
                     titulo = "Configuración",
+                    subtitulo = logueado,
                     onVolver = { navController.popBackStack() }
                 )
             }
@@ -83,7 +105,7 @@ fun NavGraph(
             }
             NavHost(
                 navController = navController,
-                startDestination = if (haySesion) Rutas.INICIO else Rutas.LOGIN,
+                startDestination = if (haySesion) Rutas.VIAJES else Rutas.LOGIN,
                 modifier = Modifier.weight(1f)
             ) {
                 composable(Rutas.LOGIN) {
@@ -92,8 +114,14 @@ fun NavGraph(
                         onIngresoProcesado = onIngresoProcesado
                     )
                 }
-                composable(Rutas.INICIO) {
-                    InicioScreen()
+                composable(Rutas.VIAJES) {
+                    ViajesScreen(onAbrirViaje = { idViaje -> navController.navigate(Rutas.viaje(idViaje)) })
+                }
+                composable(
+                    route = Rutas.VIAJE,
+                    arguments = listOf(navArgument(ViajeViewModel.ARGUMENTO) { type = NavType.LongType })
+                ) {
+                    ViajeScreen(onVolver = { navController.popBackStack() })
                 }
                 composable(Rutas.SETTINGS) {
                     SettingsScreen(
@@ -102,10 +130,17 @@ fun NavGraph(
                         urlServidor = urlServidor,
                         onGuardarUrl = onGuardarUrl,
                         onRestaurarUrl = onRestaurarUrl,
+                        usuario = if (haySesion) usuario else null,
                         onCerrarSesion = if (haySesion) onCerrarSesion else null
                     )
                 }
             }
         }
     }
+}
+
+// todavia no hay nombre: lo trae la PDI en el primer ingreso (CU-02)
+private fun identidad(usuario: UsuarioDelToken?): String? = when {
+    usuario?.cedula != null -> "C.I. ${cedulaLegible(usuario.cedula)}"
+    else -> usuario?.correo
 }

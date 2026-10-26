@@ -22,13 +22,28 @@ interface EventoPendienteDao {
     @Query("SELECT COUNT(*) FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IS NULL")
     fun contar(idUsuario: Long): Flow<Int>
 
-    // los ya enviados con su resultado, el mas reciente primero
-    @Query("SELECT * FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IS NOT NULL ORDER BY timestampGeneracion DESC")
-    fun observarEnviados(idUsuario: Long): Flow<List<EventoPendiente>>
+    @Query("SELECT * FROM evento_pendiente WHERE idUsuario = :idUsuario AND idViaje = :idViaje ORDER BY timestampGeneracion DESC")
+    fun observarDelViaje(idUsuario: Long, idViaje: Long): Flow<List<EventoPendiente>>
+
+    @Query(
+        "SELECT * FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IN ('CONFLICTO', 'RECHAZADO') " +
+            "AND idViaje NOT IN (SELECT idViaje FROM viaje_local WHERE idUsuario = :idUsuario) " +
+            "ORDER BY timestampGeneracion DESC"
+    )
+    fun observarNoAplicadosSinViaje(idUsuario: Long): Flow<List<EventoPendiente>>
 
     @Query("UPDATE evento_pendiente SET resultado = :resultado, mensaje = :mensaje WHERE idEvento = :idEvento")
     suspend fun marcar(idEvento: String, resultado: String, mensaje: String?)
 
-    @Query("DELETE FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IS NOT NULL")
-    suspend fun borrarEnviados(idUsuario: Long)
+    @Query(
+        "DELETE FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IN ('APLICADO', 'DUPLICADO') " +
+            "AND idViaje NOT IN (SELECT idViaje FROM viaje_local WHERE idUsuario = :idUsuario)"
+    )
+    suspend fun borrarAplicadosSinViaje(idUsuario: Long)
+
+    @Query(
+        "DELETE FROM evento_pendiente WHERE idUsuario = :idUsuario AND resultado IN ('CONFLICTO', 'RECHAZADO') " +
+            "AND idViaje NOT IN (SELECT idViaje FROM viaje_local WHERE idUsuario = :idUsuario)"
+    )
+    suspend fun borrarNoAplicadosSinViaje(idUsuario: Long)
 }

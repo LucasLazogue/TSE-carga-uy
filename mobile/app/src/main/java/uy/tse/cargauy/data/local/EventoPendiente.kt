@@ -16,5 +16,7 @@ data class EventoPendiente(
     // null mientras no se envió; despues APLICADO, DUPLICADO, CONFLICTO o RECHAZADO
     val resultado: String? = null,
     // el motivo que manda el central cuando no lo aplica
-    val mensaje: String? = null
+    val mensaje: String? = null,
+    val descripcion: String? = null,
+    val kilos: Int? = null
 )

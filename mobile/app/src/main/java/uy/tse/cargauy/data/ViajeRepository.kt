@@ -15,6 +15,7 @@ import uy.tse.cargauy.data.local.ViajeLocal
 import uy.tse.cargauy.data.remote.ApiClient
 import uy.tse.cargauy.data.remote.MovilApi
 import uy.tse.cargauy.data.remote.SyncRespuestaDto
+import uy.tse.cargauy.data.remote.ViajeMovilDto
 import uy.tse.cargauy.sync.Sincronizacion
 
 /**
@@ -30,14 +31,22 @@ class ViajeRepository(private val app: CargaUYApp) {
     private val refreshTokens = app.refreshTokens
 
     // flatMapLatest: cuando cambia el usuario logueado, se deja de mirar lo del anterior y se mira lo del nuevo
-    val viaje: Flow<ViajeLocal?> = app.sesion.idUsuario.flatMapLatest { id ->
-        if (id == null) flowOf(null) else viajeDao.observar(id)
+    val viajes: Flow<List<ViajeLocal>> = app.sesion.idUsuario.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else viajeDao.observarTodos(id)
     }
     val pendientes: Flow<Int> = app.sesion.idUsuario.flatMapLatest { id ->
         if (id == null) flowOf(0) else eventoDao.contar(id)
     }
-    val enviados: Flow<List<EventoPendiente>> = app.sesion.idUsuario.flatMapLatest { id ->
-        if (id == null) flowOf(emptyList()) else eventoDao.observarEnviados(id)
+    val noAplicadosSinViaje: Flow<List<EventoPendiente>> = app.sesion.idUsuario.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else eventoDao.observarNoAplicadosSinViaje(id)
+    }
+
+    fun viaje(idViaje: Long): Flow<ViajeLocal?> = app.sesion.idUsuario.flatMapLatest { id ->
+        if (id == null) flowOf(null) else viajeDao.observar(id, idViaje)
+    }
+
+    fun eventosDe(idViaje: Long): Flow<List<EventoPendiente>> = app.sesion.idUsuario.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else eventoDao.observarDelViaje(id, idViaje)
     }
 
     private suspend fun usuarioActual(): Long? = app.sesion.idUsuario.first()
@@ -45,28 +54,27 @@ class ViajeRepository(private val app: CargaUYApp) {
     private suspend fun movilApi(): MovilApi =
         ApiClient.crear(app.preferencias.urlServidor.first(), app.sesion, refreshTokens).create(MovilApi::class.java)
 
-    // trae el viaje del central. sin red tira IOException y se sigue con lo guardado en Room.
-    // si hay eventos sin enviar no se descarga: el central todavia no los tiene y pisaria el estado local;
-    // se envian primero y la respuesta del envio ya trae el viaje actualizado
+    // con eventos sin enviar no se descarga: pisaria el estado local. la respuesta del envio ya trae los viajes
     suspend fun actualizar() {
         val idUsuario = usuarioActual() ?: return
         if (eventoDao.pendientes(idUsuario).isNotEmpty()) {
             Sincronizacion.programar(app)
             return
         }
-        val respuesta = movilApi().viaje()
-        when {
-            respuesta.code() == 204 -> viajeDao.borrar(idUsuario) // no tiene viajes asignados
-            respuesta.isSuccessful -> respuesta.body()?.let { viajeDao.reemplazar(aViajeLocal(it, idUsuario)) }
-            else -> throw HttpException(respuesta)
-        }
+        guardarViajes(idUsuario, movilApi().viajes())
+    }
+
+    // lo que no se aplico queda hasta que el chofer lo da por visto
+    private suspend fun guardarViajes(idUsuario: Long, viajes: List<ViajeMovilDto>) {
+        viajeDao.reemplazarTodos(idUsuario, viajes.map { aViajeLocal(it, idUsuario) })
+        eventoDao.borrarAplicadosSinViaje(idUsuario)
     }
 
     // con o sin señal el camino es el mismo: Room y despues el worker. asi el modo sin conexion
     // no es un caso aparte que se pueda romper
-    suspend fun registrarEvento(tipo: TipoEvento) {
+    suspend fun registrarEvento(idViaje: Long, tipo: TipoEvento, descripcion: String? = null, kilos: Int? = null) {
         val idUsuario = usuarioActual() ?: return
-        val viaje = viajeDao.actual(idUsuario) ?: return
+        val viaje = viajeDao.buscar(idUsuario, idViaje) ?: return
         eventoDao.insertar(
             EventoPendiente(
                 idEvento = UUID.randomUUID().toString(),
@@ -74,10 +82,12 @@ class ViajeRepository(private val app: CargaUYApp) {
                 idViaje = viaje.idViaje,
                 tipo = tipo.name,
                 // la hora en que el chofer toco el boton, no la del envio
-                timestampGeneracion = System.currentTimeMillis()
+                timestampGeneracion = System.currentTimeMillis(),
+                descripcion = descripcion?.trim()?.ifEmpty { null },
+                kilos = kilos
             )
         )
-        estadoTras(viaje.estado, tipo)?.let { viajeDao.cambiarEstado(idUsuario, it) }
+        estadoTras(viaje.estado, tipo)?.let { viajeDao.cambiarEstado(idUsuario, viaje.idViaje, it) }
         Sincronizacion.programar(app)
     }
 
@@ -118,8 +128,7 @@ class ViajeRepository(private val app: CargaUYApp) {
             eventoDao.marcar(resultado.idEvento, resultado.resultado, resultado.mensaje)
         }
         if (eventoDao.pendientes(idUsuario).isEmpty()) {
-            val viaje = respuesta.viaje
-            if (viaje == null) viajeDao.borrar(idUsuario) else viajeDao.reemplazar(aViajeLocal(viaje, idUsuario))
+            guardarViajes(idUsuario, respuesta.viajes)
         }
     }
 
@@ -131,8 +140,8 @@ class ViajeRepository(private val app: CargaUYApp) {
         if (eventoDao.pendientes(idUsuario).isEmpty()) refreshTokens.revocar(idUsuario) else Sincronizacion.programar(app)
     }
 
-    suspend fun borrarEnviados() {
+    suspend fun descartarNoAplicados() {
         val idUsuario = usuarioActual() ?: return
-        eventoDao.borrarEnviados(idUsuario)
+        eventoDao.borrarNoAplicadosSinViaje(idUsuario)
     }
 }

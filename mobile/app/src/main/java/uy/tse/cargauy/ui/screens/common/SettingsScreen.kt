@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -21,8 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 
+import uy.tse.cargauy.data.auth.UsuarioDelToken
+import uy.tse.cargauy.data.cedulaLegible
+import uy.tse.cargauy.ui.components.BotonSecundario
+import uy.tse.cargauy.ui.components.DatoFila
 import uy.tse.cargauy.ui.components.Descripcion
+import uy.tse.cargauy.ui.components.Seccion
 import uy.tse.cargauy.ui.components.SoloDebug
+import uy.tse.cargauy.ui.components.Tarjeta
 import uy.tse.cargauy.ui.components.TituloSeccion
 import uy.tse.cargauy.ui.theme.Spacing
 
@@ -33,12 +38,18 @@ fun SettingsScreen(
     urlServidor: String,
     onGuardarUrl: (String) -> Unit,
     onRestaurarUrl: () -> Unit,
+    // null sin sesion (por ejemplo, desde el login)
+    usuario: UsuarioDelToken?,
     onCerrarSesion: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier.padding(Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.lg)
     ) {
+        if (usuario != null && onCerrarSesion != null) {
+            SeccionCuenta(usuario = usuario, onCerrarSesion = onCerrarSesion)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -62,16 +73,17 @@ fun SettingsScreen(
                 onRestaurarUrl = onRestaurarUrl
             )
         }
+    }
+}
 
-        // null cuando no hay sesion (por ejemplo, si se entra a Configuracion desde el login)
-        if (onCerrarSesion != null) {
-            OutlinedButton(
-                onClick = onCerrarSesion,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Cerrar sesión")
-            }
+@Composable
+private fun SeccionCuenta(usuario: UsuarioDelToken, onCerrarSesion: () -> Unit) {
+    Seccion(titulo = "Cuenta") {
+        Tarjeta {
+            usuario.cedula?.let { DatoFila(etiqueta = "Cédula", valor = cedulaLegible(it)) }
+            usuario.correo?.let { DatoFila(etiqueta = "Correo", valor = it) }
         }
+        BotonSecundario(texto = "Cerrar sesión", onClick = onCerrarSesion, modifier = Modifier.fillMaxWidth())
     }
 }
 
