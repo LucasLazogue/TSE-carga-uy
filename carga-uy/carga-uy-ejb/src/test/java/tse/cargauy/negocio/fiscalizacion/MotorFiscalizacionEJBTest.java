@@ -24,6 +24,8 @@ import tse.cargauy.dtos.FiltroViajes;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
+import tse.cargauy.dtos.PesajeDto;
+import tse.cargauy.dtos.PesajesViajeDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
@@ -35,14 +37,26 @@ class MotorFiscalizacionEJBTest {
     private static final Long VEHICULO = 11L;
     private static final Instant GENERADA = Instant.parse("2026-10-06T12:00:00Z");
     private static final LocalDate DIA = LocalDateTime.ofInstant(GENERADA, ZoneId.systemDefault()).toLocalDate();
+    private static final LocalDateTime AHORA = LocalDateTime.of(2026, 10, 1, 14, 0);
+    private static final String SUR = "balanzas-sur/balanza-r5-km30/1001";
+    private static final String NORTE = "balanzas-norte/balanza-r8-km60/3003";
 
-    private final MotorFiscalizacionEJB motor = new MotorFiscalizacionEJB();
+    private final MotorFiscalizacionEJB motor = new MotorFiscalizacionEJB() {
+        @Override
+        LocalDateTime ahora() {
+            return AHORA;
+        }
+    };
     private final CasosEnMemoria casos = new CasosEnMemoria();
     private final EventoPosicionDto posicion = new EventoPosicionDto();
+    private final PesajesViajeDto pesajes = new PesajesViajeDto();
     private ViajeDto viajeEnCurso;
     private ViajeDto viajeAsignado;
     private ViajeDto viaje;
     private PermisoDto permiso = new PermisoDto();
+    private List<Long> reservados = List.of();
+    private LocalDateTime reservadoHasta;
+    private LocalDateTime proximaEvaluacion;
 
     @BeforeEach
     void preparar() {
@@ -77,6 +91,17 @@ class MotorFiscalizacionEJBTest {
                         && VEHICULO.equals(filtro.getIdVehiculo()) ? List.of(viajeAsignado) : List.of();
                 return new PaginaDto<>(items, items.size(), paginacion.getPagina(), paginacion.getTamanio());
             }
+
+            @Override
+            public void marcarEvaluacionCarga(Long id, LocalDateTime proxima) {
+                proximaEvaluacion = proxima;
+            }
+
+            @Override
+            public List<Long> reservarEvaluacionesCarga(LocalDateTime ahora, LocalDateTime hasta, int maximo) {
+                reservadoHasta = hasta;
+                return reservados;
+            }
         };
         motor.permisoDAO = new PermisoDAO() {
             @Override
@@ -84,15 +109,20 @@ class MotorFiscalizacionEJBTest {
                 return permiso;
             }
         };
+        // 15000 kg de peso y 18800 kg de capacidad: el maximo es 33800 kg
+        VehiculoDAO vehiculoDAO = new VehiculoDAO() {
+            @Override
+            public VehiculoDto getVehiculoById(Long id) {
+                return new VehiculoDto("SCC9012", "Scania", "R450", 15000, 18800, 1L);
+            }
+        };
+        motor.vehiculoDAO = vehiculoDAO;
+        motor.balanzas = consultado -> pesajes;
+        motor.casoDAO = casos;
 
         CasoFiscalizacionEJB casoEJB = new CasoFiscalizacionEJB();
         casoEJB.casoDAO = casos;
-        casoEJB.vehiculoDAO = new VehiculoDAO() {
-            @Override
-            public VehiculoDto getVehiculoById(Long id) {
-                return new VehiculoDto();
-            }
-        };
+        casoEJB.vehiculoDAO = vehiculoDAO;
         motor.casoEJB = casoEJB;
     }
 
@@ -107,6 +137,15 @@ class MotorFiscalizacionEJBTest {
         viaje.setEstado(estado);
         viaje.setFechaInicio(inicio);
         return viaje;
+    }
+
+    private static PesajeDto pesaje(String idOrigen, int peso) {
+        PesajeDto pesaje = new PesajeDto();
+        pesaje.setIdOrigen(idOrigen);
+        pesaje.setFechaHora(LocalDateTime.of(2026, 10, 1, 10, 0));
+        pesaje.setPesoRegistrado(peso);
+        pesaje.setNombrePeaje("Pando");
+        return pesaje;
     }
 
     @Test
@@ -194,5 +233,81 @@ class MotorFiscalizacionEJBTest {
         motor.evaluarPosicion(3L, "ev-1");
 
         assertTrue(casos.casos.isEmpty());
+    }
+
+    @Test
+    void unPesajeSobreElMaximoGeneraUnCasoDeExcesoDeCarga() {
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 36500));
+
+        motor.evaluarViaje(21L);
+
+        List<CasoFiscalizacionDto> exceso = casosDe(TipoInfraccion.EXCESO_CARGA);
+        assertEquals(1, exceso.size());
+        assertEquals("EXCESO_CARGA|11|viaje-21", exceso.get(0).getClaveDeduplicacion());
+        assertEquals(21L, exceso.get(0).getIdViaje());
+        EvidenciaDto evidencia = exceso.get(0).getEvidencias().get(0);
+        assertEquals(TipoEvidencia.PESAJE, evidencia.getTipo());
+        assertEquals(SUR, evidencia.getIdOrigen());
+        assertEquals("36500 kg", evidencia.getValorObservado());
+        assertEquals("33800 kg", evidencia.getValorDeclarado());
+        assertEquals(1, casos.casos.size());
+    }
+
+    @Test
+    void unPesajeIgualAlMaximoNoEsExceso() {
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 33800));
+
+        motor.evaluarViaje(21L);
+
+        assertTrue(casos.casos.isEmpty());
+    }
+
+    @Test
+    void siUnaBalanzaNoRespondeQuedaPendienteHastaQueRespondanTodas() {
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 36500));
+        pesajes.getNodosSinResponder().add("balanzas-norte");
+
+        motor.evaluarViaje(21L);
+
+        assertEquals(1, casosDe(TipoInfraccion.EXCESO_CARGA).size());
+        assertEquals(AHORA.plusMinutes(1), proximaEvaluacion);
+
+        pesajes.getNodosSinResponder().clear();
+        motor.evaluarViaje(21L);
+
+        assertNull(proximaEvaluacion);
+    }
+
+    @Test
+    void loQueLlegaDespuesSeAgregaAlMismoCasoSinDuplicar() {
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 36500));
+        pesajes.getNodosSinResponder().add("balanzas-norte");
+        motor.evaluarViaje(21L);
+
+        pesajes.getNodosSinResponder().clear();
+        pesajes.getPesajes().add(pesaje(NORTE, 35900));
+        motor.evaluarViaje(21L);
+
+        List<CasoFiscalizacionDto> exceso = casosDe(TipoInfraccion.EXCESO_CARGA);
+        assertEquals(1, exceso.size());
+        assertEquals(List.of(SUR, NORTE), exceso.get(0).getEvidencias().stream().map(EvidenciaDto::getIdOrigen).toList());
+    }
+
+    @Test
+    void elTemporizadorEvaluaLosViajesReservados() {
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 36500));
+        reservados = List.of(21L);
+
+        motor.reevaluarCargasPendientes();
+
+        assertEquals(AHORA.plusMinutes(1), reservadoHasta);
+        List<CasoFiscalizacionDto> exceso = casosDe(TipoInfraccion.EXCESO_CARGA);
+        assertEquals(1, exceso.size());
+        assertEquals(21L, exceso.get(0).getIdViaje());
     }
 }

@@ -133,6 +133,19 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         return Serializers.toDto(caso, true);
     }
 
+    // volver a evaluar el mismo hecho no duplica las evidencias que ya tiene
+    @Override
+    public void agregarEvidencias(Long idCaso, List<EvidenciaDto> evidencias) {
+        CasoFiscalizacion caso = entityManager.find(CasoFiscalizacion.class, idCaso);
+        List<String> origenes = caso.getEvidencias().stream().map(Evidencia::getIdOrigen).toList();
+        for (EvidenciaDto e : evidencias) {
+            if (!origenes.contains(e.getIdOrigen())) {
+                entityManager.persist(new Evidencia(caso, e.getTipo(), e.getIdOrigen(), e.getFechaEvento(), e.getValorObservado(),
+                        e.getValorDeclarado(), e.getUmbral(), e.getDescripcion()));
+            }
+        }
+    }
+
     @Override
     public void notificar(Long id, LocalDateTime fecha, LocalDateTime venceDescargo) {
         CasoFiscalizacion caso = entityManager.find(CasoFiscalizacion.class, id);

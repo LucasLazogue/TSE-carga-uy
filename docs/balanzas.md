@@ -113,7 +113,7 @@ Otras formas descartadas:
 
 ## Pendientes
 
-- [ ] Motor (Lote 4): regla de exceso de carga con `getPesajesDelViaje`, la marca en `Viaje` y el
+- [x] Motor (Lote 4): regla de exceso de carga con `getPesajesDelViaje`, la marca en `Viaje` y el
       temporizador.
 - [ ] Prueba con el compose: un nodo caído, los reintentos, el corte y la evaluación pendiente (AC14).
 - [ ] Informe: `proximaEvaluacionCarga` en el modelo de dominio; en AC13, el temporizador de Balanzas; en

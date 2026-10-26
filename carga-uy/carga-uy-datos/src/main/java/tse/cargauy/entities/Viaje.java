@@ -49,6 +49,9 @@ public class Viaje {
     @ManyToOne(optional = false)
     private Chofer chofer;
 
+    // si alguna balanza no respondio, cuando volver a evaluar el exceso de carga; null si no queda nada pendiente
+    private LocalDateTime proximaEvaluacionCarga;
+
     // la web y el sync del celular pueden cambiar el mismo viaje a la vez: la segunda en confirmar pierde.
     // el default es para las filas que ya existian cuando se agrego la columna (schema-generation en update)
     @Version
@@ -119,6 +122,14 @@ public class Viaje {
 
     public void setChofer(Chofer chofer) {
         this.chofer = chofer;
+    }
+
+    public LocalDateTime getProximaEvaluacionCarga() {
+        return proximaEvaluacionCarga;
+    }
+
+    public void setProximaEvaluacionCarga(LocalDateTime proximaEvaluacionCarga) {
+        this.proximaEvaluacionCarga = proximaEvaluacionCarga;
     }
 
 }

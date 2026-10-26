@@ -19,6 +19,8 @@ public interface CasoFiscalizacionDAOLocal {
     CasoFiscalizacionDto getByClave(String claveDeduplicacion);
     PaginaDto<CasoFiscalizacionDto> buscar(FiltroCasos filtro, Paginacion paginacion);
     CasoFiscalizacionDto addCaso(CasoFiscalizacionDto casoDto, List<EvidenciaDto> evidencias, LocalDateTime fecha);
+    // solo las que el caso todavia no tiene, por su idOrigen
+    void agregarEvidencias(Long idCaso, List<EvidenciaDto> evidencias);
     void notificar(Long id, LocalDateTime fecha, LocalDateTime venceDescargo);
     void presentarDescargo(Long id, Long idCiudadano, String texto, LocalDateTime fecha);
     void resolver(Long id, Long idFuncionario, EstadoCaso resultado, String fundamento, LocalDateTime fecha);
