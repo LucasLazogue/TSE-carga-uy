@@ -60,10 +60,12 @@ public class BalanzasEJB implements BalanzasEJBLocal {
         LocalDateTime fin = viaje.getFechaFin() == null ? ahora() : viaje.getFechaFin();
         // a cada nodo se le pregunta en paralelo: si uno tarda o esta caido no demora a los demas
         PesajesViajeDto resultado = new PesajesViajeDto();
+        // cada nodo con la "promesa" de su respuesta, para saber despues que respuesta es de quien
         Map<NodoPerifericoDto, CompletableFuture<List<PesajeDto>>> consultas = new LinkedHashMap<>();
         for (NodoPerifericoDto nodo : nodoDAO.getHabilitados(TipoNodo.BALANZAS)) {
             try {
                 String clave = cifrado.descifrar(nodoDAO.getClaveCifrada(nodo.getId()), nodo.getIdentificador());
+                // supplyAsync larga la consulta en otro hilo del servidor y sigue sin esperarla
                 consultas.put(nodo, CompletableFuture.supplyAsync(
                         () -> consultar(nodo, clave, viaje.getMatricula(), inicio.toLocalDate(), fin.toLocalDate()), ejecutor));
             } catch (CargaUYException e) {
@@ -73,6 +75,7 @@ public class BalanzasEJB implements BalanzasEJBLocal {
         }
         for (Map.Entry<NodoPerifericoDto, CompletableFuture<List<PesajeDto>>> consulta : consultas.entrySet()) {
             try {
+                // join espera a que ese nodo termine; si fallo, tira CompletionException
                 for (PesajeDto pesaje : consulta.getValue().join()) {
                     boolean enElViaje = !pesaje.getFechaHora().isBefore(inicio) && !pesaje.getFechaHora().isAfter(fin);
                     guardar(pesaje, viaje.getIdVehiculo(), enElViaje ? viaje.getId() : null);
