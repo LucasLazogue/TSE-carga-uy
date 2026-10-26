@@ -132,15 +132,18 @@ public class DatosPrueba {
             List<TipoCargaDto> tipos = guiaDAO.getTiposCarga();
             Long chofer = carlos.getId();
             Long sta = vehiculoDAO.getVehiculoByMatricula("STA1234").getId();
+            Long sbb = vehiculoDAO.getVehiculoByMatricula("SBB5678").getId();
 
             GuiaDto montevideoRivera = guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 15),
                     -34.9011, -56.1645, -30.9053, -55.5508, 18000,
                     empresas.get(0).getId(), chofer, rubros.get(0).getId(), tipos.get(3).getId()));
             viajeDAO.addViaje(new ViajeDto(montevideoRivera.getId(), sta, chofer));
 
-            guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 20),
+            // un segundo viaje para el mismo chofer: puede tener varios asignados, pero iniciar uno a la vez
+            GuiaDto frayBentosMontevideo = guiaDAO.addGuia(new GuiaDto(LocalDate.of(2026, 10, 20),
                     -33.1325, -58.2956, -34.9058, -56.2132, 20000,
                     empresas.get(0).getId(), chofer, rubros.get(3).getId(), tipos.get(4).getId()));
+            viajeDAO.addViaje(new ViajeDto(frayBentosMontevideo.getId(), sbb, chofer));
         }
 
         if (casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, LocalDate.now()) == null) {

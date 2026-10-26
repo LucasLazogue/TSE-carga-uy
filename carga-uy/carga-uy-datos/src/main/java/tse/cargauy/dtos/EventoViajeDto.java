@@ -16,6 +16,10 @@ public class EventoViajeDto implements Serializable{
     private Instant timestampRecepcion;
     private ResultadoEvento resultado;
     private String detalle;
+    private String descripcion;
+    private Integer kilos;
+    // quien lo mando: en un viaje reasignado hay eventos de los dos choferes
+    private String cedulaChofer;
 
     public EventoViajeDto () {
     }
@@ -74,5 +78,29 @@ public class EventoViajeDto implements Serializable{
 
     public void setDetalle(String detalle) {
         this.detalle = detalle;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public Integer getKilos() {
+        return kilos;
+    }
+
+    public void setKilos(Integer kilos) {
+        this.kilos = kilos;
+    }
+
+    public String getCedulaChofer() {
+        return cedulaChofer;
+    }
+
+    public void setCedulaChofer(String cedulaChofer) {
+        this.cedulaChofer = cedulaChofer;
     }
 }

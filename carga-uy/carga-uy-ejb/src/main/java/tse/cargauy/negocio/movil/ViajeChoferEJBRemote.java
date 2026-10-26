@@ -10,7 +10,7 @@ import tse.cargauy.dtos.ViajeMovilDto;
 @Remote
 public interface ViajeChoferEJBRemote {
 
-    ViajeMovilDto getViajeActual();
+    List<ViajeMovilDto> getViajes();
 
     SyncRespuestaDto sincronizar(List<EventoViajeDto> eventos);
 }

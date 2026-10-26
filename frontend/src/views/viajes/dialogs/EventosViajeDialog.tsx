@@ -18,8 +18,17 @@ const VARIANTES_RESULTADO: Record<ResultadoEvento, ComponentProps<typeof Badge>[
   RECHAZADO: 'destructive',
 }
 
+// lo que cargo el chofer: "3.500 kg · Entregado en el deposito", o solo una de las dos partes
+function detalleDelChofer(e: EventoViaje): string {
+  const partes = [e.kilos != null ? `${e.kilos.toLocaleString('es-UY')} kg` : null, e.descripcion]
+  return partes.filter(Boolean).join(' · ') || '-'
+}
+
 const columnas: GridColumn<EventoViaje>[] = [
   { header: 'Evento', cell: (e) => NOMBRES_TIPO_EVENTO[e.tipo], className: 'font-medium' },
+  { header: 'Detalle', cell: detalleDelChofer, className: 'whitespace-normal' },
+  // en un viaje reasignado hay eventos de los dos choferes
+  { header: 'Chofer', cell: (e) => e.cedulaChofer ?? '-' },
   { header: 'Generado', cell: (e) => momento(e.timestampGeneracion) },
   { header: 'Recibido', cell: (e) => momento(e.timestampRecepcion) },
   {
