@@ -2,6 +2,8 @@ package tse.cargauy.negocio.informe;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -19,10 +21,16 @@ import tse.cargauy.data.informe.InformeDAOLocal;
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.Granularidad;
 import tse.cargauy.dtos.IndicadoresDto;
+import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.InfraccionesPorTipoDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
+import tse.cargauy.entities.EstadoInforme;
+import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoInfraccion;
+import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -64,12 +72,38 @@ public class InformeEJB implements InformeEJBLocal {
         return indicadores;
     }
 
+    public PaginaDto<InformeDto> getMisInformes(Paginacion paginacion) {
+        return informeDAO.getBySolicitante(idUsuario(), paginacion);
+    }
+
+    public InformeDto exportar(FiltroInforme filtro, TipoInforme tipo, FormatoInforme formato) {
+        validar(filtro);
+        InformeDto informe = new InformeDto();
+        informe.setTipo(tipo);
+        informe.setPeriodoDesde(filtro.getDesde());
+        informe.setPeriodoHasta(filtro.getHasta());
+        informe.setIdTipoCarga(filtro.getIdTipoCarga());
+        informe.setFormato(formato);
+        informe.setEstado(EstadoInforme.PENDIENTE);
+        informe.setFechaSolicitud(ahora());
+        informe.setIdSolicitante(idUsuario());
+        InformeDto registrado = informeDAO.addInforme(informe);
+        LOGGER.info("informe exportacion usuario=" + idUsuario() + " informe=" + registrado.getId() + " tipo=" + tipo
+                + " formato=" + formato + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
+                + " tipoCarga=" + filtro.getIdTipoCarga());
+        return registrado;
+    }
+
     Long idUsuario() {
         return Long.valueOf(contexto.getCallerPrincipal().getName());
     }
 
     LocalDate hoy() {
         return LocalDate.now();
+    }
+
+    LocalDateTime ahora() {
+        return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
     private static void validar(FiltroInforme filtro) {

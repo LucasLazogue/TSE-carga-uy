@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,20 +18,29 @@ import tse.cargauy.data.informe.InformeDAO;
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.Granularidad;
 import tse.cargauy.dtos.IndicadoresDto;
+import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.InfraccionesPorTipoDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
+import tse.cargauy.entities.EstadoInforme;
+import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.TipoInfraccion;
+import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
 class InformeEJBTest {
 
     private static final LocalDate HOY = LocalDate.of(2026, 10, 26);
+    private static final LocalDateTime AHORA = LocalDateTime.of(2026, 10, 26, 10, 0);
 
     private final List<ViajesPorPeriodoDto> viajesPorDia = new ArrayList<>();
     private final List<InfraccionesPorTipoDto> infracciones = new ArrayList<>();
     private LocalDate fechaHabilitados;
+    private final List<InformeDto> registrados = new ArrayList<>();
+    private Long solicitanteListado;
 
     private final InformeEJB ejb = new InformeEJB() {
         @Override
@@ -41,6 +51,11 @@ class InformeEJBTest {
         @Override
         LocalDate hoy() {
             return HOY;
+        }
+
+        @Override
+        LocalDateTime ahora() {
+            return AHORA;
         }
     };
 
@@ -71,6 +86,19 @@ class InformeEJBTest {
             @Override
             public List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro) {
                 return infracciones;
+            }
+
+            @Override
+            public InformeDto addInforme(InformeDto informe) {
+                informe.setId(1L);
+                registrados.add(informe);
+                return informe;
+            }
+
+            @Override
+            public PaginaDto<InformeDto> getBySolicitante(Long idSolicitante, Paginacion paginacion) {
+                solicitanteListado = idSolicitante;
+                return new PaginaDto<>(List.of(), 0, paginacion.getPagina(), paginacion.getTamanio());
             }
         };
     }
@@ -192,5 +220,37 @@ class InformeEJBTest {
 
         consultar(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 12, 31));
         assertEquals(HOY, fechaHabilitados);
+    }
+
+    @Test
+    void exportarRegistraLaSolicitudPendienteDelUsuario() {
+        Long idTipoCarga = 2L;
+
+        ejb.exportar(new FiltroInforme(LocalDate.of(2026, 1, 1), HOY, idTipoCarga), TipoInforme.VOLUMEN_POR_RUBRO, FormatoInforme.CSV);
+
+        assertEquals(1, registrados.size());
+        InformeDto informe = registrados.get(0);
+        assertEquals(TipoInforme.VOLUMEN_POR_RUBRO, informe.getTipo());
+        assertEquals(FormatoInforme.CSV, informe.getFormato());
+        assertEquals(EstadoInforme.PENDIENTE, informe.getEstado());
+        assertEquals(LocalDate.of(2026, 1, 1), informe.getPeriodoDesde());
+        assertEquals(HOY, informe.getPeriodoHasta());
+        assertEquals(idTipoCarga, informe.getIdTipoCarga());
+        assertEquals(9L, informe.getIdSolicitante());
+        assertEquals(AHORA, informe.getFechaSolicitud());
+    }
+
+    @Test
+    void exportarValidaElPeriodo() {
+        assertThrows(CargaUYException.class,
+                () -> ejb.exportar(new FiltroInforme(HOY, HOY.minusDays(1), null), TipoInforme.HABILITADOS, FormatoInforme.PDF));
+        assertTrue(registrados.isEmpty());
+    }
+
+    @Test
+    void misExportacionesSonLasDelUsuario() {
+        ejb.getMisInformes(new Paginacion(0, 10));
+
+        assertEquals(9L, solicitanteListado);
     }
 }

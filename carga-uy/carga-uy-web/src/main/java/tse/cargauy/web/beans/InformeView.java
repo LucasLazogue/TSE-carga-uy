@@ -7,11 +7,16 @@ import java.util.List;
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.IndicadoresDto;
+import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
+import tse.cargauy.entities.FormatoInforme;
+import tse.cargauy.entities.TipoInforme;
 import tse.cargauy.negocio.guia.GuiaEJBLocal;
 import tse.cargauy.negocio.informe.InformeEJBLocal;
 
@@ -33,6 +38,7 @@ public class InformeView {
     private Long idTipoCarga;
     private IndicadoresDto indicadores;
     private List<TipoCargaDto> tiposCarga;
+    private final ModeloPaginado<InformeDto> informes = new ModeloPaginado<>(paginacion -> informeEJB.getMisInformes(paginacion));
 
     @PostConstruct
     public void init() {
@@ -50,6 +56,15 @@ public class InformeView {
             case SEMANA -> "Semana del " + viajes.getInicio().format(DIA);
             case MES -> viajes.getInicio().format(MES);
         };
+    }
+
+    public void exportar(TipoInforme tipo, FormatoInforme formato) {
+        informeEJB.exportar(new FiltroInforme(desde, hasta, idTipoCarga), tipo, formato);
+        mensaje("Se esta generando el reporte. Lo vas a encontrar en Mis exportaciones.");
+    }
+
+    public ModeloPaginado<InformeDto> getInformes() {
+        return informes;
     }
 
     public List<TipoCargaDto> getTiposCarga() {
@@ -85,5 +100,9 @@ public class InformeView {
 
     public void setIdTipoCarga(Long idTipoCarga) {
         this.idTipoCarga = idTipoCarga;
+    }
+
+    private static void mensaje(String texto) {
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, texto, null));
     }
 }

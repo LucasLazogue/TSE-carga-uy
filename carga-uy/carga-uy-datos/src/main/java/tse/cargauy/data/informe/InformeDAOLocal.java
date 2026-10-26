@@ -5,7 +5,10 @@ import java.util.List;
 
 import jakarta.ejb.Local;
 import tse.cargauy.dtos.FiltroInforme;
+import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.InfraccionesPorTipoDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
 
@@ -16,4 +19,6 @@ public interface InformeDAOLocal {
     List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro);
     List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro);
     List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro);
+    InformeDto addInforme(InformeDto informeDto);
+    PaginaDto<InformeDto> getBySolicitante(Long idSolicitante, Paginacion paginacion);
 }

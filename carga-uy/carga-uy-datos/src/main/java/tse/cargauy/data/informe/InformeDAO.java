@@ -8,12 +8,18 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import tse.cargauy.dtos.FiltroInforme;
+import tse.cargauy.dtos.InformeDto;
 import tse.cargauy.dtos.InfraccionesPorTipoDto;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoCaso;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.EstadoViaje;
+import tse.cargauy.entities.Informe;
+import tse.cargauy.entities.TipoCarga;
+import tse.cargauy.entities.UsuarioBackoffice;
 
 @Stateless
 public class InformeDAO implements InformeDAOLocal {
@@ -95,6 +101,32 @@ public class InformeDAO implements InformeDAOLocal {
             query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
         }
         return query.getResultList();
+    }
+
+    @Override
+    public InformeDto addInforme(InformeDto informeDto) {
+        Informe informe = Serializers.toEntity(informeDto,
+                informeDto.getIdTipoCarga() == null ? null : entityManager.find(TipoCarga.class, informeDto.getIdTipoCarga()),
+                entityManager.find(UsuarioBackoffice.class, informeDto.getIdSolicitante()));
+        entityManager.persist(informe);
+        return Serializers.toDto(informe);
+    }
+
+    @Override
+    public PaginaDto<InformeDto> getBySolicitante(Long idSolicitante, Paginacion paginacion) {
+        List<InformeDto> items = entityManager.createQuery(
+                        "SELECT i FROM Informe i WHERE i.solicitante.id = :idSolicitante ORDER BY i.fechaSolicitud DESC, i.id DESC",
+                        Informe.class)
+                .setParameter("idSolicitante", idSolicitante)
+                .setFirstResult(paginacion.getDesde())
+                .setMaxResults(paginacion.getTamanio())
+                .getResultStream()
+                .map(Serializers::toDto)
+                .toList();
+        long total = entityManager.createQuery("SELECT COUNT(i) FROM Informe i WHERE i.solicitante.id = :idSolicitante", Long.class)
+                .setParameter("idSolicitante", idSolicitante)
+                .getSingleResult();
+        return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
     }
 
     private <T> TypedQuery<T> consulta(String jpql, Class<T> tipo) {
