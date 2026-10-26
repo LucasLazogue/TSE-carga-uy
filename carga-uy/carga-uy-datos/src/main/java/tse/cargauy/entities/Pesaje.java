@@ -21,23 +21,33 @@ import jakarta.persistence.UniqueConstraint;
 @Table(uniqueConstraints = @UniqueConstraint(name = "uk_pesaje_origen", columnNames = {"idOrigen"}),
         indexes = @Index(name = "ix_pesaje_vehiculo_fecha", columnList = "idVehiculo, fechaHora"))
 public class Pesaje {
-    @Id @GeneratedValue private Long id;
-    @Column(nullable = false) private String idOrigen;      // nodo/balanza/idRegistro: el mismo pesaje consultado dos veces no se duplica
-    @Column(nullable = false) private Long idNodo;
-    @Column(nullable = false) private Long idVehiculo;
-    private Long idViaje;                                    // null si no corresponde a ningun viaje
-    @Column(nullable = false) private String matricula;
-    @Column(nullable = false) private LocalDateTime fechaHora;
+
+    @Id @GeneratedValue
+    private Long id;
+    @Column(nullable = false)
+    private String idOrigen;
+    @Column(nullable = false)
+    private Long idNodo;
+    @Column(nullable = false)
+    private Long idVehiculo;
+    private Long idViaje;
+    @Column(nullable = false)
+    private String matricula;
+    @Column(nullable = false)
+    private LocalDateTime fechaHora;
     private int pesoRegistrado;
-    @Column(nullable = false) private String codigoBalanza;
+    @Column(nullable = false)
+    private String codigoBalanza;
     private String sentido;
-    @Column(nullable = false) private String codigoPeaje;
+    @Column(nullable = false)
+    private String codigoPeaje;
     private String nombrePeaje;
     private String ruta;
     private int km;
     private double latitud;
     private double longitud;
-    @Column(nullable = false) private LocalDateTime recibidoEn;
+    @Column(nullable = false)
+    private LocalDateTime recibidoEn;
 
     public Pesaje() {
     }
