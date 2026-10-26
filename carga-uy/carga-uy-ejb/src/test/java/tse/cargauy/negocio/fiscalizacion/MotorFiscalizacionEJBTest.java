@@ -2,6 +2,7 @@ package tse.cargauy.negocio.fiscalizacion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -34,6 +35,8 @@ import tse.cargauy.dtos.ViajeDto;
 import tse.cargauy.entities.EstadoViaje;
 import tse.cargauy.entities.TipoEvidencia;
 import tse.cargauy.entities.TipoInfraccion;
+import tse.cargauy.exceptions.CargaUYException;
+import tse.cargauy.exceptions.CodigoError;
 
 class MotorFiscalizacionEJBTest {
 
@@ -302,6 +305,44 @@ class MotorFiscalizacionEJBTest {
         motor.evaluarViaje(21L, Context.root());
 
         assertTrue(casos.casos.isEmpty());
+    }
+
+    @Test
+    void conToleranciaUnPesajeDentroDelMargenNoEsExceso() {
+        casos.toleranciaExceso = 5;
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 35490));
+
+        motor.evaluarViaje(21L, Context.root());
+
+        assertTrue(casos.casos.isEmpty());
+    }
+
+    @Test
+    void conToleranciaLaEvidenciaGuardaElUmbralAplicado() {
+        casos.toleranciaExceso = 5;
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 35491));
+
+        motor.evaluarViaje(21L, Context.root());
+
+        EvidenciaDto evidencia = casosDe(TipoInfraccion.EXCESO_CARGA).get(0).getEvidencias().get(0);
+        assertEquals("35491 kg", evidencia.getValorObservado());
+        assertEquals("33800 kg", evidencia.getValorDeclarado());
+        assertEquals("35490 kg (5% de tolerancia)", evidencia.getUmbral());
+    }
+
+    @Test
+    void sinToleranciaVigenteLaEvaluacionFallaYElViajeQuedaSinMarcar() {
+        casos.toleranciaExceso = null;
+        viaje = viaje(EstadoViaje.FINALIZADO, LocalDateTime.of(2026, 10, 1, 8, 0));
+        pesajes.getPesajes().add(pesaje(SUR, 36500));
+
+        CargaUYException error = assertThrows(CargaUYException.class, () -> motor.evaluarViaje(21L, Context.root()));
+
+        assertEquals(CodigoError.NORMA_NO_VIGENTE, error.getCodigo());
+        assertTrue(casosDe(TipoInfraccion.EXCESO_CARGA).isEmpty());
+        assertNull(proximaEvaluacion);
     }
 
     @Test

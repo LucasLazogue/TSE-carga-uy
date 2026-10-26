@@ -26,6 +26,7 @@ import tse.cargauy.dtos.ResolucionDto;
 import tse.cargauy.entities.AccionAuditoria;
 import tse.cargauy.entities.DestinatarioNotificacion;
 import tse.cargauy.entities.EstadoCaso;
+import tse.cargauy.entities.NormaFiscalizacion;
 
 class CasosEnMemoria extends CasoFiscalizacionDAO {
 
@@ -34,6 +35,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     final List<NotificacionDto> notificaciones = new ArrayList<>();
     final List<NotificacionDto> notificacionesFuncionario = new ArrayList<>();
     Integer plazoDescargo = 10;
+    Integer toleranciaExceso = 0;
     Long empresaDeLosVehiculos;
     FiltroCasos ultimoFiltro;
 
@@ -139,7 +141,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
 
     @Override
     public Integer getNormaVigente(String clave, LocalDate fecha) {
-        return plazoDescargo;
+        return NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA.equals(clave) ? toleranciaExceso : plazoDescargo;
     }
 
     CasoFiscalizacionDto agregar(String clave, Long idEmpresa, EstadoCaso estado, LocalDateTime venceDescargo) {
