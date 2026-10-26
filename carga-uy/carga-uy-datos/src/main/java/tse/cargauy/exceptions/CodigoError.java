@@ -116,7 +116,11 @@ public enum CodigoError {
     DESCARGO_FUERA_DE_PLAZO(9008, Categoria.CONFLICTO),
     DESCARGO_YA_PRESENTADO(9009, Categoria.CONFLICTO),
     NORMA_NO_VIGENTE(9010, Categoria.CONFIGURACION),
-    CASO_YA_REGISTRADO(9011, Categoria.CONFLICTO);
+    CASO_YA_REGISTRADO(9011, Categoria.CONFLICTO),
+
+    BALANZAS_NO_DISPONIBLE(10001, Categoria.NO_DISPONIBLE),
+    BALANZAS_NODO_RECHAZO(10002, Categoria.CONFIGURACION),
+    PESAJE_YA_REGISTRADO(10003, Categoria.CONFLICTO);
 
     private final int codigo;
     private final Categoria categoria;
