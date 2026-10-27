@@ -111,10 +111,12 @@ function Vehiculos() {
         title="Vehículos"
         description="Vehículos de carga de la empresa con sus datos técnicos."
         actions={
-          <Button onClick={nuevoVehiculo} disabled={!idEmpresa}>
-            <Plus />
-            Nuevo vehículo
-          </Button>
+          !esFuncionario && (
+            <Button onClick={nuevoVehiculo} disabled={!idEmpresa}>
+              <Plus />
+              Nuevo vehículo
+            </Button>
+          )
         }
       />
       <DataToolbar

@@ -80,13 +80,13 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return eventoViajeDAO.getByViaje(id, paginacion);
     }
 
-    @RolesAllowed(Rol.FUNCIONARIO)
+    @RolesAllowed({ Rol.RESPONSABLE, Rol.FUNCIONARIO })
     public PesajesViajeDto getPesajes(Long idEmpresa, Long id) {
         empresaEJB.validarAcceso(idEmpresa);
         return balanzas.getPesajesDelViaje(getDeEmpresa(idEmpresa, id));
     }
 
-    @RolesAllowed(Rol.FUNCIONARIO)
+    @RolesAllowed({ Rol.RESPONSABLE, Rol.FUNCIONARIO })
     public List<EventoPosicionDto> getPosiciones(Long idEmpresa, Long id) {
         empresaEJB.validarAcceso(idEmpresa);
         getDeEmpresa(idEmpresa, id);
