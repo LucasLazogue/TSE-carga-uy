@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button'
 import type { Page } from '@/api/page'
 import { ViajesApi } from '@/api/viajes/viajes.api'
 import type { EstadoViaje, Viaje } from '@/api/viajes/viajes.types'
-import { useSession } from '@/auth/useSession'
 import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fechaHora } from '@/lib/fechas'
@@ -44,8 +43,6 @@ function Viajes() {
   const [resultado, setResultado] = useState<Page<Viaje> | null>(null)
   const [version, setVersion] = useState(0)
   const { open } = useDialogs()
-  const { profile } = useSession()
-  const esFuncionario = profile === 'FUNCIONARIO'
   const { idEmpresa, estado } = values
 
   useEmpresaInicial(idEmpresa, set)
@@ -97,7 +94,7 @@ function Viajes() {
             <History />
             <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver eventos</span>
           </Button>
-          {esFuncionario && v.estado !== 'ASIGNADO' && (
+          {v.estado !== 'ASIGNADO' && (
             <Button size="sm" variant="outline" onClick={() => verRecorrido(v)}>
               <MapPinned />
               <span className="sr-only md:not-sr-only md:whitespace-nowrap">Ver recorrido</span>
