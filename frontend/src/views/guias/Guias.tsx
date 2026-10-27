@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia } from '@/api/guias/guias.types'
 import type { Page } from '@/api/page'
+import { useSession } from '@/auth/useSession'
 import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
 import { fecha } from '@/lib/fechas'
@@ -52,6 +53,8 @@ function Guias() {
   const [resultado, setResultado] = useState<Page<Guia> | null>(null)
   const [version, setVersion] = useState(0)
   const { open } = useDialogs()
+  const { profile } = useSession()
+  const esFuncionario = profile === 'FUNCIONARIO'
   const { busqueda, idEmpresa, conViaje, desde, hasta } = values
 
   useEmpresaInicial(idEmpresa, set)
@@ -108,7 +111,7 @@ function Guias() {
       hideHeader: true,
       className: 'sticky right-0 w-px bg-background text-right',
       cell: (g) =>
-        g.idViaje == null && (
+        !esFuncionario && g.idViaje == null && (
           <Button size="sm" variant="outline" onClick={() => asignarViaje(g)}>
             <Truck />
             <span className="sr-only md:not-sr-only md:whitespace-nowrap">Asignar viaje</span>
@@ -134,10 +137,12 @@ function Guias() {
         title="Guías"
         description="Guías de carga registradas por la empresa."
         actions={
-          <Button onClick={nuevaGuia} disabled={!idEmpresa}>
-            <Plus />
-            Nueva guía
-          </Button>
+          !esFuncionario && (
+            <Button onClick={nuevaGuia} disabled={!idEmpresa}>
+              <Plus />
+              Nueva guía
+            </Button>
+          )
         }
       />
       <DataToolbar
