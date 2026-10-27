@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw, Truck } from 'lucide-react'
+import { Pencil, Plus, RefreshCw, Truck } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import Grid from '@/components/grid/Grid'
 import type { GridColumn } from '@/components/grid/Grid'
@@ -17,14 +17,11 @@ import type { Page } from '@/api/page'
 import { useSession } from '@/auth/useSession'
 import { useEmpresaInicial } from '@/hooks/useEmpresaInicial'
 import { useListParams } from '@/hooks/useListParams'
+import { coordenadas } from '@/lib/coordenadas'
 import { fecha } from '@/lib/fechas'
 import { fuenteEmpresas } from '@/components/lookup/fuente'
 import AsignarViajeDialog from './dialogs/AsignarViajeDialog'
-import NuevaGuiaDialog from './dialogs/NuevaGuiaDialog'
-
-function coordenadas(lat: number, lon: number) {
-  return `${lat.toFixed(4)}, ${lon.toFixed(4)}`
-}
+import GuiaDialog from './dialogs/GuiaDialog'
 
 const columnas: GridColumn<Guia>[] = [
   { header: 'Nro. guía', cell: (g) => g.nroGuia, className: 'font-medium' },
@@ -104,6 +101,15 @@ function Guias() {
     })
   }
 
+  // solo sin viaje: con un viaje asignado el central ya no deja cambiar la fecha ni el volumen
+  function editarGuia(guia: Guia) {
+    open({
+      title: `Editar guía ${guia.nroGuia}`,
+      size: 'lg',
+      content: (close) => <GuiaDialog idEmpresa={guia.idEmpresa} guia={guia} close={close} onSaved={recargar} />,
+    })
+  }
+
   const columnasConAcciones: GridColumn<Guia>[] = [
     ...columnas,
     {
@@ -112,10 +118,16 @@ function Guias() {
       className: 'sticky right-0 w-px bg-background text-right',
       cell: (g) =>
         !esFuncionario && g.idViaje == null && (
-          <Button size="sm" variant="outline" onClick={() => asignarViaje(g)}>
-            <Truck />
-            <span className="sr-only md:not-sr-only md:whitespace-nowrap">Asignar viaje</span>
-          </Button>
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => editarGuia(g)}>
+              <Pencil />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Editar</span>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => asignarViaje(g)}>
+              <Truck />
+              <span className="sr-only md:not-sr-only md:whitespace-nowrap">Asignar viaje</span>
+            </Button>
+          </div>
         ),
     },
   ]
@@ -127,7 +139,7 @@ function Guias() {
     open({
       title: 'Nueva guía',
       size: 'lg',
-      content: (close) => <NuevaGuiaDialog idEmpresa={Number(idEmpresa)} close={close} onCreated={mostrarCreada} />,
+      content: (close) => <GuiaDialog idEmpresa={Number(idEmpresa)} close={close} onSaved={mostrarCreada} />,
     })
   }
 

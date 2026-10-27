@@ -11,6 +11,9 @@ export const GuiasApi = {
   create: async (idEmpresa: number, guia: GuiaNueva) =>
     (await http.post<Guia>(`/empresas/${idEmpresa}/guias`, guia)).data,
 
+  update: async (idEmpresa: number, id: number, guia: GuiaNueva) =>
+    (await http.put<Guia>(`/empresas/${idEmpresa}/guias/${id}`, guia)).data,
+
   getRubros: async () => (await http.get<Rubro[]>('/rubros')).data,
 
   getTiposCarga: async () => (await http.get<TipoCarga[]>('/tipos-carga')).data,

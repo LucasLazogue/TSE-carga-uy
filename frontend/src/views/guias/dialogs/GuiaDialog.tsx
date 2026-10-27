@@ -13,23 +13,27 @@ import { getErrorMessage } from '@/api/errors'
 import { GuiasApi } from '@/api/guias/guias.api'
 import type { Guia, GuiaNueva, Rubro, TipoCarga } from '@/api/guias/guias.types'
 import { useSession } from '@/auth/useSession'
+import { punto } from '@/lib/coordenadas'
 import { GUIA_VACIA } from '../guias.constants'
+import MapaOrigenDestino from './MapaOrigenDestino'
 
 const selectClass =
-  'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+  'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50'
 
 type Props = {
   idEmpresa: number
+  // sin guia es un alta
+  guia?: Guia
   close: () => void
-  onCreated: (guia: Guia) => void
+  onSaved: (guia: Guia) => void
 }
 
-function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
+function GuiaDialog({ idEmpresa, guia, close, onSaved }: Props) {
   const { session } = useSession()
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [rubros, setRubros] = useState<Rubro[]>([])
   const [tiposCarga, setTiposCarga] = useState<TipoCarga[]>([])
-  const [nueva, setNueva] = useState<GuiaNueva>({ ...GUIA_VACIA, idEmpresa })
+  const [nueva, setNueva] = useState<GuiaNueva>(guia ?? { ...GUIA_VACIA, idEmpresa })
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
@@ -41,10 +45,23 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
 
   async function guardar(e: FormEvent) {
     e.preventDefault()
+    // el central rechaza origen o destino nulos, pero un campo vacio llega como 0 y lo tomaria como valido
+    if (!punto(nueva.origenLat, nueva.origenLon)) {
+      setError('Indicá un origen válido: escribí sus coordenadas o marcalo en el mapa.')
+      return
+    }
+    if (!punto(nueva.destinoLat, nueva.destinoLon)) {
+      setError('Indicá un destino válido: escribí sus coordenadas o marcalo en el mapa.')
+      return
+    }
     setError('')
     setGuardando(true)
     try {
-      onCreated(await GuiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 }))
+      onSaved(
+        guia
+          ? await GuiasApi.update(guia.idEmpresa, guia.id, nueva)
+          : await GuiasApi.create(nueva.idEmpresa, { ...nueva, idRegistradaPor: session?.id ?? 0 }),
+      )
       close()
     } catch (err) {
       setError(getErrorMessage(err))
@@ -68,6 +85,7 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
             id="empresa"
             className={selectClass}
             value={nueva.idEmpresa}
+            disabled={guia != null}
             onChange={(e) => setNueva({ ...nueva, idEmpresa: Number(e.target.value) })}
           >
             {empresas.map((e) => (
@@ -127,43 +145,9 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
             onChange={(e) => setNueva({ ...nueva, fecha: e.target.value })}
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="origenLat">Origen (latitud, longitud)</Label>
-          <div className="flex gap-2">
-            <Input
-              id="origenLat"
-              type="number"
-              step="any"
-              value={nueva.origenLat || ''}
-              onChange={(e) => setNueva({ ...nueva, origenLat: Number(e.target.value) })}
-            />
-            <Input
-              aria-label="Origen longitud"
-              type="number"
-              step="any"
-              value={nueva.origenLon || ''}
-              onChange={(e) => setNueva({ ...nueva, origenLon: Number(e.target.value) })}
-            />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="destinoLat">Destino (latitud, longitud)</Label>
-          <div className="flex gap-2">
-            <Input
-              id="destinoLat"
-              type="number"
-              step="any"
-              value={nueva.destinoLat || ''}
-              onChange={(e) => setNueva({ ...nueva, destinoLat: Number(e.target.value) })}
-            />
-            <Input
-              aria-label="Destino longitud"
-              type="number"
-              step="any"
-              value={nueva.destinoLon || ''}
-              onChange={(e) => setNueva({ ...nueva, destinoLon: Number(e.target.value) })}
-            />
-          </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <p className="text-sm font-medium">Origen y destino</p>
+          <MapaOrigenDestino valor={nueva} onChange={(ubicaciones) => setNueva({ ...nueva, ...ubicaciones })} />
         </div>
       </div>
       <DialogFooter>
@@ -178,4 +162,4 @@ function NuevaGuiaDialog({ idEmpresa, close, onCreated }: Props) {
   )
 }
 
-export default NuevaGuiaDialog
+export default GuiaDialog
