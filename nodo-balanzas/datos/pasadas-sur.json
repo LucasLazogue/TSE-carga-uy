@@ -3,7 +3,9 @@
     "balanza": "balanza-r5-km30",
     "lecturas": [
       { "idRegistro": "1001", "matricula": "SCC9012", "dias": -3, "hora": "09:10", "pesoRegistrado": 36500 },
-      { "idRegistro": "1002", "matricula": "SBB5678", "dias": -2, "hora": "14:20", "pesoRegistrado": 21000 }
+      { "idRegistro": "1002", "matricula": "SBB5678", "dias": -2, "hora": "14:20", "pesoRegistrado": 21000 },
+      { "idRegistro": "1003", "matricula": "STA1234", "fecha": "2026-09-05", "hora": "09:15", "pesoRegistrado": 26800 },
+      { "idRegistro": "1004", "matricula": "SBB5678", "fecha": "2026-09-20", "hora": "10:05", "pesoRegistrado": 24100 }
     ]
   },
   {

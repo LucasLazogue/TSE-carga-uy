@@ -2,7 +2,9 @@
   {
     "balanza": "balanza-r5-km250",
     "lecturas": [
-      { "idRegistro": "1", "matricula": "STA1234", "fecha": "2026-10-15", "hora": "11:55", "pesoRegistrado": 26400 }
+      { "idRegistro": "1", "matricula": "STA1234", "fecha": "2026-10-15", "hora": "11:55", "pesoRegistrado": 26400 },
+      { "idRegistro": "2", "matricula": "STA1234", "fecha": "2026-09-05", "hora": "12:40", "pesoRegistrado": 26700 },
+      { "idRegistro": "3", "matricula": "SBB5678", "fecha": "2026-09-20", "hora": "13:30", "pesoRegistrado": 24000 }
     ]
   }
 ]

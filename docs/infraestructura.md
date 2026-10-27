@@ -29,9 +29,9 @@ El central usa PostgreSQL, MongoDB, LDAP y Artemis. Tracking publica directament
 por lo que puede seguir entregando posiciones aunque WildFly esté detenido. La conexión del
 central al broker usa `artemis:61616`, que no se publica en el host.
 
-Cada nodo de balanzas tiene su propia base. `balanzas-alta` espera los health checks de ambos nodos,
-crea peajes y balanzas, y guarda sus claves; después `simulador-balanzas` carga las lecturas de demo.
-Ambos son servicios de ejecución única. El registro y la habilitación en el central se realizan
+Cada nodo de balanzas tiene su propia base y arranca vacío. Los peajes, balanzas y lecturas de demo se
+cargan desde el host con `alta.mjs` y `simular.mjs`, según la guía de
+[balanzas](../nodo-balanzas/README.md#cómo-levantarlo-con-el-resto). El registro y la habilitación en el central se realizan
 desde el backoffice, según las guías de [tracking](../nodo-tracking/README.md#cómo-levantarlo)
 y [balanzas](../nodo-balanzas/README.md#agregar-un-nodo-nuevo).
 
@@ -47,7 +47,6 @@ del central accesible desde el dispositivo; ver la [configuración móvil](../mo
 | `ldapdata` | Directorio, usuarios y grupos del backoffice |
 | `artemisdata` | Estado persistente del broker de tracking |
 | `balanzassurdata` / `balanzasnortedata` | Peajes, balanzas y pesajes de cada operador |
-| `balanzasclaves` | Claves generadas por el alta de balanzas y usadas por el simulador |
 
 Recrear los contenedores conserva esos volúmenes. `docker compose down -v` los elimina, por lo que
 también se pierden cuentas, registros de nodos y datos de prueba acumulados. El Compose no declara
