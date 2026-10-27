@@ -36,13 +36,20 @@ Sin clave o con una clave que no existe: `401`. Con una clave válida pero sin p
 
 Preparar el [entorno local](../README.md#ejecución-local); el Compose ya incluye los nodos de balanzas.
 
-Levanta dos nodos, cada uno con su base, y los carga para la demo:
+Levanta `balanzas-sur` (puerto 8082) y `balanzas-norte` (puerto 8083), con sus bases `pg-balanzas-sur` y
+`pg-balanzas-norte`. Los nodos arrancan vacíos; los datos de la demo se cargan desde la raíz del repo con
+Node, en cualquier sistema operativo:
 
-| Servicio | Qué hace |
+    node nodo-balanzas/scripts/alta.mjs
+    node nodo-balanzas/scripts/simular.mjs
+
+| Script | Qué hace |
 | --- | --- |
-| `balanzas-sur` (puerto 8082) y `balanzas-norte` (puerto 8083) | Los nodos, con sus bases `pg-balanzas-sur` y `pg-balanzas-norte` |
-| `balanzas-alta` | Corre una vez: da de alta los peajes y balanzas de `datos/balanzas-sur.json` y `datos/balanzas-norte.json` con `scripts/alta.sh`, y guarda las claves que devuelve cada nodo en el volumen `balanzasclaves` |
-| `simulador-balanzas` | Corre una vez, después del alta: hace de los equipos y manda las lecturas de `datos/pasadas-sur.json` y `datos/pasadas-norte.json` con `scripts/simular.sh`, cada balanza con su clave |
+| `alta.mjs` | Da de alta los peajes y balanzas de `datos/balanzas-sur.json` y `datos/balanzas-norte.json`, y guarda la clave de cada balanza en `nodo-balanzas/claves/`, fuera de git |
+| `simular.mjs` | Hace de los equipos: manda las lecturas de `datos/pasadas-sur.json` y `datos/pasadas-norte.json`, cada balanza con su clave |
+
+Si un nodo no está levantado, el script corta sin hacer nada en ese nodo. Las claves se muestran una sola vez:
+si se borra `nodo-balanzas/claves/` hay que recrear las bases de los nodos para generarlas de nuevo.
 
 Las lecturas siguen los datos de prueba del central: SCC9012 con exceso de carga (36500 kg hace 3 días en
 `balanza-r5-km30` y 35100 kg hace 7 días en `balanza-r1-km45`), STA1234 sin exceso en su viaje
@@ -138,11 +145,9 @@ Por ejemplo `balanzas-este`, para otro operador. No hay que tocar código ni el 
 2. Registrarlo en el backoffice del central como nodo de tipo `BALANZAS`, con su URL y su
    `NODO_CLAVE_CENTRAL`, y habilitarlo. Requiere el administrador LDAP descrito en la
    [documentación de seguridad](../docs/seguridad.md#identidades-y-autorización).
-3. Dar de alta sus peajes y balanzas, a mano o con el script y un inventario propio:
-
-       sh scripts/alta.sh https://balanzas-este.../nodo-balanzas <clave-admin> balanzas-este.json claves-este.json
-
-   `claves-este.json` queda con la clave de cada balanza, para configurarla en el equipo.
+3. Dar de alta sus peajes y balanzas, a mano o agregando el nodo y su inventario a la lista de
+   `scripts/alta.mjs`. `claves/balanzas-este.json` queda con la clave de cada balanza, para configurarla en
+   el equipo.
 
 ## Errores
 

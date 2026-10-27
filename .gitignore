@@ -4,6 +4,7 @@
 target/
 .env
 .vscode/
+nodo-balanzas/claves/
 
 docs/informe/build/
 docs/informe/*.pdf
