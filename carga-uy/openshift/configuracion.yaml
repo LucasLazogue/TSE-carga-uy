@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: carga-uy-config
+data:
+  TZ: America/Montevideo
+  GUBUY_URL: https://auth-testing.iduruguay.gub.uy/oidc/v1
+  GUBUY_MOCK: "true"
+  CARGAUY_FRONTEND_URL: https://carga-uy-frontend.vercel.app
+  GUBUY_REDIRECT_URI: https://carga-uy-frontend.vercel.app/api/auth/callback
+  CARGAUY_API_URL: https://carga-uy-frontend.vercel.app/api
+  OTEL_PROPORCION_TRAZAS: "0.1"
