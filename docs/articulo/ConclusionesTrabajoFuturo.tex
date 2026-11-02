@@ -1,0 +1,6 @@
+\section{Conclusiones y Trabajo a Futuro}
+\textcolor{red}{[Borrador: revisar entre todos.]}
+
+Se diseñó e implementó una plataforma que da soporte a la gestión del transporte de carga y a su fiscalización, integrando un frontoffice, un backoffice, una aplicación móvil y nodos periféricos de tracking y de balanzas. Los servicios que provee el servidor de aplicaciones (transacciones, seguridad declarativa, mensajería y ejecución asíncrona) permitieron concentrar el desarrollo en la lógica del negocio. La comunicación asíncrona con los nodos de tracking y la idempotencia en la ingesta y en la sincronización de la aplicación móvil permiten tolerar fallas sin perder información, lo que se comprobó en las pruebas de resiliencia. La observabilidad resultó útil también durante el desarrollo, para diagnosticar fallas que de otro modo habrían sido difíciles de reproducir.
+
+Como trabajo a futuro queda completar la regla de desvío de ruta a partir del recorrido esperado calculado con soporte geoespacial, la consulta a la PDI, el filtro por ubicación de los reportes y la validación de viajes solapados; desplegar los nodos periféricos en una plataforma distinta a la del componente central; y repetir la prueba de performance sobre el despliegue en la nube, con el generador de carga separado y varias instancias del componente central.

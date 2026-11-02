@@ -1,0 +1,11 @@
+\section{Descripción del Problema}
+
+El problema planteado consiste en el diseño y construcción de carga.uy, una plataforma para gestionar el transporte de carga y apoyar su fiscalización en Uruguay.
+
+Las funcionalidades para las empresas transportistas se ofrecen mediante un frontoffice web del componente central. El responsable de una empresa puede gestionar su perfil, sus vehículos, permisos, inspecciones, guías de viaje e infracciones. La aplicación móvil permite que los choferes consulten el viaje asignado y registren el comienzo, la finalización, cargas o descargas parciales e incidentes, incluso cuando no disponen de conectividad.
+
+Los funcionarios acceden a un frontoffice web para gestionar empresas, fiscalizar permisos y vehículos, monitorear viajes y resolver casos de fiscalización. Las autoridades utilizan un backoffice web para consultar reportes e indicadores. Los administradores utilizan el mismo backoffice para gestionar usuarios, roles, nodos periféricos y parámetros de las reglas de fiscalización.
+
+Los nodos de balanzas suministran los pesajes registrados en los peajes y los nodos de tracking reportan periódicamente la posición de los vehículos. La Plataforma de Interoperabilidad permite consultar datos de organismos públicos, mientras que Usuario gub.uy proporciona la autenticación de ciudadanos y funcionarios.
+
+La plataforma debe implementarse sobre Jakarta EE, con el componente central desplegado en la nube y los nodos periféricos en una plataforma distinta. Además de los requerimientos obligatorios, se plantean doce requerimientos opcionales, de los que se eligieron cuatro: LDAP como mecanismo de autenticación interna del backoffice, el despliegue del componente central en un orquestador de contenedores con escalado horizontal, una base de datos NoSQL para los eventos de posición y una base de datos con soporte geoespacial para las rutas y el cálculo de desvíos.

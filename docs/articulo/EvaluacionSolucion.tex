@@ -1,0 +1,29 @@
+\section{Evaluación de la Solución}
+\subsection{Puntos fuertes y débiles}
+Entre los puntos fuertes de la solución se destacan la separación entre la recepción de los eventos y su procesamiento, que permite tolerar la indisponibilidad del componente central y de los nodos periféricos sin perder información; el control de acceso aplicado en la capa de servicios y no solo en las interfaces; la posibilidad de seguir cada operación de punta a punta mediante trazas distribuidas; y un entorno de desarrollo completo que se levanta con un solo comando.
+
+Entre los puntos débiles, al momento de esta entrega quedan pendientes la regla de desvío de ruta, que requiere calcular el recorrido esperado con soporte geoespacial; la consulta a la PDI en el primer ingreso; la asignación de choferes a una empresa; el filtro por ubicación de los reportes; la validación de viajes solapados de un mismo vehículo; y la notificación de los casos por correo. Además, la performance se evaluó solo en forma preliminar.
+
+\subsection{Volumen de tracking y performance de la ingesta}
+Las referencias disponibles hablan de unos 45.000 vehículos de carga registrados \cite{ElObservador2022}, en un mercado de unas 2.400 empresas \cite{BID2022}. Se tomó como volumen objetivo un tercio de ese parque en viaje al mismo tiempo, reportando una posición cada 30 segundos: 500 posiciones por segundo, con picos del triple.
+
+Una prueba preliminar, con todos los componentes y el generador de carga en una misma computadora de 8 núcleos, dio los resultados de la Tabla~\ref{tab:prueba-preliminar}. Hasta 250 posiciones por segundo la cola se mantiene acotada; con 500, el central procesa en promedio lo que llega, pero la computadora se satura. El procesamiento de cada posición no supera los 8~ms en el percentil 95, por lo que el cuello de botella, identificado con las métricas de la plataforma de observabilidad, es la CPU compartida y no la ingesta. Queda pendiente repetir la prueba con el generador separado y el central en la nube, medir el frontoffice bajo carga y verificar el escalado horizontal.
+
+\begin{table}
+\caption{Prueba preliminar de la ingesta de tracking.}\label{tab:prueba-preliminar}
+\centering
+\begin{tabular}{|r|r|r|r|r|}
+\hline
+Vehículos & Objetivo (pos/s) & Procesadas (pos/s) & Cola máxima & Procesamiento p95 \\
+\hline
+1.000 & 100 & 88 & 1.002 & 38 ms \\
+\hline
+2.500 & 250 & 279 & 2.192 & 8,4 ms \\
+\hline
+5.000 & 500 & 521 & 9.932 & 7,7 ms \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Resiliencia de la ingesta}
+Con el componente central detenido, el nodo de tracking siguió publicando y las posiciones esperaron en la cola; al reiniciarlo, se procesaron todas. Con PostgreSQL detenido durante un minuto, el central se recuperó sin intervención y ninguna posición llegó a la cola de mensajes muertos.

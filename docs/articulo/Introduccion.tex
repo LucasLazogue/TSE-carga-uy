@@ -1,0 +1,34 @@
+\section{Introducción}
+
+\subsection{Motivación}
+
+Todas las actividades económicas dependen de cadenas de distribución: tanto en la llegada de materias primas a centros industriales como en la distribución de todo tipo de productos para llegar a los consumidores finales. En Uruguay a nivel interno la mayoría del transporte de dichas cadenas de distribución se realiza a través del transporte carretero. El Estado como regulador de todas las actividades también regula el Transporte de Carga a través de la Dirección Nacional de Transporte\footnote{\raggedright\url{https://www.gub.uy/ministerio-transporte-obras-publicas/institucional/estructura-del-organismo/direccion-nacional-transporte}} del Ministerio de Transporte y Obras Públicas\footnote{\raggedright\url{https://www.gub.uy/ministerio-transporte-obras-publicas/}}. Hay muchas normativas relacionadas a la regulación del transporte de carga\footnote{\raggedright\url{https://www.gub.uy/ministerio-transporte-obras-publicas/politicas-y-gestion/transporte-carga}} que se han ido actualizando con el avance de la tecnología y los avances en gobierno electrónico.
+
+El Estado necesita contar con información sobre la actividad del transporte de carga para objetivos de recaudación, la fiscalización de la actividad y la planificación de la infraestructura necesaria a futuro. Para esto existe un registro de las empresas transportistas, que a su vez tienen que registrar y sacar permisos para sus vehículos (así como hacerle periódicamente una Inspección Técnica Vehicular). Cada vez que un vehículo realiza un viaje con carga se genera un documento llamado “Guía” que indica toda la información de la carga y el viaje a realizarse. A su vez para poder hacer seguimiento de dichos viajes se tiene que los GPS de los vehículos de carga transmiten su información de posición a un sistema central. También durante la realización de viajes los vehículos de carga pasan por balanzas que están ubicadas en los peajes de las rutas nacionales.
+
+Toda esta operativa requiere que se esté fiscalizando tanto la habilitación de los vehículos como los viajes que realizan (por ejemplo que no excedan su capacidad de carga). Por esto, dentro del MTOP hay funcionarios que realizan tareas de administración de estos sistemas y pueden gestionar a los demás usuarios que tendrán acceso a ellos; funcionarios que realizan tareas operativas de fiscalización y autoridades que reciben informes cuantitativos agregados de la información operativa. Este sistema también brinda información agregada al público en general y brinda servicios de consulta a empresas que requieren los servicios de transporte de carga y quieren validar las autorizaciones de las empresas que contratan.
+
+El volumen de información que maneja esta operativa no es menor: los dispositivos GPS de la flota reportan su posición de forma continua mientras los viajes están en curso. Además, las balanzas de los peajes registran pesajes en forma permanente. Cruzar esa información con los datos declarados por las empresas (capacidad de carga de cada vehículo, vigencia de permisos e ITV, origen y destino de cada Guía) es lo que permite detectar incumplimientos sin depender de un control manual exhaustivo. Actualmente, esta detección es mayormente reactiva; se busca que la plataforma la realice de forma automática y que los funcionarios se concentren en la resolución de los casos detectados.
+
+Para colaborar en esto se propone la construcción de una plataforma que brinde soporte a todo el ciclo de la gestión de transporte de carga. Los principales objetivos son:
+
+\begin{itemize}
+    \item Posibilitar que las Empresas transportistas puedan registrarse y registrar sus vehículos.
+    \item Posibilitar que los funcionarios del MTOP puedan monitorear datos de las empresas y los vehículos.
+    \item Posibilitar que otras empresas (clientes) puedan validar las autorizaciones de las empresas transportistas.
+    \item Brindar información gerencial a las autoridades del MTOP.
+    \item Brindar información estadística al público en general.
+    \item Detectar automáticamente incumplimientos a la normativa de transporte de carga y dar soporte a su tramitación.
+\end{itemize}
+
+Para cumplir con estos cometidos se apunta a que la plataforma a desarrollar se apoye en algunas soluciones existentes:
+
+\begin{itemize}
+    \item servicios ofrecidos por organismos públicos a través de la Plataforma de Interoperabilidad (PDI)\footnote{\raggedright\url{https://www.gub.uy/agencia-gobierno-electronico-sociedad-informacion-conocimiento/tematica/catalogo-plataforma-interoperabilidad}}, que brindan acceso a información de trámites, personas y empresas, entre otros;
+    \item Proveedores de Identidad (Usuario Gub.uy) para realizar la autenticación.
+\end{itemize}
+
+
+Este trabajo se desarrolló en el marco de la edición 2026 del curso Taller de Sistemas Empresariales de la Facultad de Ingeniería de la Universidad de la República.
+
+El resto del documento se organiza de la siguiente manera. La Sección 2 presenta los conceptos necesarios para comprender el trabajo y la Sección 3 describe el problema planteado. La Sección 4 presenta la solución propuesta, la Sección 5 su arquitectura y la Sección 6 los detalles de implementación. La Sección 7 evalúa la solución y la Sección 8 describe el desarrollo del proyecto. Por último, la Sección 9 presenta las conclusiones y el trabajo a futuro.

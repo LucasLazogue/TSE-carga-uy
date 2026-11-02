@@ -1,0 +1,44 @@
+\section{Detalles de Implementación}
+
+\subsection{Productos y Herramientas}
+El componente central utiliza Jakarta EE sobre WildFly, aprovechando los servicios que proporciona el servidor para ejecutar la aplicación. La lógica de negocio se implementa mediante EJB, la persistencia mediante JPA y los servicios REST mediante JAX-RS. WildFly gestiona las transacciones y las conexiones a la base de datos. El acceso a las operaciones se restringe mediante la anotación @RolesAllowed de Jakarta EE, que indica los roles permitidos y cuya comprobación realiza el servidor.
+
+Para almacenar los datos de empresas, vehículos, viajes y demás entidades del componente central se utilizó PostgreSQL, una base de datos relacional. El acceso se realiza mediante Jakarta Persistence (JPA), con Hibernate como implementación proporcionada por WildFly. Esto permite representar las tablas y sus relaciones mediante entidades Java. La conexión se configura como un recurso del servidor, integrando las operaciones de persistencia con las transacciones de los servicios de negocio.
+
+Para la comunicación asíncrona se utiliza Jakarta Messaging (JMS), integrado con un broker Apache ActiveMQ Artemis que se ejecuta en un contenedor separado. Los mensajes se envían a colas y se procesan mediante Message-Driven Beans (MDB), componentes ejecutados por WildFly al recibir los mensajes. Esta integración se utiliza para la recepción de eventos de tracking y la generación de reportes, permitiendo separar el envío de las solicitudes de su procesamiento.
+
+Para las interfaces del backoffice se utilizó Jakarta Faces, una tecnología de Jakarta EE para construir interfaces web mediante componentes, cuya implementación es proporcionada por WildFly. Sobre esta base se incorporó PrimeFaces, una biblioteca adicional de componentes para Jakarta Faces, que permitió construir formularios, tablas paginadas y diálogos.
+
+Para el directorio de usuarios del backoffice se utilizó 389 Directory Server. Se eligió por contar con una imagen de contenedor publicada por el propio proyecto y por gestionar el almacenamiento de contraseñas con \textit{salt}, sin implementar ese mecanismo en la aplicación. También permite configurar el bloqueo por intentos de ingreso fallidos. Como trabajo adicional, fue necesario configurar la creación de la estructura del directorio y la carga inicial de los datos.
+
+Para las posiciones de tracking se utilizó MongoDB, una base de datos documental. Son el mayor volumen de datos del sistema, se agregan en forma continua y se consultan por vehículo o por viaje; separarlas de PostgreSQL evita que ese volumen afecte a las operaciones transaccionales.
+
+Para la observabilidad se utilizaron los subsistemas de OpenTelemetry y Micrometer de WildFly, el SDK de OpenTelemetry en el nodo de tracking y en la aplicación móvil, y la imagen \texttt{grafana/otel-lgtm}, que reúne el colector, Prometheus, Tempo, Loki y Grafana en un solo contenedor, pensada para desarrollo y pruebas. El entorno completo, con dos nodos de tracking y dos de balanzas, se levanta con un único comando mediante Docker Compose; el nodo de tracking incluye un generador de carga para las pruebas de performance.
+
+La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de los principales productos utilizados.
+
+\begin{table}
+\caption{Evaluación de Productos y Herramientas.}\label{tab:evaluacion-productos-herramientas}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{3cm}|>{\raggedright\arraybackslash}p{3cm}|>{\raggedright\arraybackslash}p{3cm}|}
+\hline
+    Producto &  Puntos Fuertes & Puntos Débiles & Evaluación General\\
+\hline
+    ActiveMQ Artemis & Integrado con WildFly; reentregas, cola de mensajes muertos y paginado a disco. & Protocolo propio sobre TCP, difícil de exponer en plataformas que solo publican HTTP. & Adecuado: sin pérdida de posiciones con el central detenido. \\
+\hline
+    MongoDB & Escritura rápida; índice único para descartar duplicados. & Sin transacciones compartidas con PostgreSQL. & Adecuado para las posiciones. \\
+\hline
+    OpenTelemetry y Grafana & Estándar abierto; instrumentación automática en WildFly. & La propagación por mensajería y en procesos asíncronos requirió código propio. & Permitió diagnosticar fallas de punta a punta. \\
+\hline
+    \textcolor{red}{[Productos del resto de los lotes]} & & & \\
+\hline
+\end{tabular}
+\end{table}
+
+
+\subsection{Problemas Encontrados}
+
+\textbf{Trazas interrumpidas.} La instrumentación automática no propaga el contexto de la traza a los hilos de un ejecutor, a los métodos asíncronos de los EJB ni a los observadores que se ejecutan tras confirmar una transacción, por lo que esos pasos aparecían como trazas independientes. Se resolvió pasando el contexto en forma explícita.
+
+\textbf{Caída de la base de datos.} Al detener PostgreSQL unos segundos, el broker agotaba los reintentos inmediatos y las posiciones terminaban en la cola de mensajes muertos; al volver la base, el central conservaba conexiones inválidas. Se configuraron reentregas con espera creciente y la validación de las conexiones del pool.
+
+\textcolor{red}{[Despliegue: Elastic Cloud no estuvo disponible y el componente central se desplegó en OpenShift. Completar.]}
