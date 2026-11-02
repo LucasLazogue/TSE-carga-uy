@@ -68,7 +68,7 @@ el backoffice. Las guías de [tracking](nodo-tracking/README.md#cómo-levantarlo
 | [Seguridad](docs/seguridad.md) | Identidades, roles, sesiones, gub.uy, LDAP, secretos, cifrado y acceso de los nodos |
 | [Observabilidad](docs/observabilidad.md) | Métricas, trazas, logs, muestreo, dashboards y diagnóstico |
 | [Mensajería](docs/mensajeria.md) | Brokers, destinos JMS, contratos, persistencia, deduplicación y reentregas |
-| [Infraestructura](docs/infraestructura.md) | Servicios, dependencias, puertos, volúmenes, configuración y acceso remoto |
+| [Infraestructura](docs/infraestructura.md) | Servicios, dependencias, puertos, volúmenes, configuración, acceso remoto y despliegue en OpenShift |
 | [Performance](docs/performance.md) | Volumen objetivo de tracking, cómo generar la carga y resultados de las pruebas |
 
 ## Verificación

@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ldap-datos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ldap
+spec:
+  replicas: 1
+  # el volumen es ReadWriteOnce: el pod viejo tiene que soltarlo antes de que arranque el nuevo
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ldap
+  template:
+    metadata:
+      labels:
+        app: ldap
+    spec:
+      # ns-slapd es 0750 root:dirsrv (gid 499): el uid al azar de openshift tiene que estar en ese grupo para ejecutarlo
+      securityContext:
+        supplementalGroups: [499]
+      containers:
+        - name: ldap
+          image: docker.io/389ds/dirsrv:3.1
+          # ns-slapd trae la file capability NET_BIND_SERVICE: si no esta en el bounding set, el kernel no lo ejecuta
+          securityContext:
+            capabilities:
+              add: [NET_BIND_SERVICE]
+          ports:
+            - containerPort: 3389
+          env:
+            - name: TZ
+              value: America/Montevideo
+          envFrom:
+            - secretRef:
+                name: ldap-secretos
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            tcpSocket:
+              port: 3389
+            periodSeconds: 10
+          volumeMounts:
+            - name: datos
+              mountPath: /data
+            - name: inicio
+              mountPath: /inicio
+      volumes:
+        - name: datos
+          persistentVolumeClaim:
+            claimName: ldap-datos
+        - name: inicio
+          configMap:
+            name: ldap-inicio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ldap
+spec:
+  selector:
+    app: ldap
+  ports:
+    - name: ldap
+      port: 3389
