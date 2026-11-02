@@ -1,0 +1,25 @@
+\section{Marco Teórico}
+En esta sección se describen los conceptos necesarios para comprender la solución: servicios web, autenticación y autorización, mensajería asíncrona, bases de datos documentales y observabilidad.
+
+\subsection{Servicios web}
+Los servicios web exponen funcionalidades que otras aplicaciones pueden invocar a través de una red. Facilitan la comunicación entre aplicaciones desarrolladas sobre distintas plataformas de hardware y software \cite{OracleWebServices}.
+
+REST es un estilo arquitectónico utilizado para diseñar API web. Se basa en una arquitectura cliente-servidor, comunicación sin estado y una interfaz uniforme. Una API REST entrega al cliente representaciones de los recursos solicitados mediante HTTP, utilizando formatos como JSON \cite{RedHatREST}.
+
+SOAP es un protocolo que permite intercambiar mensajes entre aplicaciones desarrolladas con distintos lenguajes y plataformas. Utiliza mensajes en formato XML y puede emplear HTTP para su transmisión \cite{RedHatSOAPREST}.
+
+\subsection{Autenticación y autorización}
+La autenticación verifica la identidad de un usuario a partir de las credenciales que presenta. La autorización determina los recursos a los que puede acceder y las operaciones que puede realizar. En el control de acceso basado en roles, los permisos dependen del rol asignado al usuario dentro del sistema \cite{IBMAuth}.
+
+OpenID Connect (OIDC) es un protocolo de autenticación basado en OAuth 2.0. Permite que una aplicación delegue la autenticación en un proveedor de identidad y reciba información sobre el usuario autenticado mediante un token de identidad \cite{MDNFederatedIdentity}.
+
+LDAP (\textit{Lightweight Directory Access Protocol}) es un protocolo de acceso a servicios de directorio. La información del directorio se organiza en entradas con una estructura jerárquica. El protocolo permite buscar, agregar, modificar y eliminar estas entradas \cite{IBMLDAP}.
+
+\subsection{Mensajería asíncrona}
+En la mensajería asíncrona, las aplicaciones se comunican a través de un intermediario, llamado \textit{broker}: el emisor deposita un mensaje en una cola y el receptor lo consume cuando está disponible. Si el receptor no está disponible, los mensajes esperan en la cola sin perderse, y si varias instancias consumen la misma cola, cada mensaje se entrega a una sola de ellas \cite{Hohpe2003}. Jakarta Messaging (JMS) es la especificación de Jakarta EE para este modelo \cite{JakartaMessaging}.
+
+\subsection{Bases de datos documentales}
+Las bases de datos documentales son bases NoSQL que almacenan la información como documentos con estructura similar a JSON, agrupados en colecciones y sin un esquema fijo de tablas \cite{MongoDBDocuments}. Se adaptan a grandes volúmenes de datos que se agregan en forma continua y se consultan por pocos criterios.
+
+\subsection{Observabilidad}
+La observabilidad es la capacidad de entender el estado interno de un sistema a partir de los logs, las métricas y las trazas que emite \cite{OTelObservability}. Una traza distribuida registra el recorrido de una operación por varios componentes; cada tramo, llamado \textit{span}, indica qué componente lo ejecutó y cuánto duró. Para unir los spans de distintos componentes, el contexto de la traza viaja con cada solicitud, por ejemplo en el encabezado \texttt{traceparent} de W3C Trace Context \cite{W3CTraceContext}. OpenTelemetry es un estándar abierto que define las API, los SDK y el protocolo (OTLP) para generar y exportar esta información \cite{OTelObservability}.

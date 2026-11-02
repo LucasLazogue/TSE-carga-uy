@@ -8,3 +8,5 @@ nodo-balanzas/claves/
 
 docs/informe/build/
 docs/informe/*.pdf
+docs/articulo/build/
+docs/articulo/*.pdf
