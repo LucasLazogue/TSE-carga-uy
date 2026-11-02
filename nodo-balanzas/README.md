@@ -70,6 +70,26 @@ Necesita una base PostgreSQL propia. Por ejemplo, con Docker (desde `nodo-balanz
 
 Las tablas las crea Hibernate al arrancar. La API queda en `http://localhost:8082/nodo-balanzas/api`.
 
+## Publicar la imagen para OpenShift
+
+El workflow **Publicar balanzas** construye este Dockerfile y publica la imagen en GitHub Container
+Registry. Se ejecuta al subir cambios de este nodo a `release` o manualmente desde
+**GitHub → Actions → Publicar balanzas → Run workflow**, seleccionando la rama que se quiera publicar.
+La ejecución manual aparece cuando el workflow está incorporado a la rama predeterminada del repositorio.
+
+Usa `GITHUB_TOKEN` con permiso `packages: write`, igual que la publicación del central; no necesita un
+token personal ni las credenciales de OpenShift. Publica estas etiquetas:
+
+- `ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:latest`
+- `ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:<sha-del-commit>`
+
+Una vez terminada correctamente la ejecución, pegar la referencia de la imagen en el formulario de
+creación del Deployment de OpenShift. La misma imagen sirve para sur y norte, cada uno con su base y
+sus claves. Para fijar una versión, usar la etiqueta del commit. Este workflow publica la imagen;
+el despliegue y el registro en el backoffice se hacen por separado.
+
+Si el paquete es privado, configurar un image pull secret en OpenShift con acceso de lectura al paquete.
+
 ## Configuración
 
 | Variable | Por defecto | Para qué |
