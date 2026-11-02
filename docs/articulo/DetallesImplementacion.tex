@@ -15,6 +15,10 @@ Para las posiciones de tracking se utilizó MongoDB, una base de datos documenta
 
 Para la observabilidad se utilizaron los subsistemas de OpenTelemetry y Micrometer de WildFly, el SDK de OpenTelemetry en el nodo de tracking y en la aplicación móvil, y la imagen \texttt{grafana/otel-lgtm}, que reúne el colector, Prometheus, Tempo, Loki y Grafana en un solo contenedor, pensada para desarrollo y pruebas. El entorno completo, con dos nodos de tracking y dos de balanzas, se levanta con un único comando mediante Docker Compose; el nodo de tracking incluye un generador de carga para las pruebas de performance.
 
+La aplicación móvil se desarrolló en Kotlin para Android con Android Studio, que provee el SDK, el emulador y el JDK con el que Gradle la compila. La interfaz se construyó con Jetpack Compose, la persistencia local con Room y la sincronización en segundo plano con WorkManager. Las llamadas a la API REST usan Retrofit con OkHttp, el ingreso se abre en el navegador mediante Custom Tabs, y la prueba de posesión de la clave del dispositivo se firma con Nimbus JOSE+JWT sobre una clave del Android Keystore.
+
+Para el despliegue transitorio del componente central se utilizó el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes. El pipeline publica las imágenes en GitHub Container Registry y actualiza el despliegue con la herramienta de línea de comandos \texttt{oc}. PostgreSQL se creó a partir de una plantilla del catálogo de la plataforma, y el componente central y el directorio LDAP se describen mediante manifiestos versionados en el repositorio.
+
 La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de los principales productos utilizados.
 
 \begin{table}
@@ -29,6 +33,14 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 \hline
     OpenTelemetry y Grafana & Estándar abierto; instrumentación automática en WildFly. & La propagación por mensajería y en procesos asíncronos requirió código propio. & Permitió diagnosticar fallas de punta a punta. \\
 \hline
+    389 Directory Server & Imagen oficial; contraseñas con \textit{salt} y bloqueo por intentos fallidos sin código propio. & La estructura y la carga inicial se configuran aparte; requiere ajustes para ejecutarse sin privilegios en OpenShift. & Adecuado para el login del backoffice. \\
+\hline
+    Jetpack Compose, Room y WorkManager & Bibliotecas oficiales de Android; la sincronización continúa con la aplicación cerrada y reintenta con esperas crecientes. & Cada cambio en el esquema local exige una migración; sin ella, la aplicación se cierra al abrir la base anterior. & Adecuado para operar sin conectividad. \\
+\hline
+    Android Studio & Reúne el SDK, el emulador y el JDK; permitió probar sin un dispositivo físico. & La configuración local (ruta del SDK y URL del servidor) es propia de cada equipo y no se versiona. & Adecuado para el desarrollo de la aplicación. \\
+\hline
+    OpenShift Developer Sandbox & Gratuito; ejecuta las mismas imágenes que publica el pipeline; volúmenes persistentes y plantillas de catálogo. & Vence a los 30 días, detiene los contenedores cada 12 horas, los ejecuta con un usuario arbitrario y solo admite tráfico entrante por su router web. & Adecuado como alternativa transitoria a Elastic Cloud. \\
+\hline
     \textcolor{red}{[Productos del resto de los lotes]} & & & \\
 \hline
 \end{tabular}
@@ -41,4 +53,8 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 
 \textbf{Caída de la base de datos.} Al detener PostgreSQL unos segundos, el broker agotaba los reintentos inmediatos y las posiciones terminaban en la cola de mensajes muertos; al volver la base, el central conservaba conexiones inválidas. Se configuraron reentregas con espera creciente y la validación de las conexiones del pool.
 
-\textcolor{red}{[Despliegue: Elastic Cloud no estuvo disponible y el componente central se desplegó en OpenShift. Completar.]}
+\textbf{Despliegue sin Elastic Cloud.} Elastic Cloud no estuvo disponible, por lo que el componente central, PostgreSQL y el directorio se desplegaron en forma transitoria en el Developer Sandbox de OpenShift; las imágenes que publica el pipeline servirán igual para Elastic Cloud. El sandbox vence a los 30 días, detiene los contenedores cada 12 horas y solo admite tráfico entrante por su router web, por lo que los nodos de tracking deberán llegar al broker con TLS de extremo a extremo, indicando el destino mediante SNI. Esto queda por validar.
+
+\textbf{Contenedores sin privilegios.} El directorio LDAP, que funcionaba en Docker Compose, se reiniciaba en forma continua en OpenShift. La plataforma ejecuta los contenedores con un usuario arbitrario y sin capacidades del kernel, y el ejecutable de 389 Directory Server solo lo puede ejecutar su grupo y requiere la capacidad \texttt{NET\_BIND\_SERVICE}. Además, el primer arranque dejaba la instalación incompleta en el volumen, y los reinicios mostraban otro error que ocultaba la causa. Se diagnosticó reproduciendo el arranque en un contenedor descartable, y se resolvió agregando ese grupo y esa capacidad, que la política de seguridad admite, sin otros privilegios.
+
+\textbf{Retorno de Usuario gub.uy.} El cliente de pruebas del curso solo admitía \texttt{http://localhost:8080} como retorno, por lo que en desarrollo una regla de WildFly lo redirige al endpoint del central. En la nube, Vercel reenvía la API al central y el retorno debe pasar por Vercel, porque el estado del login viaja en una cookie firmada de ese dominio y así los servidores no guardan estado. El móvil, que no alcanza \texttt{localhost}, usó en desarrollo la IP de la máquina y un login simulado.
