@@ -93,8 +93,10 @@ usar las métricas y trazas de la [documentación de observabilidad](../docs/obs
 Los dos nodos corren en un proyecto de OpenShift distinto al del central (R15), con la flota repartida
 como en el compose: `nodo-tracking-1` (`tracking-1`, flota sur) y `nodo-tracking-2` (`tracking-2`,
 flota norte). Publican en el broker del central por la Route `artemis-nodos`, de tipo *passthrough* en
-el puerto 443: TLS de punta a punta, con el destino indicado por SNI. No reciben conexiones, así que no
-necesitan Service ni Route propios. El manifiesto es [openshift/nodo-tracking.yaml](openshift/nodo-tracking.yaml).
+el puerto 443: TLS de punta a punta, con el destino indicado por SNI. Lo único que exponen es `/health`,
+por HTTPS, con una Route por nodo (`nodo-tracking-1-salud` y `nodo-tracking-2-salud`), para que la
+Plataforma de Observabilidad los consulte como en el compose; `/metricas` no queda expuesto. El
+manifiesto es [openshift/nodo-tracking.yaml](openshift/nodo-tracking.yaml).
 
 Antes de empezar, los nodos tienen que estar registrados y habilitados en el central con su
 identificador (CU-19); si no, el central descarta sus eventos.
@@ -136,8 +138,9 @@ identificador (CU-19); si no, el central descarta sus eventos.
 
        sed 's/replicas: 1/replicas: 0/' openshift/nodo-tracking.yaml | oc apply -f -
 
-   Para ver la salud y las métricas, `oc port-forward deploy/nodo-tracking-1 8081:8081` y abrir
-   `http://localhost:8081/health`. Mientras no hay conexión con el broker, `/health` da `503` y el pod
+   La salud se ve en `https://` + `oc get route nodo-tracking-1-salud -o jsonpath='{.spec.host}'` +
+   `/health`. Para las métricas, `oc port-forward deploy/nodo-tracking-1 8081:8081` y abrir
+   `http://localhost:8081/metricas`. Mientras no hay conexión con el broker, `/health` da `503` y el pod
    no queda listo, pero no se reinicia: el nodo guarda los eventos y reintenta solo.
 
 Cada nodo empieza a publicar apenas arranca. Para detenerlo sin borrarlo,

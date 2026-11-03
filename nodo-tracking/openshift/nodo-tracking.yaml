@@ -1,7 +1,8 @@
 # nodos de tracking en un proyecto de OpenShift distinto al del central (R15), como dos proveedores de seguimiento
 # con la flota de prueba repartida, igual que en el compose. Publican en el broker del central por la Route
-# artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI. No reciben conexiones, asi que
-# no tienen Service ni Route. Los pasos estan en ../README.md#despliegue-en-openshift
+# artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI. Lo unico que exponen es /health,
+# con HTTPS, para que la Plataforma de Observabilidad los consulte como en el compose; /metricas queda adentro.
+# Los pasos estan en ../README.md#despliegue-en-openshift
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -89,6 +90,35 @@ spec:
               - key: confianza.p12
                 path: confianza.p12
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodo-tracking-1
+spec:
+  selector:
+    app: nodo-tracking-1
+  ports:
+    - name: salud
+      port: 8081
+      targetPort: 8081
+---
+# solo la ruta /health (path), con TLS terminado en el router de OpenShift (R8). Sin un pod listo (apagado o sin
+# broker), el router responde 503
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nodo-tracking-1-salud
+spec:
+  path: /health
+  to:
+    kind: Service
+    name: nodo-tracking-1
+  port:
+    targetPort: salud
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
 # el segundo proveedor: la otra mitad de la flota, con su propio usuario en el broker. Igual al primero
 apiVersion: apps/v1
 kind: Deployment
@@ -169,3 +199,32 @@ spec:
             items:
               - key: confianza.p12
                 path: confianza.p12
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodo-tracking-2
+spec:
+  selector:
+    app: nodo-tracking-2
+  ports:
+    - name: salud
+      port: 8081
+      targetPort: 8081
+---
+# solo la ruta /health (path), con TLS terminado en el router de OpenShift (R8). Sin un pod listo (apagado o sin
+# broker), el router responde 503
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nodo-tracking-2-salud
+spec:
+  path: /health
+  to:
+    kind: Service
+    name: nodo-tracking-2
+  port:
+    targetPort: salud
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
