@@ -10,7 +10,7 @@ Las propuestas son un punto de partida para discutir. Cada decisión hay que tom
 
 **Estado:**
 
-- **Documento:** el de la PR #91.
+- **Documento:** el de la PR #94, que resolvió D3 (volumen de tracking).
 - **Código:** el de la rama principal al 2/11/2026 (hasta la PR #92).
 - **Supuestos:** la entrega final se puede hacer en GitHub, y el frontoffice se puede servir desde Vercel.
 - **Actualizado:** 2/11/2026.
@@ -62,12 +62,6 @@ Los reintentos con espera creciente y la cola de mensajes muertos ya están en D
 - **DA02:** falta su justificación (D10).
 
 *Dónde:* Obs. 5 · DA02 · R4 · R8
-
-### D3. Volumen objetivo de tracking
-
-En revisión: AC08 está resuelto (#75), pero se va a recalcular con el parque oficial del MIEM (70.997 pesados activos en 2025).
-
-*Dónde:* AC08 · prueba de performance · generador de carga
 
 ### D5. Servicio de rutas, criterio de desvío y momento de evaluación
 
