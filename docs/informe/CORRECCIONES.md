@@ -10,10 +10,10 @@ Las propuestas son un punto de partida para discutir. Cada decisión hay que tom
 
 **Estado:**
 
-- **Documento:** el de la PR #43.
-- **Código:** el de la rama principal hasta el PR #39, más las PR #40 y #41.
+- **Documento:** el de la PR #91.
+- **Código:** el de la rama principal al 2/11/2026 (hasta la PR #92).
 - **Supuestos:** la entrega final se puede hacer en GitHub, y el frontoffice se puede servir desde Vercel.
-- **Actualizado:** 13/10/2026. El 2/11 se quitaron los ítems que resuelve la PR #91 (LDAP en AC13, tecnología del nodo de balanzas y del directorio, y las filas de volumen y reintentos de la tabla de decisiones pendientes).
+- **Actualizado:** 2/11/2026.
 
 **Cómo usarlo:**
 
@@ -38,39 +38,36 @@ Las propuestas son un punto de partida para discutir. Cada decisión hay que tom
 Puntos en los que la solución descrita podría no cumplir con la letra o quedar incompleta.
 
 1. **Escalado horizontal con estado en las instancias.** La sesión del backoffice JSF guarda estado en cada instancia (AC07). La mensajería ya no: el broker está en su propio contenedor. Obs. 3.
-2. **Opcional 4 frente a R14.** Falta ver dónde corre el orquestador si el componente central tiene que estar en Elastic Cloud. Obs. 7.
-3. **Elementos "a definir" en el diagrama de distribución.** La plataforma de los componentes periféricos (R15) y la del directorio LDAP y la Plataforma de Observabilidad. Obs. 4; Obs. 6.
-4. **Trazado distribuido (punto 9 de observabilidad).** AC23 define el flujo (fin del viaje desde el móvil, componente central y consulta al nodo de balanzas), pero para trazarlo hay que instrumentar la aplicación móvil y el nodo de balanzas, que todavía no lo están.
-5. **DA10 deja casos sin cubrir.** Un viaje cuyo fin nunca se registra no se evalúa por exceso de carga, y la regla "viaje sin Guía" no puede detectarse por pesaje. Obs. 10.
-6. **Fotografía de los incidentes sin diseño.** Obs. 1.
-7. **Plazo de descargo: días hábiles o corridos.** Obs. 2.
-8. **Registro de decisiones de la entrega final.** Se piden entre cinco y ocho decisiones con sus consecuencias, y el documento tiene diez. Obs. 8.
-9. **Conexión del nodo de tracking con TLS y no con HTTPS (R8).** Obs. 5.
+2. **Opcional 4 frente a R14.** Elastic Cloud no estuvo disponible y el componente central corre en forma transitoria en OpenShift (#84). Falta describir el Escenario 2 y demostrar el escalado con varias réplicas durante la prueba de carga. Obs. 7.
+3. **Elementos "a definir" en el diagrama de distribución.** La plataforma de los componentes periféricos (R15) y la de la Plataforma de Observabilidad. El diagrama todavía dibuja el directorio LDAP en la caja "a definir". Obs. 4; Obs. 6.
+4. **DA10 deja casos sin cubrir.** Un viaje cuyo fin nunca se registra no se evalúa por exceso de carga, y la regla "viaje sin Guía" no puede detectarse por pesaje. Obs. 10.
+5. **Fotografía de los incidentes sin diseño.** Obs. 1.
+6. **Plazo de descargo: días hábiles o corridos.** Obs. 2.
+7. **Registro de decisiones de la entrega final.** Se piden entre cinco y ocho decisiones con sus consecuencias, y el documento tiene once. Obs. 8.
+8. **Conexión del nodo de tracking con TLS y no con HTTPS (R8).** Obs. 5.
 
 ## 2. Decisiones importantes
 
 Ordenadas por importancia. La letra las pide definir y justificar explícitamente, o ponen en riesgo que la solución cumpla con la letra.
 
-### D2. Mensajería: reintentos, cola de mensajes muertos y R8
+### D2. Mensajería: R8
 
-**Por qué importa:** El broker ya está en su propio contenedor, y DA02 describe cómo se reparten los mensajes y cómo se entregan. Falta la política de reintentos: hoy son 10 intentos sin espera y después la cola de mensajes muertos, sin aviso ni forma de reprocesarla. Si MongoDB queda caído más de unos 5 minutos, las posiciones terminan ahí. Además, R8 pide HTTPS y la conexión del nodo usa TLS sobre el protocolo del broker.
+Los reintentos con espera creciente y la cola de mensajes muertos ya están en DA02 (#73).
+
+**Por qué importa:** R8 pide HTTPS y la conexión del nodo usa TLS sobre el protocolo del broker.
 
 **Propuesta:**
 
-- **Reintentos:** espera creciente, por ejemplo desde 1 s, duplicándose hasta un máximo de 1 min, con 15 intentos. Así se cubre una caída de unos 10 minutos sin trancar la cola.
-- **Cola de mensajes muertos:** una métrica con la cantidad de mensajes, como la de la cola de tracking; una alerta en Grafana; y un procedimiento para reenviarlos a la cola de tracking desde la consola del broker. Como la ingesta descarta los duplicados, reenviarlos no duplica nada.
 - **R8:** consultar en el monitoreo si TLS sobre el protocolo del broker alcanza. Si no, Artemis puede llevar los mensajes sobre HTTP, y con TLS eso es HTTPS, a cambio de algo de rendimiento.
-- **DA02:** confirmar que la descripción del reparto y de la entrega es la que quiere el grupo, y escribir su justificación (D10).
+- **DA02:** falta su justificación (D10).
 
-*Dónde:* Obs. 5 · DA02 · R4 · R8 · Fila Reintentos y cola de mensajes muertos
+*Dónde:* Obs. 5 · DA02 · R4 · R8
 
 ### D3. Volumen objetivo de tracking
 
-**Por qué importa:** La letra pide estimar y justificar el volumen, con picos de al menos tres veces. Es la entrada de la prueba de performance y del generador de carga; no sale de la prueba (ver la respuesta sobre AC08). Corresponde al Lote 3.
+En revisión: AC08 está resuelto (#75), pero se va a recalcular con el parque oficial del MIEM (70.997 pesados activos en 2025).
 
-**Propuesta:** Estimar los vehículos de carga en viaje a la vez en la hora pico, a partir de los datos del parque habilitado (datos abiertos del MTOP, la DNT o el INE) y de un porcentaje en circulación, y dividir por la frecuencia de reporte del GPS. Por ejemplo, 5.000 vehículos que reportan cada 30 s dan unos 167 eventos/s, y el pico de tres veces, unos 500 eventos/s. La cantidad de vehículos hay que sacarla de una fuente.
-
-*Dónde:* AC08 · Fila Volumen
+*Dónde:* AC08 · prueba de performance · generador de carga
 
 ### D5. Servicio de rutas, criterio de desvío y momento de evaluación
 
@@ -94,15 +91,17 @@ Ordenadas por importancia. La letra las pide definir y justificar explícitament
 
 ### D9. Escalado horizontal y tecnología del backoffice (JSF o React)
 
-**Por qué importa:** AC07 pide escalar sin estado local en las instancias. DA03 sacó de la sesión el estado del ingreso, pero quedan tres beans JSF con `@ViewScoped` (`EmpresaView`, `NodoView` y `VehiculoView`), que JSF guarda en la sesión HTTP de cada instancia.
+La tecnología ya está decidida: DA05 deja el backoffice en JSF y el código lo implementa con PrimeFaces (#46). Falta en el documento quitar la fila "Tecnología del backoffice" de las decisiones pendientes.
 
-**Propuesta:** Pasar el backoffice a React: elimina el único estado de sesión del servidor y aprovecha la API y la sesión sin estado que ya existen. El costo es rehacer las pantallas JSF, entre ellas la de nodos. Si el grupo prefiere mantener JSF, documentar la afinidad de sesión en el balanceador y aceptar que, si se cae una réplica, se pierden las pantallas abiertas en ella.
+**Por qué importa:** AC07 pide escalar sin estado local en las instancias. DA03 sacó de la sesión el estado del ingreso, pero quedan cinco beans JSF con `@ViewScoped` (`EmpresaView`, `NodoView`, `NormaView`, `UsuarioView` y `VehiculoView`), que JSF guarda en la sesión HTTP de cada instancia.
 
-*Dónde:* Obs. 3 · Obs. 9 · AC07 · Filas Escalado y Tecnología del backoffice
+**Propuesta:** documentar la afinidad de sesión en el balanceador y aceptar que, si se cae una réplica, se pierden las pantallas abiertas en ella.
+
+*Dónde:* Obs. 3 · AC07 · DA05 · Filas Escalado y Tecnología del backoffice
 
 ### D10. Alternativas y justificación de las decisiones, y registro de decisiones
 
-**Por qué importa:** Las alternativas y justificaciones de DA01, DA02, DA04, DA05, DA06, DA08 y DA09 son 14 de las 25 marcas en rojo. Además, la entrega final pide un registro de 5 a 8 decisiones con contexto, alternativas descartadas y consecuencias; el documento tiene 10 y la plantilla no tiene campo de consecuencias.
+**Por qué importa:** Las alternativas y justificaciones de DA01, DA02, DA04, DA05, DA06, DA08 y DA09 son 14 de las 22 marcas en rojo. Además, la entrega final pide un registro de 5 a 8 decisiones con contexto, alternativas descartadas y consecuencias; el documento tiene 11 y la plantilla no tiene campo de consecuencias.
 
 **Propuesta:** Primero, pasar a la Vista de Restricciones lo que no se eligió, como DA01 si la impone el práctico (ver la respuesta sobre decisiones de la letra). Después, armar el registro de la entrega final con las 8 decisiones que más pesan: mensajería (DA02), sesión sin estado (DA03), ubicación del frontoffice (DA05), posiciones en MongoDB (DA07), consulta a balanzas (DA10), resiliencia (AC13), observabilidad con OpenTelemetry y conflictos del móvil (AC20). Las alternativas están en la tabla de alternativas. La justificación la escribe el grupo.
 
@@ -110,11 +109,11 @@ Ordenadas por importancia. La letra las pide definir y justificar explícitament
 
 ### D11. Orquestador del opcional 4, Escenario 2 y prueba de performance
 
-**Por qué importa:** El grupo comprometió el despliegue del componente central en un orquestador con escalado horizontal, pero R14 exige que el componente central corra en Elastic Cloud. El Escenario 2 tiene que describir ese despliegue, que sirve también para la prueba de carga.
+**Por qué importa:** El grupo comprometió el despliegue del componente central en un orquestador con escalado horizontal (opcional 4), que exige demostrar el escalado durante la prueba de carga. R14 pide Elastic Cloud, que no estuvo disponible: el componente central corre en forma transitoria en OpenShift, basado en Kubernetes (#84). El Escenario 2 tiene que describir ese despliegue, que sirve también para la prueba de carga.
 
 **Propuesta:**
 
-- Verificar si Elastic Cloud ofrece un orquestador. Si no lo ofrece, consultar en el monitoreo si se puede demostrar el escalado en otro, por ejemplo el OpenShift que el grupo ya usa, mientras producción sigue en Elastic Cloud.
+- Consultar en el monitoreo si el escalado demostrado en OpenShift alcanza para el opcional 4, dado que Elastic Cloud no estuvo disponible.
 - Describirlo como Escenario 2: orquestador, réplicas del componente central y balanceador.
 - Con varias réplicas, la sesión del backoffice JSF (D9) tiene que estar resuelta antes de la prueba. La ingesta ya escala: las réplicas comparten el broker.
 - Herramientas de la prueba: k6 para las consultas del frontoffice, donde se mide el percentil 95 menor a 500 ms, y el nodo de tracking en modo carga para la ingesta. La evidencia sale del tablero de Grafana, que ya está armado, bajando la proporción de trazas con `OTEL_PROPORCION_TRAZAS`.
@@ -127,7 +126,7 @@ También hay que decidirlas, pero son acotadas.
 
 ### M1. Plataforma de los componentes periféricos y de observabilidad
 
-El directorio LDAP ya corre junto al componente central, en OpenShift (#86).
+El directorio LDAP ya corre junto al componente central, en OpenShift (#86). El #85 publica la imagen del nodo de balanzas para desplegarlo en OpenShift desde la consola; si queda en la misma plataforma que el central, no cumple R15.
 
 **Propuesta:** créditos de estudiante de una nube que no suspenda los servicios, por ejemplo Azure o DigitalOcean a través del GitHub Student Developer Pack, que la letra referencia. Ahí pueden correr los nodos, el suplantador de la PDI y la Plataforma de Observabilidad. Evitar los planes gratuitos que apagan el servicio por inactividad. Verificar la oferta vigente.
 
@@ -159,7 +158,7 @@ El directorio LDAP ya corre junto al componente central, en OpenShift (#86).
 
 ### M14. Tecnologías, pros y contras, y habilidades
 
-**Propuesta:** una tabla corta: qué impone el curso y qué eligió el grupo, una ventaja y una desventaja de lo elegido y las habilidades que el proyecto exigió. Ver la respuesta sobre tecnologías.
+**Propuesta:** una tabla corta: qué impone el curso y qué eligió el grupo, una ventaja y una desventaja de lo elegido y las habilidades que el proyecto exigió. Ver la respuesta sobre tecnologías. La tabla de evaluación de productos del artículo (`docs/articulo`) sirve de base para las ventajas y desventajas.
 
 *Dónde:* §8.1
 
@@ -201,13 +200,13 @@ El plazo ya es un parámetro con fecha de vigencia (10 días por defecto), y un 
 
 *Dónde:* §5 Vista de Atributos de Calidad, AC07 · *Ítem:* D9, D11
 
-La mensajería ya no guarda estado en las instancias: el broker está en su propio contenedor y lo comparten todas (DA02). Queda el backoffice JSF: sus beans `@ViewScoped` viven en la sesión HTTP de cada instancia. Definir cómo escala con ellos (por ejemplo, afinidad de sesión, replicación de la sesión o pasar el backoffice a React) y reflejarlo en la vista de distribución.
+La mensajería ya no guarda estado en las instancias: el broker está en su propio contenedor y lo comparten todas (DA02). Queda el backoffice JSF: sus cinco beans `@ViewScoped` viven en la sesión HTTP de cada instancia. Definir cómo escala con ellos (por ejemplo, afinidad de sesión o replicación de la sesión) y reflejarlo en la vista de distribución.
 
 ### Obs. 4. Elementos "a definir" en el diagrama
 
 *Dónde:* §7.1 Escenario 1, diagrama de distribución · *Ítem:* M1
 
-El diagrama todavía tiene elementos "a definir": la plataforma de los componentes periféricos y la del Directorio LDAP y la Plataforma de Observabilidad. Hay que quitarlos una vez tomadas esas decisiones (Obs. 6). Si al momento de entregar alguna sigue abierta, es preferible indicar las opciones evaluadas y el criterio para elegir.
+El diagrama todavía tiene elementos "a definir": la plataforma de los componentes periféricos y la del Directorio LDAP y la Plataforma de Observabilidad. El texto ya ubica el directorio junto al componente central (#91), pero el diagrama no. Hay que quitarlos una vez tomadas esas decisiones (Obs. 6). Si al momento de entregar alguna sigue abierta, es preferible indicar las opciones evaluadas y el criterio para elegir.
 
 ### Obs. 5. R8 y la conexión del nodo de tracking
 
@@ -225,19 +224,13 @@ El texto no nombra la plataforma y el diagrama la rotula "plataforma a definir".
 
 *Dónde:* §7.2 Escenario 2 · *Ítem:* D11
 
-El orquestador del opcional 4 se tiene que compatibilizar con R14, que exige ejecutar el componente central en Elastic Cloud: verificar si Elastic Cloud ofrece un orquestador o consultarlo en el monitoreo. Con varias réplicas, la sesión del backoffice JSF pasa a ser un problema concreto (Obs. 3); la ingesta ya escala, porque las réplicas comparten el broker. Indicar también con qué herramienta se ejecuta la prueba de performance.
+El orquestador del opcional 4 se tiene que compatibilizar con R14, que exige ejecutar el componente central en Elastic Cloud. Elastic Cloud no estuvo disponible y el componente central corre en OpenShift (#84): consultar en el monitoreo si eso alcanza. Con varias réplicas, la sesión del backoffice JSF pasa a ser un problema concreto (Obs. 3); la ingesta ya escala, porque las réplicas comparten el broker. Indicar también con qué herramienta se ejecuta la prueba de performance.
 
 ### Obs. 8. Registro de decisiones de la entrega final
 
 *Dónde:* §9 Vista de Decisiones, introducción · *Ítem:* D10
 
-La entrega final pide un registro de entre cinco y ocho decisiones relevantes, cada una con su contexto, la decisión adoptada, las alternativas descartadas y las consecuencias. Esta vista tiene diez decisiones y la plantilla no incluye un campo de consecuencias. Definir si esta vista cumple ese papel (y en ese caso reducirla a ocho decisiones y agregar las consecuencias) o si el registro se entrega por separado.
-
-### Obs. 9. DA05
-
-*Dónde:* §9 DA05 · *Ítem:* D9
-
-Definir si el backoffice queda en JSF o pasa a React: hoy hay páginas JSF de empresas y vehículos que duplican el frontend, y los beans `@ViewScoped` afectan el escalado (Obs. 3).
+La entrega final pide un registro de entre cinco y ocho decisiones relevantes, cada una con su contexto, la decisión adoptada, las alternativas descartadas y las consecuencias. Esta vista tiene once decisiones y la plantilla no incluye un campo de consecuencias. Definir si esta vista cumple ese papel (y en ese caso reducirla a ocho decisiones y agregar las consecuencias) o si el registro se entrega por separado.
 
 ### Obs. 10. DA10: consecuencias
 
@@ -247,12 +240,11 @@ Faltan las consecuencias de la decisión. (a) El exceso de carga se detecta reci
 
 ## 5. Pendientes marcados en rojo
 
-Los pendientes que el documento marca en rojo y el ítem de este archivo que los resuelve.
+Los 22 pendientes que el documento marca en rojo y el ítem de este archivo que los resuelve.
 
 | Sección | Pendiente | Ítem |
 |---|---|---|
 | §5 AC06 | Definir y justificar el umbral de agregación (R12) | D6 |
-| §5 AC08 | Estimar y justificar el volumen: vehículos reportando a la vez y frecuencia de reporte | D3 |
 | §5 AC13 | Servicio de rutas: definir la espera, los reintentos y el corte | M16 |
 | §6.2 | Agregar los refinamientos de otros subsistemas que hagan falta | M15 |
 | §7.1 | Definir en qué plataforma se ejecuta la Plataforma de Observabilidad | M1 |
@@ -261,7 +253,6 @@ Los pendientes que el documento marca en rojo y el ítem de este archivo que los
 | §8.1 | Definir la tecnología del suplantador de la PDI | M18 |
 | §8.1 | Describir pros y contras de las tecnologías y las habilidades necesarias | M14 |
 | §9 DA01, DA02, DA04, DA05, DA06, DA08 y DA09 (14) | Completar las alternativas consideradas y la justificación | D10 |
-| §9 DA02 | Definir la espera entre reintentos, la cantidad de intentos y qué se hace con la cola de mensajes muertos | D2 |
 
 La tabla "Decisiones pendientes" del documento (§9.1) tiene 12 filas:
 
@@ -333,14 +324,6 @@ La plantilla define la distribución como "cómo va a funcionar el sistema en el
 
 ---
 
-**Duda:** AC08 (volumen) es medio a ensayo y error.
-
-Son dos cosas distintas. AC08 pide el volumen que la plataforma *debe* soportar: un estimado que sale del problema (cuántos vehículos reportan a la vez y cada cuánto), con picos de tres veces. Es una entrada de la prueba de performance y del generador de carga. Lo que sí sale de probar es cuánto aguanta el sistema de verdad, el punto de quiebre de AC11.
-
-**Propuesta:** Estimar el volumen antes de la prueba, con una fuente para la cantidad de vehículos (ver D3). Después, la prueba muestra si el sistema lo sostiene y dónde se quiebra.
-
----
-
 **Duda:** No sé si pondría más refinamientos.
 
 La plantilla trae "Refinamiento 1 … Refinamiento N" como ejemplo, sin un mínimo.
@@ -351,16 +334,13 @@ La plantilla trae "Refinamiento 1 … Refinamiento N" como ejemplo, sin un míni
 
 No son correcciones del documento, pero el documento las da por hechas en la entrega final.
 
-- **PostGIS, LDAP y servicio de rutas:** imagen de PostgreSQL con PostGIS, un directorio LDAP con su configuración en WildFly y el adaptador del servicio de rutas con su clave fuera del repositorio.
-- **MicroProfile Fault Tolerance (AC13):** no viene activado en la configuración por defecto de WildFly; el Dockerfile tiene que agregar su extensión y su subsistema.
+- **PostGIS y servicio de rutas:** la base sigue siendo `postgres:17`, sin PostGIS, y no hay adaptador del servicio de rutas: el origen y el destino de la Guía se marcan en un mapa del frontoffice (#82). El documento los da por hechos (opcional 11, Vista de Implementación, CU-07).
 - **Credenciales fuera del repositorio (R11):** el usuario de WildFly que crea el Dockerfile, las claves por defecto del Docker Compose (PostgreSQL y MongoDB), los usuarios del broker y su certificado TLS. Quedan en el repositorio hasta el final, a propósito; antes de la entrega se sacan y se cambian.
-- **Entorno completo con un solo comando (R13):** sumar al Docker Compose el frontend en un contenedor con su build estático (en producción lo sirve Vercel), el directorio LDAP, el nodo de balanzas y el suplantador de la PDI. MongoDB, el broker y la Plataforma de Observabilidad ya están.
-- **Validaciones del CU-07:** la asignación del viaje ya controla la capacidad, el Permiso vigente y que el chofer esté vinculado a la empresa en la fecha de la Guía, pero todavía no controla la ITV vigente ni los viajes solapados, que el documento describe.
-- **Trazado distribuido del punto 9 (AC23):** el flujo es el fin del viaje desde el móvil, el componente central y la consulta al nodo de balanzas. El central ya está instrumentado; falta que la app móvil mande el contexto de la traza (`traceparent`) en sus pedidos y que el nodo de balanzas lo continúe.
-- **Aviso al Motor de Fiscalización desde la ingesta (CU-11):** queda pendiente hasta que exista el Motor. Va donde la ingesta marca los pasos que siguen al guardado, y el Motor tiene que ignorar los avisos repetidos.
+- **Entorno completo con un solo comando (R13):** sumar al Docker Compose el frontend en un contenedor con su build estático (en producción lo sirve Vercel) y el suplantador de la PDI. MongoDB, el broker, el directorio LDAP, los nodos de balanzas y la Plataforma de Observabilidad ya están.
+- **Validaciones del CU-07:** la asignación del viaje ya controla la capacidad, el Permiso vigente, la ITV vigente y que el chofer esté vinculado a la empresa en la fecha de la Guía. Los viajes solapados se controlan recién al ejecutarlos: el central rechaza el inicio si el chofer o el vehículo tiene otro viaje en curso. Falta controlarlos al asignar, como describe el documento.
 - **Recorridos del generador de carga:** los camiones simulados van en línea recta y el recorrido esperado de la Guía sigue las rutas reales, así que el Motor vería desvíos que no existen. Queda pendiente hasta elegir el servicio de rutas (D5).
-- **Imágenes en el CI (#40):** el paso que construye las imágenes hace las del central y del nodo de tracking. Faltan las del broker (`carga-uy/artemis`) y de la Plataforma de Observabilidad (`carga-uy/observabilidad`), que entraron después.
-- **Notificación por correo (CU-11):** el #41 notifica por la bandeja web, de forma provisoria. Falta el envío por correo, y que el caso pase a notificado recién cuando se confirme el envío, como dice el documento.
+- **Imágenes en el CI (#40):** el paso que construye las imágenes hace las del central y de los nodos de tracking y de balanzas. Faltan las del broker (`carga-uy/artemis`) y de la Plataforma de Observabilidad (`carga-uy/observabilidad`).
+- **Notificación por correo (CU-11):** el #41 y el #76 notifican por la bandeja web, de forma provisoria. Falta el envío por correo, y que el caso pase a notificado recién cuando se confirme el envío, como dice el documento.
 
 ## 9. Fuentes
 
