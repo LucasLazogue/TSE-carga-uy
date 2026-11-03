@@ -25,12 +25,17 @@ Para el despliegue transitorio del componente central se utilizó el Developer S
 
 La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de los principales productos utilizados.
 
-\begin{table}
-\caption{Evaluación de Productos y Herramientas.}\label{tab:evaluacion-productos-herramientas}
-\begin{tabular}{|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{3cm}|>{\raggedright\arraybackslash}p{3cm}|>{\raggedright\arraybackslash}p{3cm}|}
+{\small\setlength{\tabcolsep}{3pt}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\raggedright\arraybackslash}p{3.4cm}|>{\raggedright\arraybackslash}p{2.2cm}|}
+\caption{Evaluación de Productos y Herramientas.}\label{tab:evaluacion-productos-herramientas}\\
 \hline
     Producto &  Puntos Fuertes & Puntos Débiles & Evaluación General\\
 \hline
+\endfirsthead
+\hline
+    Producto &  Puntos Fuertes & Puntos Débiles & Evaluación General\\
+\hline
+\endhead
     ActiveMQ Artemis & Integrado con WildFly; reentregas, cola de mensajes muertos y paginado a disco. & Protocolo propio sobre TCP, difícil de exponer en plataformas que solo publican HTTP. & Adecuado: sin pérdida de posiciones con el central detenido. \\
 \hline
     MongoDB & Escritura rápida; índice único para descartar duplicados. & Sin transacciones compartidas con PostgreSQL. & Adecuado para las posiciones. \\
@@ -55,8 +60,7 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 \hline
     GitHub Actions, JaCoCo y SpotBugs & Compilación, pruebas y análisis de cada cambio del central antes de integrarlo. & Sin pruebas automatizadas sobre WildFly; la integración se verificó aparte. & Adecuado para detectar regresiones. \\
 \hline
-\end{tabular}
-\end{table}
+\end{longtable}}
 
 
 \subsection{Problemas Encontrados}
