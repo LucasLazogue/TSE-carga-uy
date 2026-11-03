@@ -51,7 +51,7 @@ a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado d
 | `NODO_MAX_LOTE` | `500` | Máximo de eventos por publicación |
 | `NODO_RUTAS` | `rutas-prueba.json` | Archivo JSON con la flota (admite `desvioKm` por vehículo) |
 | `NODO_VEHICULOS_EXTRA` | `0` | Vehículos `SIM0001...` con rutas al azar, para la prueba de carga |
-| `NODO_INTERVALO_SEG` | `10` | Cada cuánto reporta cada vehículo |
+| `NODO_INTERVALO_SEG` | `10` | Cada cuánto reporta cada vehículo. 10 s para desarrollo; la prueba de performance usa 30 s, la frecuencia del [volumen objetivo](../docs/performance.md#volumen-objetivo-de-tracking) |
 | `NODO_ACELERAR` | `1` | Multiplica la distancia de cada tick; la hora sigue siendo la real |
 | `NODO_DUPLICADOS` | `0` | Fracción de eventos que se publican dos veces |
 | `NODO_DESORDENAR` | `false` | Mezcla cada lote antes de publicarlo |
