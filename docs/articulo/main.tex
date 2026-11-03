@@ -10,6 +10,11 @@
 \usepackage{xurl} % corta las URL largas de las referencias
 \usepackage[spanish,es-tabla]{babel} % "Tabla" en lugar de "Cuadro"
 \usepackage{array}
+\usepackage{longtable}
+% titulos de longtable con el mismo formato que las tablas de llncs ("Tabla 1." en negrita)
+\makeatletter
+\def\LT@makecaption#1#2#3{\LT@mcol\LT@cols c{\hbox to\z@{\hss\parbox[t]\textwidth{\@makecaption{#2}{#3}}\hss}}}
+\makeatother
 
 % Used for displaying a sample figure. If possible, figure files should
 % be included in EPS format.
