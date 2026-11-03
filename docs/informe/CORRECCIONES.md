@@ -13,7 +13,7 @@ Las propuestas son un punto de partida para discutir. Cada decisión hay que tom
 - **Documento:** el de la PR #43.
 - **Código:** el de la rama principal hasta el PR #39, más las PR #40 y #41.
 - **Supuestos:** la entrega final se puede hacer en GitHub, y el frontoffice se puede servir desde Vercel.
-- **Actualizado:** 13/10/2026.
+- **Actualizado:** 13/10/2026. El 2/11 se quitaron los ítems que resuelve la PR #91 (LDAP en AC13, tecnología del nodo de balanzas y del directorio, y las filas de volumen y reintentos de la tabla de decisiones pendientes).
 
 **Cómo usarlo:**
 
@@ -125,9 +125,11 @@ Ordenadas por importancia. La letra las pide definir y justificar explícitament
 
 También hay que decidirlas, pero son acotadas.
 
-### M1. Plataforma de los componentes periféricos, LDAP y observabilidad
+### M1. Plataforma de los componentes periféricos y de observabilidad
 
-**Propuesta:** créditos de estudiante de una nube que no suspenda los servicios, por ejemplo Azure o DigitalOcean a través del GitHub Student Developer Pack, que la letra referencia. Ahí pueden correr los nodos, el suplantador de la PDI, el directorio LDAP y la Plataforma de Observabilidad. Evitar los planes gratuitos que apagan el servicio por inactividad. Verificar la oferta vigente.
+El directorio LDAP ya corre junto al componente central, en OpenShift (#86).
+
+**Propuesta:** créditos de estudiante de una nube que no suspenda los servicios, por ejemplo Azure o DigitalOcean a través del GitHub Student Developer Pack, que la letra referencia. Ahí pueden correr los nodos, el suplantador de la PDI y la Plataforma de Observabilidad. Evitar los planes gratuitos que apagan el servicio por inactividad. Verificar la oferta vigente.
 
 *Dónde:* Obs. 4 · Obs. 6 · §7.1 · R15 · Fila Plataforma de los periféricos
 
@@ -167,15 +169,15 @@ También hay que decidirlas, pero son acotadas.
 
 *Dónde:* §6.2
 
-### M16. Valores de AC13 para el servicio de rutas y el directorio LDAP
+### M16. Valores de AC13 para el servicio de rutas
 
-**Propuesta:** para el servicio de rutas, los mismos valores que balanzas (espera de 5 s, 2 reintentos a 1 s y 2 s, y corte por 60 s tras 5 fallas en 10 llamadas), porque registrar una Guía no es urgente y el recorrido puede quedar pendiente. Para LDAP, los mismos que Usuario gub.uy (espera de 5 s, sin reintentos), porque es un ingreso interactivo.
+**Propuesta:** los mismos valores que balanzas (espera de 5 s, 2 reintentos a 1 s y 2 s, y corte por 60 s tras 5 fallas en 10 llamadas), porque registrar una Guía no es urgente y el recorrido puede quedar pendiente.
 
 *Dónde:* AC13
 
-### M18. Tecnología del nodo de balanzas, del suplantador de la PDI y del directorio LDAP
+### M18. Tecnología del suplantador de la PDI
 
-**Propuesta:** el nodo de balanzas y el suplantador de la PDI con el mismo stack que el componente central (Jakarta EE: JAX-RS para balanzas y JAX-WS para el SOAP de la PDI), porque el grupo ya lo conoce. Para el directorio, OpenLDAP en un contenedor.
+**Propuesta:** el mismo stack que el componente central y el nodo de balanzas (Jakarta EE, con JAX-WS para el SOAP de la PDI), porque el grupo ya lo conoce.
 
 *Dónde:* §8.1
 
@@ -245,29 +247,26 @@ Faltan las consecuencias de la decisión. (a) El exceso de carga se detecta reci
 
 ## 5. Pendientes marcados en rojo
 
-Los 25 pendientes que el documento marca en rojo y el ítem de este archivo que los resuelve.
+Los pendientes que el documento marca en rojo y el ítem de este archivo que los resuelve.
 
 | Sección | Pendiente | Ítem |
 |---|---|---|
 | §5 AC06 | Definir y justificar el umbral de agregación (R12) | D6 |
 | §5 AC08 | Estimar y justificar el volumen: vehículos reportando a la vez y frecuencia de reporte | D3 |
 | §5 AC13 | Servicio de rutas: definir la espera, los reintentos y el corte | M16 |
-| §5 AC13 | Directorio LDAP: definir la espera, los reintentos y el corte | M16 |
 | §6.2 | Agregar los refinamientos de otros subsistemas que hagan falta | M15 |
-| §7.1 | Definir en qué plataforma se ejecutan el Directorio LDAP y la Plataforma de Observabilidad | M1 |
+| §7.1 | Definir en qué plataforma se ejecuta la Plataforma de Observabilidad | M1 |
 | §7.1 | Describir los requerimientos no funcionales que justifican el escenario | M13 |
 | §7.2 | Describir el despliegue en un orquestador de contenedores (opcional 4), compatible con R14 | D11 |
-| §8.1 | Definir la tecnología del nodo de balanzas, del suplantador de la PDI y del directorio LDAP | M18 |
+| §8.1 | Definir la tecnología del suplantador de la PDI | M18 |
 | §8.1 | Describir pros y contras de las tecnologías y las habilidades necesarias | M14 |
 | §9 DA01, DA02, DA04, DA05, DA06, DA08 y DA09 (14) | Completar las alternativas consideradas y la justificación | D10 |
 | §9 DA02 | Definir la espera entre reintentos, la cantidad de intentos y qué se hace con la cola de mensajes muertos | D2 |
 
-La tabla "Decisiones pendientes" del documento (§9.1) tiene 14 filas:
+La tabla "Decisiones pendientes" del documento (§9.1) tiene 12 filas:
 
 | Fila | Ítem |
 |---|---|
-| Volumen de tracking | D3 |
-| Reintentos y cola de mensajes muertos | D2 |
 | Servicio de rutas y geocodificación · Criterio de desvío de ruta · Momento de evaluación del desvío | D5 |
 | Umbral de agregación | D6 |
 | Escalado y orquestador · Prueba de performance | D11 |
