@@ -387,7 +387,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \textbf{\underline{Flujo principal:}}\par
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item El administrador accede a la gestión de nodos y el sistema lista los nodos registrados con su tipo, punto de acceso y estado.
-    \item Selecciona registrar un nodo e indica su tipo (balanzas o tracking), un identificador y su punto de acceso.
+    \item Selecciona registrar un nodo e indica su tipo (balanzas o tracking), un identificador y su punto de acceso. Para un nodo de balanzas indica también la clave con la que el componente central se autentica ante el nodo.
     \item El sistema valida que el identificador no esté en uso.
     \item Registra el nodo en estado \emph{deshabilitado}.
     \item El administrador habilita el nodo.
@@ -396,11 +396,12 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Si el identificador ya está en uso, se rechaza el registro.
+    \item Si es un nodo de balanzas y no se indica la clave, se rechaza el registro. La clave se puede cambiar después sin modificar el estado del nodo.
     \item Modificar el punto de acceso de un nodo habilitado lo vuelve a \emph{deshabilitado} hasta que el administrador lo habilite de nuevo.
     \item Deshabilitar un nodo de balanzas deja pendiente la evaluación de exceso de carga sin detener la plataforma.
     \item Deshabilitar un nodo de tracking hace que se descarten sus eventos y los viajes en curso quedan sin actualización de ruta.
     \item La baja es lógica: los pesajes y las posiciones que el nodo reportó siguen siendo evidencia de los casos generados.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} El nodo queda registrado con su tipo, punto de acceso y estado. Solo los nodos habilitados intercambian datos con el componente central y ninguna credencial queda en el repositorio. \\ \hline
+\textbf{\underline{Postcondiciones:}} El nodo queda registrado con su tipo, punto de acceso y estado, y la clave de un nodo de balanzas queda guardada cifrada (DA08). Solo los nodos habilitados intercambian datos con el componente central y ninguna credencial queda en el repositorio. \\ \hline
 \end{tabular}
 \end{table}

@@ -27,7 +27,9 @@ La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas l
 
 \textbf{Sistemas externos.} Usuario gub.uy (OpenID Connect), el servicio de correo (SMTP) y el servicio de rutas (HTTPS), del que el componente central obtiene el recorrido esperado de cada Guía.
 
-\textbf{Directorio LDAP y Plataforma de Observabilidad.} Se despliegan fuera del componente central. El componente central valida contra el directorio, por LDAPS, el ingreso al backoffice (opcional 8). El componente central y los nodos periféricos envían su telemetría a la Plataforma de Observabilidad, que consulta además los \emph{health checks} del componente central. \pendiente{definir en qué plataforma se ejecutan el Directorio LDAP y la Plataforma de Observabilidad.}
+\textbf{Directorio LDAP y Plataforma de Observabilidad.} Se despliegan fuera del componente central. El componente central valida contra el directorio, por LDAPS, el ingreso al backoffice (opcional 8). El componente central y los nodos periféricos envían su telemetría a la Plataforma de Observabilidad, que consulta además los \emph{health checks} del componente central. El Directorio LDAP se ejecuta junto al componente central. \pendiente{definir en qué plataforma se ejecuta la Plataforma de Observabilidad.}
+
+\textbf{Despliegue transitorio.} Elastic Cloud no estuvo disponible durante el desarrollo. Mientras tanto, el componente central, PostgreSQL y el Directorio LDAP se ejecutan en el Developer Sandbox de Red Hat OpenShift, con las mismas imágenes de contenedor que publica el pipeline de integración continua.
 
 \pendiente{describir los requerimientos no funcionales que justifican este escenario.}
 
