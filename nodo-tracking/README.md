@@ -151,7 +151,9 @@ reinicia con el valor nuevo:
 
 Después del primer despliegue, el workflow Deploy tracking actualiza la imagen de los dos nodos en
 cada push a `release` que modifica el nodo. Usa la cuenta de servicio `github-deploy` del proyecto de
-los nodos, que solo puede ver y actualizar Deployments ([openshift/despliegue-ci.yaml](openshift/despliegue-ci.yaml)).
+los nodos ([openshift/despliegue-ci.yaml](openshift/despliegue-ci.yaml)). El mismo token sirve para las
+pruebas: encender y apagar los nodos, cambiar la carga y ver pods, logs y métricas; no lee Secrets ni
+crea o borra recursos.
 No aplica el manifiesto, así que respeta las réplicas y las variables cambiadas con `oc scale` y
 `oc set env`; un cambio en el manifiesto se aplica a mano con `oc apply`.
 
