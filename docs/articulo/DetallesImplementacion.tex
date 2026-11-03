@@ -19,6 +19,8 @@ Para la observabilidad se utilizaron los subsistemas de OpenTelemetry y Micromet
 
 La aplicación móvil se desarrolló en Kotlin para Android con Android Studio, que provee el SDK, el emulador y el JDK con el que Gradle la compila. La interfaz se construyó con Jetpack Compose, la persistencia local con Room y la sincronización en segundo plano con WorkManager. Las llamadas a la API REST usan Retrofit con OkHttp, el ingreso se abre en el navegador mediante Custom Tabs, y la prueba de posesión de la clave del dispositivo se firma con Nimbus JOSE+JWT sobre una clave del Android Keystore.
 
+Para la integración continua se utilizó GitHub Actions, con JaCoCo para la cobertura y SpotBugs para el análisis estático del componente central.
+
 Para el despliegue transitorio del componente central se utilizó el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes. El pipeline publica las imágenes en GitHub Container Registry y actualiza el despliegue con la herramienta de línea de comandos \texttt{oc}. PostgreSQL se creó a partir de una plantilla del catálogo de la plataforma, y el componente central y el directorio LDAP se describen mediante manifiestos versionados en el repositorio.
 
 La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de los principales productos utilizados.
@@ -42,6 +44,10 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
     Android Studio & Reúne el SDK, el emulador y el JDK; permitió probar sin un dispositivo físico. & La configuración local (ruta del SDK y URL del servidor) es propia de cada equipo y no se versiona. & Adecuado para el desarrollo de la aplicación. \\
 \hline
     OpenShift Developer Sandbox & Gratuito; ejecuta las mismas imágenes que publica el pipeline; volúmenes persistentes y plantillas de catálogo. & Vence a los 30 días, detiene los contenedores cada 12 horas, los ejecuta con un usuario arbitrario y solo admite tráfico entrante por su router web. & Adecuado como alternativa transitoria a Elastic Cloud. \\
+\hline
+    PostgreSQL & Transacciones; \textit{triggers} que protegen la pista de auditoría. & Los \textit{triggers} se instalan desde la aplicación al arrancar, porque Hibernate no los genera. & Adecuado para los datos transaccionales. \\
+\hline
+    GitHub Actions, JaCoCo y SpotBugs & Compilación, pruebas y análisis de cada cambio del central antes de integrarlo. & Sin pruebas automatizadas sobre WildFly; la integración se verificó aparte. & Adecuado para detectar regresiones. \\
 \hline
     \textcolor{red}{[Productos del resto de los lotes]} & & & \\
 \hline
