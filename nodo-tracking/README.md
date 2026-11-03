@@ -86,6 +86,51 @@ El recuento depende también de los datos anteriores, los eventos rechazados y l
 no equivale por sí solo al contador `generados`. Para correlacionar lo publicado con lo procesado,
 usar las métricas y trazas de la [documentación de observabilidad](../docs/observabilidad.md).
 
+## Despliegue en OpenShift
+
+El nodo corre en un proyecto de OpenShift distinto al del central (R15) y publica en el broker del
+central por la Route `artemis-nodos`, de tipo *passthrough* en el puerto 443: TLS de punta a punta, con
+el destino indicado por SNI. No recibe conexiones, así que no necesita Service ni Route propios. El
+manifiesto es [openshift/nodo-tracking.yaml](openshift/nodo-tracking.yaml).
+
+Antes de empezar, el nodo tiene que estar registrado y habilitado en el central con su identificador
+(CU-19); si no, el central descarta sus eventos.
+
+1. **Imagen.** El workflow [Publicar tracking](../.github/workflows/publicar-tracking.yml) publica
+   `ghcr.io/lucaslazogue/tse-carga-uy/nodo-tracking` (`latest` y el SHA) en cada push a `release` que
+   modifica el nodo, o a mano desde Actions. El paquete tiene que ser público para que OpenShift lo
+   descargue sin credenciales.
+2. **Sesión.** Iniciar sesión en el proyecto del nodo como se describe en
+   [acceso a OpenShift](../docs/infraestructura.md#acceso-a-openshift). Si se trabaja con otros clústeres,
+   conviene un `KUBECONFIG` aparte para no cambiar el contexto activo.
+3. **Truststore.** El broker usa un certificado propio. El script lo baja por la Route y arma
+   `confianza.p12` con la clave que se elija:
+
+       NODO_TRUSTSTORE_CLAVE=CLAVE_DEL_TRUSTSTORE sh openshift/truststore.sh HOST_DE_LA_ROUTE
+
+   Imprime la huella SHA-256 del certificado. Antes de usar el archivo, compararla con la del keystore
+   del broker (`keytool -list -v -keystore artemis.p12`), que está en el Secret de Artemis del proyecto
+   del central.
+4. **Secret.** La clave del usuario del nodo en el broker, la del truststore y el archivo:
+
+       oc create secret generic nodo-tracking-secretos \
+         --from-literal=NODO_JMS_CLAVE=CLAVE_DEL_NODO \
+         --from-literal=NODO_TRUSTSTORE_CLAVE=CLAVE_DEL_TRUSTSTORE \
+         --from-file=confianza.p12
+
+5. **Despliegue.** El manifiesto fija el host del broker, `tracking-1`, la flota sur y la frecuencia
+   del volumen objetivo (30 s), y deja apagado OpenTelemetry hasta que haya colector en la nube:
+
+       oc apply -f openshift/nodo-tracking.yaml
+       oc rollout status deployment/nodo-tracking
+       oc logs deploy/nodo-tracking
+
+   Para ver la salud y las métricas, `oc port-forward deploy/nodo-tracking 8081:8081` y abrir
+   `http://localhost:8081/health`. Mientras no hay conexión con el broker, `/health` da `503` y el pod
+   no queda listo, pero no se reinicia: el nodo guarda los eventos y reintenta solo.
+
+Para detenerlo sin borrarlo, `oc scale deployment/nodo-tracking --replicas=0`.
+
 ## Tests
 
     mvn verify
