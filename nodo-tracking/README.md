@@ -49,6 +49,7 @@ a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado d
 | `NODO_JMS_URL` | `tcp://localhost:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev` | Dirección del broker, con TLS |
 | `NODO_PUERTO` | `8081` | Puerto de `/health` y `/metricas` |
 | `NODO_MAX_LOTE` | `500` | Máximo de eventos por publicación |
+| `NODO_MAX_PENDIENTES` | `200000` | Tope de eventos esperando el broker (unos 45 MB). Lleno, descarta los nuevos y los cuenta en `descartados` |
 | `NODO_RUTAS` | `rutas-prueba.json` | Archivo JSON con la flota (admite `desvioKm` por vehículo) |
 | `NODO_VEHICULOS_EXTRA` | `0` | Vehículos `SIM0001...` con rutas al azar, para la prueba de carga |
 | `NODO_INTERVALO_SEG` | `10` | Cada cuánto reporta cada vehículo. 10 s para desarrollo; la prueba de performance usa 30 s, la frecuencia del [volumen objetivo](../docs/performance.md#volumen-objetivo-de-tracking) |
@@ -69,7 +70,8 @@ Por ejemplo, desde `carga-uy`:
 
 - `GET http://localhost:8081/health`: `200 {"estado":"UP"}` si está conectado al broker; si no,
   `503 {"estado":"DOWN"}`.
-- `GET http://localhost:8081/metricas`: generados, duplicados, publicados, pendientes y reintentos.
+- `GET http://localhost:8081/metricas`: generados, duplicados, publicados, pendientes, reintentos y
+  descartados.
   Las mismas métricas van por OTLP a la Plataforma de Observabilidad, junto con una traza por cada
   lote publicado (el contexto viaja en la propiedad `traceparent` de cada mensaje) y los logs.
   Las mismas métricas quedan en el log cada `NODO_LOG_METRICAS_SEG` segundos
@@ -88,13 +90,14 @@ usar las métricas y trazas de la [documentación de observabilidad](../docs/obs
 
 ## Despliegue en OpenShift
 
-El nodo corre en un proyecto de OpenShift distinto al del central (R15) y publica en el broker del
-central por la Route `artemis-nodos`, de tipo *passthrough* en el puerto 443: TLS de punta a punta, con
-el destino indicado por SNI. No recibe conexiones, así que no necesita Service ni Route propios. El
-manifiesto es [openshift/nodo-tracking.yaml](openshift/nodo-tracking.yaml).
+Los dos nodos corren en un proyecto de OpenShift distinto al del central (R15), con la flota repartida
+como en el compose: `nodo-tracking-1` (`tracking-1`, flota sur) y `nodo-tracking-2` (`tracking-2`,
+flota norte). Publican en el broker del central por la Route `artemis-nodos`, de tipo *passthrough* en
+el puerto 443: TLS de punta a punta, con el destino indicado por SNI. No reciben conexiones, así que no
+necesitan Service ni Route propios. El manifiesto es [openshift/nodo-tracking.yaml](openshift/nodo-tracking.yaml).
 
-Antes de empezar, el nodo tiene que estar registrado y habilitado en el central con su identificador
-(CU-19); si no, el central descarta sus eventos.
+Antes de empezar, los nodos tienen que estar registrados y habilitados en el central con su
+identificador (CU-19); si no, el central descarta sus eventos.
 
 1. **Imagen.** El workflow [Publicar tracking](../.github/workflows/publicar-tracking.yml) publica
    `ghcr.io/lucaslazogue/tse-carga-uy/nodo-tracking` (`latest` y el SHA) en cada push a `release` que
@@ -104,32 +107,40 @@ Antes de empezar, el nodo tiene que estar registrado y habilitado en el central 
    [acceso a OpenShift](../docs/infraestructura.md#acceso-a-openshift). Si se trabaja con otros clústeres,
    conviene un `KUBECONFIG` aparte para no cambiar el contexto activo.
 3. **Truststore.** El broker usa un certificado propio. El script lo baja por la Route y arma
-   `confianza.p12` con la clave que se elija:
+   `confianza.p12` con la clave que se elija. Lo usan los dos nodos y solo hay que rehacerlo si cambia
+   el certificado del broker o la Route:
 
        NODO_TRUSTSTORE_CLAVE=CLAVE_DEL_TRUSTSTORE sh openshift/truststore.sh HOST_DE_LA_ROUTE
 
    Imprime la huella SHA-256 del certificado. Antes de usar el archivo, compararla con la del keystore
    del broker (`keytool -list -v -keystore artemis.p12`), que está en el Secret de Artemis del proyecto
    del central.
-4. **Secret.** La clave del usuario del nodo en el broker, la del truststore y el archivo:
+4. **Secret.** Las claves de los usuarios `tracking-1` y `tracking-2` en el broker, la del truststore
+   y el archivo:
 
        oc create secret generic nodo-tracking-secretos \
-         --from-literal=NODO_JMS_CLAVE=CLAVE_DEL_NODO \
+         --from-literal=TRACKING_1_CLAVE=CLAVE_DE_TRACKING_1 \
+         --from-literal=TRACKING_2_CLAVE=CLAVE_DE_TRACKING_2 \
          --from-literal=NODO_TRUSTSTORE_CLAVE=CLAVE_DEL_TRUSTSTORE \
          --from-file=confianza.p12
 
-5. **Despliegue.** El manifiesto fija el host del broker, `tracking-1`, la flota sur y la frecuencia
+5. **Despliegue.** El manifiesto fija el host del broker, los usuarios, las flotas y la frecuencia
    del volumen objetivo (30 s), y deja apagado OpenTelemetry hasta que haya colector en la nube:
 
        oc apply -f openshift/nodo-tracking.yaml
-       oc rollout status deployment/nodo-tracking
-       oc logs deploy/nodo-tracking
+       oc rollout status deployment/nodo-tracking-1
+       oc logs deploy/nodo-tracking-1
 
-   Para ver la salud y las métricas, `oc port-forward deploy/nodo-tracking 8081:8081` y abrir
+   Para ver la salud y las métricas, `oc port-forward deploy/nodo-tracking-1 8081:8081` y abrir
    `http://localhost:8081/health`. Mientras no hay conexión con el broker, `/health` da `503` y el pod
    no queda listo, pero no se reinicia: el nodo guarda los eventos y reintenta solo.
 
-Para detenerlo sin borrarlo, `oc scale deployment/nodo-tracking --replicas=0`.
+Cada nodo empieza a publicar apenas arranca. Para detenerlo sin borrarlo,
+`oc scale deployment/nodo-tracking-1 --replicas=0`, y `--replicas=1` para volver. Para la [prueba de
+carga](../docs/performance.md), los vehículos extra se cambian sin tocar el manifiesto; el pod se
+reinicia con el valor nuevo:
+
+    oc set env deployment/nodo-tracking-1 deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
 
 ## Tests
 

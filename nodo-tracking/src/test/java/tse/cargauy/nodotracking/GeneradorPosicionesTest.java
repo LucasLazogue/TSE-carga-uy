@@ -64,6 +64,29 @@ class GeneradorPosicionesTest {
     }
 
     @Test
+    void conElTopeLlenoDescartaLasNuevasYConservaLasViejas() {
+        GeneradorPosiciones generador = generador(flota(), 3, 500, 5);
+        publicador.fallar = true;
+
+        generador.generar(INICIO);
+        generador.generar(INICIO.plusSeconds(10));
+        generador.publicarPendientes(INICIO.plusSeconds(11));
+        assertEquals(5, generador.cantidadPendiente());
+        assertEquals(1, generador.descartados.get());
+
+        publicador.fallar = false;
+        generador.publicarPendientes(INICIO.plusSeconds(20));
+        assertEquals(5, publicador.recibidos.size());
+        // se publicaron los tres del primer tick, que son los mas viejos
+        assertTrue(publicador.recibidos.stream().limit(3).allMatch(m -> m.contains("2026-10-08T13:00:00Z")));
+
+        // con lugar de nuevo, vuelve a aceptar
+        generador.generar(INICIO.plusSeconds(30));
+        assertEquals(3, generador.cantidadPendiente());
+        assertEquals(1, generador.descartados.get());
+    }
+
+    @Test
     void sinCoberturaAcumulaYAlVolverPublicaTodoJunto() {
         ConfigFlota flota = new ConfigFlota(null, 0, Duration.ofSeconds(10), 1, 0, false,
                 Duration.ofMinutes(1), Duration.ofMinutes(1));
@@ -108,7 +131,11 @@ class GeneradorPosicionesTest {
     }
 
     private GeneradorPosiciones generador(ConfigFlota flota, int vehiculos, int maxLote) {
-        Config config = new Config("nodo-test", 0, "no-se-usa", "u", "c", maxLote);
+        return generador(flota, vehiculos, maxLote, 1000);
+    }
+
+    private GeneradorPosiciones generador(ConfigFlota flota, int vehiculos, int maxLote, int maxPendientes) {
+        Config config = new Config("nodo-test", 0, "no-se-usa", "u", "c", maxLote, maxPendientes);
         List<VehiculoSimulado> lista = new ArrayList<>();
         for (int i = 0; i < vehiculos; i++) {
             lista.add(new VehiculoSimulado("V" + i, RUTA, 80, 0));

@@ -1,10 +1,11 @@
-# nodo de tracking en un proyecto de OpenShift distinto al del central (R15). Publica en el broker del
-# central por la Route artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI.
-# No recibe conexiones, asi que no tiene Service ni Route. Los pasos estan en ../README.md#despliegue-en-openshift
+# nodos de tracking en un proyecto de OpenShift distinto al del central (R15), como dos proveedores de seguimiento
+# con la flota de prueba repartida, igual que en el compose. Publican en el broker del central por la Route
+# artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI. No reciben conexiones, asi que
+# no tienen Service ni Route. Los pasos estan en ../README.md#despliegue-en-openshift
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nodo-tracking
+  name: nodo-tracking-1
 spec:
   replicas: 1
   # dos pods simularian dos veces la misma flota (posiciones dobles por vehiculo): el viejo termina antes
@@ -12,11 +13,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: nodo-tracking
+      app: nodo-tracking-1
   template:
     metadata:
       labels:
-        app: nodo-tracking
+        app: nodo-tracking-1
     spec:
       containers:
         - name: nodo-tracking
@@ -37,7 +38,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: nodo-tracking-secretos
-                  key: NODO_JMS_CLAVE
+                  key: TRACKING_1_CLAVE
             - name: NODO_TRUSTSTORE_CLAVE
               valueFrom:
                 secretKeyRef:
@@ -52,6 +53,9 @@ spec:
             # la frecuencia del volumen objetivo (AC08); el compose usa 10 s para desarrollo
             - name: NODO_INTERVALO_SEG
               value: "30"
+            # la carga de la prueba: oc set env deployment/nodo-tracking-1 NODO_VEHICULOS_EXTRA=7500
+            - name: NODO_VEHICULOS_EXTRA
+              value: "0"
             # hasta que haya Plataforma de Observabilidad en la nube: sin colector, el SDK llena el log de errores
             - name: OTEL_SDK_DISABLED
               value: "true"
@@ -68,6 +72,87 @@ spec:
               memory: 512Mi
           # /health da 503 mientras no hay conexion con el broker: el pod no queda listo pero no se reinicia,
           # porque el nodo guarda los eventos y reintenta solo
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            periodSeconds: 10
+          volumeMounts:
+            - name: secretos
+              mountPath: /secretos
+              readOnly: true
+      volumes:
+        - name: secretos
+          secret:
+            secretName: nodo-tracking-secretos
+            items:
+              - key: confianza.p12
+                path: confianza.p12
+---
+# el segundo proveedor: la otra mitad de la flota, con su propio usuario en el broker. Igual al primero
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodo-tracking-2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nodo-tracking-2
+  template:
+    metadata:
+      labels:
+        app: nodo-tracking-2
+    spec:
+      containers:
+        - name: nodo-tracking
+          image: ghcr.io/lucaslazogue/tse-carga-uy/nodo-tracking:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          env:
+            - name: TZ
+              value: America/Montevideo
+            - name: ARTEMIS_HOST
+              value: artemis-nodos-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: NODO_ID
+              value: tracking-2
+            - name: NODO_JMS_USUARIO
+              value: tracking-2
+            - name: NODO_JMS_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: TRACKING_2_CLAVE
+            - name: NODO_TRUSTSTORE_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: NODO_TRUSTSTORE_CLAVE
+            - name: NODO_JMS_URL
+              value: tcp://$(ARTEMIS_HOST):443?sslEnabled=true&sniHost=$(ARTEMIS_HOST)&trustStorePath=/secretos/confianza.p12&trustStorePassword=$(NODO_TRUSTSTORE_CLAVE)
+            - name: NODO_RUTAS
+              value: flotas/flota-norte.json
+            - name: NODO_INTERVALO_SEG
+              value: "30"
+            # la carga de la prueba: oc set env deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
+            - name: NODO_VEHICULOS_EXTRA
+              value: "0"
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+            - name: OTEL_SERVICE_NAME
+              value: nodo-tracking
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: nodo.id=tracking-2,service.instance.id=tracking-2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
           readinessProbe:
             httpGet:
               path: /health
