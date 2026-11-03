@@ -39,6 +39,12 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 \hline
     389 Directory Server & Imagen oficial; contraseñas con \textit{salt} y bloqueo por intentos fallidos sin código propio. & La estructura y la carga inicial se configuran aparte; requiere ajustes para ejecutarse sin privilegios en OpenShift. & Adecuado para el login del backoffice. \\
 \hline
+    PrimeFaces & Formularios, tablas paginadas, diálogos y gráficos listos para usar sobre Jakarta Faces. & El estado de las vistas queda en la sesión del servidor: con varias instancias del central, el backoffice requiere afinidad de sesión. & Adecuado para el backoffice. \\
+\hline
+    MicroProfile Rest Client y Fault Tolerance & Clientes REST como interfaces Java; espera, reintentos, corte y comportamiento degradado declarados con anotaciones. & El corte guarda un estado por método y no por nodo: si un nodo de balanzas falla, se deja de consultar también a los demás durante 60~s. & Adecuado para las integraciones con LDAP y con los nodos de balanzas. \\
+\hline
+    OpenPDF y Apache Commons CSV & Generan los reportes en PDF y CSV dentro del central, sin servicios externos, a partir del mismo modelo de tabla. & El diseño del PDF (fuentes, tablas y celdas) se arma en código, sin plantillas. & Adecuado para exportar los reportes en dos formatos. \\
+\hline
     Jetpack Compose, Room y WorkManager & Bibliotecas oficiales de Android; la sincronización continúa con la aplicación cerrada y reintenta con esperas crecientes. & Cada cambio en el esquema local exige una migración; sin ella, la aplicación se cierra al abrir la base anterior. & Adecuado para operar sin conectividad. \\
 \hline
     Android Studio & Reúne el SDK, el emulador y el JDK; permitió probar sin un dispositivo físico. & La configuración local (ruta del SDK y URL del servidor) es propia de cada equipo y no se versiona. & Adecuado para el desarrollo de la aplicación. \\
@@ -48,8 +54,6 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
     PostgreSQL & Transacciones; \textit{triggers} que protegen la pista de auditoría. & Los \textit{triggers} se instalan desde la aplicación al arrancar, porque Hibernate no los genera. & Adecuado para los datos transaccionales. \\
 \hline
     GitHub Actions, JaCoCo y SpotBugs & Compilación, pruebas y análisis de cada cambio del central antes de integrarlo. & Sin pruebas automatizadas sobre WildFly; la integración se verificó aparte. & Adecuado para detectar regresiones. \\
-\hline
-    \textcolor{red}{[Productos del resto de los lotes]} & & & \\
 \hline
 \end{tabular}
 \end{table}
