@@ -25,5 +25,5 @@ Vehículos & Objetivo (pos/s) & Procesadas (pos/s) & Cola máxima & Procesamient
 \end{tabular}
 \end{table}
 
-\subsection{Resiliencia de la ingesta}
-Con el componente central detenido, el nodo de tracking siguió publicando y las posiciones esperaron en la cola; al reiniciarlo, se procesaron todas. Con PostgreSQL detenido durante un minuto, el central se recuperó sin intervención y ninguna posición llegó a la cola de mensajes muertos.
+\subsection{Resiliencia ante fallas}
+Con el componente central detenido, el nodo de tracking siguió publicando y las posiciones esperaron en la cola; al reiniciarlo, se procesaron todas. Con PostgreSQL detenido durante un minuto, el central se recuperó sin intervención y ninguna posición llegó a la cola de mensajes muertos. Al detener un nodo de balanzas, el caso de exceso de carga se registró con los pesajes del otro nodo, y el pesaje faltante se agregó al mismo caso cuando el nodo volvió.
