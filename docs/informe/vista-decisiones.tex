@@ -202,7 +202,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
         \hline
-            \textbf{Decisión} & Un registro de nodos con tipo (balanzas o tracking), punto de acceso y estado (deshabilitado, habilitado o baja). Todo nodo nuevo arranca deshabilitado, cambiar el punto de acceso lo vuelve a deshabilitar y la baja es lógica. \\
+            \textbf{Decisión} & Un registro de nodos con tipo (balanzas o tracking), punto de acceso y estado (deshabilitado, habilitado o baja). Todo nodo nuevo arranca deshabilitado, cambiar el punto de acceso lo vuelve a deshabilitar y la baja es lógica. Un nodo de balanzas se registra además con la clave con la que el componente central se autentica ante él. Como el componente central tiene que enviarla en cada consulta, se guarda cifrada y no con un \textit{hash}, con el identificador del nodo como dato asociado: una clave cifrada copiada a otro nodo no se puede descifrar. \\
         \hline
             \textbf{Justificación} & \pendiente{completar la justificación.} \\
         \hline
@@ -303,10 +303,6 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \textbf{Tema} & \textbf{Qué se necesita definir} & \textbf{Dónde impacta} \\
     \hline
     \endhead
-    Volumen de tracking & Cantidad de vehículos reportando en forma concurrente, frecuencia de reporte y picos de al menos tres veces ese volumen. & AC08, prueba de performance, generador de carga. \\
-    \hline
-    Reintentos y cola de mensajes muertos & Espera entre reintentos, cantidad de intentos y qué se hace con los mensajes que terminan en la cola de mensajes muertos. & DA02, AC12. \\
-    \hline
     Servicio de rutas y geocodificación & Qué servicio externo se usa para ubicar el origen y el destino y obtener el recorrido esperado, con sus límites de uso. & CU-07, Vista Lógica, Distribución. \\
     \hline
     Criterio de desvío de ruta & Distancia máxima al recorrido esperado, tiempo fuera de él y cantidad mínima de posiciones, con sus valores por defecto. & CU-11, parametrización de reglas. \\

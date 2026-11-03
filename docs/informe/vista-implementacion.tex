@@ -30,17 +30,17 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \hline
     Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS de Artemis. Incluye el generador de carga. Expone \texttt{/health} y \texttt{/metricas}, guarda los eventos mientras el broker no responde y exporta logs, métricas y trazas con el SDK de OpenTelemetry. & Nodo Periférico Tracking. \\
     \hline
-    Nodo de balanzas & Servicio de solicitud--respuesta sobre HTTPS (R3), con su propia base de pesajes. & Nodo Periférico Balanzas. \\
+    Nodo de balanzas & Servicio de solicitud--respuesta sobre HTTPS (R3): un WAR de Jakarta EE sobre WildFly 41, con MicroProfile Config, y su propia base de pesajes en PostgreSQL 17. Una misma imagen de contenedor sirve para cada operador, con otra base y otras claves. & Nodo Periférico Balanzas. \\
     \hline
     Suplantador de la PDI & Servicio SOAP sobre HTTPS (R1) que respeta la interfaz de la PDI (R5). & PDI. \\
     \hline
-    Directorio LDAP & Accedido por LDAPS (opcional 8). & Directorio LDAP. \\
+    Directorio LDAP & 389 Directory Server 3.1, en la imagen de contenedor que publica el proyecto. Accedido por LDAPS (opcional 8). & Directorio LDAP. \\
     \hline
     Plataforma de Observabilidad & \texttt{grafana/otel-lgtm} 0.34 en un contenedor: colector de OpenTelemetry, Prometheus (métricas), Tempo (trazas), Loki (logs) y Grafana, con un tablero de la ingesta, el nodo de tracking y la API REST. & Plataforma de Observabilidad. \\
     \hline
 \end{longtable}
 
-\pendiente{definir la tecnología del nodo de balanzas, del suplantador de la PDI y del directorio LDAP.}
+\pendiente{definir la tecnología del suplantador de la PDI.}
 
 \pendiente{describir los pros y los contras de las tecnologías elegidas y las habilidades necesarias para el proyecto, como pide la plantilla para esta vista.}
 
