@@ -124,6 +124,9 @@ manifiestos están en [carga-uy/openshift](../carga-uy/openshift/) y las claves 
 del clúster, fuera del repositorio. Cada servicio tiene el mismo nombre que en el Compose, por lo que
 el central los encuentra con sus valores por defecto.
 
+Los nodos de tracking corren en otro proyecto y llegan al broker por la Route `artemis-nodos`; su
+despliegue está en la [guía del nodo](../nodo-tracking/README.md#despliegue-en-openshift).
+
 Los comandos requieren la sesión de `oc` iniciada como en [acceso a OpenShift](#acceso-a-openshift)
 y se ejecutan desde `carga-uy`.
 

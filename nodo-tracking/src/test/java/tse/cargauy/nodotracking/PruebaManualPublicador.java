@@ -14,7 +14,7 @@ class PruebaManualPublicador {
     void publicaDosEventosEnElCentral() throws Exception {
         Config config = new Config("tracking-1", 8081,
                 "tcp://localhost:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev",
-                "tracking-1", "tracking123", 500);
+                "tracking-1", "tracking123", 500, 1000);
         // id distinto en cada corrida: si no, la segunda vez el central los cuenta como DUPLICADO
         String sufijo = String.valueOf(System.currentTimeMillis());
         try (PublicadorJms publicador = new PublicadorJms(config)) {

@@ -1,0 +1,230 @@
+# nodos de tracking en un proyecto de OpenShift distinto al del central (R15), como dos proveedores de seguimiento
+# con la flota de prueba repartida, igual que en el compose. Publican en el broker del central por la Route
+# artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI. Lo unico que exponen es /health,
+# con HTTPS, para que la Plataforma de Observabilidad los consulte como en el compose; /metricas queda adentro.
+# Los pasos estan en ../README.md#despliegue-en-openshift
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodo-tracking-1
+spec:
+  replicas: 1
+  # dos pods simularian dos veces la misma flota (posiciones dobles por vehiculo): el viejo termina antes
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nodo-tracking-1
+  template:
+    metadata:
+      labels:
+        app: nodo-tracking-1
+    spec:
+      containers:
+        - name: nodo-tracking
+          image: ghcr.io/lucaslazogue/tse-carga-uy/nodo-tracking:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          env:
+            - name: TZ
+              value: America/Montevideo
+            - name: ARTEMIS_HOST
+              value: artemis-nodos-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: NODO_ID
+              value: tracking-1
+            - name: NODO_JMS_USUARIO
+              value: tracking-1
+            - name: NODO_JMS_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: TRACKING_1_CLAVE
+            - name: NODO_TRUSTSTORE_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: NODO_TRUSTSTORE_CLAVE
+            # $(VAR) lo expande Kubernetes con las variables de arriba; sniHost es obligatorio: sin el, el
+            # router de OpenShift no sabe a que Route mandar la conexion
+            - name: NODO_JMS_URL
+              value: tcp://$(ARTEMIS_HOST):443?sslEnabled=true&sniHost=$(ARTEMIS_HOST)&trustStorePath=/secretos/confianza.p12&trustStorePassword=$(NODO_TRUSTSTORE_CLAVE)
+            - name: NODO_RUTAS
+              value: flotas/flota-sur.json
+            # la frecuencia del volumen objetivo (AC08); el compose usa 10 s para desarrollo
+            - name: NODO_INTERVALO_SEG
+              value: "30"
+            # la carga de la prueba: oc set env deployment/nodo-tracking-1 NODO_VEHICULOS_EXTRA=7500
+            - name: NODO_VEHICULOS_EXTRA
+              value: "0"
+            # hasta que haya Plataforma de Observabilidad en la nube: sin colector, el SDK llena el log de errores
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+            - name: OTEL_SERVICE_NAME
+              value: nodo-tracking
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: nodo.id=tracking-1,service.instance.id=tracking-1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          # /health da 503 mientras no hay conexion con el broker: el pod no queda listo pero no se reinicia,
+          # porque el nodo guarda los eventos y reintenta solo
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            periodSeconds: 10
+          volumeMounts:
+            - name: secretos
+              mountPath: /secretos
+              readOnly: true
+      volumes:
+        - name: secretos
+          secret:
+            secretName: nodo-tracking-secretos
+            items:
+              - key: confianza.p12
+                path: confianza.p12
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodo-tracking-1
+spec:
+  selector:
+    app: nodo-tracking-1
+  ports:
+    - name: salud
+      port: 8081
+      targetPort: 8081
+---
+# solo la ruta /health (path), con TLS terminado en el router de OpenShift (R8). Sin un pod listo (apagado o sin
+# broker), el router responde 503
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nodo-tracking-1-salud
+spec:
+  path: /health
+  to:
+    kind: Service
+    name: nodo-tracking-1
+  port:
+    targetPort: salud
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+# el segundo proveedor: la otra mitad de la flota, con su propio usuario en el broker. Igual al primero
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodo-tracking-2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nodo-tracking-2
+  template:
+    metadata:
+      labels:
+        app: nodo-tracking-2
+    spec:
+      containers:
+        - name: nodo-tracking
+          image: ghcr.io/lucaslazogue/tse-carga-uy/nodo-tracking:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          env:
+            - name: TZ
+              value: America/Montevideo
+            - name: ARTEMIS_HOST
+              value: artemis-nodos-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: NODO_ID
+              value: tracking-2
+            - name: NODO_JMS_USUARIO
+              value: tracking-2
+            - name: NODO_JMS_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: TRACKING_2_CLAVE
+            - name: NODO_TRUSTSTORE_CLAVE
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: NODO_TRUSTSTORE_CLAVE
+            - name: NODO_JMS_URL
+              value: tcp://$(ARTEMIS_HOST):443?sslEnabled=true&sniHost=$(ARTEMIS_HOST)&trustStorePath=/secretos/confianza.p12&trustStorePassword=$(NODO_TRUSTSTORE_CLAVE)
+            - name: NODO_RUTAS
+              value: flotas/flota-norte.json
+            - name: NODO_INTERVALO_SEG
+              value: "30"
+            # la carga de la prueba: oc set env deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
+            - name: NODO_VEHICULOS_EXTRA
+              value: "0"
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+            - name: OTEL_SERVICE_NAME
+              value: nodo-tracking
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: nodo.id=tracking-2,service.instance.id=tracking-2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            periodSeconds: 10
+          volumeMounts:
+            - name: secretos
+              mountPath: /secretos
+              readOnly: true
+      volumes:
+        - name: secretos
+          secret:
+            secretName: nodo-tracking-secretos
+            items:
+              - key: confianza.p12
+                path: confianza.p12
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodo-tracking-2
+spec:
+  selector:
+    app: nodo-tracking-2
+  ports:
+    - name: salud
+      port: 8081
+      targetPort: 8081
+---
+# solo la ruta /health (path), con TLS terminado en el router de OpenShift (R8). Sin un pod listo (apagado o sin
+# broker), el router responde 503
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: nodo-tracking-2-salud
+spec:
+  path: /health
+  to:
+    kind: Service
+    name: nodo-tracking-2
+  port:
+    targetPort: salud
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

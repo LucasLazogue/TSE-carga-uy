@@ -52,7 +52,7 @@ class ObservabilidadTest {
     }
 
     private static GeneradorPosiciones generador(int vehiculos, int maxLote) {
-        Config config = new Config("nodo-test", 0, "no-se-usa", "u", "c", maxLote);
+        Config config = new Config("nodo-test", 0, "no-se-usa", "u", "c", maxLote, 1000);
         Ruta ruta = new Ruta(new Punto(-34.9011, -56.1645), new Punto(-30.9053, -55.5508));
         List<VehiculoSimulado> lista = new ArrayList<>();
         for (int i = 0; i < vehiculos; i++) {

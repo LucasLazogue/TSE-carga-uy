@@ -16,7 +16,7 @@ import jakarta.json.JsonObject;
 
 // el sistema de tracking simulado: genera la posicion de cada vehiculo y la publica en la cola del central.
 // generar y publicar van separados: si el central no responde, lo generado se acumula y se publica despues,
-// sin perder nada
+// sin perder nada mientras no se llegue al tope de pendientes
 public class GeneradorPosiciones {
 
     private static final Logger LOGGER = Logger.getLogger(GeneradorPosiciones.class.getName());
@@ -29,11 +29,14 @@ public class GeneradorPosiciones {
     private final Random azar;
     private final Instant inicio;
 
-    // mensajes listos para publicar, en orden de generacion. vive en memoria: si el central cae por horas con
-    // muchos vehiculos crece mucho, pero un GPS real tambien guarda lo que no pudo mandar
+    // mensajes listos para publicar, en orden de generacion. vive en memoria, como el buffer de un GPS real, y por
+    // eso tiene un tope (NODO_MAX_PENDIENTES): sin el, una caida larga del broker con la flota de la prueba de carga
+    // llena la memoria del pod, que se reinicia y pierde todo lo pendiente
     private final Deque<String> pendientes = new ArrayDeque<>();
     // generados mientras el vehiculo no tiene cobertura: se liberan todos juntos al volver (el pico de 3x de la letra)
     private final List<String> retenidos = new ArrayList<>();
+    // para avisar en el log una vez cada vez que se llena, y no por cada posicion descartada
+    private boolean lleno;
 
     // solo los usa el hilo que publica
     private Instant proximoIntento = Instant.EPOCH;
@@ -43,6 +46,7 @@ public class GeneradorPosiciones {
     final AtomicLong duplicados = new AtomicLong();
     final AtomicLong publicados = new AtomicLong();
     final AtomicLong reintentos = new AtomicLong();
+    final AtomicLong descartados = new AtomicLong();
 
     public GeneradorPosiciones(Config config, ConfigFlota flota, List<VehiculoSimulado> vehiculos,
             Publicador publicador, Random azar, Instant inicio) {
@@ -116,6 +120,7 @@ public class GeneradorPosiciones {
                 .add("pendientes", cantidadPendiente())
                 .add("retenidosSinCobertura", cantidadRetenida())
                 .add("reintentos", reintentos.get())
+                .add("descartados", descartados.get())
                 .build();
     }
 
@@ -134,6 +139,18 @@ public class GeneradorPosiciones {
     }
 
     private void agregar(String mensaje, boolean sinCobertura) {
+        // lleno: se descarta el nuevo y no el mas viejo, porque el hilo que publica confirma por posicion lo que
+        // saco del principio del buffer
+        if (pendientes.size() + retenidos.size() >= config.maxPendientes()) {
+            if (!lleno) {
+                LOGGER.warning("nodo resultado=PENDIENTES_LLENOS tope=" + config.maxPendientes()
+                        + " se descartan las posiciones nuevas hasta que haya lugar");
+                lleno = true;
+            }
+            descartados.incrementAndGet();
+            return;
+        }
+        lleno = false;
         if (sinCobertura) {
             retenidos.add(mensaje);
         } else {

@@ -47,6 +47,8 @@ final class Observabilidad {
                 .setDescription("Mensajes publicados en el broker").buildObserver();
         ObservableLongMeasurement reintentos = medidor.counterBuilder("nodo.publicacion.reintentos")
                 .setDescription("Publicaciones que fallaron porque el broker no respondio").buildObserver();
+        ObservableLongMeasurement descartados = medidor.counterBuilder("nodo.eventos.descartados")
+                .setDescription("Posiciones descartadas porque se lleno el tope de pendientes").buildObserver();
         ObservableLongMeasurement pendientes = medidor.gaugeBuilder("nodo.eventos.pendientes").ofLongs()
                 .setDescription("Posiciones esperando para publicarse").buildObserver();
         ObservableLongMeasurement retenidos = medidor.gaugeBuilder("nodo.eventos.retenidos").ofLongs()
@@ -57,9 +59,10 @@ final class Observabilidad {
             duplicados.record(m.getJsonNumber("duplicados").longValue());
             publicados.record(m.getJsonNumber("publicados").longValue());
             reintentos.record(m.getJsonNumber("reintentos").longValue());
+            descartados.record(m.getJsonNumber("descartados").longValue());
             pendientes.record(m.getJsonNumber("pendientes").longValue());
             retenidos.record(m.getJsonNumber("retenidosSinCobertura").longValue());
-        }, generados, duplicados, publicados, reintentos, pendientes, retenidos);
+        }, generados, duplicados, publicados, reintentos, descartados, pendientes, retenidos);
     }
 
     // exporta lo que quedo pendiente antes de cerrar
