@@ -1,0 +1,41 @@
+# cuenta de servicio con la que el workflow Deploy tracking actualiza la imagen de los nodos. Solo puede ver y
+# actualizar Deployments de este proyecto: no lee Secrets ni crea recursos. Su token va en el secreto
+# OPENSHIFT_TRACKING_TOKEN del repositorio; los pasos estan en ../README.md#despliegue-automático
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: github-deploy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deploy-nodos-tracking
+rules:
+  # oc set image (get, patch) y oc rollout status (watch del Deployment y de sus ReplicaSets)
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: github-deploy-nodos-tracking
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: deploy-nodos-tracking
+subjects:
+  - kind: ServiceAccount
+    name: github-deploy
+---
+# token sin vencimiento para GitHub Actions; OpenShift lo completa al crear el Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-deploy-token
+  annotations:
+    kubernetes.io/service-account.name: github-deploy
+type: kubernetes.io/service-account-token

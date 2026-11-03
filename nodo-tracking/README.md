@@ -99,7 +99,7 @@ necesitan Service ni Route propios. El manifiesto es [openshift/nodo-tracking.ya
 Antes de empezar, los nodos tienen que estar registrados y habilitados en el central con su
 identificador (CU-19); si no, el central descarta sus eventos.
 
-1. **Imagen.** El workflow [Publicar tracking](../.github/workflows/publicar-tracking.yml) publica
+1. **Imagen.** El workflow [Deploy tracking](../.github/workflows/deploy-tracking.yml) publica
    `ghcr.io/lucaslazogue/tse-carga-uy/nodo-tracking` (`latest` y el SHA) en cada push a `release` que
    modifica el nodo, o a mano desde Actions. El paquete tiene que ser público para que OpenShift lo
    descargue sin credenciales.
@@ -131,6 +131,11 @@ identificador (CU-19); si no, el central descarta sus eventos.
        oc rollout status deployment/nodo-tracking-1
        oc logs deploy/nodo-tracking-1
 
+   Si el central todavía no está listo para recibir posiciones, crearlos apagados y encenderlos después
+   con `oc scale`:
+
+       sed 's/replicas: 1/replicas: 0/' openshift/nodo-tracking.yaml | oc apply -f -
+
    Para ver la salud y las métricas, `oc port-forward deploy/nodo-tracking-1 8081:8081` y abrir
    `http://localhost:8081/health`. Mientras no hay conexión con el broker, `/health` da `503` y el pod
    no queda listo, pero no se reinicia: el nodo guarda los eventos y reintenta solo.
@@ -141,6 +146,28 @@ carga](../docs/performance.md), los vehículos extra se cambian sin tocar el man
 reinicia con el valor nuevo:
 
     oc set env deployment/nodo-tracking-1 deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
+
+### Despliegue automático
+
+Después del primer despliegue, el workflow Deploy tracking actualiza la imagen de los dos nodos en
+cada push a `release` que modifica el nodo. Usa la cuenta de servicio `github-deploy` del proyecto de
+los nodos, que solo puede ver y actualizar Deployments ([openshift/despliegue-ci.yaml](openshift/despliegue-ci.yaml)).
+No aplica el manifiesto, así que respeta las réplicas y las variables cambiadas con `oc scale` y
+`oc set env`; un cambio en el manifiesto se aplica a mano con `oc apply`.
+
+Para prepararlo, una vez:
+
+1. Crear la cuenta de servicio, su rol y su token:
+
+       oc apply -f openshift/despliegue-ci.yaml
+
+2. Copiar el token y cargarlo en el secreto `OPENSHIFT_TRACKING_TOKEN` del repositorio (solo puede
+   hacerlo el dueño):
+
+       oc get secret github-deploy-token -o jsonpath='{.data.token}' | base64 -d
+
+Sin ese secreto, el workflow publica la imagen y no despliega. El servidor y el proyecto están en el
+workflow.
 
 ## Tests
 
