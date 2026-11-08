@@ -1,6 +1,8 @@
 package tse.cargauy.data.usuario;
 
+import tse.cargauy.dtos.ChoferDto;
 import tse.cargauy.dtos.UsuarioDto;
+import tse.cargauy.entities.Chofer;
 import tse.cargauy.entities.Ciudadano;
 import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Rol;
@@ -20,6 +22,17 @@ public class Serializers {
         } else if (usuario instanceof UsuarioBackoffice backoffice) {
             dto.setUsuario(backoffice.getUsuario());
         }
+        return dto;
+    }
+
+    public static ChoferDto toDto(Chofer chofer) {
+        ChoferDto dto = new ChoferDto();
+        dto.setId(chofer.getCiudadano().getId());
+        dto.setIdVinculo(chofer.getId());
+        dto.setCedula(chofer.getCiudadano().getCedula());
+        dto.setCorreo(chofer.getCiudadano().getCorreo());
+        dto.setFechaDesde(chofer.getFechaDesde());
+        dto.setFechaHasta(chofer.getFechaHasta());
         return dto;
     }
 

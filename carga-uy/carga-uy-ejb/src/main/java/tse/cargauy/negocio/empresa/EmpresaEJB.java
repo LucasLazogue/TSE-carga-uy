@@ -60,13 +60,6 @@ public class EmpresaEJB implements EmpresaEJBLocal, EmpresaEJBRemote {
         }
     }
 
-    // choferes vigentes a la fecha, para elegir a quien asignarle un viaje
-    @RolesAllowed({ Rol.FUNCIONARIO, Rol.RESPONSABLE })
-    public PaginaDto<UsuarioDto> getChoferes(Long idEmpresa, String cedula, LocalDate fecha, Paginacion paginacion) {
-        validarAcceso(idEmpresa);
-        return usuarioDAO.getChoferes(idEmpresa, cedula, fecha == null ? LocalDate.now() : fecha, paginacion);
-    }
-
     public EmpresaDto addEmpresa(EmpresaDto empresaDto) {
         validar(empresaDto);
         String cedula = empresaDto.getCedulaResponsable();

@@ -20,6 +20,8 @@ public interface ViajeDAOLocal {
     void deleteViaje(Long id);
     // los viajes asignados y en curso del chofer, primero el que esta en curso
     List<ViajeDto> getActivosDelChofer(Long idCiudadano);
+    // los viajes asignados y en curso de ese vinculo de chofer, los asignados primero
+    List<ViajeDto> getPendientesDelVinculo(Long idVinculo);
     // con la fila bloqueada hasta el fin de la transaccion
     ViajeDto getViajeParaActualizar(Long id);
     void cambiarEstado(Long id, EstadoViaje estado, LocalDateTime fecha);
