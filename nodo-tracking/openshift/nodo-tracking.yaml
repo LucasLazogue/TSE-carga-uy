@@ -1,7 +1,8 @@
 # nodos de tracking en un proyecto de OpenShift distinto al del central (R15), como dos proveedores de seguimiento
 # con la flota de prueba repartida, igual que en el compose. Publican en el broker del central por la Route
-# artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI. Lo unico que exponen es /health,
-# con HTTPS, para que la Plataforma de Observabilidad los consulte como en el compose; /metricas queda adentro.
+# artemis-nodos (passthrough en el 443): TLS de punta a punta y el destino por SNI. Mandan trazas, metricas y logs a
+# la Plataforma de Observabilidad por la Route observabilidad-otlp. Lo unico que exponen es /health, con HTTPS, para
+# que la plataforma los consulte como en el compose; /metricas queda adentro.
 # Los pasos estan en ../README.md#despliegue-en-openshift
 apiVersion: apps/v1
 kind: Deployment
@@ -57,9 +58,23 @@ spec:
             # la carga de la prueba: oc set env deployment/nodo-tracking-1 NODO_VEHICULOS_EXTRA=7500
             - name: NODO_VEHICULOS_EXTRA
               value: "0"
-            # hasta que haya Plataforma de Observabilidad en la nube: sin colector, el SDK llena el log de errores
-            - name: OTEL_SDK_DISABLED
-              value: "true"
+            # senales a la Plataforma de Observabilidad del proyecto del central, por su Route con TLS y token
+            - name: OTLP_NODOS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: OTLP_NODOS_TOKEN
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: https://observabilidad-otlp-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: Authorization=Bearer%20$(OTLP_NODOS_TOKEN)
+            # la misma proporcion que el central (OTEL_PROPORCION_TRAZAS en carga-uy/openshift/configuracion.yaml)
+            - name: OTEL_TRACES_SAMPLER
+              value: traceidratio
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: "0.1"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "10000"
             - name: OTEL_SERVICE_NAME
               value: nodo-tracking
             - name: OTEL_RESOURCE_ATTRIBUTES
@@ -170,8 +185,23 @@ spec:
             # la carga de la prueba: oc set env deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
             - name: NODO_VEHICULOS_EXTRA
               value: "0"
-            - name: OTEL_SDK_DISABLED
-              value: "true"
+            # senales a la Plataforma de Observabilidad del proyecto del central, por su Route con TLS y token
+            - name: OTLP_NODOS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: OTLP_NODOS_TOKEN
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: https://observabilidad-otlp-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: Authorization=Bearer%20$(OTLP_NODOS_TOKEN)
+            # la misma proporcion que el central (OTEL_PROPORCION_TRAZAS en carga-uy/openshift/configuracion.yaml)
+            - name: OTEL_TRACES_SAMPLER
+              value: traceidratio
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: "0.1"
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: "10000"
             - name: OTEL_SERVICE_NAME
               value: nodo-tracking
             - name: OTEL_RESOURCE_ATTRIBUTES

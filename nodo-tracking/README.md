@@ -117,17 +117,24 @@ identificador (CU-19); si no, el central descarta sus eventos.
    Imprime la huella SHA-256 del certificado. Antes de usar el archivo, compararla con la del keystore
    del broker (`keytool -list -v -keystore artemis.p12`), que está en el Secret de Artemis del proyecto
    del central.
-4. **Secret.** Las claves de los usuarios `tracking-1` y `tracking-2` en el broker, la del truststore
-   y el archivo:
+4. **Secret.** Las claves de los usuarios `tracking-1` y `tracking-2` en el broker, la del truststore,
+   el archivo y el token de la [Plataforma de Observabilidad](../docs/observabilidad.md#despliegue-en-openshift)
+   (`OTLP_NODOS_TOKEN` del Secret `observabilidad-secretos`, en el proyecto del central):
 
        oc create secret generic nodo-tracking-secretos \
          --from-literal=TRACKING_1_CLAVE=CLAVE_DE_TRACKING_1 \
          --from-literal=TRACKING_2_CLAVE=CLAVE_DE_TRACKING_2 \
          --from-literal=NODO_TRUSTSTORE_CLAVE=CLAVE_DEL_TRUSTSTORE \
+         --from-literal=OTLP_NODOS_TOKEN=TOKEN_DE_LA_PLATAFORMA \
          --from-file=confianza.p12
 
-5. **Despliegue.** El manifiesto fija el host del broker, los usuarios, las flotas y la frecuencia
-   del volumen objetivo (30 s), y deja apagado OpenTelemetry hasta que haya colector en la nube:
+   Si el Secret ya existe, el token se agrega con
+   `oc set data secret/nodo-tracking-secretos OTLP_NODOS_TOKEN=TOKEN_DE_LA_PLATAFORMA`.
+
+5. **Despliegue.** El manifiesto fija el host del broker, los usuarios, las flotas, la frecuencia
+   del volumen objetivo (30 s) y el envío de trazas, métricas y logs a la plataforma por la Route
+   `observabilidad-otlp`. Si la plataforma no está, el nodo funciona igual y solo registra los errores de
+   exportación:
 
        oc apply -f openshift/nodo-tracking.yaml
        oc rollout status deployment/nodo-tracking-1
