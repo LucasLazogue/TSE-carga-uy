@@ -1,4 +1,15 @@
-import { Building2, CalendarClock, FileText, Gavel, Home, Route, ShieldCheck, TriangleAlert, Truck } from 'lucide-react'
+import {
+  Building2,
+  CalendarClock,
+  FileText,
+  Gavel,
+  Home,
+  Route,
+  ShieldCheck,
+  TriangleAlert,
+  Truck,
+  Users,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Profile } from '@/auth/profile'
 
@@ -72,6 +83,13 @@ const groups: NavGroup[] = [
         description: 'Permisos nacionales de circulación y su vigencia.',
         path: '/permisos',
         icon: CalendarClock,
+        profiles: ['RESPONSABLE', 'FUNCIONARIO'],
+      },
+      {
+        title: 'Choferes',
+        description: 'Dar de alta y de baja a los choferes de la empresa.',
+        path: '/choferes',
+        icon: Users,
         profiles: ['RESPONSABLE', 'FUNCIONARIO'],
       },
     ],
