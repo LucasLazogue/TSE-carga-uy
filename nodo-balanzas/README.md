@@ -90,6 +90,40 @@ el despliegue y el registro en el backoffice se hacen por separado.
 
 Si el paquete es privado, configurar un image pull secret en OpenShift con acceso de lectura al paquete.
 
+## Observabilidad en OpenShift
+
+WildFly exporta trazas y logs a `observabilidad:4317` y métricas a `observabilidad:4318`, como en el compose.
+En OpenShift, la [Plataforma de Observabilidad](../docs/observabilidad.md#despliegue-en-openshift) está en el
+proyecto del central y solo se llega por su Route, con un token que WildFly no permite agregar. Por eso, en el
+proyecto de los nodos corre un colector intermedio con el nombre `observabilidad`
+([openshift/observabilidad.yaml](openshift/observabilidad.yaml)):
+
+- recibe las señales de los nodos sin cambiarles nada y las reenvía a la plataforma con TLS y el token;
+- consulta el `/health/ready` de cada nodo dentro del proyecto, sin exponerlo a internet.
+
+Pasos, una vez, en el proyecto de los nodos:
+
+1. **Secret.** El token es `OTLP_NODOS_TOKEN` del Secret `observabilidad-secretos` del proyecto del central:
+
+       oc create secret generic observabilidad-secretos --from-literal=OTLP_NODOS_TOKEN=TOKEN_DE_LA_PLATAFORMA
+
+2. **Health checks.** El colector consulta `http://balanzas-sur:9990/health/ready` y
+   `http://balanzas-norte:9990/health/ready`. Si los Services tienen otro nombre, cambiar `BALANZAS_SUR_SALUD` y
+   `BALANZAS_NORTE_SALUD` en el manifiesto. Si un Service no publica el `9990`, agregarlo:
+
+       oc patch service balanzas-sur --type=json \
+         -p '[{"op":"add","path":"/spec/ports/-","value":{"name":"gestion","port":9990}}]'
+
+3. **Despliegue.**
+
+       oc apply -f openshift/observabilidad.yaml
+       oc rollout status deployment/observabilidad
+
+Si a los pocos minutos no aparecen las señales de un nodo en Grafana, reiniciarlo con
+`oc rollout restart deployment/balanzas-sur`.
+Para que las trazas que vienen del central se muestreen igual en las dos partes, configurar en los nodos
+`OTEL_PROPORCION_TRAZAS=0.1`, la misma proporción que el central en OpenShift.
+
 ## Configuración
 
 | Variable | Por defecto | Para qué |

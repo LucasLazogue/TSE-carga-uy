@@ -1,0 +1,124 @@
+# Colector intermedio de OpenTelemetry para los nodos de balanzas en OpenShift. Los nodos estan en un proyecto distinto
+# al del central (R15) y WildFly exporta a observabilidad:4317 (trazas y logs) y observabilidad:4318 (metricas), sin
+# opcion para agregar un header de autenticacion. Este colector se llama observabilidad, como en el compose: recibe lo
+# de los nodos sin cambiarles nada y lo reenvia a la Plataforma de Observabilidad por su Route, con TLS y el token.
+# Ademas consulta el health check de cada nodo adentro del proyecto, asi no hay que exponerlo a internet.
+# Los pasos estan en ../README.md#observabilidad-en-openshift
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observabilidad-colector
+data:
+  otelcol.yaml: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      # el 9990 (administracion de WildFly) tiene que estar en el Service de cada nodo; no sale del proyecto
+      http_check/salud:
+        collection_interval: 15s
+        targets:
+          - endpoint: ${env:BALANZAS_SUR_SALUD}
+          - endpoint: ${env:BALANZAS_NORTE_SALUD}
+
+    processors:
+      batch: {}
+
+    exporters:
+      otlp_http/plataforma:
+        endpoint: ${env:PLATAFORMA_OTLP}
+        headers:
+          Authorization: Bearer ${env:OTLP_NODOS_TOKEN}
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http/plataforma]
+        metrics:
+          receivers: [otlp, http_check/salud]
+          processors: [batch]
+          exporters: [otlp_http/plataforma]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http/plataforma]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observabilidad
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: observabilidad
+  template:
+    metadata:
+      labels:
+        app: observabilidad
+    spec:
+      containers:
+        - name: colector
+          image: otel/opentelemetry-collector-contrib:0.161.0
+          args: ["--config=/etc/otelcol/otelcol.yaml"]
+          ports:
+            - containerPort: 4317
+            - containerPort: 4318
+          env:
+            # la Route observabilidad-otlp del proyecto del central (carga-uy/openshift/observabilidad.yaml)
+            - name: PLATAFORMA_OTLP
+              value: https://observabilidad-otlp-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: OTLP_NODOS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: observabilidad-secretos
+                  key: OTLP_NODOS_TOKEN
+            # cambiar si los Services de los nodos tienen otro nombre
+            - name: BALANZAS_SUR_SALUD
+              value: http://balanzas-sur:9990/health/ready
+            - name: BALANZAS_NORTE_SALUD
+              value: http://balanzas-norte:9990/health/ready
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            periodSeconds: 10
+          volumeMounts:
+            - name: configuracion
+              mountPath: /etc/otelcol
+              readOnly: true
+      volumes:
+        - name: configuracion
+          configMap:
+            name: observabilidad-colector
+---
+# solo adentro del proyecto: los nodos de balanzas le mandan por el nombre, como en el compose
+apiVersion: v1
+kind: Service
+metadata:
+  name: observabilidad
+spec:
+  selector:
+    app: observabilidad
+  ports:
+    - name: otlp-grpc
+      port: 4317
+    - name: otlp-http
+      port: 4318
