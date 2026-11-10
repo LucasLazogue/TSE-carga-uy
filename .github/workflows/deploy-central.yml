@@ -5,6 +5,8 @@ on:
     branches: [release]
     paths:
       - 'carga-uy/**'
+      # la plataforma tiene su propia imagen y su workflow (deploy-observabilidad.yml)
+      - '!carga-uy/observabilidad/**'
       - '.github/workflows/deploy-central.yml'
   workflow_dispatch:
 
