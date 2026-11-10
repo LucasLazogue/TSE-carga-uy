@@ -97,6 +97,7 @@ central exporta a `observabilidad:4317` y `observabilidad:4318` sin configuraci�
 | --- | --- |
 | Grafana | Route con TLS; pide el usuario `admin` y su clave, sin acceso anónimo |
 | Nodos de tracking | Están en otro proyecto (R15): envían por la Route `observabilidad-otlp` (OTLP HTTP, puerto `4319`), con TLS y un token; sin el token el colector responde `401` |
+| App móvil | Envía sus trazas por la Route `observabilidad-otlp-movil` (puerto `4320`), con otro token, que va dentro del APK; solo acepta trazas y el router limita los pedidos por IP |
 | Health checks | La API del central (`/carga-uy/api/salud`) y el `/health` de cada nodo por su Route; el `9990` de WildFly no se publica en el Service |
 | Datos | Volumen de 5 GiB: se conservan cuando el sandbox apaga los pods |
 
@@ -109,13 +110,15 @@ Pasos, una vez, en el proyecto del central:
 1. **Imagen.** El workflow [Deploy observabilidad](../.github/workflows/deploy-observabilidad.yml) publica
    `ghcr.io/lucaslazogue/tse-carga-uy/observabilidad` (`latest` y el SHA) en cada push a `release` que
    modifica `carga-uy/observabilidad`, o a mano desde Actions. El paquete tiene que ser público.
-2. **Secret.** La clave de Grafana y el token de los nodos, que después se carga también en el Secret de
-   los [nodos de tracking](../nodo-tracking/README.md#despliegue-en-openshift):
+2. **Secret.** La clave de Grafana, el token de los nodos, que después se carga también en el Secret de
+   los [nodos de tracking](../nodo-tracking/README.md#despliegue-en-openshift), y el de la
+   [app móvil](../mobile/README.md#configuración), que va en su `local.properties`:
 
    ```sh
    oc create secret generic observabilidad-secretos \
      --from-literal=GRAFANA_CLAVE=CLAVE_DE_GRAFANA \
-     --from-literal=OTLP_NODOS_TOKEN="$(openssl rand -hex 24)"
+     --from-literal=OTLP_NODOS_TOKEN="$(openssl rand -hex 24)" \
+     --from-literal=OTLP_MOVIL_TOKEN="$(openssl rand -hex 24)"
    ```
 
 3. **Despliegue.**

@@ -1,7 +1,8 @@
 # Plataforma de Observabilidad en el proyecto del central, con el mismo nombre de servicio que en el compose: el central
 # ya exporta a observabilidad:4317 y observabilidad:4318 por defecto (config/observabilidad.cli), sin configurar nada.
 # Los nodos de tracking estan en otro proyecto (R15): mandan sus senales por la Route observabilidad-otlp, con TLS y un
-# token, y el colector consulta su salud por las Routes de los nodos.
+# token, y el colector consulta su salud por las Routes de los nodos. La app movil manda sus trazas por otra Route, con
+# su propio token.
 # Los pasos estan en ../../docs/observabilidad.md#despliegue-en-openshift
 apiVersion: v1
 kind: ConfigMap
@@ -15,6 +16,9 @@ data:
     extensions:
       bearertokenauth/nodos:
         token: ${env:OTLP_NODOS_TOKEN}
+      # el de la app va dentro del APK, asi que se asume que se puede extraer: solo sirve para mandar trazas
+      bearertokenauth/movil:
+        token: ${env:OTLP_MOVIL_TOKEN}
 
     receivers:
       # el unico puerto que sale por Route: los nodos tienen que mandar "Authorization: Bearer <token>"
@@ -24,6 +28,13 @@ data:
             endpoint: 0.0.0.0:4319
             auth:
               authenticator: bearertokenauth/nodos
+      # la app movil (punto 9): solo trazas, por la Route observabilidad-otlp-movil
+      otlp/movil:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4320
+            auth:
+              authenticator: bearertokenauth/movil
       http_check/salud:
         collection_interval: 15s
         targets:
@@ -33,10 +44,10 @@ data:
           - endpoint: https://nodo-tracking-2-salud-andres-murara-dev.apps.rm2.thpm.p1.openshiftapps.com/health
 
     service:
-      extensions: [health_check, bearertokenauth/nodos]
+      extensions: [health_check, bearertokenauth/nodos, bearertokenauth/movil]
       pipelines:
         traces:
-          receivers: [otlp, otlp/nodos]
+          receivers: [otlp, otlp/nodos, otlp/movil]
         metrics:
           receivers: [otlp, otlp/nodos, prometheus/collector, http_check/salud]
         logs:
@@ -81,6 +92,7 @@ spec:
             - containerPort: 4317
             - containerPort: 4318
             - containerPort: 4319
+            - containerPort: 4320
           env:
             - name: TZ
               value: America/Montevideo
@@ -97,6 +109,11 @@ spec:
                 secretKeyRef:
                   name: observabilidad-secretos
                   key: OTLP_NODOS_TOKEN
+            - name: OTLP_MOVIL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: observabilidad-secretos
+                  key: OTLP_MOVIL_TOKEN
           resources:
             requests:
               cpu: 200m
@@ -141,6 +158,8 @@ spec:
       port: 4318
     - name: otlp-nodos
       port: 4319
+    - name: otlp-movil
+      port: 4320
 ---
 # Grafana, con TLS terminado en el router (R8) y su propio login
 apiVersion: route.openshift.io/v1
@@ -168,6 +187,25 @@ spec:
     name: observabilidad
   port:
     targetPort: otlp-nodos
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+# trazas de la app movil. El token viaja en el APK: ademas de exigirlo, el router limita los pedidos por IP, para que
+# con el token extraido no se pueda inundar la plataforma. Sin el token, 401
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: observabilidad-otlp-movil
+  annotations:
+    haproxy.router.openshift.io/rate-limit-connections: "true"
+    haproxy.router.openshift.io/rate-limit-connections.rate-http: "50"
+spec:
+  to:
+    kind: Service
+    name: observabilidad
+  port:
+    targetPort: otlp-movil
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect

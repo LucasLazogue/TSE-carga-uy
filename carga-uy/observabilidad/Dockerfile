@@ -15,5 +15,6 @@ RUN mkdir -p /data /var/tempo /etc/lgtm \
 # la imagen arranca el colector con su configuracion y le suma esta
 ENV OTELCOL_EXTRA_ARGS="--config=file:/otel-lgtm/otelcol-carga-uy.yaml"
 
-# 3000: Grafana; 4317 y 4318: OTLP (gRPC y HTTP); 4319: OTLP HTTP con token, para los nodos de otros proyectos
-EXPOSE 3000 4317 4318 4319
+# 3000: Grafana; 4317 y 4318: OTLP (gRPC y HTTP); 4319 y 4320: OTLP HTTP con token, para los nodos de otros
+# proyectos y para la app movil (solo en OpenShift)
+EXPOSE 3000 4317 4318 4319 4320

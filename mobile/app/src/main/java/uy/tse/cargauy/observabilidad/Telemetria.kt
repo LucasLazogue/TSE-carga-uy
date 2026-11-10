@@ -32,13 +32,17 @@ object Telemetria {
 
     val tracer: Tracer get() = openTelemetry.getTracer("carga-uy-movil")
 
-    /** Una vez, al crear la app. urlPlataforma: la de OTLP por HTTP, por ejemplo http://IP:4318 */
-    fun iniciar(urlPlataforma: String) {
+    /**
+     * Una vez, al crear la app. urlPlataforma: la de OTLP por HTTP, por ejemplo http://IP:4318. token: el de la
+     * Route de la app en OpenShift (va en el header Authorization); vacio en el compose, que no lo pide.
+     */
+    fun iniciar(urlPlataforma: String, token: String = "") {
         val constructor = SdkTracerProvider.builder()
             .setResource(Resource.getDefault().merge(Resource.create(Attributes.of(SERVICIO, "carga-uy-movil"))))
         if (urlPlataforma.isNotBlank()) {
             val exportador = OtlpHttpSpanExporter.builder()
                 .setEndpoint(urlPlataforma.trimEnd('/') + "/v1/traces")
+                .apply { if (token.isNotBlank()) addHeader("Authorization", "Bearer $token") }
                 .build()
             // en lotes y en otro hilo: exportar no demora los pedidos al central
             constructor.addSpanProcessor(BatchSpanProcessor.builder(exportador).build())
