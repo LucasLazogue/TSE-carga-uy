@@ -102,7 +102,12 @@ central exporta a `observabilidad:4317` y `observabilidad:4318` sin configuraci�
 
 El colector usa la configuración del ConfigMap `observabilidad-colector` en lugar de
 [otelcol-carga-uy.yaml](../carga-uy/observabilidad/otelcol-carga-uy.yaml), porque los destinos de los health
-checks son otros. Los nodos de balanzas todavía no envían señales a la plataforma de la nube.
+checks son otros.
+
+Los nodos de balanzas están en otro proyecto, y WildFly no permite agregar el token a lo que exporta. En su
+proyecto corre un colector intermedio llamado `observabilidad`, como en el compose: recibe sus señales y las
+reenvía por la Route `observabilidad-otlp` con el token, y consulta el health check de cada nodo adentro del
+proyecto. Los pasos están en [nodo-balanzas](../nodo-balanzas/README.md#observabilidad-en-openshift).
 
 Pasos, una vez, en el proyecto del central:
 
