@@ -47,12 +47,15 @@ android {
             buildConfigField("String", "URL_SERVIDOR", "\"${propiedadesLocales.getProperty("cargauy.url", "")}\"")
             // Plataforma de Observabilidad (OTLP por HTTP, puerto 4318); vacia, las trazas no se exportan
             buildConfigField("String", "URL_OBSERVABILIDAD", "\"${propiedadesLocales.getProperty("cargauy.observabilidad", "")}\"")
+            // token de la Route de la app en OpenShift; el compose no lo pide
+            buildConfigField("String", "TOKEN_OBSERVABILIDAD", "\"${propiedadesLocales.getProperty("cargauy.observabilidad.token", "")}\"")
         }
         release {
             // fija: en release no se muestra ni se lee la url de Configuracion
             buildConfigField("String", "URL_SERVIDOR", "\"$urlProduccion\"")
             // TODO: la de la Plataforma de Observabilidad cuando este desplegada; hasta entonces no se exportan trazas
             buildConfigField("String", "URL_OBSERVABILIDAD", "\"\"")
+            buildConfigField("String", "TOKEN_OBSERVABILIDAD", "\"\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

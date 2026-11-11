@@ -43,6 +43,16 @@ El celular o el emulador no llegan a la PC por `localhost`: hay que usar la IP d
    Cada pedido al central abre un span y le pasa la traza en el header `traceparent`. Sin esta URL los spans
    no se exportan, pero el header se manda igual. Ver la [documentación de observabilidad](../docs/observabilidad.md).
 
+   Con la plataforma de OpenShift, la URL es la de la Route `observabilidad-otlp-movil` y hace falta su token
+   (`OTLP_MOVIL_TOKEN` del Secret `observabilidad-secretos`, ver el
+   [despliegue](../docs/observabilidad.md#despliegue-en-openshift)):
+
+       cargauy.observabilidad=https://<HOST_DE_LA_ROUTE>
+       cargauy.observabilidad.token=<TOKEN>
+
+   El token queda dentro del APK, así que se asume que se puede extraer: solo permite mandar trazas, y el
+   router limita los pedidos por IP.
+
 ## Ejecutar
 
 Abrir `mobile/` en Android Studio, esperar el sync de Gradle y correr `app`.
