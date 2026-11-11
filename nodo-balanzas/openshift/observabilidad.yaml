@@ -85,9 +85,9 @@ spec:
                   key: OTLP_NODOS_TOKEN
             # cambiar si los Services de los nodos tienen otro nombre
             - name: BALANZAS_SUR_SALUD
-              value: http://balanzas-sur:9990/health/ready
+              value: http://cargauy-balanzas-sur:9990/health/ready
             - name: BALANZAS_NORTE_SALUD
-              value: http://balanzas-norte:9990/health/ready
+              value: http://cargauy-balanzas-norte:9990/health/ready
           resources:
             requests:
               cpu: 50m
