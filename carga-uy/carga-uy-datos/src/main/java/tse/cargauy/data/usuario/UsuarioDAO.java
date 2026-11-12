@@ -6,19 +6,29 @@ import java.util.List;
 
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import tse.cargauy.dtos.ChoferDto;
+import tse.cargauy.dtos.FiltroChoferes;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Chofer;
 import tse.cargauy.entities.Ciudadano;
+import tse.cargauy.entities.Ciudadano_;
 import tse.cargauy.entities.Empresa;
+import tse.cargauy.entities.Empresa_;
 import tse.cargauy.entities.Funcionario;
 import tse.cargauy.entities.Responsable;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.Usuario;
 import tse.cargauy.entities.UsuarioBackoffice;
 import tse.cargauy.entities.VinculoEmpresa;
+import tse.cargauy.entities.VinculoEmpresa_;
 
 @Stateless
 public class UsuarioDAO implements UsuarioDAOLocal {
@@ -113,9 +123,11 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     }
 
     @Override
-    public void addChofer(Long idCiudadano, Long idEmpresa, LocalDate fechaDesde) {
-        entityManager.persist(new Chofer(entityManager.find(Ciudadano.class, idCiudadano),
-                entityManager.find(Empresa.class, idEmpresa), fechaDesde));
+    public ChoferDto addChofer(Long idCiudadano, Long idEmpresa, LocalDate fechaDesde) {
+        Chofer chofer = new Chofer(entityManager.find(Ciudadano.class, idCiudadano),
+                entityManager.find(Empresa.class, idEmpresa), fechaDesde);
+        entityManager.persist(chofer);
+        return Serializers.toDto(chofer);
     }
 
     @Override
@@ -134,28 +146,78 @@ public class UsuarioDAO implements UsuarioDAOLocal {
         return getVigente(Responsable.class, idCiudadano, idEmpresa, fecha);
     }
 
+    // bloquea el vinculo hasta el fin de la transaccion, para que una baja y una asignacion al mismo chofer
+    // se apliquen una detras de la otra
     @Override
-    public PaginaDto<UsuarioDto> getChoferes(Long idEmpresa, String cedula, LocalDate fecha, Paginacion paginacion) {
-        String desde = " FROM Chofer c WHERE c.empresa.id = :idEmpresa AND c.ciudadano.cedula LIKE :cedula"
-                + " AND c.fechaDesde <= :fecha AND (c.fechaHasta IS NULL OR c.fechaHasta >= :fecha)";
-        String patron = (cedula == null ? "" : cedula.replaceAll("\\D", "")) + "%";
-
-        List<UsuarioDto> choferes = entityManager.createQuery(
-                        "SELECT c.ciudadano" + desde + " ORDER BY c.ciudadano.cedula", Ciudadano.class)
+    public Long getChoferSinBaja(Long idCiudadano, Long idEmpresa, LocalDate fecha) {
+        return entityManager.createQuery(
+                        "SELECT c FROM Chofer c WHERE c.ciudadano.id = :idCiudadano AND c.empresa.id = :idEmpresa"
+                                + " AND c.fechaDesde <= :fecha AND c.fechaHasta IS NULL", Chofer.class)
+                .setParameter("idCiudadano", idCiudadano)
                 .setParameter("idEmpresa", idEmpresa)
-                .setParameter("cedula", patron)
                 .setParameter("fecha", fecha)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultStream()
+                .map(Chofer::getId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public ChoferDto getVinculoSinBaja(Long idVinculo, Long idEmpresa) {
+        Chofer chofer = entityManager.find(Chofer.class, idVinculo, LockModeType.PESSIMISTIC_WRITE);
+        if (chofer == null || !chofer.getEmpresa().getId().equals(idEmpresa) || chofer.getFechaHasta() != null) {
+            return null;
+        }
+        return Serializers.toDto(chofer);
+    }
+
+    @Override
+    public ChoferDto darDeBajaChofer(Long idVinculo, LocalDate fecha) {
+        Chofer chofer = entityManager.find(Chofer.class, idVinculo);
+        chofer.setFechaHasta(fecha);
+        return Serializers.toDto(chofer);
+    }
+
+    @Override
+    public PaginaDto<ChoferDto> getChoferes(Long idEmpresa, FiltroChoferes filtro, Paginacion paginacion) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Chofer> query = cb.createQuery(Chofer.class);
+        Root<Chofer> chofer = query.from(Chofer.class);
+        chofer.fetch(VinculoEmpresa_.ciudadano);
+        query.select(chofer)
+                .where(condiciones(idEmpresa, filtro, cb, chofer))
+                .orderBy(cb.asc(chofer.get(VinculoEmpresa_.ciudadano).get(Ciudadano_.cedula)),
+                        cb.desc(chofer.get(VinculoEmpresa_.fechaDesde)), cb.desc(chofer.get(VinculoEmpresa_.id)));
+        List<ChoferDto> items = entityManager.createQuery(query)
                 .setFirstResult(paginacion.getDesde())
                 .setMaxResults(paginacion.getTamanio())
                 .getResultStream()
                 .map(Serializers::toDto)
                 .toList();
-        long total = entityManager.createQuery("SELECT COUNT(c)" + desde, Long.class)
-                .setParameter("idEmpresa", idEmpresa)
-                .setParameter("cedula", patron)
-                .setParameter("fecha", fecha)
-                .getSingleResult();
-        return new PaginaDto<>(choferes, total, paginacion.getPagina(), paginacion.getTamanio());
+
+        CriteriaQuery<Long> conteo = cb.createQuery(Long.class);
+        Root<Chofer> contado = conteo.from(Chofer.class);
+        conteo.select(cb.count(contado)).where(condiciones(idEmpresa, filtro, cb, contado));
+        long total = entityManager.createQuery(conteo).getSingleResult();
+
+        return new PaginaDto<>(items, total, paginacion.getPagina(), paginacion.getTamanio());
+    }
+
+    // sin historial, los que se pueden elegir para un viaje de esa fecha; con historial, todos los vinculos
+    private Predicate[] condiciones(Long idEmpresa, FiltroChoferes filtro, CriteriaBuilder cb, Root<Chofer> chofer) {
+        List<Predicate> condiciones = new ArrayList<>();
+        condiciones.add(cb.equal(chofer.get(VinculoEmpresa_.empresa).get(Empresa_.id), idEmpresa));
+        if (filtro.getCedula() != null) {
+            condiciones.add(cb.like(chofer.get(VinculoEmpresa_.ciudadano).get(Ciudadano_.cedula),
+                    filtro.getCedula().replaceAll("\\D", "") + "%"));
+        }
+        if (!filtro.isHistorial()) {
+            condiciones.add(cb.lessThanOrEqualTo(chofer.get(VinculoEmpresa_.fechaDesde), filtro.getFecha()));
+            condiciones.add(cb.isNull(chofer.get(VinculoEmpresa_.fechaHasta)));
+        }
+        return condiciones.toArray(Predicate[]::new);
     }
 
     @Override

@@ -1,0 +1,54 @@
+# cuenta de servicio con la que el workflow Deploy tracking actualiza la imagen de los nodos. El grupo usa el mismo
+# token para las pruebas: encender y apagar los nodos, cambiar la carga y ver pods, logs y metricas. No lee Secrets
+# ni crea o borra recursos. Su token va en el secreto OPENSHIFT_TRACKING_TOKEN del repositorio; los pasos estan
+# en ../README.md#despliegue-automático
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: github-deploy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deploy-nodos-tracking
+rules:
+  # oc set image, oc set env (get, patch) y oc rollout status (watch del Deployment y de sus ReplicaSets)
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list", "watch"]
+  # oc scale
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "patch", "update"]
+  # oc get pods, oc logs y oc get events, para seguir una prueba
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events"]
+    verbs: ["get", "list", "watch"]
+  # oc port-forward, para /health y /metricas del nodo
+  - apiGroups: [""]
+    resources: ["pods/portforward"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: github-deploy-nodos-tracking
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: deploy-nodos-tracking
+subjects:
+  - kind: ServiceAccount
+    name: github-deploy
+---
+# token sin vencimiento para GitHub Actions; OpenShift lo completa al crear el Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-deploy-token
+  annotations:
+    kubernetes.io/service-account.name: github-deploy
+type: kubernetes.io/service-account-token

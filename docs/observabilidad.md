@@ -87,6 +87,57 @@ aplicar los cambios desde `carga-uy`:
 docker compose up -d carga-uy nodo-tracking
 ```
 
+## Despliegue en OpenShift
+
+La plataforma corre en el proyecto del central con el nombre `observabilidad`, igual que en el compose: el
+central exporta a `observabilidad:4317` y `observabilidad:4318` sin configuración adicional. El manifiesto es
+[observabilidad.yaml](../carga-uy/openshift/observabilidad.yaml). Respecto del entorno local cambia lo siguiente:
+
+| Aspecto | En OpenShift |
+| --- | --- |
+| Grafana | Route con TLS; pide el usuario `admin` y su clave, sin acceso anónimo |
+| Nodos de tracking | Están en otro proyecto (R15): envían por la Route `observabilidad-otlp` (OTLP HTTP, puerto `4319`), con TLS y un token; sin el token el colector responde `401` |
+| App móvil | Envía sus trazas por la Route `observabilidad-otlp-movil` (puerto `4320`), con otro token, que va dentro del APK; solo acepta trazas y el router limita los pedidos por IP |
+| Health checks | La API del central (`/carga-uy/api/salud`) y el `/health` de cada nodo por su Route; el `9990` de WildFly no se publica en el Service |
+| Datos | Volumen de 5 GiB: se conservan cuando el sandbox apaga los pods |
+
+El colector usa la configuración del ConfigMap `observabilidad-colector` en lugar de
+[otelcol-carga-uy.yaml](../carga-uy/observabilidad/otelcol-carga-uy.yaml), porque los destinos de los health
+checks son otros.
+
+Los nodos de balanzas están en otro proyecto, y WildFly no permite agregar el token a lo que exporta. En su
+proyecto corre un colector intermedio llamado `observabilidad`, como en el compose: recibe sus señales y las
+reenvía por la Route `observabilidad-otlp` con el token, y consulta el health check de cada nodo adentro del
+proyecto. Los pasos están en [nodo-balanzas](../nodo-balanzas/README.md#observabilidad-en-openshift).
+
+Pasos, una vez, en el proyecto del central:
+
+1. **Imagen.** El workflow [Deploy observabilidad](../.github/workflows/deploy-observabilidad.yml) publica
+   `ghcr.io/lucaslazogue/tse-carga-uy/observabilidad` (`latest` y el SHA) en cada push a `release` que
+   modifica `carga-uy/observabilidad`, o a mano desde Actions. El paquete tiene que ser público.
+2. **Secret.** La clave de Grafana, el token de los nodos, que después se carga también en el Secret de
+   los [nodos de tracking](../nodo-tracking/README.md#despliegue-en-openshift), y el de la
+   [app móvil](../mobile/README.md#configuración), que va en su `local.properties`:
+
+   ```sh
+   oc create secret generic observabilidad-secretos \
+     --from-literal=GRAFANA_CLAVE=CLAVE_DE_GRAFANA \
+     --from-literal=OTLP_NODOS_TOKEN="$(openssl rand -hex 24)" \
+     --from-literal=OTLP_MOVIL_TOKEN="$(openssl rand -hex 24)"
+   ```
+
+3. **Despliegue.**
+
+   ```sh
+   oc apply -f carga-uy/openshift/observabilidad.yaml
+   oc rollout status deployment/observabilidad
+   ```
+
+4. **Acceso.** Grafana queda en `https://` + `oc get route observabilidad -o jsonpath='{.spec.host}'`.
+
+Después, el workflow actualiza la imagen en cada push a `release`; un cambio en el manifiesto se aplica a mano
+con `oc apply`. La plataforma reserva 200m de CPU y 1 GiB de memoria, dentro de la cuota del proyecto.
+
 ## Salud y diagnóstico
 
 | Endpoint local | Qué comprueba |

@@ -70,6 +70,60 @@ Necesita una base PostgreSQL propia. Por ejemplo, con Docker (desde `nodo-balanz
 
 Las tablas las crea Hibernate al arrancar. La API queda en `http://localhost:8082/nodo-balanzas/api`.
 
+## Publicar la imagen para OpenShift
+
+El workflow **Publicar balanzas** construye este Dockerfile y publica la imagen en GitHub Container
+Registry. Se ejecuta al subir cambios de este nodo a `release` o manualmente desde
+**GitHub → Actions → Publicar balanzas → Run workflow**, seleccionando la rama que se quiera publicar.
+La ejecución manual aparece cuando el workflow está incorporado a la rama predeterminada del repositorio.
+
+Usa `GITHUB_TOKEN` con permiso `packages: write`, igual que la publicación del central; no necesita un
+token personal ni las credenciales de OpenShift. Publica estas etiquetas:
+
+- `ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:latest`
+- `ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:<sha-del-commit>`
+
+Una vez terminada correctamente la ejecución, pegar la referencia de la imagen en el formulario de
+creación del Deployment de OpenShift. La misma imagen sirve para sur y norte, cada uno con su base y
+sus claves. Para fijar una versión, usar la etiqueta del commit. Este workflow publica la imagen;
+el despliegue y el registro en el backoffice se hacen por separado.
+
+Si el paquete es privado, configurar un image pull secret en OpenShift con acceso de lectura al paquete.
+
+## Observabilidad en OpenShift
+
+WildFly exporta trazas y logs a `observabilidad:4317` y métricas a `observabilidad:4318`, como en el compose.
+En OpenShift, la [Plataforma de Observabilidad](../docs/observabilidad.md#despliegue-en-openshift) está en el
+proyecto del central y solo se llega por su Route, con un token que WildFly no permite agregar. Por eso, en el
+proyecto de los nodos corre un colector intermedio con el nombre `observabilidad`
+([openshift/observabilidad.yaml](openshift/observabilidad.yaml)):
+
+- recibe las señales de los nodos sin cambiarles nada y las reenvía a la plataforma con TLS y el token;
+- consulta el `/health/ready` de cada nodo dentro del proyecto, sin exponerlo a internet.
+
+Pasos, una vez, en el proyecto de los nodos:
+
+1. **Secret.** El token es `OTLP_NODOS_TOKEN` del Secret `observabilidad-secretos` del proyecto del central:
+
+       oc create secret generic observabilidad-secretos --from-literal=OTLP_NODOS_TOKEN=TOKEN_DE_LA_PLATAFORMA
+
+2. **Health checks.** El colector consulta `http://balanzas-sur:9990/health/ready` y
+   `http://balanzas-norte:9990/health/ready`. Si los Services tienen otro nombre, cambiar `BALANZAS_SUR_SALUD` y
+   `BALANZAS_NORTE_SALUD` en el manifiesto. Si un Service no publica el `9990`, agregarlo:
+
+       oc patch service balanzas-sur --type=json \
+         -p '[{"op":"add","path":"/spec/ports/-","value":{"name":"gestion","port":9990}}]'
+
+3. **Despliegue.**
+
+       oc apply -f openshift/observabilidad.yaml
+       oc rollout status deployment/observabilidad
+
+Si a los pocos minutos no aparecen las señales de un nodo en Grafana, reiniciarlo con
+`oc rollout restart deployment/balanzas-sur`.
+Para que las trazas que vienen del central se muestreen igual en las dos partes, configurar en los nodos
+`OTEL_PROPORCION_TRAZAS=0.1`, la misma proporción que el central en OpenShift.
+
 ## Configuración
 
 | Variable | Por defecto | Para qué |

@@ -16,12 +16,14 @@ import { TAMANIO_MAXIMO } from '@/api/page'
 import { VehiculosApi } from '@/api/vehiculos/vehiculos.api'
 import type { Vehiculo } from '@/api/vehiculos/vehiculos.types'
 import { ViajesApi } from '@/api/viajes/viajes.api'
+import type { Viaje } from '@/api/viajes/viajes.types'
 
 const selectClass =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 type Props = {
   guia: Guia
+  viaje?: Viaje
   close: () => void
   onAssigned: () => void
 }
@@ -30,19 +32,28 @@ function opcionChofer(c: Chofer): LookupOption {
   return { value: String(c.id), label: c.correo ? `${c.cedula} - ${c.correo}` : c.cedula }
 }
 
-function AsignarViajeDialog({ guia, close, onAssigned }: Props) {
+// el chofer actual se precarga para que el lookup lo muestre sin tener que buscarlo
+function choferActual(viaje?: Viaje) {
+  const conocidos = new Map<string, LookupOption>()
+  if (viaje) {
+    conocidos.set(String(viaje.idChofer), { value: String(viaje.idChofer), label: viaje.cedulaChofer })
+  }
+  return conocidos
+}
+
+function AsignarViajeDialog({ guia, viaje, close, onAssigned }: Props) {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
-  const [idVehiculo, setIdVehiculo] = useState(0)
-  const [idChofer, setIdChofer] = useState<string>()
+  const [idVehiculo, setIdVehiculo] = useState(viaje?.idVehiculo ?? 0)
+  const [idChofer, setIdChofer] = useState(viaje ? String(viaje.idChofer) : undefined)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
-  const conocidos = useRef(new Map<string, LookupOption>())
+  const conocidos = useRef(choferActual(viaje))
 
   useEffect(() => {
     VehiculosApi.findAll({ idEmpresa: guia.idEmpresa }, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
   }, [guia.idEmpresa])
 
-  // solo los choferes vigentes a la fecha de la guia, que son los que acepta la asignacion
+  // solo los choferes vigentes a la fecha de la guia y sin baja, que son los que acepta la asignacion
   const buscarChoferes = useCallback(
     async (texto: string) => {
       const { items } = await ChoferesApi.findAll(guia.idEmpresa, { cedula: texto, fecha: guia.fecha })
@@ -60,7 +71,12 @@ function AsignarViajeDialog({ guia, close, onAssigned }: Props) {
     setError('')
     setGuardando(true)
     try {
-      await ViajesApi.create(guia.idEmpresa, { idGuia: guia.id, idVehiculo, idChofer: Number(idChofer ?? 0) })
+      const datos = { idGuia: guia.id, idVehiculo, idChofer: Number(idChofer ?? 0) }
+      if (viaje) {
+        await ViajesApi.update(guia.idEmpresa, viaje.id, datos)
+      } else {
+        await ViajesApi.create(guia.idEmpresa, datos)
+      }
       onAssigned()
       close()
     } catch (err) {
@@ -122,7 +138,7 @@ function AsignarViajeDialog({ guia, close, onAssigned }: Props) {
           Cancelar
         </Button>
         <Button type="submit" disabled={guardando}>
-          Asignar
+          {viaje ? 'Reasignar' : 'Asignar'}
         </Button>
       </DialogFooter>
     </form>

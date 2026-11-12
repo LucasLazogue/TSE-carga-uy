@@ -169,7 +169,7 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         if (itvDAO.getVigente(vehiculo.getId(), guia.getFecha()) == null) {
             throw new CargaUYException(CodigoError.VIAJE_VEHICULO_SIN_ITV, vehiculo.getMatricula(), guia.getFecha().toString());
         }
-        if (usuarioDAO.getChoferVigente(viajeDto.getIdChofer(), guia.getIdEmpresa(), guia.getFecha()) == null) {
+        if (usuarioDAO.getChoferSinBaja(viajeDto.getIdChofer(), guia.getIdEmpresa(), guia.getFecha()) == null) {
             throw new CargaUYException(CodigoError.VIAJE_CHOFER_INVALIDO, String.valueOf(viajeDto.getIdChofer()), guia.getFecha().toString());
         }
     }

@@ -1,0 +1,211 @@
+# Plataforma de Observabilidad en el proyecto del central, con el mismo nombre de servicio que en el compose: el central
+# ya exporta a observabilidad:4317 y observabilidad:4318 por defecto (config/observabilidad.cli), sin configurar nada.
+# Los nodos de tracking estan en otro proyecto (R15): mandan sus senales por la Route observabilidad-otlp, con TLS y un
+# token, y el colector consulta su salud por las Routes de los nodos. La app movil manda sus trazas por otra Route, con
+# su propio token.
+# Los pasos estan en ../../docs/observabilidad.md#despliegue-en-openshift
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observabilidad-colector
+data:
+  # reemplaza a ../observabilidad/otelcol-carga-uy.yaml, que apunta a los nombres del compose. Se suma a la
+  # configuracion de la imagen (otelcol-config.yaml): las listas de receivers reemplazan a las de la imagen, por eso
+  # se repiten otlp y prometheus/collector
+  otelcol-carga-uy.yaml: |
+    extensions:
+      bearertokenauth/nodos:
+        token: ${env:OTLP_NODOS_TOKEN}
+      # el de la app va dentro del APK, asi que se asume que se puede extraer: solo sirve para mandar trazas
+      bearertokenauth/movil:
+        token: ${env:OTLP_MOVIL_TOKEN}
+
+    receivers:
+      # el unico puerto que sale por Route: los nodos tienen que mandar "Authorization: Bearer <token>"
+      otlp/nodos:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4319
+            auth:
+              authenticator: bearertokenauth/nodos
+      # la app movil (punto 9): solo trazas, por la Route observabilidad-otlp-movil
+      otlp/movil:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4320
+            auth:
+              authenticator: bearertokenauth/movil
+      http_check/salud:
+        collection_interval: 15s
+        targets:
+          # el Service del central solo publica el 8080; /health/ready de WildFly lo usa el readinessProbe del pod
+          - endpoint: http://carga-uy:8080/carga-uy/api/salud
+          - endpoint: https://nodo-tracking-1-salud-andres-murara-dev.apps.rm2.thpm.p1.openshiftapps.com/health
+          - endpoint: https://nodo-tracking-2-salud-andres-murara-dev.apps.rm2.thpm.p1.openshiftapps.com/health
+
+    service:
+      extensions: [health_check, bearertokenauth/nodos, bearertokenauth/movil]
+      pipelines:
+        traces:
+          receivers: [otlp, otlp/nodos, otlp/movil]
+        metrics:
+          receivers: [otlp, otlp/nodos, prometheus/collector, http_check/salud]
+        logs:
+          receivers: [otlp, otlp/nodos]
+---
+# Prometheus, Tempo, Loki y Grafana guardan todo en /data. El sandbox apaga los pods a las 12 horas: sin volumen, cada
+# vez que se prende se pierden las metricas y las trazas de las pruebas anteriores
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: observabilidad-datos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observabilidad
+spec:
+  replicas: 1
+  # el volumen es ReadWriteOnce: el pod viejo lo suelta antes de que arranque el nuevo
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: observabilidad
+  template:
+    metadata:
+      labels:
+        app: observabilidad
+    spec:
+      containers:
+        - name: observabilidad
+          image: ghcr.io/lucaslazogue/tse-carga-uy/observabilidad:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+            - containerPort: 4317
+            - containerPort: 4318
+            - containerPort: 4319
+            - containerPort: 4320
+          env:
+            - name: TZ
+              value: America/Montevideo
+            # la imagen deja entrar a Grafana sin usuario y como administrador; con la Route publica, solo con clave
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: observabilidad-secretos
+                  key: GRAFANA_CLAVE
+            - name: OTLP_NODOS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: observabilidad-secretos
+                  key: OTLP_NODOS_TOKEN
+            - name: OTLP_MOVIL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: observabilidad-secretos
+                  key: OTLP_MOVIL_TOKEN
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          volumeMounts:
+            - name: datos
+              mountPath: /data
+            - name: colector
+              mountPath: /otel-lgtm/otelcol-carga-uy.yaml
+              subPath: otelcol-carga-uy.yaml
+              readOnly: true
+      volumes:
+        - name: datos
+          persistentVolumeClaim:
+            claimName: observabilidad-datos
+        - name: colector
+          configMap:
+            name: observabilidad-colector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: observabilidad
+spec:
+  selector:
+    app: observabilidad
+  ports:
+    - name: grafana
+      port: 3000
+    - name: otlp-grpc
+      port: 4317
+    - name: otlp-http
+      port: 4318
+    - name: otlp-nodos
+      port: 4319
+    - name: otlp-movil
+      port: 4320
+---
+# Grafana, con TLS terminado en el router (R8) y su propio login
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: observabilidad
+spec:
+  to:
+    kind: Service
+    name: observabilidad
+  port:
+    targetPort: grafana
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+# OTLP HTTP para los nodos de otros proyectos; sin el token, el colector responde 401
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: observabilidad-otlp
+spec:
+  to:
+    kind: Service
+    name: observabilidad
+  port:
+    targetPort: otlp-nodos
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+# trazas de la app movil. El token viaja en el APK: ademas de exigirlo, el router limita los pedidos por IP, para que
+# con el token extraido no se pueda inundar la plataforma. Sin el token, 401
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: observabilidad-otlp-movil
+  annotations:
+    haproxy.router.openshift.io/rate-limit-connections: "true"
+    haproxy.router.openshift.io/rate-limit-connections.rate-http: "50"
+spec:
+  to:
+    kind: Service
+    name: observabilidad
+  port:
+    targetPort: otlp-movil
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

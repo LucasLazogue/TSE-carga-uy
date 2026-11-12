@@ -21,6 +21,6 @@ class CargaUYApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Telemetria.iniciar(BuildConfig.URL_OBSERVABILIDAD)
+        Telemetria.iniciar(BuildConfig.URL_OBSERVABILIDAD, BuildConfig.TOKEN_OBSERVABILIDAD)
     }
 }

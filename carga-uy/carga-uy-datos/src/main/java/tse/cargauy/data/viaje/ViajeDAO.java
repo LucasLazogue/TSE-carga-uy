@@ -144,6 +144,16 @@ public class ViajeDAO implements ViajeDAOLocal {
         return toDtos(viajes);
     }
 
+    @Override
+    public List<ViajeDto> getPendientesDelVinculo(Long idVinculo) {
+        return toDtos(entityManager.createQuery(
+                        "SELECT v FROM Viaje v WHERE v.chofer.id = :idVinculo AND v.estado IN :estados"
+                                + " ORDER BY v.estado, v.guia.fecha, v.id", Viaje.class)
+                .setParameter("idVinculo", idVinculo)
+                .setParameter("estados", List.of(EstadoViaje.ASIGNADO, EstadoViaje.EN_CURSO))
+                .getResultList());
+    }
+
     // bloquea la fila hasta que termine la transaccion: dos envios sobre el mismo viaje se aplican uno detras del
     // otro, y el segundo ve lo que dejo el primero. el bloqueo es de postgres, asi que vale entre instancias
     @Override
@@ -261,9 +271,10 @@ public class ViajeDAO implements ViajeDAOLocal {
                 .getResultList();
     }
 
+    // la misma consulta que valido la asignacion, para que el viaje quede en el vinculo sin baja
     private Chofer getChofer(Long idCiudadano, Guia guia) {
         return entityManager.find(Chofer.class,
-                usuarioDAO.getChoferVigente(idCiudadano, guia.getEmpresa().getId(), guia.getFecha()));
+                usuarioDAO.getChoferSinBaja(idCiudadano, guia.getEmpresa().getId(), guia.getFecha()));
     }
 
     private List<ViajeDto> toDtos(List<Viaje> viajes) {
