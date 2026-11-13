@@ -1,0 +1,57 @@
+# cuenta de servicio con la que el grupo enciende y apaga los nodos de balanzas en el proyecto de OpenShift de sus
+# duenos: antes de una prueba (el sandbox los lleva a 0 replicas despues de un tiempo) y para el escenario de
+# balanzas indisponible. Solo puede ver y escalar: no cambia imagenes ni variables, no lee Secrets y no crea ni borra
+# nada. Su token va en el Google Doc del grupo; los pasos estan en ../README.md#encender-y-apagar-los-nodos-desde-el-grupo
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: operador-grupo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: operar-nodos-balanzas
+rules:
+  # oc get y oc rollout status
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  # oc scale de los nodos, del colector de observabilidad y de las bases
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale", "statefulsets/scale"]
+    verbs: ["get", "patch", "update"]
+  # lo mismo si alguna base se creo desde la consola como DeploymentConfig
+  - apiGroups: ["apps.openshift.io"]
+    resources: ["deploymentconfigs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps.openshift.io"]
+    resources: ["deploymentconfigs/scale"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["replicationcontrollers"]
+    verbs: ["get", "list", "watch"]
+  # oc get pods, oc logs y oc get events, para seguir una prueba
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: operador-grupo-nodos-balanzas
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: operar-nodos-balanzas
+subjects:
+  - kind: ServiceAccount
+    name: operador-grupo
+---
+# token sin vencimiento; OpenShift lo completa al crear el Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: operador-grupo-token
+  annotations:
+    kubernetes.io/service-account.name: operador-grupo
+type: kubernetes.io/service-account-token
