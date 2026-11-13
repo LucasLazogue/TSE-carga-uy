@@ -133,10 +133,24 @@ Pasos, una vez, en el proyecto del central:
    oc rollout status deployment/observabilidad
    ```
 
-4. **Acceso.** Grafana queda en `https://` + `oc get route observabilidad -o jsonpath='{.spec.host}'`.
+4. **Acceso.** Grafana queda en `https://` + `oc get route observabilidad -o jsonpath='{.spec.host}'`, con el
+   usuario `admin` y la clave `GRAFANA_CLAVE` del Secret `observabilidad-secretos`. Al arrancar, el log de la
+   plataforma muestra `User: admin, password: admin`: es el mensaje por defecto de la imagen base y no aplica, porque
+   el manifiesto fija la clave del Secret.
 
 Después, el workflow actualiza la imagen en cada push a `release`; un cambio en el manifiesto se aplica a mano
 con `oc apply`. La plataforma reserva 200m de CPU y 1 GiB de memoria, dentro de la cuota del proyecto.
+
+El Developer Sandbox lleva los Deployments a 0 réplicas después de un tiempo. Mientras la plataforma está apagada,
+el sistema funciona igual: el central y los nodos solo registran en su log que no pueden exportar, y se pierde la
+telemetría de ese período. La Route de Grafana responde que la aplicación no está disponible. Para volver a
+encenderla, desde la consola de OpenShift o con:
+
+```sh
+oc scale deployment/observabilidad --replicas=1
+```
+
+Las métricas, trazas y logs anteriores se conservan en el volumen.
 
 ## Salud y diagnóstico
 
