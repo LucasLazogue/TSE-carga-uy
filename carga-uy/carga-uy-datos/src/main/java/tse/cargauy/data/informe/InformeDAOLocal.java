@@ -17,6 +17,7 @@ import tse.cargauy.dtos.VolumenPorRubroDto;
 public interface InformeDAOLocal {
     long contarVehiculosHabilitados(LocalDate fecha);
     long contarEmpresasHabilitadas(LocalDate fecha);
+    boolean isEmpresaHabilitada(Long idEmpresa, LocalDate fecha);
     List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro);
     List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro);
     List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro);
