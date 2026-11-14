@@ -58,23 +58,43 @@ public class GeneradorPosiciones {
         this.inicio = inicio;
     }
 
-    // lo llama el reloj cada intervalo: un evento por vehiculo
+    // lo llama el reloj cada segundo. Cada vehiculo reporta una vez por intervalo, pero no todos en el mismo segundo:
+    // con un intervalo de S segundos, en cada segundo le toca a uno de cada S vehiculos. Asi la carga llega pareja,
+    // como la de una flota real, en lugar de llegar toda la flota junta y despues nada hasta el proximo intervalo
+    public synchronized void generarTurno(Instant ahora, long segundo) {
+        long turnos = Math.max(1, flota.intervalo().toSeconds());
+        boolean sinCobertura = revisarCobertura(ahora);
+        for (long i = segundo % turnos; i < vehiculos.size(); i += turnos) {
+            generar(vehiculos.get((int) i), ahora, sinCobertura);
+        }
+    }
+
+    // un evento por vehiculo, todos en el mismo instante
     public synchronized void generar(Instant ahora) {
+        boolean sinCobertura = revisarCobertura(ahora);
+        for (VehiculoSimulado vehiculo : vehiculos) {
+            generar(vehiculo, ahora, sinCobertura);
+        }
+    }
+
+    private boolean revisarCobertura(Instant ahora) {
         boolean sinCobertura = sinCobertura(ahora);
         if (!sinCobertura && !retenidos.isEmpty()) {
             LOGGER.info("nodo cobertura=RECUPERADA eventos_acumulados=" + retenidos.size());
             pendientes.addAll(retenidos);
             retenidos.clear();
         }
-        for (VehiculoSimulado vehiculo : vehiculos) {
-            String mensaje = vehiculo.avanzar(ahora, flota.intervalo(), flota.acelerar()).aMensaje(config.nodoId());
-            generados.incrementAndGet();
+        return sinCobertura;
+    }
+
+    private void generar(VehiculoSimulado vehiculo, Instant ahora, boolean sinCobertura) {
+        String mensaje = vehiculo.avanzar(ahora, flota.intervalo(), flota.acelerar()).aMensaje(config.nodoId());
+        generados.incrementAndGet();
+        agregar(mensaje, sinCobertura);
+        if (azar.nextDouble() < flota.duplicados()) {
+            // el mismo mensaje, con el mismo idEvento: el central lo tiene que contar como DUPLICADO
             agregar(mensaje, sinCobertura);
-            if (azar.nextDouble() < flota.duplicados()) {
-                // el mismo mensaje, con el mismo idEvento: el central lo tiene que contar como DUPLICADO
-                agregar(mensaje, sinCobertura);
-                duplicados.incrementAndGet();
-            }
+            duplicados.incrementAndGet();
         }
     }
 

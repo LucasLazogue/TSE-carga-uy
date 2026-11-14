@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,8 +44,10 @@ public class NodoTracking {
         // un hilo genera y otro publica: si publicar se demora porque el central esta lento, la generacion no se atrasa.
         // el tercero es para el resumen periodico, asi tampoco espera a un envio lento
         ScheduledExecutorService reloj = Executors.newScheduledThreadPool(3);
-        reloj.scheduleAtFixedRate(sinCortar(() -> generador.generar(Instant.now())),
-                0, configFlota.intervalo().toMillis(), TimeUnit.MILLISECONDS);
+        // cada segundo genera la parte de la flota a la que le toca reportar (ver generarTurno)
+        AtomicLong segundo = new AtomicLong();
+        reloj.scheduleAtFixedRate(sinCortar(() -> generador.generarTurno(Instant.now(), segundo.getAndIncrement())),
+                0, 1, TimeUnit.SECONDS);
         reloj.scheduleWithFixedDelay(sinCortar(() -> generador.publicarPendientes(Instant.now())),
                 1, 1, TimeUnit.SECONDS);
         // un resumen cada tantos segundos en lugar de una linea por evento: el log no crece con el tamanio de la flota

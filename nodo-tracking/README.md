@@ -52,7 +52,7 @@ a `localhost:61617`, el puerto con TLS del broker, y confía en el certificado d
 | `NODO_MAX_PENDIENTES` | `200000` | Tope de eventos esperando el broker (unos 45 MB). Lleno, descarta los nuevos y los cuenta en `descartados` |
 | `NODO_RUTAS` | `rutas-prueba.json` | Archivo JSON con la flota (admite `desvioKm` por vehículo) |
 | `NODO_VEHICULOS_EXTRA` | `0` | Vehículos `SIM0001...` con rutas al azar, para la prueba de carga |
-| `NODO_INTERVALO_SEG` | `10` | Cada cuánto reporta cada vehículo. 10 s para desarrollo; la prueba de performance usa 30 s, la frecuencia del [volumen objetivo](../docs/performance.md#volumen-objetivo-de-tracking) |
+| `NODO_INTERVALO_SEG` | `10` | Cada cuánto reporta cada vehículo. Los reportes se reparten a lo largo del intervalo: cada segundo reporta uno de cada `NODO_INTERVALO_SEG` vehículos, así la carga llega pareja. 10 s para desarrollo; la prueba de performance usa 30 s, la frecuencia del [volumen objetivo](../docs/performance.md#volumen-objetivo-de-tracking) |
 | `NODO_ACELERAR` | `1` | Multiplica la distancia de cada tick; la hora sigue siendo la real |
 | `NODO_DUPLICADOS` | `0` | Fracción de eventos que se publican dos veces |
 | `NODO_DESORDENAR` | `false` | Mezcla cada lote antes de publicarlo |
@@ -155,7 +155,7 @@ Cada nodo empieza a publicar apenas arranca. Para detenerlo sin borrarlo,
 carga](../docs/performance.md), los vehículos extra se cambian sin tocar el manifiesto; el pod se
 reinicia con el valor nuevo:
 
-    oc set env deployment/nodo-tracking-1 deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
+    oc set env deployment/nodo-tracking-1 deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=9000
 
 ### Despliegue automático
 

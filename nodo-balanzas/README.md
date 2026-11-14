@@ -124,6 +124,33 @@ Si a los pocos minutos no aparecen las señales de un nodo en Grafana, reiniciar
 Para que las trazas que vienen del central se muestreen igual en las dos partes, configurar en los nodos
 `OTEL_PROPORCION_TRAZAS=0.1`, la misma proporción que el central en OpenShift.
 
+## Encender y apagar los nodos desde el grupo
+
+El Developer Sandbox lleva los Deployments a 0 réplicas después de un tiempo. Para las pruebas (por ejemplo, la de
+performance o el escenario de balanzas indisponible), el grupo usa una cuenta de servicio de este proyecto que solo
+puede **ver y escalar**: no cambia imágenes ni variables, no lee Secrets y no crea ni borra nada
+([openshift/operacion-grupo.yaml](openshift/operacion-grupo.yaml)).
+
+Para prepararla, una vez, en el proyecto de los nodos:
+
+1. Crear la cuenta de servicio, su rol y su token:
+
+       oc apply -f openshift/operacion-grupo.yaml
+
+2. Copiar el token y dejarlo en el Google Doc del grupo:
+
+       oc get secret operador-grupo-token -o jsonpath='{.data.token}' | base64 -d
+
+Con ese token, cualquiera del grupo puede, por ejemplo:
+
+    oc login --server=SERVIDOR_DEL_PROYECTO --token=TOKEN
+    oc get deploy,dc -n PROYECTO
+    oc scale deployment/cargauy-balanzas-sur --replicas=1 -n PROYECTO
+    oc scale deployment/observabilidad --replicas=1 -n PROYECTO
+
+Para encender todo después de que el sandbox lo apagó, escalar a 1 las bases, los nodos y el colector
+`observabilidad`, en ese orden.
+
 ## Configuración
 
 | Variable | Por defecto | Para qué |

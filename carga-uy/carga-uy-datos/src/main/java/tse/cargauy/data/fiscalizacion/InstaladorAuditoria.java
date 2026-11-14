@@ -7,6 +7,7 @@ import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import tse.cargauy.data.CerrojoArranque;
 
 // la pista de auditoria es de solo agregado: la base rechaza modificarla o borrarla, aunque sea desde fuera de la aplicacion
 @Singleton
@@ -33,6 +34,8 @@ public class InstaladorAuditoria {
 
     @PostConstruct
     public void init() {
+        // dos instancias que arrancan juntas chocarian en el CREATE OR REPLACE
+        CerrojoArranque.tomar(entityManager);
         for (String sentencia : SENTENCIAS) {
             entityManager.createNativeQuery(sentencia).executeUpdate();
         }

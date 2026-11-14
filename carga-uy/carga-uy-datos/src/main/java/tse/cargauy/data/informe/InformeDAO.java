@@ -14,7 +14,9 @@ import tse.cargauy.dtos.InfraccionesPorTipoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
+import tse.cargauy.dtos.ViajesPorMesPublicoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
+import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
 import tse.cargauy.entities.EstadoCaso;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.EstadoPermiso;
@@ -27,6 +29,14 @@ import tse.cargauy.entities.UsuarioBackoffice;
 public class InformeDAO implements InformeDAOLocal {
 
     private static final int TIEMPO_MAXIMO_MS = 10000;
+
+    private static final String VEHICULO_HABILITADO = " p.estado = :aprobado"
+            + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha"
+            + " AND EXISTS (SELECT i FROM Itv i WHERE i.vehiculo = p.vehiculo"
+            + " AND i.fechaInspeccion <= :fecha AND i.fechaVencimiento >= :fecha)";
+
+    private static final String VIAJES_FINALIZADOS = " FROM Viaje v WHERE v.estado = :finalizado"
+            + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta";
 
     @PersistenceContext(unitName = "carga-uy")
     private EntityManager entityManager;
@@ -41,11 +51,18 @@ public class InformeDAO implements InformeDAOLocal {
         return habilitados("p.vehiculo.empresa.id", fecha);
     }
 
+    @Override
+    public boolean isEmpresaHabilitada(Long idEmpresa, LocalDate fecha) {
+        return consulta("SELECT COUNT(p) FROM Permiso p WHERE p.vehiculo.empresa.id = :idEmpresa AND"
+                        + VEHICULO_HABILITADO, Long.class)
+                .setParameter("idEmpresa", idEmpresa)
+                .setParameter("aprobado", EstadoPermiso.APROBADO)
+                .setParameter("fecha", fecha)
+                .getSingleResult() > 0;
+    }
+
     private long habilitados(String campo, LocalDate fecha) {
-        return consulta("SELECT COUNT(DISTINCT " + campo + ") FROM Permiso p WHERE p.estado = :aprobado"
-                        + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha"
-                        + " AND EXISTS (SELECT i FROM Itv i WHERE i.vehiculo = p.vehiculo"
-                        + " AND i.fechaInspeccion <= :fecha AND i.fechaVencimiento >= :fecha)", Long.class)
+        return consulta("SELECT COUNT(DISTINCT " + campo + ") FROM Permiso p WHERE" + VEHICULO_HABILITADO, Long.class)
                 .setParameter("aprobado", EstadoPermiso.APROBADO)
                 .setParameter("fecha", fecha)
                 .getSingleResult();
@@ -105,6 +122,44 @@ public class InformeDAO implements InformeDAOLocal {
             query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
         }
         return query.getResultList();
+    }
+
+    @Override
+    public List<ViajesPorMesPublicoDto> contarViajesPorMesPublico(FiltroInforme filtro, int umbral) {
+        String mes = "EXTRACT(YEAR FROM v.fechaFin), EXTRACT(MONTH FROM v.fechaFin)";
+        return publica("SELECT NEW tse.cargauy.dtos.ViajesPorMesPublicoDto(" + mes + ", " + siSuperaUmbral("COUNT(v)") + ")",
+                " GROUP BY " + mes + " ORDER BY " + mes, filtro, umbral, ViajesPorMesPublicoDto.class)
+                .getResultList();
+    }
+
+    @Override
+    public List<VolumenPorRubroPublicoDto> sumarVolumenPorRubroPublico(FiltroInforme filtro, int umbral) {
+        return publica("SELECT NEW tse.cargauy.dtos.VolumenPorRubroPublicoDto(v.guia.rubro.nombre, "
+                        + siSuperaUmbral("SUM(v.guia.volumen)") + ")",
+                " GROUP BY v.guia.rubro.nombre ORDER BY v.guia.rubro.nombre", filtro, umbral, VolumenPorRubroPublicoDto.class)
+                .getResultList();
+    }
+
+    private static String siSuperaUmbral(String valor) {
+        return "CASE WHEN COUNT(DISTINCT v.guia.empresa.id) >= :umbral AND COUNT(DISTINCT v.vehiculo.id) >= :umbral"
+                + " THEN " + valor + " ELSE NULL END";
+    }
+
+    private <T> TypedQuery<T> publica(String seleccion, String agrupamiento, FiltroInforme filtro, int umbral, Class<T> tipo) {
+        String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND v.guia.tipoCarga.id = :idTipoCarga";
+        String rubro = filtro.getIdRubro() == null ? "" : " AND v.guia.rubro.id = :idRubro";
+        TypedQuery<T> query = consulta(seleccion + VIAJES_FINALIZADOS + tipoCarga + rubro + agrupamiento, tipo)
+                .setParameter("umbral", (long) umbral)
+                .setParameter("finalizado", EstadoViaje.FINALIZADO)
+                .setParameter("desde", filtro.getDesde().atStartOfDay())
+                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
+        if (filtro.getIdTipoCarga() != null) {
+            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
+        }
+        if (filtro.getIdRubro() != null) {
+            query.setParameter("idRubro", filtro.getIdRubro());
+        }
+        return query;
     }
 
     @Override

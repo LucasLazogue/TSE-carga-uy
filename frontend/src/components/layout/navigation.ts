@@ -1,6 +1,7 @@
 import {
   Building2,
   CalendarClock,
+  ChartColumn,
   FileText,
   Gavel,
   Home,
@@ -39,6 +40,12 @@ const groups: NavGroup[] = [
         description: 'Verificar si una empresa transportista tiene sus permisos vigentes.',
         path: '/validar-permisos',
         icon: ShieldCheck,
+      },
+      {
+        title: 'Estadísticas',
+        description: 'Actividad del transporte de carga en cifras agregadas.',
+        path: '/estadisticas',
+        icon: ChartColumn,
       },
     ],
   },
