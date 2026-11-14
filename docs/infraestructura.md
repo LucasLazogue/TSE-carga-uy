@@ -231,7 +231,7 @@ Lo que hace que el central funcione con varias instancias:
 | Tareas nocturnas | Borrar refresh tokens viejos y vencer informes son `DELETE` y `UPDATE` idempotentes: da lo mismo que corran en una instancia o en todas |
 | Preparación de la base al arrancar | Los triggers de la auditoría y los datos de prueba toman un cerrojo de PostgreSQL (`pg_advisory_xact_lock`): si dos instancias arrancan a la vez, la segunda espera y encuentra todo hecho |
 | API (frontend y app) | Sin estado en el servidor: JWT firmado y DPoP sin guardar `jti` |
-| Backoffice (JSF) | La sesión y el estado de las vistas quedan en la instancia que atendió el login. El Route mantiene a cada usuario en la misma instancia con la cookie `carga-uy-instancia`; si esa instancia se apaga, el usuario vuelve a iniciar sesión |
+| Backoffice (JSF) | El login no guarda estado: es el mismo JWT, en una cookie, que se valida en cada pedido. Lo que sí queda en la instancia es el estado de cada pantalla (JSF y los beans `@ViewScoped`). El Route mantiene a cada usuario en la misma instancia con la cookie `carga-uy-instancia`; si esa instancia se apaga, la pantalla abierta se recarga y el usuario sigue logueado |
 | Métricas de la cola | Cada instancia publica el tamaño de la cola; el tablero toma el máximo |
 
 ### Directorio LDAP

@@ -57,8 +57,8 @@ kind: Route
 metadata:
   name: carga-uy
   annotations:
-    # afinidad de sesion: el backoffice (JSF) guarda la sesion y el estado de las vistas en la instancia que lo
-    # atendio. El router de OpenShift ya la da con una cookie; aca se le pone nombre. La API (JWT) no la necesita
+    # afinidad: el backoffice (JSF) guarda el estado de cada pantalla en la instancia que la abrio; el login es un JWT
+    # y no depende de la instancia. El router de OpenShift ya da afinidad con una cookie; aca se le pone nombre
     router.openshift.io/cookie_name: carga-uy-instancia
 spec:
   to:
