@@ -6,12 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.jboss.resteasy.mock.MockHttpResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.HabilitacionEmpresaDto;
+import tse.cargauy.dtos.IndicadoresPublicosDto;
+import tse.cargauy.dtos.RubroDto;
+import tse.cargauy.dtos.TipoCargaDto;
+import tse.cargauy.dtos.ViajesPorMesPublicoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 import tse.cargauy.negocio.publico.ConsultaPublicaEJBLocal;
@@ -21,6 +27,7 @@ class ConsultaPublicaRestTest {
 
     private Integer ultimoNro;
     private String ultimaRazonSocial;
+    private FiltroInforme ultimoFiltro;
     private CargaUYException error;
     private ApiEnMemoria api;
 
@@ -37,6 +44,28 @@ class ConsultaPublicaRestTest {
                 }
                 return new HabilitacionEmpresaDto("Transportes del Sur", "Transportes del Sur S.A.", true,
                         LocalDate.of(2026, 11, 14));
+            }
+
+            @Override
+            public IndicadoresPublicosDto getIndicadores(FiltroInforme filtro) {
+                ultimoFiltro = filtro;
+                if (error != null) {
+                    throw error;
+                }
+                IndicadoresPublicosDto indicadores = new IndicadoresPublicosDto();
+                indicadores.setUmbral(5);
+                indicadores.setViajesPorMes(List.of(new ViajesPorMesPublicoDto("2026-03", 18L), new ViajesPorMesPublicoDto("2026-04", null)));
+                return indicadores;
+            }
+
+            @Override
+            public List<RubroDto> getRubros() {
+                return List.of();
+            }
+
+            @Override
+            public List<TipoCargaDto> getTiposCarga() {
+                return List.of();
             }
         };
         api = new ApiEnMemoria(rest);
@@ -80,5 +109,34 @@ class ConsultaPublicaRestTest {
 
         assertEquals(404, respuesta.getStatus());
         assertTrue(respuesta.getContentAsString().contains("1009"));
+    }
+
+    @Test
+    void indicadoresConFiltros() throws Exception {
+        MockHttpResponse respuesta = api.get("/publico/indicadores?desde=2026-03-01&hasta=2026-06-30&tipoCarga=2&rubro=4");
+
+        assertEquals(200, respuesta.getStatus());
+        assertEquals(LocalDate.of(2026, 3, 1), ultimoFiltro.getDesde());
+        assertEquals(LocalDate.of(2026, 6, 30), ultimoFiltro.getHasta());
+        assertEquals(2L, ultimoFiltro.getIdTipoCarga());
+        assertEquals(4L, ultimoFiltro.getIdRubro());
+    }
+
+    @Test
+    void elMesBajoElUmbralNoTraeCantidad() throws Exception {
+        String json = api.get("/publico/indicadores?desde=2026-03-01&hasta=2026-06-30").getContentAsString();
+
+        assertTrue(json.contains("{\"cantidad\":18,\"mes\":\"2026-03\"}"));
+        assertTrue(json.contains("{\"mes\":\"2026-04\"}"));
+    }
+
+    @Test
+    void periodoInvalido() throws Exception {
+        error = new CargaUYException(CodigoError.INFORME_RANGO_FECHAS_INVALIDO);
+
+        MockHttpResponse respuesta = api.get("/publico/indicadores?desde=2026-03-31&hasta=2026-03-01");
+
+        assertEquals(400, respuesta.getStatus());
+        assertTrue(respuesta.getContentAsString().contains("12002"));
     }
 }
