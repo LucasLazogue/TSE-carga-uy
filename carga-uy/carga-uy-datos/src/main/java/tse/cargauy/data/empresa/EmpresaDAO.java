@@ -40,6 +40,20 @@ public class EmpresaDAO implements EmpresaDAOLocal {
     }
 
     @Override
+    public List<EmpresaDto> getByRazonSocial(String razonSocial, int maximo) {
+        List<EmpresaDto> res = new ArrayList<>();
+        for (Empresa e : entityManager.createQuery(
+                        "SELECT e FROM Empresa e WHERE LOWER(TRIM(e.razonSocial)) = :razonSocial ORDER BY e.nroEmpresa",
+                        Empresa.class)
+                .setParameter("razonSocial", razonSocial.trim().toLowerCase())
+                .setMaxResults(maximo)
+                .getResultList()) {
+            res.add(Serializers.toDto(e));
+        }
+        return res;
+    }
+
+    @Override
     public PaginaDto<EmpresaDto> getAll(Paginacion paginacion) {
         List<EmpresaDto> res = new ArrayList<>();
 

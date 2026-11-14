@@ -11,6 +11,7 @@ import tse.cargauy.dtos.Paginacion;
 public interface EmpresaDAOLocal {
     EmpresaDto getEmpresaById(Long id);
     EmpresaDto getEmpresaByNro(int nroEmpresa);
+    List<EmpresaDto> getByRazonSocial(String razonSocial, int maximo);
     PaginaDto<EmpresaDto> getAll(Paginacion paginacion);
     PaginaDto<EmpresaDto> findByNombre(String nombre, Paginacion paginacion);
     List<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha);
