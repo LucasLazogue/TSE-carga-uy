@@ -23,7 +23,7 @@ RUN rm -rf /opt/jboss/wildfly/standalone/configuration/standalone_xml_history
 COPY --from=build /app/target/pdi-suplantador.war /opt/jboss/wildfly/standalone/deployments/
 # el Compose monta encima la carpeta del repo, para editar las personas sin reconstruir
 COPY personas /config/personas
-ENV PDI_PERSONAS_ARCHIVO=/config/personas/personas.json
+ENV SUPLANTADOR_PERSONAS_ARCHIVO=/config/personas/personas.json
 USER 0
 RUN chgrp -R 0 /opt/jboss/wildfly/standalone && chmod -R g=u /opt/jboss/wildfly/standalone
 USER 1000

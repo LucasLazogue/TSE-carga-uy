@@ -103,18 +103,22 @@ El central aplica una espera de 3 s, un reintento a 1 s y un corte de 30 s tras 
 | Escenario | Cómo | Qué tiene que pasar |
 | --- | --- | --- |
 | PDI caída | `docker compose stop pdi-suplantador` | El ciudadano entra igual, sin los datos; se completan en su próximo ingreso con la PDI disponible |
-| PDI que no responde | `PDI_DEMORA_MS=10000 docker compose up -d pdi-suplantador` | Con el perfil pendiente, el ingreso tarda unos 7 s (dos esperas de 3 s y el reintento). Con el corte abierto, que puede tardar hasta 5 ingresos en abrirse, es inmediato |
-| PDI que falla | `PDI_FALLA=true docker compose up -d pdi-suplantador` | Lo mismo que caída: el error 1001 cuenta como falla |
+| PDI que no responde | `SUPLANTADOR_DEMORA_MS=10000 docker compose up -d pdi-suplantador` | Con el perfil pendiente, el ingreso tarda unos 7 s (dos esperas de 3 s y el reintento). Con el corte abierto, que puede tardar hasta 5 ingresos en abrirse, es inmediato |
+| PDI que falla | `SUPLANTADOR_FALLA=true docker compose up -d pdi-suplantador` | Lo mismo que caída: el error 1001 cuenta como falla |
 
 ## Configuración
 
 | Variable | Por defecto | Para qué |
 | --- | --- | --- |
-| `PDI_ORGANIZACION` | obligatoria | Organización que acepta |
-| `PDI_PASSWORD_ENTIDAD` | obligatoria | Clave que acepta; sin ella rechaza todo con 10002 |
-| `PDI_PERSONAS_ARCHIVO` | `/config/personas/personas.json` | Ruta del [archivo de personas](#agregar-personas) dentro del contenedor. La imagen trae el del repo, y el Compose monta encima la carpeta `personas/` |
-| `PDI_DEMORA_MS` | `0` | Cuánto tarda en responder |
-| `PDI_FALLA` | `false` | Responder 1001 a todo |
+| `SUPLANTADOR_ORGANIZACION` | obligatoria | Organización que acepta |
+| `SUPLANTADOR_PASSWORD_ENTIDAD` | obligatoria | Clave que acepta; sin ella rechaza todo con 10002 |
+| `SUPLANTADOR_PERSONAS_ARCHIVO` | `/config/personas/personas.json` | Ruta del [archivo de personas](#agregar-personas) dentro del contenedor. La imagen trae el del repo, y el Compose monta encima la carpeta `personas/` |
+| `SUPLANTADOR_DEMORA_MS` | `0` | Cuánto tarda en responder |
+| `SUPLANTADOR_FALLA` | `false` | Responder 1001 a todo |
+
+La organización y la clave tienen que coincidir con `PDI_ORGANIZACION` y `PDI_PASSWORD_ENTIDAD` del central. Tienen
+nombres distintos porque son dos lados distintos: el central configura qué manda y el suplantador qué acepta, y cada uno
+se despliega por su cuenta.
 
 El Compose incluye valores predeterminados para desarrollo. Para otro despliegue, configurarlos mediante variables de
 entorno.

@@ -25,8 +25,8 @@ import tse.cargauy.pdisuplantador.soap.ResultObtPersonaPorDoc;
 class ServicioBasicoInformacionImplTest {
 
     private final Map<String, String> variables = new HashMap<>(Map.of(
-            "PDI_ORGANIZACION", "carga-uy",
-            "PDI_PASSWORD_ENTIDAD", "clave"));
+            "SUPLANTADOR_ORGANIZACION", "carga-uy",
+            "SUPLANTADOR_PASSWORD_ENTIDAD", "clave"));
 
     private final ServicioBasicoInformacionImpl servicio = new ServicioBasicoInformacionImpl() {
         @Override
@@ -53,7 +53,7 @@ class ServicioBasicoInformacionImplTest {
 
     private void conArchivo(Path carpeta, String personas) throws IOException {
         Path archivo = Files.writeString(carpeta.resolve("personas.json"), personas);
-        variables.put("PDI_PERSONAS_ARCHIVO", archivo.toString());
+        variables.put("SUPLANTADOR_PERSONAS_ARCHIVO", archivo.toString());
     }
 
     private static String fechaDelMenor() {
@@ -154,21 +154,21 @@ class ServicioBasicoInformacionImplTest {
 
     @Test
     void sinPasswordConfiguradaNadieEstaAutorizado() {
-        variables.remove("PDI_PASSWORD_ENTIDAD");
+        variables.remove("SUPLANTADOR_PASSWORD_ENTIDAD");
 
         assertError(CodigoDnic.ACCESO_NO_AUTORIZADO, servicio.obtPersonaPorDoc(consulta("55555555")));
     }
 
     @Test
     void conLaFallaActivadaTodoEsFalloTransitorio() {
-        variables.put("PDI_FALLA", "true");
+        variables.put("SUPLANTADOR_FALLA", "true");
 
         assertError(CodigoDnic.CONSULTA_INCOMPLETA, servicio.obtPersonaPorDoc(consulta("55555555")));
     }
 
     @Test
     void laDemoraRetrasaLaRespuesta() {
-        variables.put("PDI_DEMORA_MS", "200");
+        variables.put("SUPLANTADOR_DEMORA_MS", "200");
         long inicio = System.nanoTime();
 
         servicio.obtPersonaPorDoc(consulta("55555555"));

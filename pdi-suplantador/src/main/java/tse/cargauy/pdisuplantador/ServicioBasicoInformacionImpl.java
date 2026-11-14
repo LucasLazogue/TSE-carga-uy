@@ -30,7 +30,7 @@ public class ServicioBasicoInformacionImpl implements ServicioBasicoInformacionP
     @Override
     public ResultObtPersonaPorDoc obtPersonaPorDoc(ParamObtPersonaPorDoc parametros) {
         demorar();
-        if (Boolean.parseBoolean(entorno("PDI_FALLA"))) {
+        if (Boolean.parseBoolean(entorno("SUPLANTADOR_FALLA"))) {
             return conError(CodigoDnic.CONSULTA_INCOMPLETA);
         }
         if (!parametrosValidos(parametros)) {
@@ -47,7 +47,7 @@ public class ServicioBasicoInformacionImpl implements ServicioBasicoInformacionP
         }
         ObjPersona persona = CasosEspeciales.buscar(cedula, LocalDate.now());
         if (persona == null) {
-            persona = PersonasArchivo.buscar(entorno("PDI_PERSONAS_ARCHIVO"), cedula);
+            persona = PersonasArchivo.buscar(entorno("SUPLANTADOR_PERSONAS_ARCHIVO"), cedula);
         }
         if (persona == null) {
             return conError(CodigoDnic.PERSONA_INEXISTENTE);
@@ -85,16 +85,16 @@ public class ServicioBasicoInformacionImpl implements ServicioBasicoInformacionP
     }
 
     private boolean autorizado(ParamObtPersonaPorDoc parametros) {
-        String password = entorno("PDI_PASSWORD_ENTIDAD");
+        String password = entorno("SUPLANTADOR_PASSWORD_ENTIDAD");
         return password != null && !password.isBlank()
                 && password.equals(parametros.getPasswordEntidad())
                 && parametros.getOrganizacion() != null
-                && parametros.getOrganizacion().equals(entorno("PDI_ORGANIZACION"));
+                && parametros.getOrganizacion().equals(entorno("SUPLANTADOR_ORGANIZACION"));
     }
 
     // simula una PDI que tarda en responder, para probar la espera del central
     private void demorar() {
-        String demora = entorno("PDI_DEMORA_MS");
+        String demora = entorno("SUPLANTADOR_DEMORA_MS");
         if (demora == null || demora.isBlank()) {
             return;
         }
