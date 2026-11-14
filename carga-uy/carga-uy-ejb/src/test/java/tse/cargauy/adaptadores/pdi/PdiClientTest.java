@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.sun.net.httpserver.HttpServer;
@@ -130,6 +131,29 @@ class PdiClientTest {
     }
 
     @Test
+    void losCamposVaciosNoDejanEspacios() {
+        responder("<objPersona><nombre1>Jorge</nombre1><nombre2></nombre2>"
+                + "<Apellido1>Silva</Apellido1><Apellido2> </Apellido2></objPersona>");
+
+        PersonaPdi persona = client.obtenerPersona("44444444").orElseThrow();
+
+        assertEquals("Jorge", persona.nombres());
+        assertEquals("Silva", persona.apellidos());
+    }
+
+    // nombres null marca el perfil como pendiente: con "" quedaria completo y sin nombre para mostrar
+    @Test
+    void sinNombresElPerfilQuedaPendiente() {
+        responder("<objPersona><nombre1> </nombre1><Apellido1>Silva</Apellido1>"
+                + "<fechaNacimiento>1975-1103</fechaNacimiento></objPersona>");
+
+        PersonaPdi persona = client.obtenerPersona("44444444").orElseThrow();
+
+        assertNull(persona.nombres());
+        assertEquals("1975-11-03", persona.fechaNacimiento());
+    }
+
+    @Test
     void laAdvertenciaDeDatosARegularizarIgualCompletaElPerfil() {
         responder(PERSONA + "<Warnings><Mensajes><CodMensaje>701</CodMensaje></Mensajes></Warnings>");
 
@@ -175,9 +199,11 @@ class PdiClientTest {
         assertThrows(WebServiceException.class, () -> client.obtenerPersona("22222222"));
     }
 
-    @Test
-    void sinUrlConfiguradaEsSinDatosYNoLlama() {
-        variables.remove("PDI_URL");
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    void sinUrlConfiguradaEsSinDatosYNoLlama(String url) {
+        variables.put("PDI_URL", url);
         responder(PERSONA);
 
         assertEquals(Optional.empty(), client.obtenerPersona("22222222"));
