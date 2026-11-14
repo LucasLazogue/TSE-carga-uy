@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +16,9 @@ import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.entities.EstadoPermiso;
+import tse.cargauy.entities.EstadoViaje;
 
 class InformeDAOTest {
 
@@ -35,6 +38,7 @@ class InformeDAOTest {
                         yield proxy;
                     }
                     case "getSingleResult" -> resultado;
+                    case "getResultList" -> List.of();
                     default -> proxy;
                 });
         EntityManager entityManager = (EntityManager) Proxy.newProxyInstance(getClass().getClassLoader(),
@@ -63,6 +67,35 @@ class InformeDAOTest {
         resultado = 0;
 
         assertFalse(dao.isEmpresaHabilitada(7L, HOY));
+    }
+
+    @Test
+    void losViajesPublicosFiltranPorRubroYTipoDeCarga() {
+        dao.contarViajesPorMesPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), 2L, 4L), 5);
+
+        assertTrue(jpql.contains("v.guia.tipoCarga.id = :idTipoCarga AND v.guia.rubro.id = :idRubro GROUP BY"));
+        assertEquals(Map.of("umbral", 5L, "finalizado", EstadoViaje.FINALIZADO, "desde", LocalDate.of(2026, 3, 1).atStartOfDay(),
+                "hasta", LocalDate.of(2026, 4, 1).atStartOfDay(), "idTipoCarga", 2L, "idRubro", 4L), parametros);
+    }
+
+    @Test
+    void lasFilasBajoElUmbralVuelvenSinValor() {
+        dao.contarViajesPorMesPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), null, null), 5);
+        String viajes = jpql;
+        dao.sumarVolumenPorRubroPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), null, null), 5);
+
+        String condicion = "CASE WHEN COUNT(DISTINCT v.guia.empresa.id) >= :umbral AND COUNT(DISTINCT v.vehiculo.id) >= :umbral";
+        assertTrue(viajes.contains(condicion + " THEN COUNT(v) ELSE NULL END"));
+        assertTrue(jpql.contains(condicion + " THEN SUM(v.guia.volumen) ELSE NULL END"));
+    }
+
+    @Test
+    void elVolumenPublicoSeOrdenaPorRubroYNoPorValor() {
+        dao.sumarVolumenPorRubroPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), null, null), 5);
+
+        assertTrue(jpql.endsWith("ORDER BY v.guia.rubro.nombre"));
+        assertFalse(jpql.contains(":idRubro"));
+        assertFalse(jpql.contains(":idTipoCarga"));
     }
 
     @Test

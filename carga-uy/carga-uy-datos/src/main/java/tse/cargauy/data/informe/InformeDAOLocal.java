@@ -11,7 +11,9 @@ import tse.cargauy.dtos.InfraccionesPorTipoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.ViajesPorPeriodoDto;
+import tse.cargauy.dtos.ViajesPorMesPublicoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
+import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
 
 @Local
 public interface InformeDAOLocal {
@@ -21,6 +23,8 @@ public interface InformeDAOLocal {
     List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro);
     List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro);
     List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro);
+    List<ViajesPorMesPublicoDto> contarViajesPorMesPublico(FiltroInforme filtro, int umbral);
+    List<VolumenPorRubroPublicoDto> sumarVolumenPorRubroPublico(FiltroInforme filtro, int umbral);
     InformeDto addInforme(InformeDto informeDto);
     PaginaDto<InformeDto> getBySolicitante(Long idSolicitante, Paginacion paginacion);
     InformeDto getInformeById(Long id);

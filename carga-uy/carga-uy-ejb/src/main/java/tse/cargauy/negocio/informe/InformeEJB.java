@@ -140,7 +140,7 @@ public class InformeEJB implements InformeEJBLocal {
         return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private static void validar(FiltroInforme filtro) {
+    public static void validar(FiltroInforme filtro) {
         if (filtro.getDesde() == null || filtro.getHasta() == null) {
             throw new CargaUYException(CodigoError.INFORME_PERIODO_REQUERIDO);
         }
