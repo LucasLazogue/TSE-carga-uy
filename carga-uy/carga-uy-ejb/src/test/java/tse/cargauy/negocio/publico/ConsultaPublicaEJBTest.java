@@ -2,6 +2,7 @@ package tse.cargauy.negocio.publico;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,7 +19,11 @@ import org.junit.jupiter.api.function.Executable;
 import tse.cargauy.data.empresa.EmpresaDAO;
 import tse.cargauy.data.informe.InformeDAO;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.HabilitacionEmpresaDto;
+import tse.cargauy.dtos.IndicadoresPublicosDto;
+import tse.cargauy.dtos.ViajesPorMesPublicoDto;
+import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
@@ -29,6 +34,12 @@ class ConsultaPublicaEJBTest {
     private final List<EmpresaDto> empresas = new ArrayList<>();
     private final Set<Long> habilitadas = new HashSet<>();
     private final List<LocalDate> fechasConsultadas = new ArrayList<>();
+    private final List<FiltroInforme> filtros = new ArrayList<>();
+    private long empresasHabilitadas = 40;
+    private long vehiculosHabilitados = 120;
+    private final List<Integer> umbrales = new ArrayList<>();
+    private List<ViajesPorMesPublicoDto> viajesPorMes = List.of();
+    private List<VolumenPorRubroPublicoDto> volumenPorRubro = List.of();
     private final ConsultaPublicaEJB ejb = new ConsultaPublicaEJB() {
         @Override
         LocalDate hoy() {
@@ -57,6 +68,30 @@ class ConsultaPublicaEJBTest {
             public boolean isEmpresaHabilitada(Long idEmpresa, LocalDate fecha) {
                 fechasConsultadas.add(fecha);
                 return habilitadas.contains(idEmpresa);
+            }
+
+            @Override
+            public long contarEmpresasHabilitadas(LocalDate fecha) {
+                return empresasHabilitadas;
+            }
+
+            @Override
+            public long contarVehiculosHabilitados(LocalDate fecha) {
+                return vehiculosHabilitados;
+            }
+
+            @Override
+            public List<ViajesPorMesPublicoDto> contarViajesPorMesPublico(FiltroInforme filtro, int umbral) {
+                filtros.add(filtro);
+                umbrales.add(umbral);
+                return viajesPorMes;
+            }
+
+            @Override
+            public List<VolumenPorRubroPublicoDto> sumarVolumenPorRubroPublico(FiltroInforme filtro, int umbral) {
+                filtros.add(filtro);
+                umbrales.add(umbral);
+                return volumenPorRubro;
             }
         };
         empresa(1L, 1001, "Transportes del Sur", "Transportes del Sur S.A.");
@@ -125,5 +160,58 @@ class ConsultaPublicaEJBTest {
     void conLosDosDatos() {
         assertCodigo(CodigoError.EMPRESA_CONSULTA_DATO_REQUERIDO,
                 () -> ejb.validarEmpresa(1001, "Transportes del Sur S.A."));
+    }
+
+    private static FiltroInforme anio() {
+        return new FiltroInforme(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31), null, null);
+    }
+
+    @Test
+    void devuelveLasFilasDelDaoConElUmbral() {
+        viajesPorMes = List.of(new ViajesPorMesPublicoDto("2026-03", 18L), new ViajesPorMesPublicoDto("2026-04", null));
+        volumenPorRubro = List.of(new VolumenPorRubroPublicoDto("Forestal", 48000L));
+
+        IndicadoresPublicosDto indicadores = ejb.getIndicadores(anio());
+
+        assertEquals(viajesPorMes, indicadores.getViajesPorMes());
+        assertEquals(volumenPorRubro, indicadores.getVolumenPorRubro());
+        assertEquals(5, indicadores.getUmbral());
+        assertEquals(List.of(5, 5), umbrales);
+    }
+
+    @Test
+    void publicaLosHabilitadosAHoy() {
+        IndicadoresPublicosDto indicadores = ejb.getIndicadores(anio());
+
+        assertEquals(HOY, indicadores.getHabilitadosAl());
+        assertEquals(40L, indicadores.getEmpresasHabilitadas());
+        assertEquals(120L, indicadores.getVehiculosHabilitados());
+    }
+
+    @Test
+    void habilitadosPorDebajoDelUmbralNoSePublican() {
+        empresasHabilitadas = 4;
+
+        IndicadoresPublicosDto indicadores = ejb.getIndicadores(anio());
+
+        assertNull(indicadores.getEmpresasHabilitadas());
+        assertNull(indicadores.getVehiculosHabilitados());
+    }
+
+    @Test
+    void pasaLosFiltrosAlDao() {
+        FiltroInforme filtro = new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 6, 30), 2L, 4L);
+
+        ejb.getIndicadores(filtro);
+
+        assertEquals(List.of(filtro, filtro), filtros);
+    }
+
+    @Test
+    void periodoInvalido() {
+        assertCodigo(CodigoError.INFORME_PERIODO_REQUERIDO,
+                () -> ejb.getIndicadores(new FiltroInforme(null, LocalDate.of(2026, 1, 1), null, null)));
+        assertCodigo(CodigoError.INFORME_RANGO_FECHAS_INVALIDO,
+                () -> ejb.getIndicadores(new FiltroInforme(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 1, 1), null, null)));
     }
 }
