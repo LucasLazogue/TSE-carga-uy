@@ -1,0 +1,65 @@
+[
+  {
+    "cedula": "9876549",
+    "nombre1": "Raúl",
+    "apellido1": "Acosta",
+    "apellido2": "Benítez",
+    "sexo": 1,
+    "fechaNacimiento": "1958-0907"
+  },
+  {
+    "cedula": "11111111",
+    "nombre1": "Laura",
+    "apellido1": "Méndez",
+    "apellido2": "Olivera",
+    "sexo": 2,
+    "fechaNacimiento": "1983-0619"
+  },
+  {
+    "cedula": "12345672",
+    "nombre1": "Pedro",
+    "apellido1": "Gómez",
+    "apellido2": "Díaz",
+    "sexo": 1,
+    "fechaNacimiento": "1992-0815"
+  },
+  {
+    "cedula": "22222222",
+    "nombre1": "Ana",
+    "nombre2": "María",
+    "apellido1": "Pereira",
+    "apellido2": "Gómez",
+    "sexo": 2,
+    "fechaNacimiento": "1975-1103"
+  },
+  {
+    "cedula": "34567894",
+    "nombre1": "Sofía",
+    "nombre2": "Inés",
+    "apellido1": "Rodríguez",
+    "sexo": 2,
+    "fechaNacimiento": "1988-0302"
+  },
+  {
+    "cedula": "44444444",
+    "nombre1": "Jorge",
+    "apellido1": "Silva",
+    "sexo": 1,
+    "fechaNacimiento": "1985"
+  },
+  {
+    "cedula": "45678905",
+    "nombre1": "Martín",
+    "apellido1": "Castro",
+    "sexo": 1,
+    "fechaNacimiento": "1979-1120"
+  },
+  {
+    "cedula": "55555555",
+    "nombre1": "Carlos",
+    "apellido1": "Suárez",
+    "apellido2": "Rodríguez",
+    "sexo": 1,
+    "fechaNacimiento": "1980-0412"
+  }
+]
