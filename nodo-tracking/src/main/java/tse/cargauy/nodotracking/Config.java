@@ -13,7 +13,7 @@ public record Config(String nodoId, int puerto, String jmsUrl, String jmsUsuario
             obligatoria("NODO_JMS_USUARIO"),
             obligatoria("NODO_JMS_CLAVE"),
             numero("NODO_MAX_LOTE", 500),
-            // unos 45 MB de mensajes: con 7.500 vehiculos cada 30 s, unos 13 minutos sin broker
+            // unos 45 MB de mensajes: con 9.000 vehiculos cada 30 s, unos 11 minutos sin broker
             numero("NODO_MAX_PENDIENTES", 200_000)
         );
         return config;

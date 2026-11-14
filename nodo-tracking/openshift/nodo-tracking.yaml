@@ -55,7 +55,7 @@ spec:
             # la frecuencia del volumen objetivo (AC08); el compose usa 10 s para desarrollo
             - name: NODO_INTERVALO_SEG
               value: "30"
-            # la carga de la prueba: oc set env deployment/nodo-tracking-1 NODO_VEHICULOS_EXTRA=7500
+            # la carga de la prueba: oc set env deployment/nodo-tracking-1 NODO_VEHICULOS_EXTRA=9000
             - name: NODO_VEHICULOS_EXTRA
               value: "0"
             # senales a la Plataforma de Observabilidad del proyecto del central, por su Route con TLS y token
@@ -182,7 +182,7 @@ spec:
               value: flotas/flota-norte.json
             - name: NODO_INTERVALO_SEG
               value: "30"
-            # la carga de la prueba: oc set env deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
+            # la carga de la prueba: oc set env deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=9000
             - name: NODO_VEHICULOS_EXTRA
               value: "0"
             # senales a la Plataforma de Observabilidad del proyecto del central, por su Route con TLS y token
