@@ -7,13 +7,10 @@ public class HabilitacionEmpresaDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String nombrePublico;
-    private String razonSocial;
-    private boolean habilitada;
-    private LocalDate fecha;
-
-    public HabilitacionEmpresaDto() {
-    }
+    private final String nombrePublico;
+    private final String razonSocial;
+    private final boolean habilitada;
+    private final LocalDate fecha;
 
     public HabilitacionEmpresaDto(String nombrePublico, String razonSocial, boolean habilitada, LocalDate fecha) {
         this.nombrePublico = nombrePublico;
@@ -26,31 +23,15 @@ public class HabilitacionEmpresaDto implements Serializable {
         return nombrePublico;
     }
 
-    public void setNombrePublico(String nombrePublico) {
-        this.nombrePublico = nombrePublico;
-    }
-
     public String getRazonSocial() {
         return razonSocial;
-    }
-
-    public void setRazonSocial(String razonSocial) {
-        this.razonSocial = razonSocial;
     }
 
     public boolean isHabilitada() {
         return habilitada;
     }
 
-    public void setHabilitada(boolean habilitada) {
-        this.habilitada = habilitada;
-    }
-
     public LocalDate getFecha() {
         return fecha;
-    }
-
-    public void setFecha(LocalDate fecha) {
-        this.fecha = fecha;
     }
 }
