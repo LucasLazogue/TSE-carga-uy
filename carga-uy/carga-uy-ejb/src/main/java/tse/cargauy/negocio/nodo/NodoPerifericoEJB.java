@@ -31,6 +31,8 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
     @Inject
     Cifrado cifrado;
 
+    boolean httpsObligatorio = !"false".equalsIgnoreCase(System.getenv("CARGAUY_NODOS_HTTPS"));
+
     public List<NodoPerifericoDto> getVigentes() {
         return nodoDAO.getVigentes();
     }
@@ -56,6 +58,7 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
         if (nodoDto.getTipo() == TipoNodo.BALANZAS && vacio(nodoDto.getClave())) {
             throw new CargaUYException(CodigoError.NODO_CLAVE_REQUERIDA);
         }
+        validarPuntoAcceso(nodoDto.getTipo(), nodoDto.getPuntoAcceso());
         // todo nodo nuevo arranca deshabilitado: un nodo mal configurado no da error, da silencio
         nodoDto.setEstado(EstadoNodo.DESHABILITADO);
         nodoDAO.addNodo(nodoDto, vacio(nodoDto.getClave()) ? null : cifrado.cifrar(nodoDto.getClave(), nodoDto.getIdentificador()));
@@ -71,6 +74,7 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
 
     public void cambiarPuntoAcceso(Long id, String puntoAcceso) {
         NodoPerifericoDto nodo = vigente(id);
+        validarPuntoAcceso(nodo.getTipo(), puntoAcceso);
         nodoDAO.cambiarPuntoAcceso(nodo.getId(), puntoAcceso);
         nodoDAO.cambiarEstado(nodo.getId(), EstadoNodo.DESHABILITADO);
     }
@@ -94,6 +98,12 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
             throw new CargaUYException(CodigoError.NODO_DADO_DE_BAJA, nodo.getIdentificador());
         }
         return nodo;
+    }
+
+    private void validarPuntoAcceso(TipoNodo tipo, String puntoAcceso) {
+        if (httpsObligatorio && tipo == TipoNodo.BALANZAS && (puntoAcceso == null || !puntoAcceso.startsWith("https://"))) {
+            throw new CargaUYException(CodigoError.NODO_PUNTO_ACCESO_HTTPS);
+        }
     }
 
     private static boolean vacio(String valor) {

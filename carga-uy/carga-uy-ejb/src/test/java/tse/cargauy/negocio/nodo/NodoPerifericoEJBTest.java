@@ -95,8 +95,35 @@ class NodoPerifericoEJBTest {
         assertError(CodigoError.NODO_CLAVE_REQUERIDA, () -> ejb.cambiarClave(1L, " "));
     }
 
+    @Test
+    void nodoDeBalanzasConHttpFalla() {
+        NodoPerifericoDto nodo = nodo("balanzas-sur", TipoNodo.BALANZAS, "clave");
+        nodo.setPuntoAcceso("http://balanzas-sur:8080/nodo-balanzas");
+
+        assertError(CodigoError.NODO_PUNTO_ACCESO_HTTPS, () -> ejb.addNodo(nodo));
+    }
+
+    @Test
+    void cambiarElPuntoAccesoDeBalanzasAHttpFalla() {
+        ejb.addNodo(nodo("balanzas-sur", TipoNodo.BALANZAS, "clave"));
+
+        assertError(CodigoError.NODO_PUNTO_ACCESO_HTTPS,
+                () -> ejb.cambiarPuntoAcceso(1L, "http://balanzas-sur:8080/nodo-balanzas"));
+    }
+
+    @Test
+    void sinHttpsObligatorioAceptaHttp() {
+        ejb.httpsObligatorio = false;
+        NodoPerifericoDto nodo = nodo("balanzas-sur", TipoNodo.BALANZAS, "clave");
+        nodo.setPuntoAcceso("http://balanzas-sur:8080/nodo-balanzas");
+
+        ejb.addNodo(nodo);
+
+        assertEquals(EstadoNodo.DESHABILITADO, nodos.get("balanzas-sur").getEstado());
+    }
+
     private static NodoPerifericoDto nodo(String identificador, TipoNodo tipo, String clave) {
-        NodoPerifericoDto nodo = new NodoPerifericoDto(identificador, tipo, "http://" + identificador + ":8080/nodo-balanzas");
+        NodoPerifericoDto nodo = new NodoPerifericoDto(identificador, tipo, "https://" + identificador + ":8080/nodo-balanzas");
         nodo.setClave(clave);
         return nodo;
     }
