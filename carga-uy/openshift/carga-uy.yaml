@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: carga-uy
 spec:
-  replicas: 1
+  # sin replicas: las maneja el HorizontalPodAutoscaler de abajo. Si se fijaran aca, cada oc apply las pisaria
   selector:
     matchLabels:
       app: carga-uy
@@ -23,9 +23,12 @@ spec:
                 name: carga-uy-config
             - secretRef:
                 name: carga-uy-secretos
+          # el autoescalado mide el uso de CPU contra el request. Cuota del proyecto: 3 CPU de requests; Artemis,
+          # Mongo, LDAP, Postgres y la plataforma de observabilidad piden ~0,5. Con 400m entran 4 instancias mas la
+          # extra que agrega un despliegue (maxSurge)
           resources:
             requests:
-              cpu: 250m
+              cpu: 400m
               memory: 1Gi
             limits:
               cpu: "2"
@@ -53,6 +56,10 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: carga-uy
+  annotations:
+    # afinidad de sesion: el backoffice (JSF) guarda la sesion y el estado de las vistas en la instancia que lo
+    # atendio. El router de OpenShift ya la da con una cookie; aca se le pone nombre. La API (JWT) no la necesita
+    router.openshift.io/cookie_name: carga-uy-instancia
 spec:
   to:
     kind: Service
@@ -62,3 +69,39 @@ spec:
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
+---
+# autoescalado del central (opcional 4): entre 1 y 4 instancias segun el uso de CPU. Todas consumen de la misma cola
+# de tracking (cada mensaje lo procesa una sola) y no guardan estado propio de la API. Ver "Varias instancias y autoescalado" en docs/infraestructura.md
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: carga-uy
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: carga-uy
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    # WildFly tarda ~1 minuto en arrancar: mientras tanto la cola absorbe el pico
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    # baja de a una instancia, despues de 5 minutos tranquilos, para no oscilar
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
