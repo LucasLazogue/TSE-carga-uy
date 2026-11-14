@@ -1,5 +1,10 @@
 # carga.uy
 
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=LucasLazogue_TSE-carga-uy&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=LucasLazogue_TSE-carga-uy)
+[![Cobertura](https://sonarcloud.io/api/project_badges/measure?project=LucasLazogue_TSE-carga-uy&metric=coverage)](https://sonarcloud.io/summary/new_code?id=LucasLazogue_TSE-carga-uy)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=LucasLazogue_TSE-carga-uy&metric=bugs)](https://sonarcloud.io/summary/new_code?id=LucasLazogue_TSE-carga-uy)
+[![Vulnerabilidades](https://sonarcloud.io/api/project_badges/measure?project=LucasLazogue_TSE-carga-uy&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=LucasLazogue_TSE-carga-uy)
+
 Sistema de gestión y fiscalización del transporte de carga. El componente central reúne la API REST,
 el backoffice y la lógica de negocio; la web, la app Android y los nodos periféricos se conectan a él
 para gestionar empresas, vehículos, permisos, viajes y datos de fiscalización.
