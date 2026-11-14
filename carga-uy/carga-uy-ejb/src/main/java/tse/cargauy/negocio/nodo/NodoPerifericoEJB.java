@@ -31,8 +31,6 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
     @Inject
     Cifrado cifrado;
 
-    boolean httpsObligatorio = !"false".equalsIgnoreCase(System.getenv("CARGAUY_NODOS_HTTPS"));
-
     public List<NodoPerifericoDto> getVigentes() {
         return nodoDAO.getVigentes();
     }
@@ -100,8 +98,12 @@ public class NodoPerifericoEJB implements NodoPerifericoEJBLocal {
         return nodo;
     }
 
+    boolean httpsObligatorio() {
+        return !"false".equalsIgnoreCase(System.getenv("CARGAUY_NODOS_HTTPS"));
+    }
+
     private void validarPuntoAcceso(TipoNodo tipo, String puntoAcceso) {
-        if (httpsObligatorio && tipo == TipoNodo.BALANZAS && (puntoAcceso == null || !puntoAcceso.startsWith("https://"))) {
+        if (httpsObligatorio() && tipo == TipoNodo.BALANZAS && (puntoAcceso == null || !puntoAcceso.startsWith("https://"))) {
             throw new CargaUYException(CodigoError.NODO_PUNTO_ACCESO_HTTPS);
         }
     }

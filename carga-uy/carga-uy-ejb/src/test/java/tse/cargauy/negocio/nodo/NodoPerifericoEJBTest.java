@@ -113,11 +113,18 @@ class NodoPerifericoEJBTest {
 
     @Test
     void sinHttpsObligatorioAceptaHttp() {
-        ejb.httpsObligatorio = false;
+        NodoPerifericoEJB sinHttps = new NodoPerifericoEJB() {
+            @Override
+            boolean httpsObligatorio() {
+                return false;
+            }
+        };
+        sinHttps.nodoDAO = ejb.nodoDAO;
+        sinHttps.cifrado = cifrado;
         NodoPerifericoDto nodo = nodo("balanzas-sur", TipoNodo.BALANZAS, "clave");
         nodo.setPuntoAcceso("http://balanzas-sur:8080/nodo-balanzas");
 
-        ejb.addNodo(nodo);
+        sinHttps.addNodo(nodo);
 
         assertEquals(EstadoNodo.DESHABILITADO, nodos.get("balanzas-sur").getEstado());
     }
