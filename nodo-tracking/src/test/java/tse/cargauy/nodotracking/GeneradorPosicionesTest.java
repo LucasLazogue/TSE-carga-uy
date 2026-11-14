@@ -3,6 +3,7 @@ package tse.cargauy.nodotracking;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.StringReader;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.jupiter.api.Test;
+
+import jakarta.json.Json;
 
 // con un publicador falso: prueba la logica de generar, acumular y reintentar sin necesitar el central
 class GeneradorPosicionesTest {
@@ -31,6 +34,30 @@ class GeneradorPosicionesTest {
         assertEquals(6, publicador.recibidos.size());
         assertEquals(6, generador.generados.get());
         assertEquals(0, generador.cantidadPendiente());
+    }
+
+    @Test
+    void cadaSegundoReportaUnaParteYEnUnIntervaloReportanTodosUnaVez() {
+        // 25 vehiculos cada 10 s: 2 o 3 por segundo, en lugar de los 25 juntos
+        GeneradorPosiciones generador = generador(flota(), 25, 500);
+
+        List<Integer> porSegundo = new ArrayList<>();
+        for (int segundo = 0; segundo < 10; segundo++) {
+            long antes = generador.generados.get();
+            generador.generarTurno(INICIO.plusSeconds(segundo), segundo);
+            porSegundo.add((int) (generador.generados.get() - antes));
+        }
+        generador.publicarPendientes(INICIO.plusSeconds(10));
+
+        assertEquals(25, generador.generados.get());
+        assertTrue(porSegundo.stream().allMatch(n -> n == 2 || n == 3), "por segundo: " + porSegundo);
+        // cada vehiculo una sola vez en el intervalo
+        assertEquals(25, publicador.recibidos.stream().map(GeneradorPosicionesTest::matricula).distinct().count());
+
+        // el segundo 10 empieza otro intervalo: le toca de nuevo al primer grupo
+        long antes = generador.generados.get();
+        generador.generarTurno(INICIO.plusSeconds(10), 10);
+        assertEquals(porSegundo.get(0), (int) (generador.generados.get() - antes));
     }
 
     @Test
@@ -128,6 +155,10 @@ class GeneradorPosicionesTest {
 
         assertEquals(20, new HashSet<>(publicador.recibidos).size());
         assertTrue(publicador.tamaniosDeLote.size() == 1);
+    }
+
+    private static String matricula(String mensaje) {
+        return Json.createReader(new StringReader(mensaje)).readObject().getString("matricula");
     }
 
     private GeneradorPosiciones generador(ConfigFlota flota, int vehiculos, int maxLote) {
