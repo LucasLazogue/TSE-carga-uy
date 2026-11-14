@@ -3,9 +3,8 @@
 [Volver al proyecto](../README.md)
 
 Simula el **Servicio Básico de Información** de DNIC, que en la realidad se consume por la Plataforma de
-Interoperabilidad (PDI). Los servicios de la PDI no son públicos, así que la letra pide suplantarlos respetando su
-interfaz en lo posible. El central lo usa en el ingreso de un ciudadano, para obtener su nombre y su fecha de
-nacimiento.
+Interoperabilidad (PDI), respetando su interfaz. El central lo usa en el ingreso de un ciudadano, para obtener su
+nombre y su fecha de nacimiento.
 
 Es un WAR de Jakarta EE sobre WildFly 41 con JAX-WS. **No tiene base ni datos reales:** las personas son ficticias y
 están en [personas.json](personas/personas.json), salvo los [casos especiales](#casos-especiales).
@@ -15,10 +14,10 @@ están en [personas.json](personas/personas.json), salvo los [casos especiales](
 | Aspecto | Real | Suplantador |
 | --- | --- | --- |
 | Operaciones, campos y códigos | [Descripción funcional de AGESIC](https://www.gub.uy/agencia-gobierno-electronico-sociedad-informacion-conocimiento/sites/agencia-gobierno-electronico-sociedad-informacion-conocimiento/files/2020-01/Documentacion%20funcional-DNIC%20servicio%20basico%20info.pdf) | Los mismos |
-| Transporte | SOAP sobre HTTPS | SOAP sobre HTTP en el Compose; falta HTTPS (ver [despliegue](#despliegue)) |
+| Transporte | SOAP sobre HTTPS | SOAP sobre HTTP en el Compose y sobre HTTPS al desplegar (ver [despliegue](#despliegue)) |
 | Errores | En el cuerpo de la respuesta | Igual |
 | WSDL, namespace, `soapAction` | No son públicos | Armados por el grupo a partir de la descripción funcional |
-| WS-Addressing y token SAML por WS-Security | Los exige la PDI | No se simulan (es el opcional 9) |
+| WS-Addressing y token SAML por WS-Security | Los exige la PDI | No se simulan |
 
 El contrato está en [ServicioBasicoInformacion.wsdl](src/main/webapp/WEB-INF/wsdl/ServicioBasicoInformacion.wsdl). El
 central guarda su propia copia en `carga-uy/carga-uy-ejb/src/main/resources/wsdl/pdi/`, como haría un consumidor real:
@@ -98,7 +97,7 @@ http://localhost:8085/pdi-suplantador/ServicioBasicoInformacion?wsdl.
 
 ## Probar la resiliencia del central
 
-El central aplica una espera de 3 s, un reintento a 1 s y un corte de 30 s tras 5 fallas en 10 llamadas (AC13).
+El central aplica una espera de 3 s, un reintento a 1 s y un corte de 30 s tras 5 fallas en 10 llamadas.
 
 | Escenario | Cómo | Qué tiene que pasar |
 | --- | --- | --- |
@@ -116,18 +115,15 @@ El central aplica una espera de 3 s, un reintento a 1 s y un corte de 30 s tras 
 | `SUPLANTADOR_DEMORA_MS` | `0` | Cuánto tarda en responder |
 | `SUPLANTADOR_FALLA` | `false` | Responder 1001 a todo |
 
-La organización y la clave tienen que coincidir con `PDI_ORGANIZACION` y `PDI_PASSWORD_ENTIDAD` del central. Tienen
-nombres distintos porque son dos lados distintos: el central configura qué manda y el suplantador qué acepta, y cada uno
-se despliega por su cuenta.
+La organización y la clave tienen que coincidir con `PDI_ORGANIZACION` y `PDI_PASSWORD_ENTIDAD` del central.
 
 El Compose incluye valores predeterminados para desarrollo. Para otro despliegue, configurarlos mediante variables de
 entorno.
 
 ## Despliegue
 
-Por ahora no se despliega: solo corre en el Compose, por HTTP, igual que los nodos de balanzas. El HTTPS que pide la
-letra hacia las plataformas externas queda para cuando se despliegue. Sin `PDI_URL`, el central deja entrar a los
-ciudadanos sin los datos de la PDI y sin control de mayoría de edad.
+Por ahora no se despliega: solo corre en el Compose, por HTTP. Al desplegarlo, la plataforma lo publica por HTTPS. Sin
+`PDI_URL`, el central deja entrar a los ciudadanos sin los datos de la PDI y sin control de mayoría de edad.
 
 ## Tests
 
