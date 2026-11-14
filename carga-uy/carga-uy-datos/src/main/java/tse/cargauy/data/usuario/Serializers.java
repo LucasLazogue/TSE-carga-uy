@@ -17,6 +17,9 @@ public class Serializers {
         if (usuario instanceof Ciudadano ciudadano) {
             dto.setCedula(ciudadano.getCedula());
             dto.setCorreo(ciudadano.getCorreo());
+            dto.setNombres(ciudadano.getNombres());
+            dto.setApellidos(ciudadano.getApellidos());
+            dto.setFechaNacimiento(ciudadano.getFechaNacimiento());
         } else if (usuario instanceof Funcionario funcionario) {
             dto.setCedula(funcionario.getCedula());
         } else if (usuario instanceof UsuarioBackoffice backoffice) {

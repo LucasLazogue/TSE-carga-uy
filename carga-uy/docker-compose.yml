@@ -130,6 +130,9 @@ services:
       ARTEMIS_CLAVE: ${ARTEMIS_CLAVE:-central123}
       LDAP_URL: ${LDAP_URL:-ldap://ldap:3389}
       LDAP_DM_PASSWORD: ${LDAP_DM_PASSWORD:-cargauy123}
+      PDI_URL: ${PDI_URL:-http://pdi-suplantador:8080/pdi-suplantador/ServicioBasicoInformacion}
+      PDI_ORGANIZACION: ${PDI_ORGANIZACION:-carga-uy}
+      PDI_PASSWORD_ENTIDAD: ${PDI_PASSWORD_ENTIDAD:-clave-pdi-desarrollo}
       # trazas, metricas y logs hacia la Plataforma de Observabilidad; la proporcion de trazas que se guardan tiene
       # que ser la misma que en el nodo
       OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
@@ -264,6 +267,31 @@ services:
       start_period: 120s
     depends_on:
       - pg-balanzas-norte
+
+  # suplantador de la PDI: servicio SOAP sin base ni datos reales
+  pdi-suplantador:
+    build: ../pdi-suplantador
+    ports:
+      - "8085:8080"
+    environment:
+      TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
+      SUPLANTADOR_ORGANIZACION: ${SUPLANTADOR_ORGANIZACION:-carga-uy}
+      SUPLANTADOR_PASSWORD_ENTIDAD: ${SUPLANTADOR_PASSWORD_ENTIDAD:-clave-pdi-desarrollo}
+      # para probar la resiliencia del central: tardar en responder o responder con error a todo
+      SUPLANTADOR_DEMORA_MS: ${SUPLANTADOR_DEMORA_MS:-0}
+      SUPLANTADOR_FALLA: ${SUPLANTADOR_FALLA:-false}
+      OTEL_SERVICE_NAME: pdi-suplantador
+      OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
+      OTEL_ENDPOINT_METRICAS: ${OTEL_ENDPOINT_METRICAS:-http://observabilidad:4318/v1/metrics}
+      OTEL_PROPORCION_TRAZAS: ${OTEL_PROPORCION_TRAZAS:-1.0}
+    volumes:
+      - ../pdi-suplantador/personas:/config/personas:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9990/health/ready > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
 
 volumes:
   pgdata:
