@@ -28,6 +28,11 @@ public class InformeDAO implements InformeDAOLocal {
 
     private static final int TIEMPO_MAXIMO_MS = 10000;
 
+    private static final String VEHICULO_HABILITADO = " p.estado = :aprobado"
+            + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha"
+            + " AND EXISTS (SELECT i FROM Itv i WHERE i.vehiculo = p.vehiculo"
+            + " AND i.fechaInspeccion <= :fecha AND i.fechaVencimiento >= :fecha)";
+
     @PersistenceContext(unitName = "carga-uy")
     private EntityManager entityManager;
 
@@ -41,11 +46,18 @@ public class InformeDAO implements InformeDAOLocal {
         return habilitados("p.vehiculo.empresa.id", fecha);
     }
 
+    @Override
+    public boolean isEmpresaHabilitada(Long idEmpresa, LocalDate fecha) {
+        return consulta("SELECT COUNT(p) FROM Permiso p WHERE p.vehiculo.empresa.id = :idEmpresa AND"
+                        + VEHICULO_HABILITADO, Long.class)
+                .setParameter("idEmpresa", idEmpresa)
+                .setParameter("aprobado", EstadoPermiso.APROBADO)
+                .setParameter("fecha", fecha)
+                .getSingleResult() > 0;
+    }
+
     private long habilitados(String campo, LocalDate fecha) {
-        return consulta("SELECT COUNT(DISTINCT " + campo + ") FROM Permiso p WHERE p.estado = :aprobado"
-                        + " AND p.validoDesde <= :fecha AND p.validoHasta >= :fecha"
-                        + " AND EXISTS (SELECT i FROM Itv i WHERE i.vehiculo = p.vehiculo"
-                        + " AND i.fechaInspeccion <= :fecha AND i.fechaVencimiento >= :fecha)", Long.class)
+        return consulta("SELECT COUNT(DISTINCT " + campo + ") FROM Permiso p WHERE" + VEHICULO_HABILITADO, Long.class)
                 .setParameter("aprobado", EstadoPermiso.APROBADO)
                 .setParameter("fecha", fecha)
                 .getSingleResult();
