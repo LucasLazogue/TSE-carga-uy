@@ -68,6 +68,7 @@ define el conjunto completo de variables y sus valores predeterminados.
 | `BALANZAS_SUR_CLAVE_*`, `BALANZAS_NORTE_CLAVE_*` | Credenciales que Compose pasa a los [nodos de balanzas](../nodo-balanzas/README.md#configuración) |
 | `OTEL_*` | Exportación y muestreo; ver [observabilidad](observabilidad.md#exportación-y-muestreo) |
 | `CARGAUY_ZONA_HORARIA` | Zona de los servicios, `America/Montevideo` por defecto |
+| `CARGAUY_NODOS_HTTPS` | Exige `https` en el punto de acceso de los nodos de balanzas; `false` en Compose, `true` en OpenShift |
 
 Después de editar variables, aplicar los cambios desde `carga-uy`:
 

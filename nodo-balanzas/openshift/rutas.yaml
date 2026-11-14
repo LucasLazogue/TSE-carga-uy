@@ -1,0 +1,27 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: balanzas-sur
+spec:
+  to:
+    kind: Service
+    name: cargauy-balanzas-sur
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: cargauy-balanzas-norte
+spec:
+  to:
+    kind: Service
+    name: cargauy-balanzas-norte
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: None
