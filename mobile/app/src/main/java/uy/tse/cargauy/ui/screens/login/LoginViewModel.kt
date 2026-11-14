@@ -87,6 +87,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             "4002" -> "El ingreso no es válido o expiró. Volvé a intentarlo."
             "4003" -> "No se pudo validar tu identidad con gub.uy."
             "4004" -> "gub.uy no está disponible. Probá de nuevo más tarde."
+            "4028" -> "Tenés que ser mayor de edad para ingresar."
             else -> "No se pudo ingresar (código ${codigo ?: "desconocido"})."
         }
     }
