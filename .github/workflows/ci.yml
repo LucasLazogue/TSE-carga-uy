@@ -80,6 +80,7 @@ jobs:
       - if: env.CAMBIOS == 'true'
         run: mvn -B verify ${{ matrix.perfil }}
         working-directory: ${{ matrix.module }}
+      # analisis en SonarCloud: necesita el secreto SONAR_TOKEN y las variables SONAR_ORGANIZATION y SONAR_PROJECT_KEY
       - if: env.CAMBIOS == 'true' && matrix.module == 'carga-uy' && env.SONAR_TOKEN != ''
         run: >
           mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
