@@ -17,11 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import tse.cargauy.data.empresa.EmpresaDAO;
+import tse.cargauy.data.guia.GuiaDAO;
 import tse.cargauy.data.informe.InformeDAO;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.dtos.HabilitacionEmpresaDto;
 import tse.cargauy.dtos.IndicadoresPublicosDto;
+import tse.cargauy.dtos.RubroDto;
+import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.ViajesPorMesPublicoDto;
 import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -92,6 +95,17 @@ class ConsultaPublicaEJBTest {
                 filtros.add(filtro);
                 umbrales.add(umbral);
                 return volumenPorRubro;
+            }
+        };
+        ejb.guiaDAO = new GuiaDAO() {
+            @Override
+            public List<RubroDto> getRubros() {
+                return List.of(new RubroDto("Forestal"));
+            }
+
+            @Override
+            public List<TipoCargaDto> getTiposCarga() {
+                return List.of(new TipoCargaDto("Granos"));
             }
         };
         empresa(1L, 1001, "Transportes del Sur", "Transportes del Sur S.A.");
@@ -205,6 +219,12 @@ class ConsultaPublicaEJBTest {
         ejb.getIndicadores(filtro);
 
         assertEquals(List.of(filtro, filtro), filtros);
+    }
+
+    @Test
+    void catalogosParaLosFiltros() {
+        assertEquals("Forestal", ejb.getRubros().get(0).getNombre());
+        assertEquals("Granos", ejb.getTiposCarga().get(0).getNombre());
     }
 
     @Test

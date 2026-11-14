@@ -18,6 +18,7 @@ import tse.cargauy.dtos.IndicadoresPublicosDto;
 import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.dtos.ViajesPorMesPublicoDto;
+import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 import tse.cargauy.negocio.publico.ConsultaPublicaEJBLocal;
@@ -55,17 +56,19 @@ class ConsultaPublicaRestTest {
                 IndicadoresPublicosDto indicadores = new IndicadoresPublicosDto();
                 indicadores.setUmbral(5);
                 indicadores.setViajesPorMes(List.of(new ViajesPorMesPublicoDto("2026-03", 18L), new ViajesPorMesPublicoDto("2026-04", null)));
+                indicadores.setVolumenPorRubro(List.of(new VolumenPorRubroPublicoDto("Forestal", 48000L),
+                        new VolumenPorRubroPublicoDto("Granos", null)));
                 return indicadores;
             }
 
             @Override
             public List<RubroDto> getRubros() {
-                return List.of();
+                return List.of(new RubroDto("Forestal"));
             }
 
             @Override
             public List<TipoCargaDto> getTiposCarga() {
-                return List.of();
+                return List.of(new TipoCargaDto("Granos"));
             }
         };
         api = new ApiEnMemoria(rest);
@@ -128,6 +131,25 @@ class ConsultaPublicaRestTest {
 
         assertTrue(json.contains("{\"cantidad\":18,\"mes\":\"2026-03\"}"));
         assertTrue(json.contains("{\"mes\":\"2026-04\"}"));
+    }
+
+    @Test
+    void elRubroBajoElUmbralNoTraeVolumen() throws Exception {
+        String json = api.get("/publico/indicadores?desde=2026-03-01&hasta=2026-06-30").getContentAsString();
+
+        assertTrue(json.contains("{\"rubro\":\"Forestal\",\"volumen\":48000}"));
+        assertTrue(json.contains("{\"rubro\":\"Granos\"}"));
+    }
+
+    @Test
+    void catalogosSinSesion() throws Exception {
+        MockHttpResponse rubros = api.get("/publico/rubros");
+        MockHttpResponse tipos = api.get("/publico/tipos-carga");
+
+        assertEquals(200, rubros.getStatus());
+        assertTrue(rubros.getContentAsString().contains("\"nombre\":\"Forestal\""));
+        assertEquals(200, tipos.getStatus());
+        assertTrue(tipos.getContentAsString().contains("\"nombre\":\"Granos\""));
     }
 
     @Test
