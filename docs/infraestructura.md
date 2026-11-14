@@ -201,6 +201,39 @@ En el repositorio, en **Settings → Secrets and variables → Actions**, ese to
 `OPENSHIFT_TOKEN`; el servidor del `oc login` y el nombre del proyecto van en las variables
 `OPENSHIFT_SERVER` y `OPENSHIFT_NAMESPACE`.
 
+### Varias instancias y autoescalado
+
+El mismo manifiesto crea un HorizontalPodAutoscaler que mantiene entre 1 y 4 instancias del central
+según el uso de CPU: agrega instancias cuando el promedio supera el 70 % de lo pedido (400m por
+instancia) y las quita de a una después de 5 minutos por debajo. Lo calcula con el uso que mide la
+plataforma, sin nada que instalar.
+
+```sh
+oc get hpa carga-uy --watch
+```
+
+El límite de 4 sale de la cuota del Developer Sandbox: 3 CPU de requests para todo el proyecto, de
+las que Artemis, MongoDB, LDAP, PostgreSQL y la plataforma de observabilidad piden alrededor de 0,5.
+Cuatro instancias más la extra que agrega un despliegue piden 2 CPU.
+
+Mientras una instancia nueva arranca, que en WildFly lleva alrededor de un minuto, las posiciones
+esperan en la cola de Artemis. Si una instancia se apaga con mensajes en proceso, sus transacciones
+se deshacen y el broker se los entrega a otra; el procesamiento idempotente evita duplicados.
+
+Lo que hace que el central funcione con varias instancias:
+
+| Qué | Cómo se resuelve |
+| --- | --- |
+| Posiciones de tracking | Todas las instancias consumen de la misma cola y cada mensaje lo procesa una sola ([mensajería](mensajeria.md)). Un reenvío no duplica nada: índice único en MongoDB |
+| Casos de fiscalización | La clave de deduplicación es única en la base. Si dos instancias detectan el mismo hecho a la vez, la segunda recibe `CASO_YA_REGISTRADO`, deshace lo suyo y no crea otro caso |
+| Viajes | Bloqueo de fila al cambiar el estado y `@Version` para detectar cambios concurrentes |
+| Reevaluación de pesajes pendientes | El temporizador corre en cada instancia, pero cada viaje lo toma una sola (`FOR UPDATE SKIP LOCKED`, ver [balanzas](balanzas.md#varias-instancias-del-central)) |
+| Tareas nocturnas | Borrar refresh tokens viejos y vencer informes son `DELETE` y `UPDATE` idempotentes: da lo mismo que corran en una instancia o en todas |
+| Preparación de la base al arrancar | Los triggers de la auditoría y los datos de prueba toman un cerrojo de PostgreSQL (`pg_advisory_xact_lock`): si dos instancias arrancan a la vez, la segunda espera y encuentra todo hecho |
+| API (frontend y app) | Sin estado en el servidor: JWT firmado y DPoP sin guardar `jti` |
+| Backoffice (JSF) | El login no guarda estado: es el mismo JWT, en una cookie, que se valida en cada pedido. Lo que sí queda en la instancia es el estado de cada pantalla (JSF y los beans `@ViewScoped`). El Route mantiene a cada usuario en la misma instancia con la cookie `carga-uy-instancia`; si esa instancia se apaga, la pantalla abierta se recarga y el usuario sigue logueado |
+| Métricas de la cola | Cada instancia publica el tamaño de la cola; el tablero toma el máximo |
+
 ### Directorio LDAP
 
 El directorio del backoffice usa la imagen `389ds/dirsrv:3.1` del Compose. No tiene workflow: se

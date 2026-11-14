@@ -8,6 +8,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import tse.cargauy.data.CerrojoArranque;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
@@ -42,6 +45,9 @@ import tse.cargauy.entities.TipoInfraccion;
 @Startup
 public class DatosPrueba {
 
+    @PersistenceContext(unitName = "carga-uy")
+    private EntityManager entityManager;
+
     @EJB
     private EmpresaDAOLocal empresaDAO;
 
@@ -68,6 +74,8 @@ public class DatosPrueba {
 
     @PostConstruct
     public void init() {
+        // con varias instancias, una sola carga los datos: las demas esperan y despues los encuentran
+        CerrojoArranque.tomar(entityManager);
         // solo la primera vez, si no se duplican en cada arranque
         if (empresaDAO.getAll(new Paginacion(0, 3)).getTotal() == 0) {
             empresaDAO.addEmpresa(new EmpresaDto(1001, "Transportes del Sur", "Transportes del Sur S.A.", "Av. Italia 3456, Montevideo", LocalDate.of(2020, 3, 15)));
