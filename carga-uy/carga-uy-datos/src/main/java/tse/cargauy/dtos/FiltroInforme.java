@@ -10,6 +10,7 @@ public class FiltroInforme implements Serializable {
     private LocalDate desde;
     private LocalDate hasta;
     private Long idTipoCarga;
+    private Long idRubro;
 
     public FiltroInforme() {
     }
@@ -18,6 +19,19 @@ public class FiltroInforme implements Serializable {
         this.desde = desde;
         this.hasta = hasta;
         this.idTipoCarga = idTipoCarga;
+    }
+
+    public FiltroInforme(LocalDate desde, LocalDate hasta, Long idTipoCarga, Long idRubro) {
+        this(desde, hasta, idTipoCarga);
+        this.idRubro = idRubro;
+    }
+
+    public Long getIdRubro() {
+        return idRubro;
+    }
+
+    public void setIdRubro(Long idRubro) {
+        this.idRubro = idRubro;
     }
 
     public LocalDate getDesde() {
