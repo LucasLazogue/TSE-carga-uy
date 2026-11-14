@@ -13,6 +13,7 @@ para gestionar empresas, vehículos, permisos, viajes y datos de fiscalización.
 | [mobile](mobile/README.md) | App Android para choferes, con trabajo sin conexión y sincronización |
 | [nodo-tracking](nodo-tracking/README.md) | Simulación de flota y publicación de posiciones por JMS |
 | [nodo-balanzas](nodo-balanzas/README.md) | Peajes, balanzas y API de pesajes de cada operador |
+| [pdi-suplantador](pdi-suplantador/README.md) | Servicio SOAP que suplanta al Servicio Básico de Información de DNIC, con personas ficticias |
 | [carga-uy-client](carga-uy-client/README.md) | Cliente de consola EJB/JMS; su guía detalla el estado de la autenticación remota |
 
 ## Requisitos
