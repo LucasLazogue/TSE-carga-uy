@@ -5,6 +5,7 @@ import Casos from '@/views/casos/Casos'
 import Choferes from '@/views/choferes/Choferes'
 import Empresas from '@/views/empresas/Empresas'
 import PerfilEmpresa from '@/views/empresas/PerfilEmpresa'
+import Estadisticas from '@/views/estadisticas/Estadisticas'
 import Guias from '@/views/guias/Guias'
 import Home from '@/views/home/Home'
 import Infracciones from '@/views/infracciones/Infracciones'
@@ -28,6 +29,7 @@ function App() {
       <Route element={<AppShell />}>
         <Route path="/" element={session ? <Home /> : <PublicHome />} />
         <Route path="/validar-permisos" element={<ValidarPermisos />} />
+        <Route path="/estadisticas" element={<Estadisticas />} />
         {session && (
           <>
             <Route path="/empresas" element={<Empresas />} />
