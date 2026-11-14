@@ -155,7 +155,7 @@ Cada nodo empieza a publicar apenas arranca. Para detenerlo sin borrarlo,
 carga](../docs/performance.md), los vehículos extra se cambian sin tocar el manifiesto; el pod se
 reinicia con el valor nuevo:
 
-    oc set env deployment/nodo-tracking-1 deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=7500
+    oc set env deployment/nodo-tracking-1 deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=9000
 
 ### Despliegue automático
 

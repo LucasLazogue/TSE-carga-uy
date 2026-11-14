@@ -8,16 +8,13 @@ El informe ([Vista de Atributos de Calidad](informe/vista-atributos-calidad.tex)
 
 | | Valor | De dónde sale |
 | --- | --- | --- |
-| Parque profesional | 17.869 vehículos con motor (2019) | Registro del MTOP, en el cuadro 2.1 del informe del BID (2022) |
-| Tiempo de trabajo | 2.050 h por año, el 23 % del tiempo | Camión pesado de referencia del MTOP, en el informe del INALOG (2021) |
-| Hora pico | 10 % a 16 % del tránsito diario | Factor K de la trigésima hora, tabla 385 de PennDOT (2021) |
-| Vehículos en viaje en la hora pico | 10.000 a 16.000 | 17.869 × 23 % × (2,4 a 3,8) |
-| Vehículos reportando a la vez | **15.000** | Dentro del rango anterior |
+| Flota profesional | 17.869 vehículos con motor (2019) | Registro del MTOP, en el cuadro 2.1 del informe del BID (2022) |
+| Vehículos reportando a la vez | **18.000** | Peor caso: toda la flota con un viaje en curso, redondeado |
 | Frecuencia de reporte | una posición cada 30 s | Requisito de carga.uy: ~670 m entre posiciones a 80 km/h |
-| Volumen objetivo | **500 posiciones/s** | 15.000 / 30 |
-| Pico (×3) | **1.500 posiciones/s** | Vehículos que recuperan cobertura y descargan lo acumulado |
+| Volumen objetivo | **600 posiciones/s** | 18.000 / 30 |
+| Pico (×3) | **1.800 posiciones/s** | Vehículos que recuperan cobertura y descargan lo acumulado |
 
-La justificación completa, con lo que deja la estimación del lado alto, está en la sección "Volumen
+La justificación completa, y por qué la estimación queda del lado alto, está en la sección "Volumen
 objetivo de tracking" del informe.
 
 ## Cómo generar la carga
@@ -25,10 +22,10 @@ objetivo de tracking" del informe.
 El nodo de tracking suma vehículos simulados (`SIM0001`, `SIM0002`…) con rutas al azar.
 `NODO_VEHICULOS_EXTRA=N` con `NODO_INTERVALO_SEG=S` genera unas `N / S` posiciones por segundo.
 El intervalo por defecto del compose es de 10 s, para que en desarrollo y en la demo el recorrido
-de la flota de prueba se vea rápido. La prueba de performance usa el volumen del informe: 15.000
+de la flota de prueba se vea rápido. La prueba de performance usa el volumen del informe: 18.000
 vehículos cada 30 s, repartidos entre los dos nodos. Desde `carga-uy`:
 
-    NODO_INTERVALO_SEG=30 NODO_VEHICULOS_EXTRA=7500 NODO_2_VEHICULOS_EXTRA=7500 \
+    NODO_INTERVALO_SEG=30 NODO_VEHICULOS_EXTRA=9000 NODO_2_VEHICULOS_EXTRA=9000 \
       docker compose up -d nodo-tracking nodo-tracking-2
 
 Para el pico, `NODO_SIN_COBERTURA=desde,durante` (en minutos) retiene las posiciones y las publica

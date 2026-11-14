@@ -30,7 +30,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC07 & Escalabilidad & El componente central escala horizontalmente en la capa web o de aplicaciones, sin estado de sesión almacenado localmente en las instancias. \\
     \hline
-    AC08 & Performance & La plataforma sostiene, sin pérdida de eventos, un volumen de ingesta de tracking de 500 posiciones por segundo (15.000 vehículos reportando en forma concurrente, cada 30 segundos), y picos de al menos tres veces ese volumen, 1.500 posiciones por segundo. La estimación se justifica en la Sección \ref{sec:volumen-objetivo}. \\
+    AC08 & Performance & La plataforma sostiene, sin pérdida de eventos, un volumen de ingesta de tracking de 600 posiciones por segundo (18.000 vehículos reportando en forma concurrente, cada 30 segundos), y picos de al menos tres veces ese volumen, 1.800 posiciones por segundo. La estimación se justifica en la Sección \ref{sec:volumen-objetivo}. \\
     \hline
     AC09 & Performance & El percentil 95 del tiempo de respuesta de las consultas del frontoffice es menor a 500 ms. \\
     \hline
@@ -91,19 +91,16 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
 
 \subsection{Volumen objetivo de tracking}\label{sec:volumen-objetivo}
 
-La letra pide estimar y justificar la cantidad de vehículos que reportan en forma concurrente y la frecuencia de reporte, considerando picos de al menos tres veces ese volumen \cite{LINS2026}. Un vehículo reporta posiciones mientras tiene un viaje en curso, también cuando está detenido cargando o esperando, así que lo que se estima es cuántos vehículos están trabajando a la vez.
+La letra pide estimar y justificar la cantidad de vehículos que reportan en forma concurrente y la frecuencia de reporte, considerando picos de al menos tres veces ese volumen \cite{LINS2026}. Un vehículo reporta posiciones mientras tiene un viaje en curso, también cuando está detenido cargando o esperando. La estimación toma el peor caso: toda la flota de transporte profesional de carga con un viaje en curso al mismo tiempo.
 
 \begin{itemize}
-    \item \textbf{Parque: 17.869 vehículos con motor} (camiones, tractores y vehículos especiales, sin remolques ni semirremolques) registrados en el MTOP para el transporte profesional de carga en 2019 \cite{BID2022}. Como referencia, el parque activo de vehículos pesados de todo el país, que incluye a quienes transportan carga propia, era de 70.997 en 2025 \cite{MIEM2025}.
-    \item \textbf{Tiempo de trabajo: 23~\%.} El modelo de costos del MTOP para un camión pesado de referencia (45~t, 18 cubiertas) considera 2.050 horas de trabajo por año \cite{INALOG2021}, el 23~\% de las 8.760 horas del año. En promedio, unos 4.200 vehículos tienen un viaje en curso al mismo tiempo.
-    \item \textbf{Hora pico: entre 2,4 y 3,8 veces el promedio.} El factor K de la ingeniería de tránsito es la proporción del tránsito diario que circula en la trigésima hora más cargada del año \cite{CaltransK}. Medido en estaciones de conteo permanentes, va del 10~\% al 16~\% según el tipo de vía \cite{PennDOT2021}, es decir, entre 2,4 y 3,8 veces una hora promedio. En la hora pico habría entre 10.000 y 16.000 vehículos en viaje, y entre 12.000 y 19.000 con el crecimiento del 20~\% del parque de pesados entre 2019 y 2025 \cite{MIEM2025}.
-    \item \textbf{Vehículos concurrentes: 15.000}, dentro de ese rango.
+    \item \textbf{Vehículos concurrentes: 18.000.} En 2019 había 17.869 vehículos con motor (camiones, tractores y vehículos especiales, sin remolques ni semirremolques) registrados en el MTOP para el transporte profesional de carga \cite{BID2022}. No puede haber más vehículos reportando que vehículos registrados, así que ese es el máximo; se redondea a 18.000.
     \item \textbf{Frecuencia: una posición cada 30 segundos} por vehículo en viaje. No se encontró una norma que la fije, así que es un requisito de carga.uy para los nodos de tracking. A 80~km/h deja unos 670~m entre posiciones, suficiente para reconstruir el recorrido y evaluar desvíos. Reportar cada 10~s triplicaría el volumen sin que el sistema lo necesite, y cada 60~s dejaría más de un kilómetro entre posiciones.
-    \item \textbf{Volumen objetivo: 500 posiciones por segundo} (15.000 vehículos / 30 segundos), unos 43 millones por día en el peor caso.
-    \item \textbf{Pico: 1.500 posiciones por segundo} durante algunos minutos, cuando un conjunto de vehículos recupera cobertura y descarga lo acumulado. El nodo de tracking lo simula (\texttt{NODO\_SIN\_COBERTURA}). Lo que el componente central no procesa en el momento espera en la cola (AC17).
+    \item \textbf{Volumen objetivo: 600 posiciones por segundo} (18.000 vehículos / 30 segundos).
+    \item \textbf{Pico: 1.800 posiciones por segundo} durante algunos minutos, cuando un conjunto de vehículos recupera cobertura y descarga lo acumulado. El nodo de tracking lo simula (\texttt{NODO\_SIN\_COBERTURA}). Lo que el componente central no procesa en el momento espera en la cola (AC17).
 \end{itemize}
 
-La estimación queda del lado alto por tres motivos. Las 2.050 horas son las de un camión pesado de larga distancia, que probablemente trabaja más que el promedio del parque. El factor K se mide en un tramo de ruta: los picos de distintas rutas no coinciden, así que aplicarlo a toda la red sobreestima el pico. Además, K incluye a los automóviles, que se concentran más en ciertas horas que los camiones, y no es un valor medido en Uruguay.
+La estimación queda del lado alto a propósito. El dato del parque es de 2019 y la flota puede haber crecido, pero suponer que toda reporta a la vez sobreestima bastante más que ese crecimiento: un vehículo no trabaja las 24 horas, y entre descansos, esperas sin viaje asignado y la concentración del trabajo en el día, en un momento dado solo una parte de la flota tiene un viaje en curso.
 
-Este volumen es el que usa la prueba de performance (AC09 a AC11): el generador de carga del nodo de tracking simula 15.000 vehículos que reportan cada 30 segundos (\texttt{NODO\_VEHICULOS\_EXTRA} y \texttt{NODO\_INTERVALO\_SEG}).
+Este volumen es el que usa la prueba de performance (AC09 a AC11): el generador de carga del nodo de tracking simula 18.000 vehículos que reportan cada 30 segundos, repartidos a lo largo del intervalo (\texttt{NODO\_VEHICULOS\_EXTRA} y \texttt{NODO\_INTERVALO\_SEG}).
 
