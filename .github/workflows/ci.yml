@@ -42,6 +42,9 @@ jobs:
             nodo-balanzas:
               - 'nodo-balanzas/**'
               - '.github/workflows/**'
+            pdi-suplantador:
+              - 'pdi-suplantador/**'
+              - '.github/workflows/**'
             frontend:
               - 'frontend/**'
               - '.github/workflows/**'
@@ -56,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [carga-uy, carga-uy-client, nodo-tracking, nodo-balanzas]
+        module: [carga-uy, carga-uy-client, nodo-tracking, nodo-balanzas, pdi-suplantador]
         include:
           - module: carga-uy
             perfil: -Pci

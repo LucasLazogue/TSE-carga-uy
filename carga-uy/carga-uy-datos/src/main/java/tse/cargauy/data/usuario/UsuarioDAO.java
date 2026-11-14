@@ -66,6 +66,14 @@ public class UsuarioDAO implements UsuarioDAOLocal {
     }
 
     @Override
+    public void updateDatosPdi(Long idCiudadano, String nombres, String apellidos, String fechaNacimiento) {
+        Ciudadano ciudadano = entityManager.find(Ciudadano.class, idCiudadano);
+        ciudadano.setNombres(nombres);
+        ciudadano.setApellidos(apellidos);
+        ciudadano.setFechaNacimiento(fechaNacimiento);
+    }
+
+    @Override
     public void addFuncionario(String cedula) {
         Funcionario funcionario = new Funcionario(cedula);
         funcionario.getRoles().add(getRol(Rol.FUNCIONARIO));

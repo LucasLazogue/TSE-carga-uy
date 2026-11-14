@@ -168,12 +168,6 @@ El directorio LDAP ya corre junto al componente central, en OpenShift (#86). El 
 
 *Dónde:* AC13
 
-### M18. Tecnología del suplantador de la PDI
-
-**Propuesta:** el mismo stack que el componente central y el nodo de balanzas (Jakarta EE, con JAX-WS para el SOAP de la PDI), porque el grupo ya lo conoce.
-
-*Dónde:* §8.1
-
 ## 4. Observaciones de la revisión
 
 Cosas que conviene corregir o completar en el documento y que no siempre están marcadas en rojo.
@@ -234,7 +228,7 @@ Faltan las consecuencias de la decisión. (a) El exceso de carga se detecta reci
 
 ## 5. Pendientes marcados en rojo
 
-Los 22 pendientes que el documento marca en rojo y el ítem de este archivo que los resuelve.
+Los 21 pendientes que el documento marca en rojo y el ítem de este archivo que los resuelve.
 
 | Sección | Pendiente | Ítem |
 |---|---|---|
@@ -244,7 +238,6 @@ Los 22 pendientes que el documento marca en rojo y el ítem de este archivo que 
 | §7.1 | Definir en qué plataforma se ejecuta la Plataforma de Observabilidad | M1 |
 | §7.1 | Describir los requerimientos no funcionales que justifican el escenario | M13 |
 | §7.2 | Describir el despliegue en un orquestador de contenedores (opcional 4), compatible con R14 | D11 |
-| §8.1 | Definir la tecnología del suplantador de la PDI | M18 |
 | §8.1 | Describir pros y contras de las tecnologías y las habilidades necesarias | M14 |
 | §9 DA01, DA02, DA04, DA05, DA06, DA08 y DA09 (14) | Completar las alternativas consideradas y la justificación | D10 |
 

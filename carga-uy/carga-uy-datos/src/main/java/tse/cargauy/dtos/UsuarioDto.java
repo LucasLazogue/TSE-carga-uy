@@ -11,6 +11,9 @@ public class UsuarioDto implements Serializable {
     private String usuario;
     private String cedula;
     private String correo;
+    private String nombres;
+    private String apellidos;
+    private String fechaNacimiento;
     private List<String> roles;
 
     public UsuarioDto() {
@@ -51,6 +54,30 @@ public class UsuarioDto implements Serializable {
 
     public void setCorreo(String correo) {
         this.correo = correo;
+    }
+
+    public String getNombres() {
+        return nombres;
+    }
+
+    public void setNombres(String nombres) {
+        this.nombres = nombres;
+    }
+
+    public String getApellidos() {
+        return apellidos;
+    }
+
+    public void setApellidos(String apellidos) {
+        this.apellidos = apellidos;
+    }
+
+    public String getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(String fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
     }
 
     public List<String> getRoles() {

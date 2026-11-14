@@ -14,9 +14,13 @@ import {
 import type { Session } from '@/api/auth/auth.types'
 import { useSession } from '@/auth/useSession'
 
+// DNIC puede informar la fecha parcial: 1975-11-03, 1975-11 o 1975
+const formatFechaNacimiento = (fecha: string) => fecha.split('-').reverse().join('/')
+
 function UserMenu({ session }: { session: Session }) {
   const { logout } = useSession()
   const navigate = useNavigate()
+  const nombre = [session.nombres, session.apellidos].filter(Boolean).join(' ')
 
   const handleLogout = async () => {
     await logout()
@@ -30,14 +34,20 @@ function UserMenu({ session }: { session: Session }) {
           <Avatar className="size-7">
             <AvatarFallback className="text-xs">{session.cedula.slice(-2)}</AvatarFallback>
           </Avatar>
-          <span className="hidden text-sm sm:inline">{session.cedula}</span>
+          <span className="hidden text-sm sm:inline">{nombre || session.cedula}</span>
           <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="flex flex-col gap-1">
-          <span className="font-medium">{session.cedula}</span>
+          {nombre && <span className="font-medium">{nombre}</span>}
+          <span className={nombre ? 'text-xs font-normal text-muted-foreground' : 'font-medium'}>{session.cedula}</span>
           <span className="truncate text-xs font-normal text-muted-foreground">{session.correo}</span>
+          {session.fechaNacimiento && (
+            <span className="text-xs font-normal text-muted-foreground">
+              Nacimiento: {formatFechaNacimiento(session.fechaNacimiento)}
+            </span>
+          )}
           <span className="flex flex-wrap gap-1 pt-1">
             {session.roles.map((role) => (
               <Badge key={role} variant="secondary">

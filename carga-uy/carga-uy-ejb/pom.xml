@@ -19,6 +19,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jjwt.version>0.13.0</jjwt.version>
+    <jaxws.version>4.0.3</jaxws.version>
+    <!-- las clases que genera wsimport desde el WSDL de la PDI -->
+    <sonar.exclusions>**/adaptadores/pdi/soap/**</sonar.exclusions>
   </properties>
 
   <dependencyManagement>
@@ -149,6 +152,13 @@
       <version>1.1.9</version>
       <scope>test</scope>
     </dependency>
+    <!-- en el servidor el cliente SOAP lo pone WildFly (CXF); los tests corren sin contenedor -->
+    <dependency>
+      <groupId>com.sun.xml.ws</groupId>
+      <artifactId>jaxws-rt</artifactId>
+      <version>${jaxws.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
@@ -164,6 +174,27 @@
 
   <build>
     <plugins>
+      <!-- cliente SOAP de la PDI: se genera desde la copia del WSDL en cada build -->
+      <plugin>
+        <groupId>com.sun.xml.ws</groupId>
+        <artifactId>jaxws-maven-plugin</artifactId>
+        <version>${jaxws.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>wsimport</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <wsdlDirectory>${project.basedir}/src/main/resources/wsdl/pdi</wsdlDirectory>
+          <wsdlFiles>
+            <wsdlFile>ServicioBasicoInformacion.wsdl</wsdlFile>
+          </wsdlFiles>
+          <wsdlLocation>/wsdl/pdi/ServicioBasicoInformacion.wsdl</wsdlLocation>
+          <packageName>tse.cargauy.adaptadores.pdi.soap</packageName>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-ejb-plugin</artifactId>

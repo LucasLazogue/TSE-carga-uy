@@ -1,0 +1,14 @@
+# Observabilidad del suplantador de la PDI: logs y metricas por OTLP a la Plataforma de Observabilidad, igual que los
+# nodos de balanzas
+embed-server
+
+/extension=org.wildfly.extension.opentelemetry:add
+/subsystem=opentelemetry:add(service-name="${env.OTEL_SERVICE_NAME:pdi-suplantador}", exporter-type=otlp, endpoint="${env.OTEL_ENDPOINT:http://observabilidad:4317}", sampler-type=ratio, ratio="${env.OTEL_PROPORCION_TRAZAS:1.0}")
+
+# metricas del servidor (JVM, undertow)
+/extension=org.wildfly.extension.micrometer:add
+/subsystem=micrometer:add(endpoint="${env.OTEL_ENDPOINT_METRICAS:http://observabilidad:4318/v1/metrics}", step=10, exposed-subsystems=["*"])
+
+/subsystem=logging/pattern-formatter=COLOR-PATTERN:write-attribute(name=pattern, value="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %X{trace_id} %s%e%n")
+
+stop-embedded-server

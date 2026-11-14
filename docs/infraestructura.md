@@ -24,10 +24,13 @@ y su puerto interno; por ejemplo, el central llega a PostgreSQL por `postgres:54
 | `nodo-tracking-2` | Segundo nodo de tracking, con la otra mitad de la flota | `8084` salud y métricas |
 | `balanzas-sur` / `balanzas-norte` | API de cada operador de balanzas | `8082` / `8083` → `8080` |
 | `pg-balanzas-sur` / `pg-balanzas-norte` | Base propia de cada operador | Solo red interna, `5432` |
+| `pdi-suplantador` | Servicio SOAP que suplanta a la PDI, sin base | `8085` → `8080` |
 
 El central usa PostgreSQL, MongoDB, LDAP y Artemis. Tracking publica directamente al broker,
 por lo que puede seguir entregando posiciones aunque WildFly esté detenido. La conexión del
-central al broker usa `artemis:61616`, que no se publica en el host.
+central al broker usa `artemis:61616`, que no se publica en el host. El central no depende del
+[suplantador de la PDI](../pdi-suplantador/README.md) para arrancar: sin él, los ciudadanos entran
+sin los datos de la PDI y se completan en un próximo ingreso.
 
 Cada nodo de balanzas tiene su propia base y arranca vacío. Los peajes, balanzas y lecturas de demo se
 cargan desde el host con `alta.mjs` y `simular.mjs`, según la guía de
@@ -66,6 +69,9 @@ define el conjunto completo de variables y sus valores predeterminados.
 | `ARTEMIS_HOST`, `ARTEMIS_PORT`, `ARTEMIS_USUARIO`, `ARTEMIS_CLAVE` | Conexión del central al broker |
 | `NODO_*` | Publicador y simulación de [tracking](../nodo-tracking/README.md#configuración) |
 | `BALANZAS_SUR_CLAVE_*`, `BALANZAS_NORTE_CLAVE_*` | Credenciales que Compose pasa a los [nodos de balanzas](../nodo-balanzas/README.md#configuración) |
+| `PDI_URL`, `PDI_ORGANIZACION`, `PDI_PASSWORD_ENTIDAD` | Conexión del central a la PDI: dirección y credenciales que manda |
+| `SUPLANTADOR_ORGANIZACION`, `SUPLANTADOR_PASSWORD_ENTIDAD` | Credenciales que acepta el [suplantador de la PDI](../pdi-suplantador/README.md#configuración); tienen que coincidir con las del central |
+| `SUPLANTADOR_DEMORA_MS`, `SUPLANTADOR_FALLA` | Simulación de fallas del [suplantador](../pdi-suplantador/README.md#probar-la-resiliencia-del-central) |
 | `OTEL_*` | Exportación y muestreo; ver [observabilidad](observabilidad.md#exportación-y-muestreo) |
 | `CARGAUY_ZONA_HORARIA` | Zona de los servicios, `America/Montevideo` por defecto |
 | `CARGAUY_NODOS_HTTPS` | Exige `https` en el punto de acceso de los nodos de balanzas; `false` en Compose, `true` en OpenShift |

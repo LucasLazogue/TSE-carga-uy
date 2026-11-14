@@ -9,6 +9,7 @@ class LoginViewModelTest {
     fun mensajeLogin_traduceLosCodigosDelCentral() {
         assertEquals("El ingreso no es válido o expiró. Volvé a intentarlo.", LoginViewModel.mensajeLogin("4002"))
         assertEquals("gub.uy no está disponible. Probá de nuevo más tarde.", LoginViewModel.mensajeLogin("4004"))
+        assertEquals("Tenés que ser mayor de edad para ingresar.", LoginViewModel.mensajeLogin("4028"))
     }
 
     @Test

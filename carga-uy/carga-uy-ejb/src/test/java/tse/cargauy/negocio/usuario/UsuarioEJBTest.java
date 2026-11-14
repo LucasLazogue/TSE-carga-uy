@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,8 @@ import org.junit.jupiter.api.function.Executable;
 
 import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
+import tse.cargauy.adaptadores.pdi.PdiClient;
+import tse.cargauy.adaptadores.pdi.PersonaPdi;
 import tse.cargauy.data.usuario.UsuarioDAO;
 import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
@@ -131,6 +136,7 @@ class UsuarioEJBTest {
 
     private Map<Long, String> correosGuardados(UsuarioDto existente) {
         Map<Long, String> correos = new HashMap<>();
+        conPdi(Optional.empty());
         ejb.gubUy = new GubUyClient() {
             @Override
             public IdentidadGubUy exchangeCode(String code, String nonce) {
@@ -179,6 +185,173 @@ class UsuarioEJBTest {
 
         assertEquals("anterior@correo.uy", ejb.loginGubUy("code", "nonce").getCorreo());
         assertTrue(correos.isEmpty());
+    }
+
+    // el login con el DAO, gub.uy y la PDI simulados: los ciudadanos quedan en un mapa por cedula
+    private final Map<String, UsuarioDto> ciudadanos = new HashMap<>();
+    private final List<String> consultasPdi = new ArrayList<>();
+    private UsuarioDto funcionario;
+
+    private void conPdi(Optional<PersonaPdi> respuesta) {
+        ejb.pdi = new PdiClient() {
+            @Override
+            public Optional<PersonaPdi> obtenerPersona(String cedula) {
+                consultasPdi.add(cedula);
+                return respuesta;
+            }
+        };
+    }
+
+    private void prepararLogin(Optional<PersonaPdi> respuestaPdi) {
+        conPdi(respuestaPdi);
+        ejb.gubUy = new GubUyClient() {
+            @Override
+            public IdentidadGubUy exchangeCode(String code, String nonce) {
+                return new IdentidadGubUy(code, code + "@correo.uy");
+            }
+        };
+        ejb.usuarioDAO = new UsuarioDAO() {
+            @Override
+            public UsuarioDto getFuncionarioByCedula(String cedula) {
+                return funcionario;
+            }
+
+            @Override
+            public UsuarioDto getCiudadanoByCedula(String cedula) {
+                return ciudadanos.get(cedula);
+            }
+
+            @Override
+            public UsuarioDto addCiudadano(String cedula, String correo) {
+                UsuarioDto nuevo = ciudadano(cedula, null, null);
+                ciudadanos.put(cedula, nuevo);
+                return nuevo;
+            }
+
+            @Override
+            public void updateCorreo(Long idCiudadano, String correo) {
+                // el correo no importa en estas pruebas
+            }
+
+            @Override
+            public void updateDatosPdi(Long idCiudadano, String nombres, String apellidos, String fechaNacimiento) {
+                UsuarioDto ciudadano = ciudadanos.values().stream()
+                        .filter(c -> c.getId().equals(idCiudadano))
+                        .findFirst()
+                        .orElseThrow();
+                ciudadano.setNombres(nombres);
+                ciudadano.setApellidos(apellidos);
+                ciudadano.setFechaNacimiento(fechaNacimiento);
+            }
+        };
+    }
+
+    private static UsuarioDto ciudadano(String cedula, String nombres, String fechaNacimiento) {
+        UsuarioDto ciudadano = new UsuarioDto();
+        ciudadano.setId(Long.valueOf(cedula));
+        ciudadano.setCedula(cedula);
+        ciudadano.setNombres(nombres);
+        ciudadano.setFechaNacimiento(fechaNacimiento);
+        ciudadano.setRoles(List.of("CIUDADANO"));
+        return ciudadano;
+    }
+
+    private static Optional<PersonaPdi> persona(String fechaNacimiento) {
+        return Optional.of(new PersonaPdi("Ana María", "Pereira Gómez", fechaNacimiento));
+    }
+
+    private static String haceAnios(int anios) {
+        return LocalDate.now().minusYears(anios).toString();
+    }
+
+    @Test
+    void elPrimerIngresoCompletaElPerfilConLosDatosDeLaPdi() {
+        prepararLogin(persona("1975-11-03"));
+
+        UsuarioDto usuario = ejb.loginGubUy("22222222", "nonce");
+
+        assertEquals(List.of("22222222"), consultasPdi);
+        assertEquals("Ana María", usuario.getNombres());
+        assertEquals("Pereira Gómez", usuario.getApellidos());
+        assertEquals("1975-11-03", usuario.getFechaNacimiento());
+        assertEquals("Ana María", ciudadanos.get("22222222").getNombres());
+    }
+
+    @Test
+    void conLaPdiCaidaEntraSinDatosYSeCompletanEnElProximoIngreso() {
+        prepararLogin(Optional.empty());
+
+        UsuarioDto sinDatos = ejb.loginGubUy("22222222", "nonce");
+
+        assertEquals("22222222", sinDatos.getCedula());
+        assertNull(sinDatos.getNombres());
+
+        prepararLogin(persona("1975-11-03"));
+
+        assertEquals("Ana María", ejb.loginGubUy("22222222", "nonce").getNombres());
+    }
+
+    @Test
+    void unPerfilCompletoNoConsultaLaPdi() {
+        ciudadanos.put("22222222", ciudadano("22222222", "Ana María", "1975-11-03"));
+        prepararLogin(persona("1975-11-03"));
+
+        assertEquals("Ana María", ejb.loginGubUy("22222222", "nonce").getNombres());
+        assertTrue(consultasPdi.isEmpty());
+    }
+
+    @Test
+    void unPerfilCompletoSinFechaEntraSinConsultar() {
+        ciudadanos.put("22222222", ciudadano("22222222", "Ana María", null));
+        prepararLogin(persona(haceAnios(16)));
+
+        assertEquals("22222222", ejb.loginGubUy("22222222", "nonce").getCedula());
+        assertTrue(consultasPdi.isEmpty());
+    }
+
+    @Test
+    void unFuncionarioNoConsultaLaPdi() {
+        funcionario = new UsuarioDto();
+        funcionario.setCedula("11111111");
+        prepararLogin(persona(haceAnios(16)));
+
+        assertEquals(funcionario, ejb.loginGubUy("11111111", "nonce"));
+        assertTrue(consultasPdi.isEmpty());
+    }
+
+    @Test
+    void unMenorNuevoSeRechazaSinCrearElPerfil() {
+        prepararLogin(persona(haceAnios(16)));
+
+        assertCodigo(CodigoError.USUARIO_MENOR_DE_EDAD, () -> ejb.loginGubUy("33333333", "nonce"));
+        assertTrue(ciudadanos.isEmpty());
+    }
+
+    @Test
+    void unMenorConPerfilPendienteGuardaLaFechaYSeRechaza() {
+        ciudadanos.put("33333333", ciudadano("33333333", null, null));
+        String fecha = haceAnios(16);
+        prepararLogin(persona(fecha));
+
+        assertCodigo(CodigoError.USUARIO_MENOR_DE_EDAD, () -> ejb.loginGubUy("33333333", "nonce"));
+        assertEquals(fecha, ciudadanos.get("33333333").getFechaNacimiento());
+    }
+
+    @Test
+    void unMenorConDatosGuardadosSeRechazaSinConsultarLaPdi() {
+        ciudadanos.put("33333333", ciudadano("33333333", "Lucia", haceAnios(16)));
+        prepararLogin(Optional.empty());
+
+        assertCodigo(CodigoError.USUARIO_MENOR_DE_EDAD, () -> ejb.loginGubUy("33333333", "nonce"));
+        assertTrue(consultasPdi.isEmpty());
+    }
+
+    @Test
+    void elRechazadoEntraCuandoCumpleDieciocho() {
+        ciudadanos.put("33333333", ciudadano("33333333", "Lucia", haceAnios(18)));
+        prepararLogin(Optional.empty());
+
+        assertEquals("33333333", ejb.loginGubUy("33333333", "nonce").getCedula());
     }
 
     @Test
