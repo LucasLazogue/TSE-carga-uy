@@ -37,6 +37,7 @@ import tse.cargauy.entities.TipoEvidencia;
 import tse.cargauy.entities.TipoInfraccion;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.EventoFalso;
 
 class MotorFiscalizacionEJBTest {
 
@@ -136,6 +137,7 @@ class MotorFiscalizacionEJBTest {
         CasoFiscalizacionEJB casoEJB = new CasoFiscalizacionEJB();
         casoEJB.casoDAO = casos;
         casoEJB.vehiculoDAO = vehiculoDAO;
+        casoEJB.cambioCaso = new EventoFalso<>();
         motor.casoEJB = casoEJB;
     }
 

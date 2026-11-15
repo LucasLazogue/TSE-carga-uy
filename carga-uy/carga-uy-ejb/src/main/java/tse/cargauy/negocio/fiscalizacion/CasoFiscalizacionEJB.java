@@ -11,6 +11,8 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
@@ -52,6 +54,9 @@ public class CasoFiscalizacionEJB implements CasoFiscalizacionEJBLocal {
     @EJB
     EmpresaEJBLocal empresaEJB;
 
+    @Inject
+    Event<CasoCambiado> cambioCaso;
+
     @Resource
     SessionContext contexto;
 
@@ -72,6 +77,7 @@ public class CasoFiscalizacionEJB implements CasoFiscalizacionEJBLocal {
         CasoFiscalizacionDto caso = casoDAO.addCaso(casoDto, evidencias, ahora);
         MaquinaEstadosCaso.validarNotificacion(caso);
         casoDAO.notificar(caso.getId(), ahora, ahora.plusDays(plazoDescargoDias(ahora.toLocalDate())));
+        cambioCaso.fire(new CasoCambiado(caso.getId()));
         return casoDAO.getCasoById(caso.getId());
     }
 
@@ -97,6 +103,7 @@ public class CasoFiscalizacionEJB implements CasoFiscalizacionEJBLocal {
         MaquinaEstadosCaso.validarResolucion(caso, resolucion.getResultado(), resolucion.getFundamento(), ahora);
 
         casoDAO.resolver(id, idUsuario(), resolucion.getResultado(), resolucion.getFundamento().strip(), ahora);
+        cambioCaso.fire(new CasoCambiado(id));
         return casoDAO.getCasoById(id);
     }
 
@@ -130,6 +137,7 @@ public class CasoFiscalizacionEJB implements CasoFiscalizacionEJBLocal {
         MaquinaEstadosCaso.validarDescargo(caso, descargo.getTexto(), ahora);
 
         casoDAO.presentarDescargo(id, idUsuario(), descargo.getTexto().strip(), ahora);
+        cambioCaso.fire(new CasoCambiado(id));
         return paraLaEmpresa(casoDAO.getCasoById(id));
     }
 
