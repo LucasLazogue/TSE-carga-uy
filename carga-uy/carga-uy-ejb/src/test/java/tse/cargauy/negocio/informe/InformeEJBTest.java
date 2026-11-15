@@ -32,6 +32,7 @@ import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.TipoInfraccion;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.historico.HistoricoDAO;
 
 class InformeEJBTest {
 
@@ -84,21 +85,6 @@ class InformeEJBTest {
             }
 
             @Override
-            public List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro) {
-                return viajesPorDia;
-            }
-
-            @Override
-            public List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro) {
-                return List.of();
-            }
-
-            @Override
-            public List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro) {
-                return infracciones;
-            }
-
-            @Override
             public InformeDto addInforme(InformeDto informe) {
                 informe.setId(1L);
                 registrados.add(informe);
@@ -119,6 +105,22 @@ class InformeEJBTest {
             public PaginaDto<InformeDto> getBySolicitante(Long idSolicitante, Paginacion paginacion) {
                 solicitanteListado = idSolicitante;
                 return new PaginaDto<>(List.of(), 0, paginacion.getPagina(), paginacion.getTamanio());
+            }
+        };
+        ejb.historicoDAO = new HistoricoDAO() {
+            @Override
+            public List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro) {
+                return viajesPorDia;
+            }
+
+            @Override
+            public List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro) {
+                return List.of();
+            }
+
+            @Override
+            public List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro) {
+                return infracciones;
             }
         };
     }

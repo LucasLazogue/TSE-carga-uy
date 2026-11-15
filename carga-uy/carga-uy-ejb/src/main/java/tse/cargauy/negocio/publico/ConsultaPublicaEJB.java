@@ -17,6 +17,7 @@ import tse.cargauy.dtos.RubroDto;
 import tse.cargauy.dtos.TipoCargaDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.historico.HistoricoDAOLocal;
 import tse.cargauy.negocio.informe.InformeEJB;
 
 @Stateless
@@ -30,6 +31,9 @@ public class ConsultaPublicaEJB implements ConsultaPublicaEJBLocal {
 
     @EJB
     InformeDAOLocal informeDAO;
+
+    @EJB
+    HistoricoDAOLocal historicoDAO;
 
     @EJB
     GuiaDAOLocal guiaDAO;
@@ -47,8 +51,8 @@ public class ConsultaPublicaEJB implements ConsultaPublicaEJBLocal {
             indicadores.setEmpresasHabilitadas(empresas);
             indicadores.setVehiculosHabilitados(vehiculos);
         }
-        indicadores.setViajesPorMes(informeDAO.contarViajesPorMesPublico(filtro, UMBRAL_AGREGACION));
-        indicadores.setVolumenPorRubro(informeDAO.sumarVolumenPorRubroPublico(filtro, UMBRAL_AGREGACION));
+        indicadores.setViajesPorMes(historicoDAO.contarViajesPorMesPublico(filtro, UMBRAL_AGREGACION));
+        indicadores.setVolumenPorRubro(historicoDAO.sumarVolumenPorRubroPublico(filtro, UMBRAL_AGREGACION));
         return indicadores;
     }
 
