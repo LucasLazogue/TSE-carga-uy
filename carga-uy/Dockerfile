@@ -31,6 +31,24 @@ data-source add --name=CargaUyDS \
 --background-validation=false,\
 stop-embedded-server'
 
+# modelo de lectura del historico de viajes (opcional 3): esquema historico de la misma base, con un pool propio y
+# chico para que los reportes no tomen las conexiones de la operativa
+RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
+data-source add --name=HistoricoDS \
+--jndi-name=java:jboss/datasources/HistoricoDS \
+--driver-name=postgresql \
+--connection-url=jdbc:postgresql://${env.DB_HOST:postgres}:${env.DB_PORT:5432}/${env.DB_NAME:cargauy} \
+--user-name=${env.DB_USER:cargauy} \
+--password=${env.DB_PASSWORD:cargauy} \
+--max-pool-size=5 \
+--enabled=true \
+--use-java-context=true \
+--valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker \
+--exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter \
+--validate-on-match=true \
+--background-validation=false,\
+stop-embedded-server'
+
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 jms-queue add --queue-address=queue_alta_empresa --entries=[java:/jms/queue/queue_alta_empresa java:jboss/exported/jms/queue/queue_alta_empresa],\
 stop-embedded-server'

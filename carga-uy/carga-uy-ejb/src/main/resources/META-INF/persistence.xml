@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                                 https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="historico" transaction-type="JTA">
+
+        <jta-data-source>java:jboss/datasources/HistoricoDS</jta-data-source>
+
+        <class>tse.cargauy.historico.HistViaje</class>
+        <class>tse.cargauy.historico.HistCaso</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+
+        <properties>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.default_schema" value="historico"/>
+            <property name="jakarta.persistence.create-database-schemas" value="true"/>
+            <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
+        </properties>
+
+    </persistence-unit>
+
+</persistence>
