@@ -20,6 +20,7 @@ const loginMessages: Record<string, string> = {
   '4005': 'El ingreso con gub.uy no esta configurado.',
   '4006': 'La sesion no es valida o expiro. Vuelva a ingresar.',
   '4007': 'El ingreso no esta configurado.',
+  '4028': 'Debe ser mayor de edad para ingresar.',
 }
 
 export function getLoginErrorMessage(code: string | null) {

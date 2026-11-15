@@ -86,6 +86,11 @@
                 <goals>
                   <goal>report-aggregate</goal>
                 </goals>
+                <configuration>
+                  <excludes>
+                    <exclude>tse/cargauy/adaptadores/pdi/soap/**</exclude>
+                  </excludes>
+                </configuration>
               </execution>
             </executions>
           </plugin>

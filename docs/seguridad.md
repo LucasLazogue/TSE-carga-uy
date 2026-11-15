@@ -115,6 +115,8 @@ Para volver al simulado, restaurar `GUBUY_MOCK=true` y
 | `LDAP_DM_PASSWORD` | Credencial de servicio para acceder al directorio LDAP |
 | `NODO_JMS_USUARIO` / `NODO_JMS_CLAVE` | Credenciales del publicador de tracking |
 | `NODO_CLAVE_ADMIN` / `NODO_CLAVE_CENTRAL` | Claves de administración y consulta de cada nodo de balanzas |
+| `PDI_PASSWORD_ENTIDAD` | Clave con la que el central consulta a la PDI |
+| `SUPLANTADOR_PASSWORD_ENTIDAD` | Clave que acepta el suplantador de la PDI; tiene que coincidir con la del central |
 
 El central necesita recuperar la clave de consulta de un nodo, por eso la almacena cifrada con
 AEAD. El identificador del nodo se usa como dato asociado: el texto cifrado queda ligado a ese
@@ -139,6 +141,29 @@ de la API usan HTTP; la conexión TLS documentada para tracking corresponde al t
 
 Referencias: [permisos de Artemis](../carga-uy/artemis/etc/broker.xml) y
 [autenticación de balanzas](../nodo-balanzas/src/main/java/tse/cargauy/nodobalanzas/seguridad/ClaveAuthenticationMechanism.java).
+
+## PDI y mayoría de edad
+
+El [suplantador de la PDI](../pdi-suplantador/README.md) recibe la organización y la clave en el cuerpo
+del mensaje, como el servicio real de DNIC. Por ahora solo corre en el Compose, por HTTP; al desplegarlo,
+la plataforma lo publica por HTTPS. Sus personas son ficticias, y las de
+[personas.json](../pdi-suplantador/personas/personas.json) están en Git, así que ahí no van datos reales.
+
+Cuando un ciudadano ingresa por gub.uy, en la web o en la app, y su perfil no tiene los datos de la PDI,
+el central los consulta. Del resultado guarda solo los nombres, los apellidos y la fecha de nacimiento.
+
+- **Menor de edad:** no se crea la sesión y el central responde el error `4028`. Si nunca había
+  ingresado, no se crea el perfil ni se guarda ningún dato. Si ya tenía perfil, por ejemplo porque lo
+  dieron de alta en una empresa, se guarda la fecha, para rechazarlo aunque después caiga la PDI.
+- **Fecha parcial:** se usa el último día posible, así nunca deja pasar a un menor. Puede demorar el
+  ingreso de alguien que ya cumplió 18.
+- **PDI no disponible:** como no se conoce la edad, el ciudadano entra y se vuelve a consultar
+  en su próximo ingreso.
+- **DNIC sin fecha:** el ciudadano entra con los nombres y no se vuelve a consultar, porque es una
+  respuesta definitiva de DNIC y repetirla solo demoraría cada ingreso.
+- **Límite conocido:** un menor que entró con la PDI caída se rechaza en su siguiente ingreso, pero la
+  sesión ya abierta sigue hasta vencer: 6 h en la web y, en la app, mientras el refresh token sea válido.
+- **Quién no pasa por esta verificación:** los funcionarios y el backoffice, que usa LDAP.
 
 ## Configuración de WildFly
 

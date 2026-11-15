@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.crypto.SecretKey;
@@ -20,9 +21,14 @@ import jakarta.annotation.Resource;
 import jakarta.ejb.EJB;
 import jakarta.ejb.SessionContext;
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
+import tse.cargauy.adaptadores.pdi.FechaDnic;
+import tse.cargauy.adaptadores.pdi.PdiClient;
+import tse.cargauy.adaptadores.pdi.PersonaPdi;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.usuario.UsuarioDAOLocal;
 import tse.cargauy.dtos.EstadoLoginDto;
@@ -65,6 +71,9 @@ public class UsuarioEJB implements UsuarioEJBLocal {
     @Inject
     LdapClient ldap;
 
+    @Inject
+    PdiClient pdi;
+
     @Resource
     SessionContext contexto;
 
@@ -76,6 +85,9 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         return gubUy.getAuthorizationUrl(state, nonce, cedulaMock);
     }
 
+    // sin transaccion: la consulta a la PDI puede tardar varios segundos y no tiene que retener una conexion a la base.
+    // cada llamada al DAO confirma por su cuenta, asi rechazar a un menor no deshace los datos que se guardaron de el
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public UsuarioDto loginGubUy(String code, String nonce) {
         IdentidadGubUy identidad = gubUy.exchangeCode(code, nonce);
         String cedula = identidad.getCedula();
@@ -89,14 +101,42 @@ public class UsuarioEJB implements UsuarioEJBLocal {
         }
 
         UsuarioDto ciudadano = usuarioDAO.getCiudadanoByCedula(cedula);
-        if (ciudadano == null) {
-            return usuarioDAO.addCiudadano(cedula, identidad.getCorreo());
+        return ciudadano == null ? primerIngreso(identidad) : ingresoConPerfil(ciudadano, identidad);
+    }
+
+    private UsuarioDto primerIngreso(IdentidadGubUy identidad) {
+        Optional<PersonaPdi> persona = pdi.obtenerPersona(identidad.getCedula());
+        persona.ifPresent(datos -> rechazarSiEsMenor(datos.fechaNacimiento()));
+        UsuarioDto ciudadano = usuarioDAO.addCiudadano(identidad.getCedula(), identidad.getCorreo());
+        persona.ifPresent(datos -> guardarDatosPdi(ciudadano, datos));
+        return ciudadano;
+    }
+
+    private UsuarioDto ingresoConPerfil(UsuarioDto ciudadano, IdentidadGubUy identidad) {
+        // sin nombres el perfil esta pendiente: se creo con la PDI caida o al darlo de alta en una empresa
+        if (ciudadano.getNombres() == null) {
+            pdi.obtenerPersona(identidad.getCedula()).ifPresent(datos -> guardarDatosPdi(ciudadano, datos));
         }
+        // despues de guardar: un menor con perfil queda bloqueado aunque despues caiga la PDI
+        rechazarSiEsMenor(ciudadano.getFechaNacimiento());
         if (ciudadano.getCorreo() == null && identidad.getCorreo() != null) {
             usuarioDAO.updateCorreo(ciudadano.getId(), identidad.getCorreo());
             ciudadano.setCorreo(identidad.getCorreo());
         }
         return ciudadano;
+    }
+
+    private void guardarDatosPdi(UsuarioDto ciudadano, PersonaPdi persona) {
+        usuarioDAO.updateDatosPdi(ciudadano.getId(), persona.nombres(), persona.apellidos(), persona.fechaNacimiento());
+        ciudadano.setNombres(persona.nombres());
+        ciudadano.setApellidos(persona.apellidos());
+        ciudadano.setFechaNacimiento(persona.fechaNacimiento());
+    }
+
+    private static void rechazarSiEsMenor(String fechaNacimiento) {
+        if (FechaDnic.esMenor(fechaNacimiento, LocalDate.now())) {
+            throw new CargaUYException(CodigoError.USUARIO_MENOR_DE_EDAD);
+        }
     }
 
     public UsuarioDto loginBackoffice(String usuario, String clave) {

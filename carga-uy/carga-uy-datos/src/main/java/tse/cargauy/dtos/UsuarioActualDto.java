@@ -1,59 +1,26 @@
 package tse.cargauy.dtos;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class UsuarioActualDto implements Serializable {
+public class UsuarioActualDto extends UsuarioDto {
 
     private static final long serialVersionUID = 1L;
 
-    private Long id;
-    private String cedula;
-    private String correo;
-    private List<String> roles;
     private List<EmpresaDto> empresas;
 
     public UsuarioActualDto() {
     }
 
     public UsuarioActualDto(UsuarioDto usuario, List<EmpresaDto> empresas) {
-        this.id = usuario.getId();
-        this.cedula = usuario.getCedula();
-        this.correo = usuario.getCorreo();
-        this.roles = usuario.getRoles();
+        setId(usuario.getId());
+        setUsuario(usuario.getUsuario());
+        setCedula(usuario.getCedula());
+        setCorreo(usuario.getCorreo());
+        setNombres(usuario.getNombres());
+        setApellidos(usuario.getApellidos());
+        setFechaNacimiento(usuario.getFechaNacimiento());
+        setRoles(usuario.getRoles());
         this.empresas = empresas;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getCedula() {
-        return cedula;
-    }
-
-    public void setCedula(String cedula) {
-        this.cedula = cedula;
-    }
-
-    public String getCorreo() {
-        return correo;
-    }
-
-    public void setCorreo(String correo) {
-        this.correo = correo;
-    }
-
-    public List<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
     }
 
     public List<EmpresaDto> getEmpresas() {

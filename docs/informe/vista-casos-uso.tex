@@ -184,7 +184,8 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
     \item Si no existe perfil local, se crea con la cédula y el correo (CU-02) y se consultan a la PDI el nombre y la fecha de nacimiento.
     \item Si el perfil existe pero no tiene los datos de la PDI, se vuelven a consultar.
     \item Si el perfil se creó al dar de alta una empresa y todavía no tiene correo, se completa con el que devuelve gub.uy.
-    \item Si la PDI no responde, la sesión se establece igual y el perfil queda sin esos datos, que se completan en el próximo ingreso (AC13).
+    \item Si la PDI no responde, la sesión se establece igual y el perfil queda sin esos datos, que se completan en el próximo ingreso (AC13). Como no se conoce la edad, tampoco se puede rechazar a un menor hasta ese ingreso.
+    \item Si la fecha de nacimiento indica que el ciudadano es menor de edad, no se crea la sesión. Si nunca había ingresado, tampoco se crea el perfil.
     \item Un ciudadano sin empresa asociada accede solamente a funciones públicas.
     \item Una autenticación cancelada, fallida, inválida o vencida no crea sesión.
     \item Si gub.uy no responde, las funcionalidades públicas siguen disponibles.
