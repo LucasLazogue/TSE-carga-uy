@@ -69,6 +69,7 @@ class ElencoDemoTest {
             @Override
             public void init() {
                 datosPrueba++;
+                llamadas.add("datosPrueba.init");
             }
         };
         elenco.cifrado = new Cifrado() {
@@ -142,6 +143,17 @@ class ElencoDemoTest {
         assertEquals(EstadoNodo.HABILITADO, nodos.get("balanzas-sur").getEstado());
         assertEquals("https://balanzas.example/nodo-balanzas", nodos.get("balanzas-sur").getPuntoAcceso());
         assertEquals("cifrada(secreta,balanzas-sur)", clavesCifradas.get("balanzas-sur"));
+    }
+
+    @Test
+    void cargaLosDatosDePruebaAntesDeTomarElCerrojo() {
+        entorno.put("DEMO_FUNCIONARIOS", "51111111");
+
+        elenco.iniciar();
+
+        // al reves se traba con el arranque de DatosPrueba, que tambien toma el cerrojo
+        assertTrue(llamadas.indexOf("datosPrueba.init") < llamadas.indexOf("createNativeQuery"));
+        assertTrue(llamadas.contains("createNativeQuery"));
     }
 
     @Test

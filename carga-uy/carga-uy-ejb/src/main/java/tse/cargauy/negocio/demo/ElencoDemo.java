@@ -85,8 +85,11 @@ public class ElencoDemo {
         if (funcionarios.isEmpty() && responsables.isEmpty() && choferes.isEmpty() && ciudadanos.isEmpty() && nodos.isEmpty()) {
             return;
         }
-        CerrojoArranque.tomar(entityManager);
+        // primero los datos de prueba y despues el cerrojo, en ese orden: DatosPrueba tambien arranca solo y toma el
+        // cerrojo. Si este bean lo tomara antes, la llamada esperaria a que termine el arranque de DatosPrueba, que a
+        // su vez espera el cerrojo: quedaban trabados hasta el timeout de la transaccion y el servidor no arrancaba
         datosPrueba.init();
+        CerrojoArranque.tomar(entityManager);
 
         EmpresaDto empresa = empresaDAO.getEmpresaByNro(numero(entorno("DEMO_EMPRESA"), EMPRESA_POR_DEFECTO));
         for (String cedula : funcionarios) {
