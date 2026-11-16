@@ -1,0 +1,80 @@
+# Almacen de posiciones de tracking (MongoDB) en OpenShift. Reconstruido de lo que esta aplicado en el proyecto del
+# central (oc apply view-last-applied).
+#
+# Secret mongo-secretos (fuera del repositorio): el usuario root que crea la imagen al iniciar la base vacia.
+#   oc create secret generic mongo-secretos \
+#     --from-literal=MONGO_INITDB_ROOT_USERNAME=USUARIO \
+#     --from-literal=MONGO_INITDB_ROOT_PASSWORD=CLAVE
+# El central se conecta con MONGO_URI (Secret carga-uy-secretos), que usa ese mismo usuario y clave:
+#   mongodb://USUARIO:CLAVE@mongo:27017/?authSource=admin
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-datos
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+spec:
+  replicas: 1
+  # el volumen es ReadWriteOnce: el pod viejo tiene que soltarlo antes de que arranque el nuevo
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: docker.io/library/mongo:8.0
+          env:
+            - name: TZ
+              value: America/Montevideo
+            # el usuario al azar de OpenShift no tiene home: mongosh escribe su historial en HOME
+            - name: HOME
+              value: /tmp
+          envFrom:
+            - secretRef:
+                name: mongo-secretos
+          ports:
+            - containerPort: 27017
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: datos
+              mountPath: /data/db
+      volumes:
+        - name: datos
+          persistentVolumeClaim:
+            claimName: mongo-datos
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  selector:
+    app: mongo
+  ports:
+    - name: mongo
+      port: 27017
