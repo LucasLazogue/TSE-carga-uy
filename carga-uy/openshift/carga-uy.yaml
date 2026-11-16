@@ -23,6 +23,11 @@ spec:
                 name: carga-uy-config
             - secretRef:
                 name: carga-uy-secretos
+            # elenco de la demo (ElencoDemo): cedulas de las cuentas de gub.uy y nodos con sus claves. Optativo: sin
+            # el Secret el central arranca igual. Ver "Datos de la demo y reinicio" en docs/infraestructura.md
+            - secretRef:
+                name: carga-uy-demo
+                optional: true
           # el autoescalado mide el uso de CPU contra el request. Cuota del proyecto: 3 CPU de requests; Artemis,
           # Mongo, LDAP, Postgres y la plataforma de observabilidad piden ~0,5. Con 400m entran 4 instancias mas la
           # extra que agrega un despliegue (maxSurge)

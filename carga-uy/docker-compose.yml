@@ -134,6 +134,12 @@ services:
       PDI_URL: ${PDI_URL:-http://pdi-suplantador:8080/pdi-suplantador/ServicioBasicoInformacion}
       PDI_ORGANIZACION: ${PDI_ORGANIZACION:-carga-uy}
       PDI_PASSWORD_ENTIDAD: ${PDI_PASSWORD_ENTIDAD:-clave-pdi-desarrollo}
+      # elenco de la demo (ElencoDemo): cedulas reales y claves de nodos, solo en el .env; vacio no hace nada
+      DEMO_FUNCIONARIOS: ${DEMO_FUNCIONARIOS:-}
+      DEMO_RESPONSABLES: ${DEMO_RESPONSABLES:-}
+      DEMO_CHOFERES: ${DEMO_CHOFERES:-}
+      DEMO_CIUDADANOS: ${DEMO_CIUDADANOS:-}
+      DEMO_NODOS: ${DEMO_NODOS:-}
       # trazas, metricas y logs hacia la Plataforma de Observabilidad; la proporcion de trazas que se guardan tiene
       # que ser la misma que en el nodo
       OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
