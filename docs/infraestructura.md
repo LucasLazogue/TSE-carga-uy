@@ -297,6 +297,22 @@ elenco entra como ciudadano sin rol.
 En Compose, el elenco se define en el `.env` con las mismas variables, y el reinicio es
 `docker compose down -v && docker compose up -d`.
 
+### Broker y almacén de posiciones
+
+Artemis y MongoDB tienen sus manifiestos en [openshift/artemis.yaml](../carga-uy/openshift/artemis.yaml) y
+[openshift/mongo.yaml](../carga-uy/openshift/mongo.yaml), con los comandos para crear sus Secrets
+(`artemis-secretos` y `mongo-secretos`) en el encabezado de cada uno. La imagen del broker se construye en el
+clúster a partir de `carga-uy/artemis`:
+
+```sh
+oc apply -f openshift/artemis.yaml -f openshift/mongo.yaml
+oc start-build artemis --from-dir=artemis --follow
+```
+
+Los usuarios del broker de OpenShift vienen del Secret y reemplazan a los de desarrollo del repositorio. La clave
+del usuario `central` va en `carga-uy-secretos` como `ARTEMIS_CLAVE`, y la de `artemis` como
+`ARTEMIS_CONSOLA_CLAVE`. `MONGO_URI` usa el usuario root de `mongo-secretos`.
+
 ### Directorio LDAP
 
 El directorio del backoffice usa la imagen `389ds/dirsrv:3.1` del Compose. No tiene workflow: se
