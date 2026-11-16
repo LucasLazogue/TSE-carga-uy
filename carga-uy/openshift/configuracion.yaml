@@ -11,3 +11,5 @@ data:
   GUBUY_REDIRECT_URI: https://carga-uy-frontend.vercel.app/api/auth/callback
   CARGAUY_API_URL: https://carga-uy-frontend.vercel.app/api
   OTEL_PROPORCION_TRAZAS: "0.1"
+  # usuario de la consola del broker: el central lee por ahi el tamano de la cola (la clave va en carga-uy-secretos)
+  ARTEMIS_CONSOLA_USUARIO: artemis

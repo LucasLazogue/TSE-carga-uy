@@ -67,6 +67,7 @@ define el conjunto completo de variables y sus valores predeterminados.
 | `CARGAUY_JWT_SECRET`, `CARGAUY_CLAVE_CIFRADO`, `LDAP_*` | Sesiones, cifrado y directorio; ver [seguridad](seguridad.md#secretos-y-cifrado) |
 | `MONGO_URI`, `MONGO_DB` | Conexión al almacén de posiciones |
 | `ARTEMIS_HOST`, `ARTEMIS_PORT`, `ARTEMIS_USUARIO`, `ARTEMIS_CLAVE` | Conexión del central al broker |
+| `ARTEMIS_CONSOLA`, `ARTEMIS_CONSOLA_USUARIO`, `ARTEMIS_CONSOLA_CLAVE` | Consola del broker (Jolokia), de donde el central lee el tamaño de la cola para las [métricas](observabilidad.md) |
 | `NODO_*` | Publicador y simulación de [tracking](../nodo-tracking/README.md#configuración) |
 | `BALANZAS_SUR_CLAVE_*`, `BALANZAS_NORTE_CLAVE_*` | Credenciales que Compose pasa a los [nodos de balanzas](../nodo-balanzas/README.md#configuración) |
 | `PDI_URL`, `PDI_ORGANIZACION`, `PDI_PASSWORD_ENTIDAD` | Conexión del central a la PDI: dirección y credenciales que manda |
@@ -133,6 +134,13 @@ el central los encuentra con sus valores por defecto.
 
 Los nodos de tracking corren en otro proyecto y llegan al broker por la Route `artemis-nodos`; su
 despliegue está en la [guía del nodo](../nodo-tracking/README.md#despliegue-en-openshift).
+
+El Service `artemis` publica también la consola (`8161`), solo dentro del proyecto: por ahí el central lee
+cada 10 s los mensajes esperando y los consumidores de `queue_tracking`, y los mensajes muertos (`DLQ`). Se
+autentica como el usuario `artemis` del broker, con `ARTEMIS_CONSOLA_USUARIO` (ConfigMap) y
+`ARTEMIS_CONSOLA_CLAVE` (`oc set data secret/carga-uy-secretos ARTEMIS_CONSOLA_CLAVE=...`). Sin el puerto o con
+otra clave, el panel "Cola de tracking" de Grafana queda vacío y el central lo avisa una vez en el log
+(`metricas cola=SIN_DATOS`).
 
 Los comandos requieren la sesión de `oc` iniciada como en [acceso a OpenShift](#acceso-a-openshift)
 y se ejecutan desde `carga-uy`.
