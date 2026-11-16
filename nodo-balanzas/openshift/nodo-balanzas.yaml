@@ -1,0 +1,191 @@
+# Nodos de balanzas (balanzas-sur y balanzas-norte) en OpenShift: la misma imagen, cada uno con su base y sus claves.
+# Armado a partir de los Deployments que estan corriendo en el proyecto de los nodos, con tres cambios:
+#   - las claves salen de Secrets en vez de estar escritas en el Deployment;
+#   - una readinessProbe en /health/ready: sin ella el pod figura listo antes de que WildFly despliegue la aplicacion
+#     (y si la base no esta arriba, nunca la despliega y responde 404 aunque el pod diga Ready);
+#   - los dos Services con los mismos nombres de puertos (http y gestion), y el 9990 para el colector.
+#
+# Una vez por nodo (ejemplo con sur; para norte, cambiar sur por norte):
+#
+# 1. Base: plantilla del catalogo, que crea el DeploymentConfig, el volumen y el Secret pg-balanzas-sur
+#    (claves database-name, database-user y database-password):
+#      oc new-app postgresql-persistent -p DATABASE_SERVICE_NAME=pg-balanzas-sur \
+#        -p POSTGRESQL_DATABASE=balanzas-sur -p POSTGRESQL_USER=admin-balanza -p POSTGRESQL_PASSWORD=CLAVE_DE_LA_BASE
+#
+# 2. Claves del nodo (las del Google Doc: admin para dar de alta peajes y balanzas, central para que consulte carga.uy):
+#      oc create secret generic balanzas-sur-claves \
+#        --from-literal=NODO_CLAVE_ADMIN=CLAVE_ADMIN --from-literal=NODO_CLAVE_CENTRAL=CLAVE_CENTRAL
+#
+# 3. oc apply -f openshift/nodo-balanzas.yaml -f openshift/rutas.yaml
+#
+# Al pasar los nodos que ya existen a este manifiesto, crear antes los Secrets del paso 2 con las mismas claves que
+# tienen hoy: si cambian, hay que actualizarlas tambien en el central (backoffice, Nodos, Cambiar clave).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cargauy-balanzas-sur
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cargauy-balanzas-sur
+  template:
+    metadata:
+      labels:
+        app: cargauy-balanzas-sur
+    spec:
+      containers:
+        - name: nodo-balanzas
+          image: ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:latest
+          imagePullPolicy: Always
+          env:
+            - name: DB_HOST
+              value: pg-balanzas-sur
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: pg-balanzas-sur
+                  key: database-name
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-balanzas-sur
+                  key: database-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-balanzas-sur
+                  key: database-password
+            - name: NODO_CLAVE_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: balanzas-sur-claves
+                  key: NODO_CLAVE_ADMIN
+            - name: NODO_CLAVE_CENTRAL
+              valueFrom:
+                secretKeyRef:
+                  name: balanzas-sur-claves
+                  key: NODO_CLAVE_CENTRAL
+            - name: OTEL_SERVICE_NAME
+              value: balanzas-sur
+            # la misma proporcion que el central, para que las trazas que vienen de el se muestreen igual
+            - name: OTEL_PROPORCION_TRAZAS
+              value: "0.1"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: gestion
+              containerPort: 9990
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9990
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cargauy-balanzas-sur
+spec:
+  selector:
+    app: cargauy-balanzas-sur
+  ports:
+    - name: http
+      port: 8080
+    # solo dentro del proyecto: el colector consulta /health/ready
+    - name: gestion
+      port: 9990
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cargauy-balanzas-norte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cargauy-balanzas-norte
+  template:
+    metadata:
+      labels:
+        app: cargauy-balanzas-norte
+    spec:
+      containers:
+        - name: nodo-balanzas
+          image: ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:latest
+          imagePullPolicy: Always
+          env:
+            - name: DB_HOST
+              value: pg-balanzas-norte
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: pg-balanzas-norte
+                  key: database-name
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pg-balanzas-norte
+                  key: database-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pg-balanzas-norte
+                  key: database-password
+            - name: NODO_CLAVE_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: balanzas-norte-claves
+                  key: NODO_CLAVE_ADMIN
+            - name: NODO_CLAVE_CENTRAL
+              valueFrom:
+                secretKeyRef:
+                  name: balanzas-norte-claves
+                  key: NODO_CLAVE_CENTRAL
+            - name: OTEL_SERVICE_NAME
+              value: balanzas-norte
+            - name: OTEL_PROPORCION_TRAZAS
+              value: "0.1"
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: gestion
+              containerPort: 9990
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9990
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cargauy-balanzas-norte
+spec:
+  selector:
+    app: cargauy-balanzas-norte
+  ports:
+    - name: http
+      port: 8080
+    - name: gestion
+      port: 9990

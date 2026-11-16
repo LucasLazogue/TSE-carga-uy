@@ -83,10 +83,11 @@ token personal ni las credenciales de OpenShift. Publica estas etiquetas:
 - `ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:latest`
 - `ghcr.io/lucaslazogue/tse-carga-uy/nodo-balanzas:<sha-del-commit>`
 
-Una vez terminada correctamente la ejecución, pegar la referencia de la imagen en el formulario de
-creación del Deployment de OpenShift. La misma imagen sirve para sur y norte, cada uno con su base y
-sus claves. Para fijar una versión, usar la etiqueta del commit. Este workflow publica la imagen;
-el despliegue y el registro en el backoffice se hacen por separado.
+La misma imagen sirve para sur y norte, cada uno con su base y sus claves. Los dos nodos se despliegan con
+[openshift/nodo-balanzas.yaml](openshift/nodo-balanzas.yaml) (Deployments y Services) y
+[openshift/rutas.yaml](openshift/rutas.yaml); el encabezado del manifiesto tiene los pasos para crear la base y
+los Secrets con las claves, que no van escritas en el Deployment. Para fijar una versión, usar la etiqueta del
+commit. Este workflow publica la imagen; el despliegue y el registro en el backoffice se hacen por separado.
 
 Si el paquete es privado, configurar un image pull secret en OpenShift con acceso de lectura al paquete.
 
