@@ -247,6 +247,8 @@ public class DatosPrueba {
             casoDAO.resolver(sinHabilitacion, funcionario, EstadoCaso.DESESTIMADA, "La ITV se renovo antes del viaje; el registro estaba atrasado.",
                     LocalDateTime.of(2026, 5, 20, 9, 0));
         }
+        // mas empresas con viajes terminados, para que Estadisticas (informacion publica) supere el umbral
+        new HistoriaPublica(empresaDAO, vehiculoDAO, permisoDAO, itvDAO, usuarioDAO, guiaDAO, viajeDAO).cargar();
     }
 
     private void agregarViajeRealizado(LocalDate fecha, Long idVehiculo, Long idChofer, Long idEmpresa, Long idRubro, Long idTipoCarga,
