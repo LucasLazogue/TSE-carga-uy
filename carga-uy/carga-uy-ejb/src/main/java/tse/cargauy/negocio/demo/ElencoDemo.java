@@ -137,8 +137,9 @@ public class ElencoDemo {
         if (vehiculo == null || !vehiculo.getIdEmpresa().equals(empresa.getId()) || !viajeDAO.getActivosDelChofer(chofer.getId()).isEmpty()) {
             return;
         }
-        // Montevideo a Colonia
-        GuiaDto guia = guiaDAO.addGuia(new GuiaDto(LocalDate.now(), -34.9011, -56.1645, -34.4626, -57.8400, 12000,
+        // Montevideo a Salto: la misma ruta con la que tracking-1 reporta a SBB5678 (flotas/flota-sur.json), asi el
+        // recorrido del viaje sigue la guia
+        GuiaDto guia = guiaDAO.addGuia(new GuiaDto(LocalDate.now(), -34.9011, -56.1645, -31.3833, -57.9667, 12000,
                 empresa.getId(), responsable.getId(), guiaDAO.getRubros().get(0).getId(), guiaDAO.getTiposCarga().get(0).getId()));
         viajeDAO.addViaje(new ViajeDto(guia.getId(), vehiculo.getId(), chofer.getId()));
     }

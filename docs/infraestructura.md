@@ -246,7 +246,9 @@ El central carga dos capas de datos al arrancar, y las dos solo agregan lo que f
 nada:
 
 - **Datos de prueba** (`DatosPrueba`): empresas, vehículos con sus permisos e ITV, Guías, viajes, casos en cada
-  estado y las normas de fiscalización, con personas ficticias. Están siempre.
+  estado y las normas de fiscalización, con personas ficticias. Están siempre. Incluyen cinco empresas más
+  (1005 a 1009, `HistoriaPublica`) con un viaje terminado por mes de febrero a octubre: la información pública solo
+  muestra un mes o un rubro con al menos 5 empresas y 5 vehículos detrás, y sin ellas Estadísticas quedaba vacía.
 - **Elenco de la demo** (`ElencoDemo`): quién es funcionario, responsable o chofer, y los nodos periféricos
   registrados y habilitados. Usa las cédulas de las cuentas de gub.uy de testing del grupo, que son de personas
   reales, y las claves de los nodos: por eso no está en el repositorio sino en el Secret `carga-uy-demo`. Sin el
