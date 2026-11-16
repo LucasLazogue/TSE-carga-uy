@@ -240,6 +240,53 @@ Lo que hace que el central funcione con varias instancias:
 | Backoffice (JSF) | El login no guarda estado: es el mismo JWT, en una cookie, que se valida en cada pedido. Lo que sí queda en la instancia es el estado de cada pantalla (JSF y los beans `@ViewScoped`). El Route mantiene a cada usuario en la misma instancia con la cookie `carga-uy-instancia`; si esa instancia se apaga, la pantalla abierta se recarga y el usuario sigue logueado |
 | Métricas de la cola | Cada instancia publica el tamaño de la cola; el tablero toma el máximo |
 
+### Datos de la demo y reinicio
+
+El central carga dos capas de datos al arrancar, y las dos solo agregan lo que falta, así que reiniciarlo no duplica
+nada:
+
+- **Datos de prueba** (`DatosPrueba`): empresas, vehículos con sus permisos e ITV, Guías, viajes, casos en cada
+  estado y las normas de fiscalización, con personas ficticias. Están siempre.
+- **Elenco de la demo** (`ElencoDemo`): quién es funcionario, responsable o chofer, y los nodos periféricos
+  registrados y habilitados. Usa las cédulas de las cuentas de gub.uy de testing del grupo, que son de personas
+  reales, y las claves de los nodos: por eso no está en el repositorio sino en el Secret `carga-uy-demo`. Sin el
+  Secret no hace nada.
+
+| Variable | Contenido |
+| --- | --- |
+| `DEMO_FUNCIONARIOS` | Cédulas que entran como funcionarios, separadas por coma |
+| `DEMO_RESPONSABLES` | Cédulas responsables de la empresa 1001 (`DEMO_EMPRESA` para otra) |
+| `DEMO_CHOFERES` | Cédulas choferes de esa empresa. Cada uno recibe además un viaje asignado sin iniciar, con `SBB5678` |
+| `DEMO_CIUDADANOS` | Cédulas que existen como ciudadanos, sin rol |
+| `DEMO_NODOS` | Nodos separados por `;`: un nodo de tracking es su identificador; uno de balanzas, `identificador\|url\|clave` |
+
+El correo de cada ciudadano queda vacío y se completa con el de gub.uy en su primer ingreso.
+
+```sh
+oc create secret generic carga-uy-demo \
+  --from-literal=DEMO_FUNCIONARIOS=CEDULA \
+  --from-literal=DEMO_RESPONSABLES=CEDULA \
+  --from-literal=DEMO_CHOFERES=CEDULA \
+  --from-literal=DEMO_CIUDADANOS=CEDULA \
+  --from-literal='DEMO_NODOS=tracking-1;tracking-2;balanzas-sur|https://URL/nodo-balanzas|CLAVE_CENTRAL;balanzas-norte|https://URL/nodo-balanzas|CLAVE_CENTRAL'
+```
+
+[openshift/reiniciar-datos.sh](../carga-uy/openshift/reiniciar-datos.sh) deja el central como recién instalado, para
+repetir la demo o una prueba desde el mismo punto:
+
+1. apaga el central;
+2. borra y vuelve a crear la base de PostgreSQL. No alcanza con vaciar las tablas: los triggers de la auditoría no
+   dejan borrar la pista;
+3. borra las posiciones de MongoDB;
+4. enciende el central, que crea el esquema y carga las dos capas.
+
+Pide confirmación escribiendo el nombre del proyecto. No toca los usuarios de LDAP, las cuentas de gub.uy, la cola de
+Artemis ni los pesajes de los nodos de balanzas. Después del reinicio, cualquier cuenta de gub.uy que no esté en el
+elenco entra como ciudadano sin rol.
+
+En Compose, el elenco se define en el `.env` con las mismas variables, y el reinicio es
+`docker compose down -v && docker compose up -d`.
+
 ### Directorio LDAP
 
 El directorio del backoffice usa la imagen `389ds/dirsrv:3.1` del Compose. No tiene workflow: se
