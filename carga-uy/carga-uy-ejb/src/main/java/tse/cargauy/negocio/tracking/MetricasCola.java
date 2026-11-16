@@ -46,9 +46,12 @@ public class MetricasCola {
     private final AtomicLong mensajes = new AtomicLong(DESCONOCIDO);
     private final AtomicLong consumidores = new AtomicLong(DESCONOCIDO);
     private final AtomicLong muertos = new AtomicLong(DESCONOCIDO);
-    private HttpClient cliente;
-    private URI jolokia;
-    private String autorizacion;
+    // package-private para los tests
+    HttpClient cliente;
+    URI jolokia;
+    String autorizacion;
+    // para avisar en el log una sola vez cuando deja de poder consultar, y otra cuando vuelve
+    private boolean fallando;
 
     @PostConstruct
     void iniciar() {
@@ -91,6 +94,10 @@ public class MetricasCola {
             mensajes.set(cola.getJsonNumber("MessageCount").longValue());
             consumidores.set(cola.getJsonNumber("ConsumerCount").longValue());
             muertos.set(valores.getJsonObject(1).getJsonObject("value").getJsonNumber("MessageCount").longValue());
+            if (fallando) {
+                fallando = false;
+                LOGGER.info("metricas cola=CONSULTADA: se volvio a leer la cola en el broker");
+            }
         } catch (Exception e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -98,8 +105,28 @@ public class MetricasCola {
             mensajes.set(DESCONOCIDO);
             consumidores.set(DESCONOCIDO);
             muertos.set(DESCONOCIDO);
+            // corre cada 10 s: el aviso va una sola vez y el detalle de cada intento queda en FINE. Antes todo iba en
+            // FINE y en OpenShift las metricas de la cola estuvieron vacias sin que nada lo dijera (el Service no
+            // publicaba la consola y la clave no era la del broker)
+            if (!fallando) {
+                fallando = true;
+                LOGGER.warning("metricas cola=SIN_DATOS: no se pudo consultar la cola en " + jolokia
+                        + " (revisar que el Service publique la consola y ARTEMIS_CONSOLA_USUARIO/CLAVE): " + e);
+            }
             LOGGER.log(Level.FINE, "no se pudo consultar la cola en el broker", e);
         }
+    }
+
+    long mensajes() {
+        return mensajes.get();
+    }
+
+    long consumidores() {
+        return consumidores.get();
+    }
+
+    long muertos() {
+        return muertos.get();
     }
 
     private static JsonObject lectura(String cola, JsonArrayBuilder atributos) {
