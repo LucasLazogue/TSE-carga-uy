@@ -200,7 +200,7 @@ public class DatosPrueba {
             casoDAO.addNorma(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, LocalDate.of(2026, 1, 1));
         }
         if (casoDAO.getNormaVigente(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, LocalDate.now()) == null) {
-            casoDAO.addNorma(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, 2000, LocalDate.of(2026, 1, 1));
+            casoDAO.addNorma(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, 5000, LocalDate.of(2026, 1, 1));
         }
 
         // fechas relativas a hoy para que siempre haya un caso en plazo, uno vencido y uno en descargo
@@ -213,8 +213,8 @@ public class DatosPrueba {
                     new EvidenciaDto(TipoEvidencia.PESAJE, "balanzas-sur/balanza-r5-km30/1001", ahora.minusDays(3), "36500 kg", "33800 kg",
                             "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 5 km 30 por encima del maximo."));
             agregarCaso(TipoInfraccion.DESVIO_RUTA, scc, ahora.minusDays(16), ahora.minusDays(15),
-                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-1", ahora.minusDays(16), "12,4 km", "0 km",
-                            "2 km", "Posiciones a mas de 2 km del recorrido esperado durante 40 minutos."));
+                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-1", ahora.minusDays(16), "12400 m", "0 m",
+                            "5000 m", "Posicion fuera del tramo entre el origen y el destino de la Guia."));
             Long enDescargo = agregarCaso(TipoInfraccion.EXCESO_CARGA, scc, ahora.minusDays(7), ahora.minusDays(6),
                     new EvidenciaDto(TipoEvidencia.PESAJE, "balanzas-sur/balanza-r1-km45/2002", ahora.minusDays(7), "35100 kg", "33800 kg",
                             "peso del vehiculo + capacidad declarada", "Pesada en la balanza de ruta 1 km 45 por encima del maximo."));
@@ -238,8 +238,8 @@ public class DatosPrueba {
             casoDAO.resolver(exceso, funcionario, EstadoCaso.CONFIRMADA, "El pesaje supera el maximo y no hubo descargo.",
                     LocalDateTime.of(2026, 4, 25, 9, 0));
             Long desvio = agregarCaso(TipoInfraccion.DESVIO_RUTA, scc, LocalDateTime.of(2026, 6, 12, 15, 0), LocalDateTime.of(2026, 6, 12, 15, 30),
-                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-3", LocalDateTime.of(2026, 6, 12, 15, 0), "8,1 km", "0 km",
-                            "2 km", "Posiciones a mas de 2 km del recorrido esperado durante 25 minutos."));
+                    new EvidenciaDto(TipoEvidencia.POSICION, "tracking-1/semilla-3", LocalDateTime.of(2026, 6, 12, 15, 0), "8100 m", "0 m",
+                            "5000 m", "Posicion fuera del tramo entre el origen y el destino de la Guia."));
             casoDAO.resolver(desvio, funcionario, EstadoCaso.CONFIRMADA, "El desvio no tiene justificacion.", LocalDateTime.of(2026, 6, 30, 9, 0));
             Long sinHabilitacion = agregarCaso(TipoInfraccion.SIN_HABILITACION, sdd, LocalDateTime.of(2026, 5, 3, 8, 0),
                     LocalDateTime.of(2026, 5, 3, 8, 30), new EvidenciaDto(TipoEvidencia.ITV, "itv-sdd3456", LocalDateTime.of(2026, 5, 3, 8, 0),
