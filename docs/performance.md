@@ -65,3 +65,62 @@ Conclusión: en la máquina de desarrollo el punto de quiebre está entre 250 y 
 la prueba de performance de la entrega final (AC09 a AC11) hay que separar el generador del central
 y correrla con el central en Elastic Cloud. Las varias instancias del central consumen la misma cola
 (DA02), así que se puede medir también el escalado horizontal.
+
+## Conexiones a la base
+
+Cada instancia del central tiene su propio pool de conexiones a PostgreSQL (`CargaUyDS`), así que al
+escalar horizontalmente las conexiones se multiplican: el total es el pool por instancia por la cantidad
+de instancias, y tiene que quedar por debajo del `max_connections` de PostgreSQL (100 en OpenShift, de
+las que 3 quedan reservadas al superusuario).
+
+| Parámetro (variable de entorno) | Valor por defecto | Qué limita |
+| --- | --- | --- |
+| `DB_POOL_MAX` | 20 | Conexiones abiertas por instancia |
+| `DB_POOL_MIN` | 2 | Conexiones que la instancia mantiene abiertas aunque no las use |
+| `DB_POOL_ESPERA_MS` | 5.000 | Cuánto espera un pedido por una conexión libre antes de fallar |
+| `TRACKING_CONSUMIDORES` | 15 | Consumidores concurrentes de la cola de tracking por instancia (`maxSession` del MDB) |
+
+Con el autoescalado de 1 a 4 instancias, 4 × 20 = 80 conexiones, más las de las herramientas
+(`psql`, el script de reinicio). Una quinta instancia ya pasaría el límite y PostgreSQL rechazaría las
+conexiones nuevas ("too many clients"). Antes de llegar a eso aparece el otro síntoma: cuando una
+instancia usa todo su pool, los pedidos siguientes esperan una conexión y la latencia sube aunque la
+CPU no esté saturada.
+
+Cada consumidor de la cola de tracking ocupa una conexión mientras procesa una posición, así que
+`TRACKING_CONSUMIDORES` tiene que quedar por debajo de `DB_POOL_MAX` para que la API REST y el
+backoffice no se queden sin conexiones durante un pico de tracking. Además, WildFly limita las
+instancias de MDB con su pool `mdb-strict-max-pool` (por defecto, 4 por procesador disponible), que
+puede ser el límite real de la concurrencia de la ingesta.
+
+### Cómo se mide en la prueba
+
+- **Del lado del central:** las estadísticas del pool están activadas y salen por la Plataforma de
+  Observabilidad, con la instancia en la etiqueta `instance` (el nombre del pod, por
+  `OTEL_RESOURCE_ATTRIBUTES`). En Prometheus: `datasources_pool_in_use_count{name="CargaUyDS"}`
+  (conexiones en uso), `datasources_pool_available_count`, `datasources_pool_max_used_count`,
+  `datasources_pool_wait_count` (pedidos que esperaron una conexión) y `datasources_pool_max_wait_time`.
+  La etiqueta `instance` también separa por instancia los tiempos y contadores de la ingesta
+  (`ingesta_*`). Las que exporta el SDK de OpenTelemetry de WildFly (`http_server_request_duration`, JVM) no
+  la llevan: ese subsistema no toma `OTEL_RESOURCE_ATTRIBUTES`, así que las series de las instancias se pisan. El p95 del
+  frontoffice se mide del lado del cliente, con k6.
+- **Del lado de la base:** cada instancia se identifica en `pg_stat_activity` con el nombre de su pod
+  (`ApplicationName`):
+
+  ```sql
+  SELECT application_name, state, count(*) FROM pg_stat_activity
+  WHERE datname = 'cargauy' GROUP BY 1, 2 ORDER BY 1, 2;
+  ```
+
+- **Qué se busca:** si al pasar de 1 a 4 instancias el throughput de la ingesta y el p95 del
+  frontoffice escalan, o si aparecen esperas por conexión antes de que la CPU se sature.
+
+### Si las conexiones son el cuello de botella
+
+1. Ajustar `DB_POOL_MAX` y `TRACKING_CONSUMIDORES` según lo medido, siempre con instancias × pool por
+   debajo del límite.
+2. Poner un pooler de conexiones (PgBouncer, en modo transacción) entre las instancias y PostgreSQL: las
+   instancias abren muchas conexiones contra el pooler y él las multiplexa sobre pocas conexiones reales,
+   así que la cantidad de instancias deja de depender de `max_connections`. En modo transacción hay que
+   desactivar las sentencias preparadas del lado del servidor en el driver (`prepareThreshold=0`).
+3. Subir `max_connections` con moderación: cada conexión de PostgreSQL es un proceso con su memoria, y
+   muchas conexiones activas compitiendo por pocas CPU rinden peor que menos conexiones bien usadas.

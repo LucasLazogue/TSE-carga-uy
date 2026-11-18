@@ -125,6 +125,8 @@ services:
       # clave con la que se cifra el estado de las pantallas del backoffice, igual en todas las instancias. sin valor
       # cada instancia usa una propia: anda con una sola. ver docs/infraestructura.md
       CARGAUY_CLAVE_VISTAS: ${CARGAUY_CLAVE_VISTAS:-}
+      # identifica la instancia en las metricas (etiqueta instance); docker-compose.dos-instancias.yml le da otra a la segunda
+      OTEL_RESOURCE_ATTRIBUTES: service.instance.id=carga-uy
       CARGAUY_CLAVE_CIFRADO: ${CARGAUY_CLAVE_CIFRADO:-CKuP6o0GEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIKJ+jG4eVk75SBQBKzLBb0ZNlX4XSY8KQVqS8w5WdreOGAEQARirj+qNBiAB}
       MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}
       MONGO_DB: ${MONGO_DB:-cargauy}
