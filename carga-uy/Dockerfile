@@ -16,11 +16,20 @@ stop-embedded-server'
 
 # el pool valida cada conexion antes de entregarla y descarta las que fallan: si PostgreSQL se reinicia, el
 # central vuelve a andar solo (sin esto seguia usando las conexiones cerradas hasta reiniciar WildFly)
+# tamaño del pool explicito: cada instancia abre hasta DB_POOL_MAX conexiones, y con el autoescalado (hasta 4
+# instancias) el total tiene que quedar por debajo del max_connections de PostgreSQL (100). Si se agotan, el pedido
+# espera una conexion libre hasta DB_POOL_ESPERA_MS y despues falla. Las estadisticas del pool (activas, libres,
+# esperas) salen por micrometer a la Plataforma de Observabilidad. ApplicationName identifica la instancia en
+# pg_stat_activity. Ver "Conexiones a la base" en docs/performance.md
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 data-source add --name=CargaUyDS \
 --jndi-name=java:jboss/datasources/CargaUyDS \
 --driver-name=postgresql \
---connection-url=jdbc:postgresql://${env.DB_HOST:postgres}:${env.DB_PORT:5432}/${env.DB_NAME:cargauy} \
+--connection-url=jdbc:postgresql://${env.DB_HOST:postgres}:${env.DB_PORT:5432}/${env.DB_NAME:cargauy}?ApplicationName=${env.HOSTNAME:carga-uy} \
+--min-pool-size=${env.DB_POOL_MIN:2} \
+--max-pool-size=${env.DB_POOL_MAX:20} \
+--blocking-timeout-wait-millis=${env.DB_POOL_ESPERA_MS:5000} \
+--statistics-enabled=true \
 --user-name=${env.DB_USER:cargauy} \
 --password=${env.DB_PASSWORD:cargauy} \
 --enabled=true \

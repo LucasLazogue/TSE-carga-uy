@@ -8,6 +8,21 @@
                xsi:schemaLocation="urn:jboss:jakartaee:1.0 https://www.jboss.org/schema/jbossas/jboss-ejb3-4_0.xsd https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/ejb-jar_4_0.xsd"
                version="4.0"
                impl-version="2.0">
+    <!-- consumidores concurrentes de la cola de tracking por instancia (maxSession; 15 es el valor por defecto de
+         Artemis). Cada uno usa una conexion del pool de CargaUyDS mientras procesa una posicion, asi que tiene que
+         quedar por debajo de DB_POOL_MAX para dejar conexiones a la API REST y al backoffice. Ver "Conexiones a la
+         base" en docs/performance.md -->
+    <enterprise-beans>
+        <message-driven>
+            <ejb-name>IngestaTrackingMDB</ejb-name>
+            <activation-config>
+                <activation-config-property>
+                    <activation-config-property-name>maxSession</activation-config-property-name>
+                    <activation-config-property-value>${env.TRACKING_CONSUMIDORES:15}</activation-config-property-value>
+                </activation-config-property>
+            </activation-config>
+        </message-driven>
+    </enterprise-beans>
     <assembly-descriptor>
         <mdb:resource-adapter-binding>
             <ejb-name>IngestaTrackingMDB</ejb-name>
