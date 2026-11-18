@@ -10,3 +10,4 @@ docs/informe/build/
 docs/informe/*.pdf
 docs/articulo/build/
 docs/articulo/*.pdf
+performance/usuarios.json
