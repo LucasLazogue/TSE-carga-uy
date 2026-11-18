@@ -9,6 +9,12 @@
     <param-name>jakarta.faces.PROJECT_STAGE</param-name>
     <param-value>Production</param-value>
   </context-param>
+  <!-- el estado de cada pantalla viaja en la pagina (cifrado), no en la instancia que la abrio: cualquier instancia
+       atiende el clic siguiente. la clave de cifrado es la misma en todas, ver jboss-web.xml -->
+  <context-param>
+    <param-name>jakarta.faces.STATE_SAVING_METHOD</param-name>
+    <param-value>client</param-value>
+  </context-param>
   <context-param>
     <param-name>jakarta.faces.FACELETS_SKIP_COMMENTS</param-name>
     <param-value>true</param-value>

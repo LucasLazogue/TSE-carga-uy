@@ -95,7 +95,7 @@ central exporta a `observabilidad:4317` y `observabilidad:4318` sin configuraci�
 
 | Aspecto | En OpenShift |
 | --- | --- |
-| Grafana | Route con TLS; pide el usuario `admin` y su clave, sin acceso anónimo |
+| Grafana | Route con TLS; pide el usuario `admin` y su clave, sin acceso anónimo. Sin actualización automática de plugins (`GF_PLUGINS_PREINSTALL_AUTO_UPDATE=false`): con el usuario arbitrario de OpenShift la actualización fallaba y dejaba sin Tempo, Loki ni Prometheus |
 | Nodos de tracking | Están en otro proyecto (R15): envían por la Route `observabilidad-otlp` (OTLP HTTP, puerto `4319`), con TLS y un token; sin el token el colector responde `401` |
 | App móvil | Envía sus trazas por la Route `observabilidad-otlp-movil` (puerto `4320`), con otro token, que va dentro del APK; solo acepta trazas y el router limita los pedidos por IP |
 | Health checks | La API del central (`/carga-uy/api/salud`) y el `/health` de cada nodo por su Route; el `9990` de WildFly no se publica en el Service |

@@ -99,6 +99,12 @@ spec:
             # la imagen deja entrar a Grafana sin usuario y como administrador; con la Route publica, solo con clave
             - name: GF_AUTH_ANONYMOUS_ENABLED
               value: "false"
+            # Grafana actualiza solo, al arrancar, los plugins que trae la imagen (Tempo, Loki, Prometheus): primero
+            # los da de baja y despues borra los archivos viejos. OpenShift corre el contenedor con un usuario que no
+            # puede escribir en esa carpeta de la imagen, el borrado falla y los plugins quedan dados de baja: Explore
+            # y los tableros no tenian trazas, logs ni metricas. Sin la actualizacion se usan los de la imagen
+            - name: GF_PLUGINS_PREINSTALL_AUTO_UPDATE
+              value: "false"
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
