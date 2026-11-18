@@ -40,6 +40,28 @@ Se mira en Grafana, en el tablero **carga.uy · ingesta, nodo y API**:
 Las matrículas simuladas no están registradas: se guardan sin vehículo y no pasan por la
 fiscalización, así que la carga real por posición es algo mayor que la medida.
 
+## Usuarios simulados del frontoffice (k6)
+
+Mientras el generador de tracking carga la ingesta, `performance/frontoffice.js` simula con
+[k6](https://k6.io) a los usuarios del frontoffice, para verificar el objetivo de p95 < 500 ms en
+sus consultas (AC09). Tiene tres escenarios con llegada constante de pedidos (`TASA` iteraciones por
+segundo cada uno):
+
+- **Responsable de empresa:** sus viajes, el detalle y los eventos de uno, sus vehículos y sus infracciones.
+- **Funcionario:** empresas, vehículos y casos de fiscalización.
+- **Público, sin sesión:** validación de una empresa e indicadores del año.
+
+Los tokens no pasan por gub.uy: el script los firma con el mismo secreto del central
+(`CARGAUY_JWT_SECRET`) y las mismas claims que `UsuarioEJB`. Los usuarios salen de la base:
+
+```bash
+KUBECONFIG=~/.kube/demo-central performance/usuarios.sh   # genera performance/usuarios.json (no se versiona)
+k6 run -e JWT_SECRETO="$CARGAUY_JWT_SECRET" -e TASA=10 -e DURACION=10m performance/frontoffice.js
+```
+
+Los umbrales de k6 fallan la corrida si el p95 de algún escenario pasa de 500 ms o si más del 1 %
+de los pedidos fallan. `BASE_URL` cambia el destino (por defecto, el central en OpenShift).
+
 ## Prueba preliminar (26/10/2026, máquina de desarrollo)
 
 Todo el compose en una sola Mac de 8 núcleos y 8 GB para Docker: el nodo de tracking que genera la
