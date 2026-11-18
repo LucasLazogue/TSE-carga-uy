@@ -95,8 +95,14 @@ puede ser el límite real de la concurrencia de la ingesta.
 ### Cómo se mide en la prueba
 
 - **Del lado del central:** las estadísticas del pool están activadas y salen por la Plataforma de
-  Observabilidad: conexiones activas, libres y en uso máximo, cantidad de esperas y tiempo máximo de
-  espera, por instancia.
+  Observabilidad, con la instancia en la etiqueta `instance` (el nombre del pod, por
+  `OTEL_RESOURCE_ATTRIBUTES`). En Prometheus: `datasources_pool_in_use_count{name="CargaUyDS"}`
+  (conexiones en uso), `datasources_pool_available_count`, `datasources_pool_max_used_count`,
+  `datasources_pool_wait_count` (pedidos que esperaron una conexión) y `datasources_pool_max_wait_time`.
+  La etiqueta `instance` también separa por instancia los tiempos y contadores de la ingesta
+  (`ingesta_*`). Las que exporta el SDK de OpenTelemetry de WildFly (`http_server_request_duration`, JVM) no
+  la llevan: ese subsistema no toma `OTEL_RESOURCE_ATTRIBUTES`, así que las series de las instancias se pisan. El p95 del
+  frontoffice se mide del lado del cliente, con k6.
 - **Del lado de la base:** cada instancia se identifica en `pg_stat_activity` con el nombre de su pod
   (`ApplicationName`):
 

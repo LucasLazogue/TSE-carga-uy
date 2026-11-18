@@ -17,6 +17,8 @@ services:
       service: carga-uy
     image: carga-uy-central
     hostname: carga-uy-2
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: service.instance.id=carga-uy-2
     ports: !override
       - "8090:8080"
     depends_on:
