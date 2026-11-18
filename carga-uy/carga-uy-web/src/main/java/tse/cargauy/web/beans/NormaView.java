@@ -6,18 +6,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
+import org.omnifaces.cdi.ViewScoped;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import jakarta.enterprise.inject.Model;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
-import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Named;
 import tse.cargauy.dtos.NormaFiscalizacionDto;
 import tse.cargauy.entities.NormaFiscalizacion;
 import tse.cargauy.negocio.fiscalizacion.NormaFiscalizacionEJBLocal;
 
-@Named
-@ViewScoped
+// @Model es solo para que WildFly descubra el bean: dentro del EAR no reconoce como alcance la anotacion de
+// OmniFaces, que viene en WEB-INF/lib. vale el alcance explicito (@ViewScoped), no el de pedido de @Model
+@Model
+@ViewScoped(saveInViewState = true)
 public class NormaView implements Serializable {
 
     private static final long serialVersionUID = 1L;

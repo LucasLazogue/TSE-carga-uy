@@ -65,6 +65,7 @@ define el conjunto completo de variables y sus valores predeterminados.
 | --- | --- |
 | `GUBUY_*`, `CARGAUY_FRONTEND_URL`, `CARGAUY_MOBILE_REDIRECT`, `CARGAUY_API_URL` | Login y URLs públicas; ver [seguridad](seguridad.md#urls-del-login) |
 | `CARGAUY_JWT_SECRET`, `CARGAUY_CLAVE_CIFRADO`, `LDAP_*` | Sesiones, cifrado y directorio; ver [seguridad](seguridad.md#secretos-y-cifrado) |
+| `CARGAUY_CLAVE_VISTAS` | Cifrado del estado de las pantallas del backoffice; igual en todas las instancias. Ver [varias instancias](#varias-instancias-y-autoescalado) |
 | `MONGO_URI`, `MONGO_DB` | Conexión al almacén de posiciones |
 | `ARTEMIS_HOST`, `ARTEMIS_PORT`, `ARTEMIS_USUARIO`, `ARTEMIS_CLAVE` | Conexión del central al broker |
 | `ARTEMIS_CONSOLA`, `ARTEMIS_CONSOLA_USUARIO`, `ARTEMIS_CONSOLA_CLAVE` | Consola del broker (Jolokia), de donde el central lee el tamaño de la cola para las [métricas](observabilidad.md) |
@@ -175,6 +176,19 @@ credenciales de gub.uy se agregan después con
 `oc set data secret/carga-uy-secretos GUBUY_CLIENT_ID=... GUBUY_CLIENT_SECRET=...`. Cada secreto
 está descrito en [seguridad](seguridad.md#secretos-y-cifrado).
 
+La clave del estado de las pantallas del backoffice va en un Secret aparte, `carga-uy-vistas`, que
+el Deployment lee con `secretKeyRef`. Se crea **antes** de aplicar el manifiesto; el valor se genera
+en el momento y no se muestra:
+
+```sh
+oc create secret generic carga-uy-vistas \
+  --from-literal=CARGAUY_CLAVE_VISTAS="$(openssl rand -base64 32)"
+```
+
+Si el Secret no existe, la instancia nueva queda en `CreateContainerConfigError` y no arranca: la
+anterior sigue atendiendo hasta que se crea el Secret. Más detalles en
+[varias instancias](#varias-instancias-y-autoescalado).
+
 La configuración que no es secreta está en el ConfigMap de
 [openshift/configuracion.yaml](../carga-uy/openshift/configuracion.yaml), con las
 [URLs del login](seguridad.md#urls-del-login) apuntando al frontend en Vercel.
@@ -245,8 +259,39 @@ Lo que hace que el central funcione con varias instancias:
 | Tareas nocturnas | Borrar refresh tokens viejos y vencer informes son `DELETE` y `UPDATE` idempotentes: da lo mismo que corran en una instancia o en todas |
 | Preparación de la base al arrancar | Los triggers de la auditoría y los datos de prueba toman un cerrojo de PostgreSQL (`pg_advisory_xact_lock`): si dos instancias arrancan a la vez, la segunda espera y encuentra todo hecho |
 | API (frontend y app) | Sin estado en el servidor: JWT firmado y DPoP sin guardar `jti` |
-| Backoffice (JSF) | El login no guarda estado: es el mismo JWT, en una cookie, que se valida en cada pedido. Lo que sí queda en la instancia es el estado de cada pantalla (JSF y los beans `@ViewScoped`). El Route mantiene a cada usuario en la misma instancia con la cookie `carga-uy-instancia`; si esa instancia se apaga, la pantalla abierta se recarga y el usuario sigue logueado |
+| Backoffice (JSF) | El login es el mismo JWT, en una cookie, que se valida en cada pedido. El estado de cada pantalla (el árbol de JSF y los beans `@ViewScoped` de OmniFaces con `saveInViewState`) viaja cifrado en la página, en `jakarta.faces.ViewState`, y no en la sesión: no se crea sesión HTTP. Cualquier instancia atiende el clic siguiente, así que el Route no tiene afinidad (`disable_cookies`) |
 | Métricas de la cola | Cada instancia publica el tamaño de la cola; el tablero toma el máximo |
+
+#### Estado de las pantallas del backoffice
+
+JSF guarda el estado de cada pantalla en el cliente (`jakarta.faces.STATE_SAVING_METHOD=client`
+en `web.xml`). Mojarra lo cifra con AES y lo firma con HMAC usando la clave de
+`CARGAUY_CLAVE_VISTAS`, que llega a JSF por JNDI (`java:comp/env/faces/ClientSideSecretKey`, en
+`WEB-INF/jboss-web.xml`). Todas las instancias tienen que usar la misma clave: si no, una no
+puede leer las páginas que armó otra.
+
+| `CARGAUY_CLAVE_VISTAS` | Qué pasa |
+| --- | --- |
+| Clave AES de 16, 24 o 32 bytes en base64 (`openssl rand -base64 32`) | Al arrancar se registra `estado de las pantallas cifrado con la clave de CARGAUY_CLAVE_VISTAS` |
+| Vacía o sin definir | Aviso al arrancar: cada instancia usa una clave propia al azar. Con una sola instancia, como en el Compose de siempre, no cambia nada; con más de una, el clic que atiende otra instancia termina en «Página desactualizada» |
+| Cualquier otro valor | El despliegue falla con un mensaje que nombra la variable, sin mostrar el valor, y `/health/ready` da `DOWN` |
+
+Cambiar la clave invalida las páginas abiertas en ese momento. Lo mismo puede pasar con una página
+abierta durante un despliegue, si la versión nueva cambia esa pantalla o los campos de su bean. En
+los dos casos el clic siguiente muestra «Página desactualizada», con un botón a la pantalla de inicio
+del rol y sin pedir login de nuevo.
+
+Para probarlo con dos instancias, con `CARGAUY_CLAVE_VISTAS` en el `.env`:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dos-instancias.yml up -d --build \
+  postgres mongo artemis ldap carga-uy carga-uy-2 balanceador
+```
+
+El backoffice queda en `http://localhost:8088/carga-uy/login.xhtml`, detrás de un balanceador sin
+afinidad que alterna las instancias en cada pedido; el encabezado `X-Instancia` dice cuál respondió.
+Con una pantalla abierta, `docker compose stop carga-uy` apaga una instancia y el clic siguiente lo
+atiende la otra.
 
 ### Datos de la demo y reinicio
 

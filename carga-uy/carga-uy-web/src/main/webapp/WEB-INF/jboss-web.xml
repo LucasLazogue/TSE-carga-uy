@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web>
+  <!-- clave con la que Mojarra cifra y firma el estado de las pantallas que viaja en la pagina. tiene que ser la misma en
+       todas las instancias; si no, una no entiende las paginas que armo otra. sale de CARGAUY_CLAVE_VISTAS (AES de 16,
+       24 o 32 bytes en base64). si falta, el valor queda vacio, la entrada no se publica y cada instancia usa una clave
+       propia al azar: anda con una sola instancia. ClaveVistas lo avisa al arrancar -->
+  <env-entry>
+    <env-entry-name>faces/ClientSideSecretKey</env-entry-name>
+    <env-entry-type>java.lang.String</env-entry-type>
+    <env-entry-value>${env.CARGAUY_CLAVE_VISTAS:}</env-entry-value>
+  </env-entry>
+</jboss-web>

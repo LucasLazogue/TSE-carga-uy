@@ -111,6 +111,7 @@ Para volver al simulado, restaurar `GUBUY_MOCK=true` y
 | --- | --- |
 | `CARGAUY_JWT_SECRET` | Firma de JWT; al menos 32 bytes |
 | `CARGAUY_CLAVE_CIFRADO` | Keyset binario de Google Tink codificado en base64, usado para cifrar las claves de los nodos guardadas por el central |
+| `CARGAUY_CLAVE_VISTAS` | Clave AES en base64 con la que se cifra y firma el estado de las pantallas del backoffice, que viaja en la página; la misma en todas las instancias ([infraestructura](infraestructura.md#estado-de-las-pantallas-del-backoffice)) |
 | `GUBUY_CLIENT_SECRET` | Credencial del cliente OIDC de gub.uy |
 | `LDAP_DM_PASSWORD` | Credencial de servicio para acceder al directorio LDAP |
 | `NODO_JMS_USUARIO` / `NODO_JMS_CLAVE` | Credenciales del publicador de tracking |

@@ -9,7 +9,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import tse.cargauy.dtos.TokenDto;
 import tse.cargauy.dtos.UsuarioDto;
-import tse.cargauy.entities.Rol;
 import tse.cargauy.negocio.usuario.UsuarioEJBLocal;
 
 @Named
@@ -33,10 +32,7 @@ public class LoginView {
         cookie.setHttpOnly(true);
         cookie.setSecure(contexto.isSecure());
         ((HttpServletResponse) contexto.getResponse()).addCookie(cookie);
-        if (backoffice.getRoles().contains(Rol.ADMINISTRADOR)) {
-            return "/admin/nodos?faces-redirect=true";
-        }
-        return "/autoridad/reportes?faces-redirect=true";
+        return PantallaInicio.para(backoffice.getRoles()::contains) + "?faces-redirect=true";
     }
 
     public String getUsuario() {

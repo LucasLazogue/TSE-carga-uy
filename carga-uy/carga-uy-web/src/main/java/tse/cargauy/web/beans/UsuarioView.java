@@ -4,18 +4,21 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.omnifaces.cdi.ViewScoped;
+
 import jakarta.ejb.EJB;
+import jakarta.enterprise.inject.Model;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
-import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Named;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.entities.Rol;
 import tse.cargauy.negocio.usuario.FuncionarioEJBLocal;
 import tse.cargauy.negocio.usuario.UsuarioBackofficeEJBLocal;
 
-@Named
-@ViewScoped
+// @Model es solo para que WildFly descubra el bean: dentro del EAR no reconoce como alcance la anotacion de
+// OmniFaces, que viene en WEB-INF/lib. vale el alcance explicito (@ViewScoped), no el de pedido de @Model
+@Model
+@ViewScoped(saveInViewState = true)
 public class UsuarioView implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -55,6 +58,8 @@ public class UsuarioView implements Serializable {
             usuarioBackofficeEJB.addUsuario(usuario, clave);
             mensaje("Usuario " + usuario.getUsuario() + " registrado.");
         }
+        // el bean viaja (cifrado) en la pagina: la clave no tiene que quedar en el
+        clave = null;
     }
 
     public void deleteUsuario(UsuarioDto u) {

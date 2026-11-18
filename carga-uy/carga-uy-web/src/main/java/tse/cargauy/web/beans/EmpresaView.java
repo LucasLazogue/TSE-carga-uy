@@ -3,18 +3,21 @@ package tse.cargauy.web.beans;
 import java.io.Serializable;
 import java.util.List;
 
+import org.omnifaces.cdi.ViewScoped;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import jakarta.enterprise.inject.Model;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
-import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Named;
 import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
 
-@Named
-@ViewScoped
+// @Model es solo para que WildFly descubra el bean: dentro del EAR no reconoce como alcance la anotacion de
+// OmniFaces, que viene en WEB-INF/lib. vale el alcance explicito (@ViewScoped), no el de pedido de @Model
+@Model
+@ViewScoped(saveInViewState = true)
 public class EmpresaView implements Serializable {
 
     private static final long serialVersionUID = 1L;
