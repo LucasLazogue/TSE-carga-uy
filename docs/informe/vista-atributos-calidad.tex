@@ -44,7 +44,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC13 & Resiliencia & Las integraciones con sistemas externos y nodos periféricos aplican un tiempo de espera, reintentos y un corte ante fallas sostenidas, con un comportamiento degradado definido:
     \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-        \item \textbf{Balanzas:} espera de 5 s, 2 reintentos a 1 s y 2 s, y corte por 60 s tras 5 fallas en 10 llamadas. La evaluación de exceso de carga queda pendiente y el resto de las reglas se evalúa igual.
+        \item \textbf{Balanzas:} espera de 3 s por llamada, con 2 s para conectar y 3 s para leer la respuesta en el propio cliente HTTP; 1 reintento a 0,5 s; tope de 7 s para la consulta a todos los nodos, que se hace en paralelo; y corte por 60 s tras 5 fallas en 10 llamadas, uno solo para todos los nodos. La consulta no mantiene una transacción abierta, así que un nodo que no responde no retiene conexiones a la base. La evaluación de exceso de carga queda pendiente y se reintenta cada minuto; el resto de las reglas se evalúa igual.
         \item \textbf{PDI:} espera de 3 s, 1 reintento a 1 s, y corte por 30 s tras 5 fallas en 10 llamadas. El perfil del ciudadano se crea sin los datos de la PDI, que se completan en su próximo ingreso.
         \item \textbf{Usuario gub.uy:} espera de 5 s, sin reintentos. El ingreso falla con un mensaje y las sesiones ya iniciadas siguen funcionando.
         \item \textbf{Correo:} espera de 5 s y 3 reintentos a 1, 5 y 30 min. El caso avanza igual y la notificación se reintenta.
@@ -103,4 +103,33 @@ La letra pide estimar y justificar la cantidad de vehículos que reportan en for
 La estimación queda del lado alto a propósito. El dato del parque es de 2019 y la flota puede haber crecido, pero suponer que toda reporta a la vez sobreestima bastante más que ese crecimiento: un vehículo no trabaja las 24 horas, y entre descansos, esperas sin viaje asignado y la concentración del trabajo en el día, en un momento dado solo una parte de la flota tiene un viaje en curso.
 
 Este volumen es el que usa la prueba de performance (AC09 a AC11): el generador de carga del nodo de tracking simula 18.000 vehículos que reportan cada 30 segundos, repartidos a lo largo del intervalo (\texttt{NODO\_VEHICULOS\_EXTRA} y \texttt{NODO\_INTERVALO\_SEG}).
+
+\subsection{Resultado de la prueba de performance}\label{sec:resultado-performance}
+
+La prueba se realizó el 18 y el 19 de noviembre de 2026 en el Escenario 2 de la Vista de Distribución: el componente central en OpenShift con entre 1 y 4 instancias, los nodos de tracking simulando la flota desde otro proyecto del mismo clúster y k6 simulando a los usuarios del frontoffice (funcionarios, responsables de empresa y público, unos 50 pedidos por segundo), más la sincronización del fin de un viaje por segundo desde el móvil. El detalle de cada corrida, los comandos para repetirla y las métricas en que se apoya están en \texttt{docs/performance.md} del repositorio.
+
+\begin{longtable}{|p{0.13\textwidth}|p{0.80\textwidth}|}
+    \caption{Resultado de la prueba de performance}\label{tab:resultado-performance}\\
+    \hline
+    \textbf{AC} & \textbf{Resultado} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{AC} & \textbf{Resultado} \\
+    \hline
+    \endhead
+    AC07 & Con la cola llena, 1, 2 y 4 instancias procesan unas 610, 1.170 y 1.600 posiciones por segundo (opcional 4). Hasta 2 instancias el límite es la CPU de cada una; con 4, la base de datos que comparten. \\
+    \hline
+    AC08 & Con 600 posiciones por segundo el componente central procesa lo que llega, sin errores de ingesta ni mensajes en la cola de mensajes muertos. Un pico de 1.800 por segundo durante 5 minutos se acumula en la cola (hasta unos 240.000 mensajes) y se procesa con atraso, sin pérdida. \\
+    \hline
+    AC09 & Con 600 posiciones por segundo, el percentil 95 de las consultas del frontoffice queda entre 168 y 426 ms, medido desde fuera del clúster (incluye unos 280 ms de red y TLS), y sin errores. \\
+    \hline
+    AC10 & En una corrida de 40 minutos el percentil 95, medido en tramos de 5 minutos, se mantiene estable después del primero, que incluye el arranque de las instancias. \\
+    \hline
+    AC11 & Los cuellos de botella encontrados, en orden: índices faltantes en las claves foráneas que consulta la ingesta; la memoria y la CPU de PostgreSQL; el cálculo de los indicadores públicos en cada pedido, que pasó a guardarse 5 minutos en cada instancia; y, por encima del volumen objetivo, MongoDB, la CPU del componente central y de nuevo la de PostgreSQL. El punto de quiebre es de unas 1.600 posiciones por segundo con 4 instancias, limitado por la CPU de PostgreSQL. \\
+    \hline
+    AC12, AC14 & Con un nodo de balanzas sin responder durante la carga completa, el frontoffice no se ve afectado y los viajes que quedan pendientes se evalúan unos 4 minutos después de que el nodo vuelve. Con la PDI sin responder (entorno local), todos los ingresos funcionan con el perfil pendiente. \\
+    \hline
+\end{longtable}
+
 

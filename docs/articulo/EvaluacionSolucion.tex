@@ -2,28 +2,36 @@
 \subsection{Puntos fuertes y débiles}
 Entre los puntos fuertes de la solución se destacan la separación entre la recepción de los eventos y su procesamiento, que permite tolerar la indisponibilidad del componente central y de los nodos periféricos sin perder información; el control de acceso aplicado en la capa de servicios y no solo en las interfaces; la posibilidad de seguir cada operación de punta a punta mediante trazas distribuidas; y un entorno de desarrollo completo que se levanta con un solo comando.
 
-Entre los puntos débiles, la regla de desvío de ruta mide la distancia al tramo recto entre el origen y el destino de la Guía y no al recorrido por las rutas reales. Al momento de esta entrega quedan pendientes la asignación de choferes a una empresa; el filtro por ubicación de los reportes; la validación de viajes solapados de un mismo vehículo; y la notificación de los casos por correo. Además, la performance se evaluó solo en forma preliminar.
+Entre los puntos débiles, la regla de desvío de ruta mide la distancia al tramo recto entre el origen y el destino de la Guía y no al recorrido por las rutas reales. Al momento de esta entrega quedan pendientes la asignación de choferes a una empresa; el filtro por ubicación de los reportes; la validación de viajes solapados de un mismo vehículo; y la notificación de los casos por correo. Además, el corte ante fallas de las balanzas es común a todos los nodos: mientras uno no responde, tampoco se consulta a los demás.
 
-\subsection{Volumen de tracking y performance de la ingesta}
+\subsection{Volumen de tracking y performance}
 El volumen objetivo toma el peor caso: los 17.869 vehículos con motor registrados para el transporte profesional de carga \cite{BID2022}, redondeados a 18.000, todos con un viaje en curso al mismo tiempo. Cada uno reporta una posición cada 30 segundos, una frecuencia que fija la plataforma: 600 posiciones por segundo, con picos del triple.
 
-Una prueba preliminar, con todos los componentes y el generador de carga en una misma computadora de 8 núcleos, dio los resultados de la Tabla~\ref{tab:prueba-preliminar}. Hasta 250 posiciones por segundo la cola se mantiene acotada; con 500, el central procesa en promedio lo que llega, pero la computadora se satura. El procesamiento de cada posición no supera los 8~ms en el percentil 95, por lo que el cuello de botella, identificado con las métricas de la plataforma de observabilidad, es la CPU compartida y no la ingesta. Queda pendiente repetir la prueba con el generador separado y el central en la nube, medir el frontoffice bajo carga y verificar el escalado horizontal.
+La prueba se realizó en el Developer Sandbox de Red Hat OpenShift, con el componente central en un orquestador que mantiene entre una y cuatro instancias según el uso de CPU (opcional 4). Los nodos de tracking simularon la flota del volumen objetivo desde otro proyecto del mismo clúster, y k6 \cite{k6} simuló a los usuarios del frontoffice, con unos 50 pedidos por segundo. La Tabla~\ref{tab:prueba-performance} resume el resultado frente a los objetivos de la letra.
 
 \begin{table}
-\caption{Prueba preliminar de la ingesta de tracking.}\label{tab:prueba-preliminar}
+\caption{Prueba de performance en OpenShift.}\label{tab:prueba-performance}
 \centering
-\begin{tabular}{|r|r|r|r|}
+\begin{tabular}{|p{0.34\textwidth}|p{0.52\textwidth}|}
 \hline
-Objetivo (pos/s) & Procesadas (pos/s) & Cola máxima & Procesamiento p95 \\
+Objetivo & Resultado \\
 \hline
-100 & 88 & 1.002 & 38 ms \\
+p95 del frontoffice $<$ 500 ms & Entre 168 y 426 ms con 600 pos/s \\
 \hline
-250 & 279 & 2.192 & 8,4 ms \\
+600 pos/s sin pérdida & Se procesa lo que llega, sin errores ni mensajes descartados \\
 \hline
-500 & 521 & 9.932 & 7,7 ms \\
+Sin degradación & p95 estable durante 40 minutos \\
+\hline
+Pico de 1.800 pos/s & Se acumula en la cola y se procesa con atraso, sin pérdida \\
+\hline
+Escalado y quiebre & 1, 2 y 4 instancias procesan 610, 1.170 y 1.600 pos/s \\
 \hline
 \end{tabular}
 \end{table}
 
+Los cuellos de botella se identificaron con las métricas de la plataforma de observabilidad y las consultas activas en la base: faltaban índices en las claves foráneas que la ingesta consulta con cada posición, PostgreSQL no tenía memoria ni CPU suficientes, y los indicadores públicos se calculaban completos en cada pedido y le quitaban la CPU a la ingesta. Se agregaron los índices, se guardó ese resultado cinco minutos en cada instancia y se llevó PostgreSQL a 4 CPU. Hasta dos instancias el límite es la CPU de cada una; con cuatro, la de PostgreSQL, que comparten todas.
+
 \subsection{Resiliencia ante fallas}
 Con el componente central detenido, el nodo de tracking siguió publicando y las posiciones esperaron en la cola; al reiniciarlo, se procesaron todas. Con PostgreSQL detenido durante un minuto, el central se recuperó sin intervención y ninguna posición llegó a la cola de mensajes muertos. Al detener un nodo de balanzas, el caso de exceso de carga se registró con los pesajes del otro nodo, y el pesaje faltante se agregó al mismo caso cuando el nodo volvió.
+
+En la nube, un nodo de balanzas que no respondía agotaba el pool de conexiones a la base, porque cada consulta retenía la suya mientras esperaba. Se corrigió liberando la transacción durante la consulta y con tiempos máximos de conexión y de lectura; con la carga completa y un nodo caído cuatro minutos, el frontoffice no se vio afectado. Con la PDI sin responder (en el entorno local), todos los ingresos funcionaron.
