@@ -1,0 +1,881 @@
+{
+    "setup_data": {
+        "funcionarios": [
+            {
+                "id": 1,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEiLCJ0eXAiOiJzZXNpb24iLCJpYXQiOjE3OTUwNTUxMjIsImV4cCI6MTc5NTA3NjcyMiwiY2VkdWxhIjoiNTE1MDIxMzQiLCJyb2xlcyI6WyJGVU5DSU9OQVJJTyJdfQ.0v3WfLz05CSsrp5CeQ0CoDjK1vrTU08fpPqTP692ZRU",
+                "cedula": "51502134"
+            },
+            {
+                "cedula": "72000001",
+                "id": 12000001,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEyMDAwMDAxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcyMDAwMDAxIiwicm9sZXMiOlsiRlVOQ0lPTkFSSU8iXX0.4Pm_wMNcyY3OsTiSz-E8kMKPovgI_WDqBexZITp2_ZI"
+            },
+            {
+                "cedula": "72000002",
+                "id": 12000002,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEyMDAwMDAyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcyMDAwMDAyIiwicm9sZXMiOlsiRlVOQ0lPTkFSSU8iXX0.5rwEnMU5rw3KPeerGXbP4ysLyVS0Sh4RVnM-rb4ZMFM"
+            },
+            {
+                "cedula": "72000003",
+                "id": 12000003,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEyMDAwMDAzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcyMDAwMDAzIiwicm9sZXMiOlsiRlVOQ0lPTkFSSU8iXX0.3WHtb9ReiQuh-ePu96f1zdJaHJkwxzp5O32LY3XJaaM"
+            },
+            {
+                "cedula": "72000004",
+                "id": 12000004,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEyMDAwMDA0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcyMDAwMDA0Iiwicm9sZXMiOlsiRlVOQ0lPTkFSSU8iXX0.3I_rHNYyrMG8FLOolexOOSlBDTCwLaInR6Ow7aQjD4c"
+            },
+            {
+                "cedula": "72000005",
+                "id": 12000005,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEyMDAwMDA1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcyMDAwMDA1Iiwicm9sZXMiOlsiRlVOQ0lPTkFSSU8iXX0.ganVUa_-uWEBDGiPx4q_Uaaa1TVNvO25rFi_vDmdpVQ"
+            }
+        ],
+        "responsables": [
+            {
+                "cedula": "70000001",
+                "empresa": 10000001,
+                "id": 10000001,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDAxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDAxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.nLBUYvxFB8MQNnYq1OqWTe_k3lfnl69s51dYs3rLZlo"
+            },
+            {
+                "empresa": 10000002,
+                "id": 10000002,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDAyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDAyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.9igK4TCUlzKPuns0remlvR3W2wRAtQjORIJYPQus1o0",
+                "cedula": "70000002"
+            },
+            {
+                "cedula": "70000003",
+                "empresa": 10000003,
+                "id": 10000003,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDAzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDAzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.TQjxyts_Q2hLjdUYg4DqX6yKn3USWSyTdP-e9LHmNl0"
+            },
+            {
+                "cedula": "70000004",
+                "empresa": 10000004,
+                "id": 10000004,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDA0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDA0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.UhmdazGvRLhQ-z1YY8fRXMZh0FZJ49wzv7I9zI7AsX0"
+            },
+            {
+                "cedula": "70000005",
+                "empresa": 10000005,
+                "id": 10000005,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDA1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDA1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.rb6WMuWBUGYI0s0kr2fioYLWpXwEkO1j_9kC0D_bvw0"
+            },
+            {
+                "cedula": "70000006",
+                "empresa": 10000006,
+                "id": 10000006,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDA2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDA2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.F358C19fOk3bqtwCN4ZO81qdlnSs-d0NVoWMSqgPbVY"
+            },
+            {
+                "id": 10000007,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDA3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDA3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.1cLjbtp7IYFq-GhMVVkeYdbpDgfmUSpvn6QuGX4dArk",
+                "cedula": "70000007",
+                "empresa": 10000007
+            },
+            {
+                "cedula": "70000008",
+                "empresa": 10000008,
+                "id": 10000008,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDA4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDA4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.Rt6QPov1RYc7dNjOs11N7KVZIYR-WZ8onWIevtJQuyQ"
+            },
+            {
+                "id": 10000009,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDA5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDA5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.AiVRCQJ9N0-NRddDHF_rARR8TlFBBnXU7K-rYNEbYkE",
+                "cedula": "70000009",
+                "empresa": 10000009
+            },
+            {
+                "id": 10000010,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDEwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDEwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.zfCbz-8ytpjuNofFhpFaQvtbA1onujWEUAUKsGr8BJ4",
+                "cedula": "70000010",
+                "empresa": 10000010
+            },
+            {
+                "id": 10000011,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDExIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDExIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.El4BW9BAua1WDOz8Gru3PKltPM29-Cal0ZivixsL_R4",
+                "cedula": "70000011",
+                "empresa": 10000011
+            },
+            {
+                "cedula": "70000012",
+                "empresa": 10000012,
+                "id": 10000012,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDEyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDEyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0._ax4WxMhltqCTzwHXCoQjeL1vzRicrkMUjPBPQuASWc"
+            },
+            {
+                "empresa": 10000013,
+                "id": 10000013,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDEzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDEzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.UGOVhY7mk7EfUzDL8jTOM-UnCF_zZHrjsry2J_GGcyA",
+                "cedula": "70000013"
+            },
+            {
+                "empresa": 10000014,
+                "id": 10000014,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDE0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDE0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.TUBFwrHYzZOyujoWN3xbX0pP1LWTLIM8PCVq3GJEG3k",
+                "cedula": "70000014"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDE1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDE1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.mTJUS-TLtnm5yx7NmongV-8E3-w5gjYtCRtYV99rg58",
+                "cedula": "70000015",
+                "empresa": 10000015,
+                "id": 10000015
+            },
+            {
+                "cedula": "70000016",
+                "empresa": 10000016,
+                "id": 10000016,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDE2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDE2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.0f-LZXeDZT7d1N21eGXJUOHlg3PWZIfHrBkbFmpxywY"
+            },
+            {
+                "cedula": "70000017",
+                "empresa": 10000017,
+                "id": 10000017,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDE3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDE3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.rxnXb7l4qniFczfZ01MzzGK2Adq3tV_J7clRGjnti0U"
+            },
+            {
+                "empresa": 10000018,
+                "id": 10000018,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDE4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDE4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.C0_ZuWY1VlyHvrY3WGZ1rH4lWK7_o7R4ckeQW6A3qf0",
+                "cedula": "70000018"
+            },
+            {
+                "cedula": "70000019",
+                "empresa": 10000019,
+                "id": 10000019,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDE5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDE5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.oIu3V4nkt5WfYEvkOZWk6Fj5tV7Hk2VzyMoyyJhlIFs"
+            },
+            {
+                "cedula": "70000020",
+                "empresa": 10000020,
+                "id": 10000020,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDIwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDIwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.woz695Hnh_SqGAbyAKB390D3RZfcB46Vk4n2ZXOzBt0"
+            },
+            {
+                "empresa": 10000021,
+                "id": 10000021,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDIxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDIxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.GF76MxnTLodVlawfaNQ3soDrC82PmHaydje0qZO09x8",
+                "cedula": "70000021"
+            },
+            {
+                "cedula": "70000022",
+                "empresa": 10000022,
+                "id": 10000022,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDIyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDIyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.w7IkMEnrdefp_GZdTiwRqh4HKo0h0-rePxfrFkMKwC8"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDIzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDIzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.KdmvIsp0iJwk3GAiYpLobnAicUJLU95hoBsyG-ENsLs",
+                "cedula": "70000023",
+                "empresa": 10000023,
+                "id": 10000023
+            },
+            {
+                "cedula": "70000024",
+                "empresa": 10000024,
+                "id": 10000024,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDI0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDI0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.PPovLRix6YkTuSFO1-GXCUt8WWQhgzmSgWQZFtSDdfI"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDI1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDI1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.8VmHIqy70EZ3qwl8HDwP03zVIcCqDmxc7eHkyEZOJdo",
+                "cedula": "70000025",
+                "empresa": 10000025,
+                "id": 10000025
+            },
+            {
+                "cedula": "70000026",
+                "empresa": 10000026,
+                "id": 10000026,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDI2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDI2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.5hFAuP7L-NIbpRkzaPYxrl5wZS7gOgmPSLZjDBm8fg8"
+            },
+            {
+                "cedula": "70000027",
+                "empresa": 10000027,
+                "id": 10000027,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDI3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDI3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.CQ8viRtxHmgO_bo0t0hBdeUEeBSg7WYiBskpsnN7wSE"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDI4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDI4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.xznjx34H1Hoew11sCtgxwepHeR681y_Km7o0b6BxajQ",
+                "cedula": "70000028",
+                "empresa": 10000028,
+                "id": 10000028
+            },
+            {
+                "id": 10000029,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDI5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDI5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.iHMTDSZ1E7GnsIagL2AFtckFR16d_s5g1YqYjHqJPx0",
+                "cedula": "70000029",
+                "empresa": 10000029
+            },
+            {
+                "cedula": "70000030",
+                "empresa": 10000030,
+                "id": 10000030,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDMwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDMwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.W_Oe-lJ8B1kw2ffopy3tASAchLQYmyuwRbu6F5Vw1C4"
+            },
+            {
+                "id": 10000031,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDMxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDMxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.S-6HAPGGuGNCLwl51weZ6XWaZ5xBJ31SGEvdrlewvh0",
+                "cedula": "70000031",
+                "empresa": 10000031
+            },
+            {
+                "id": 10000032,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDMyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDMyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.xbbIf9kvWwVfEQb2zicJNKTulcZYoeEPpvpg8TWZsak",
+                "cedula": "70000032",
+                "empresa": 10000032
+            },
+            {
+                "cedula": "70000033",
+                "empresa": 10000033,
+                "id": 10000033,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDMzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDMzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.o458c9ZEc9_hPd-DG8qz4vks9tQ_2eE8AYCoZVulKNU"
+            },
+            {
+                "id": 10000034,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDM0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDM0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.vQIdV9BUe7p5mIJl4_OPxnaNGrTmFCpRUi5S_vwFYNE",
+                "cedula": "70000034",
+                "empresa": 10000034
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDM1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDM1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.O1uFljBF6dQrVokD5TSuPn7exP3r00xRgFRfLezBgU8",
+                "cedula": "70000035",
+                "empresa": 10000035,
+                "id": 10000035
+            },
+            {
+                "cedula": "70000036",
+                "empresa": 10000036,
+                "id": 10000036,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDM2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDM2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.yE67NCJfPgo2xHgnuAc_XksvL9xVhAX5-hq7GLzU7Y0"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDM3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDM3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.A5t7LVCnc6r5DJlaLcbJNqGKsVO6MLz5s5t8gF0s8E0",
+                "cedula": "70000037",
+                "empresa": 10000037,
+                "id": 10000037
+            },
+            {
+                "cedula": "70000038",
+                "empresa": 10000038,
+                "id": 10000038,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDM4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDM4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.8Pt38-rV9AMZwjnNOhrWBL9DYlxhgVK-2WitKqeYHag"
+            },
+            {
+                "cedula": "70000039",
+                "empresa": 10000039,
+                "id": 10000039,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDM5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDM5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.R01gxcf2FW2Dbr2LJpPD93scfNb-n_qjqFM1ECygtwY"
+            },
+            {
+                "empresa": 10000040,
+                "id": 10000040,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.zlCphp1HZDy7_SfHBh_XUF6JcrKocnSszrDo3iRdzoM",
+                "cedula": "70000040"
+            },
+            {
+                "cedula": "70000041",
+                "empresa": 10000041,
+                "id": 10000041,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.7uOheSQuB7ZJUF9F4Pnybqhwz-w5wCC3o0_O_sU2-W8"
+            },
+            {
+                "cedula": "70000042",
+                "empresa": 10000042,
+                "id": 10000042,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.nBBVPxggDOHhAspyL9coMYxzQeaEU1KcvtTVWJuu8e0"
+            },
+            {
+                "cedula": "70000043",
+                "empresa": 10000043,
+                "id": 10000043,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.bGk1I7ZJMxLewcYLlOlmNFDnrnnpBSrLEqey9uuSTik"
+            },
+            {
+                "cedula": "70000044",
+                "empresa": 10000044,
+                "id": 10000044,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQ0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQ0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.8eGbXIHwWkZo_PI0IPDnHuecDaKp61H1aR-0pXha75M"
+            },
+            {
+                "cedula": "70000045",
+                "empresa": 10000045,
+                "id": 10000045,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQ1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQ1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.qzd3IWQU2Vr-ta6NvSnqme1g5RITIQAwfAUutFsu1OY"
+            },
+            {
+                "id": 10000046,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQ2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQ2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.E7TzVuAK0PjFQ6_yr1xlXr8Y8M2ruegbABtg3ef7iQ8",
+                "cedula": "70000046",
+                "empresa": 10000046
+            },
+            {
+                "cedula": "70000047",
+                "empresa": 10000047,
+                "id": 10000047,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQ3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQ3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.1RLnaiwRsD1yf4hpbqoex2N0VomIJn6IPLY9gC6_F5c"
+            },
+            {
+                "id": 10000048,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQ4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQ4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.EQO1hdMSuyddVrcw3jPO1Qa6e64phpg8cZ2QL_c-YLw",
+                "cedula": "70000048",
+                "empresa": 10000048
+            },
+            {
+                "cedula": "70000049",
+                "empresa": 10000049,
+                "id": 10000049,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDQ5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDQ5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.Pn4x8rkheNcOQuFVdnIYgcwwPC2d-FRJzP9VBila96Q"
+            },
+            {
+                "cedula": "70000050",
+                "empresa": 10000050,
+                "id": 10000050,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDUwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDUwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.eu4WlQUIpfPmqY1GplW2f1sV2XxCuqhU9bhNddRWd18"
+            },
+            {
+                "cedula": "70000051",
+                "empresa": 10000051,
+                "id": 10000051,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDUxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDUxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.hUy2D815e5pp7dlk1whQU0WkGkV1Ok07QfF_EleBr6Q"
+            },
+            {
+                "cedula": "70000052",
+                "empresa": 10000052,
+                "id": 10000052,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDUyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDUyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.OPk4JX8SjaHMJuYkRtriQDjpjo7fO-H8sbrxYZzEc8E"
+            },
+            {
+                "id": 10000053,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDUzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDUzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.g202x6D8l239a7mdV_DzFtmZ05U-xccuI_eBBqDDooc",
+                "cedula": "70000053",
+                "empresa": 10000053
+            },
+            {
+                "cedula": "70000054",
+                "empresa": 10000054,
+                "id": 10000054,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDU0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDU0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.fCnOLp3B9oSDlp0CzhwKXpHm4l1gwExVskrCNTf-X5M"
+            },
+            {
+                "cedula": "70000055",
+                "empresa": 10000055,
+                "id": 10000055,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDU1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDU1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.bcU_kTStbI79QaFO3V5OSYrzIaVHEMp7C-6o9e0n-Ts"
+            },
+            {
+                "cedula": "70000056",
+                "empresa": 10000056,
+                "id": 10000056,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDU2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDU2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.ACHz3klEd3vU18e8ps5UHxNlrH_JLrzkNgeMIsPa7WM"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDU3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDU3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.H6xJ7TTH_gx_IZovTTdHj4v_HAJWakgZw7UZ_Gd61Qc",
+                "cedula": "70000057",
+                "empresa": 10000057,
+                "id": 10000057
+            },
+            {
+                "empresa": 10000058,
+                "id": 10000058,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDU4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDU4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.WECA6HpXcWDgsRU9OTT1R2EPVK83h6VkPYVUtLjHR1U",
+                "cedula": "70000058"
+            },
+            {
+                "cedula": "70000059",
+                "empresa": 10000059,
+                "id": 10000059,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDU5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDU5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.6ComNgKsPDe7gUB3PSNx1BoaENO_bMVH1RoTL9ggTRc"
+            },
+            {
+                "cedula": "70000060",
+                "empresa": 10000060,
+                "id": 10000060,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDYwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDYwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.yTMzScPV_QLLc0EkiuoiGOGdvWozTzEhpg3TDkxHs7I"
+            },
+            {
+                "id": 10000061,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDYxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDYxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.yUIY73mUyvcFQex8mH9MattmlD30CsS0rFgMi8_1iDs",
+                "cedula": "70000061",
+                "empresa": 10000061
+            },
+            {
+                "cedula": "70000062",
+                "empresa": 10000062,
+                "id": 10000062,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDYyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDYyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.ZjDczN0c9RWHm3Ukia31lqrgyPpyZycRpuoSLdziywg"
+            },
+            {
+                "cedula": "70000063",
+                "empresa": 10000063,
+                "id": 10000063,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDYzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDYzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.hz6GgR7UADf-VbuZ2w6oNoMpzvxP-qgP2JxUH1_aaPo"
+            },
+            {
+                "cedula": "70000064",
+                "empresa": 10000064,
+                "id": 10000064,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDY0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDY0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.GFQ02EErzdHAjvetW4fKIwsyTF7msKCez_aJt_fujkI"
+            },
+            {
+                "cedula": "70000065",
+                "empresa": 10000065,
+                "id": 10000065,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDY1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDY1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.orKMCvfXcjjbHJfX0a81UWdz616JIJ2wapRgBUdcypE"
+            },
+            {
+                "cedula": "70000066",
+                "empresa": 10000066,
+                "id": 10000066,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDY2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDY2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.ptJHCdOhxWOOf5eDXAqJb2r2BLSwgQjUkS_jkNAw8nA"
+            },
+            {
+                "cedula": "70000067",
+                "empresa": 10000067,
+                "id": 10000067,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDY3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDY3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.EnnCOTrADj6-H5ll5ty6nnuCmBlFri_iy0FLjAMRogg"
+            },
+            {
+                "id": 10000068,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDY4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDY4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.hiwLUU9bjAd78V0tPqvTkM8fvdKO_yIM21DA5Fn40Wg",
+                "cedula": "70000068",
+                "empresa": 10000068
+            },
+            {
+                "cedula": "70000069",
+                "empresa": 10000069,
+                "id": 10000069,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDY5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDY5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.K4tvfvDepTzwNLPCCepqwQJI_dLGO1gjsIw7eibUKKI"
+            },
+            {
+                "cedula": "70000070",
+                "empresa": 10000070,
+                "id": 10000070,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDcwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDcwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.mJT1bNBWzMG56qG_A_c0XKOY5Mf9K5PcaZj4bjGvXhk"
+            },
+            {
+                "empresa": 10000071,
+                "id": 10000071,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDcxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDcxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.zwkJvGQUDG55zxcEeQ03MK6KrsB26aDyVWl9YY0Xe0I",
+                "cedula": "70000071"
+            },
+            {
+                "cedula": "70000072",
+                "empresa": 10000072,
+                "id": 10000072,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDcyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDcyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.ecmAV3Via2TbsxZ2JSeXUHsabUXaKxPEERWbphqxY1s"
+            },
+            {
+                "cedula": "70000073",
+                "empresa": 10000073,
+                "id": 10000073,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDczIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDczIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.lFAJyhIqylGB-FpLBStxMDea35EX701YrGomOK4jxtw"
+            },
+            {
+                "id": 10000074,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDc0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDc0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.yXZ_jktydm0aDroRpYGSvp89rotkro8-kkla42_AsHg",
+                "cedula": "70000074",
+                "empresa": 10000074
+            },
+            {
+                "cedula": "70000075",
+                "empresa": 10000075,
+                "id": 10000075,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDc1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDc1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.JNIKzVYMOzhdY8h7Mg_qouEmvixDi2C5s3vS-dRzEHY"
+            },
+            {
+                "cedula": "70000076",
+                "empresa": 10000076,
+                "id": 10000076,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDc2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDc2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.i3YZv5RdVUuUQ_jqatt8AcOB9v-Zd2fY5G876kCwg6w"
+            },
+            {
+                "cedula": "70000077",
+                "empresa": 10000077,
+                "id": 10000077,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDc3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDc3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.Cg7GNlU6rhi9C6pgQsv18QKOftWThR34riZkzvgQ8v4"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDc4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDc4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.yyRdI61zIvajjC3bEY7QjaGy0DpLDRvRYT2JNul8WgU",
+                "cedula": "70000078",
+                "empresa": 10000078,
+                "id": 10000078
+            },
+            {
+                "cedula": "70000079",
+                "empresa": 10000079,
+                "id": 10000079,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDc5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDc5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.aN12jllEaI4tWr_Ar-Ia1uNG2ROzN_z-cG886PZa2CE"
+            },
+            {
+                "cedula": "70000080",
+                "empresa": 10000080,
+                "id": 10000080,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDgwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDgwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.Jhfhg1T0IuCTGuJ5t9n2WZbyjFmzsRsv2N8iyamw330"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDgxIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDgxIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.i4eLTXNXgPhDKV-oxJEb9SelV6qkvizCS88wpxprSJI",
+                "cedula": "70000081",
+                "empresa": 10000081,
+                "id": 10000081
+            },
+            {
+                "cedula": "70000082",
+                "empresa": 10000082,
+                "id": 10000082,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDgyIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDgyIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.jxZtsXQKS6vii582wHtdbVenbDRiPOaMDhrviSUqiyc"
+            },
+            {
+                "id": 10000083,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDgzIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDgzIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.BxPdiR2_Nl0BUCBBu0bVXmog5RuouwcOwtjfs-gfSWo",
+                "cedula": "70000083",
+                "empresa": 10000083
+            },
+            {
+                "id": 10000084,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDg0IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDg0Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.0K1ohBgKJPFGatyHs-NR5ansjHVQU6jI1BoIR4QsozY",
+                "cedula": "70000084",
+                "empresa": 10000084
+            },
+            {
+                "empresa": 10000085,
+                "id": 10000085,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDg1IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDg1Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.Fxiqe428glQ2hR9EF1mMWjqJtDHzm3b4G0lXVOJSxvc",
+                "cedula": "70000085"
+            },
+            {
+                "cedula": "70000086",
+                "empresa": 10000086,
+                "id": 10000086,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDg2IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDg2Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.PL__aKxQCBYQh3A2I9-okDy0meSsVeIfAnsyvdiwzVc"
+            },
+            {
+                "cedula": "70000087",
+                "empresa": 10000087,
+                "id": 10000087,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDg3IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDg3Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.tkzGC8FkjVtBvxI9lK2-pNGDT8J5XM3dyhUDKsjhBJQ"
+            },
+            {
+                "cedula": "70000088",
+                "empresa": 10000088,
+                "id": 10000088,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDg4IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDg4Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.tTk284zWlbwlUrDV_2vWET0PnaXPQEn3GkpXRBek5Yc"
+            },
+            {
+                "cedula": "70000089",
+                "empresa": 10000089,
+                "id": 10000089,
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDg5IiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDg5Iiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.8JHcaRCMhdC-ojd410nkqKhNqMR-w-lNKbWHxNlyk2Y"
+            },
+            {
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYXJnYS11eSIsInN1YiI6IjEwMDAwMDkwIiwidHlwIjoic2VzaW9uIiwiaWF0IjoxNzk1MDU1MTIyLCJleHAiOjE3OTUwNzY3MjIsImNlZHVsYSI6IjcwMDAwMDkwIiwicm9sZXMiOlsiQ0lVREFEQU5PIiwiUkVTUE9OU0FCTEUiXX0.av51rERepEhrj4b2esCkRMr9YzJGigqo88lUVE4N9t4",
+                "cedula": "70000090",
+                "empresa": 10000090,
+                "id": 10000090
+            }
+        ],
+        "empresas": [
+            8001,
+            8002,
+            8003,
+            8004,
+            8005,
+            8006,
+            8007,
+            8008,
+            8009,
+            8010,
+            8011,
+            8012,
+            8013,
+            8014,
+            8015,
+            8016,
+            8017,
+            8018,
+            8019,
+            8020,
+            8021,
+            8022,
+            8023,
+            8024,
+            8025,
+            8026,
+            8027,
+            8028,
+            8029,
+            8030,
+            8031,
+            8032,
+            8033,
+            8034,
+            8035,
+            8036,
+            8037,
+            8038,
+            8039,
+            8040,
+            8041,
+            8042,
+            8043,
+            8044,
+            8045,
+            8046,
+            8047,
+            8048,
+            8049,
+            8050,
+            8051,
+            8052,
+            8053,
+            8054,
+            8055,
+            8056,
+            8057,
+            8058,
+            8059,
+            8060,
+            8061,
+            8062,
+            8063,
+            8064,
+            8065,
+            8066,
+            8067,
+            8068,
+            8069,
+            8070,
+            8071,
+            8072,
+            8073,
+            8074,
+            8075,
+            8076,
+            8077,
+            8078,
+            8079,
+            8080,
+            8081,
+            8082,
+            8083,
+            8084,
+            8085,
+            8086,
+            8087,
+            8088,
+            8089,
+            8090
+        ]
+    },
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "publico": {
+                "name": "publico",
+                "path": "::publico",
+                "id": "98034d149cee5714619867be67533633",
+                "groups": {},
+                "checks": {
+                    "respuesta 200": {
+                        "fails": 454,
+                        "name": "respuesta 200",
+                        "path": "::publico::respuesta 200",
+                        "id": "9d707a1ad79cfc1f062ec78c25155751",
+                        "passes": 566
+                    }
+                }
+            },
+            "funcionario": {
+                "name": "funcionario",
+                "path": "::funcionario",
+                "id": "0e3c3d91a935b92619b17745d81930eb",
+                "groups": {},
+                "checks": {
+                    "respuesta 200": {
+                        "name": "respuesta 200",
+                        "path": "::funcionario::respuesta 200",
+                        "id": "56edde8c2b0d8ade6dc2b8aab4e9207c",
+                        "passes": 1623,
+                        "fails": 0
+                    }
+                }
+            },
+            "responsable": {
+                "name": "responsable",
+                "path": "::responsable",
+                "id": "a93aba20c537fc26648cc9166fb0ab94",
+                "groups": {},
+                "checks": {
+                    "respuesta 200": {
+                        "id": "81a030827f94c2b80285c4f18afe9c27",
+                        "passes": 2465,
+                        "fails": 0,
+                        "name": "respuesta 200",
+                        "path": "::responsable::respuesta 200"
+                    }
+                }
+            }
+        },
+        "checks": {},
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "http_req_blocked": {
+            "avg": 17.90991170712555,
+            "min": 0,
+            "med": 0.006,
+            "max": 316.393,
+            "p(90)": 0.017,
+            "p(95)": 279.91055
+        },
+        "http_req_duration{scenario:funcionario}": {
+            "avg": 2589.514439309918,
+            "min": 142.063,
+            "med": 2265.93,
+            "max": 10100.613,
+            "p(90)": 5560.3854,
+            "p(95)": 6488.784,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "http_req_tls_handshaking": {
+            "avg": 9.183511746280347,
+            "min": 0,
+            "med": 0,
+            "max": 162.327,
+            "p(90)": 0,
+            "p(95)": 142.79295
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 2578.4725,
+            "max": 25897.558,
+            "p(90)": 6010.5034,
+            "p(95)": 7159.844499999999,
+            "avg": 2974.0361525569356,
+            "min": 142.063
+        },
+        "http_req_failed": {
+            "passes": 454,
+            "fails": 4654,
+            "thresholds": {
+                "rate<0.01": true
+            },
+            "value": 0.08888018794048551
+        },
+        "http_req_connecting": {
+            "avg": 8.708557165231005,
+            "min": 0,
+            "med": 0,
+            "max": 173.572,
+            "p(90)": 0,
+            "p(95)": 136.6413
+        },
+        "vus": {
+            "min": 5,
+            "max": 268,
+            "value": 5
+        },
+        "http_req_sending": {
+            "avg": 0.025240015661707634,
+            "min": 0.003,
+            "med": 0.021,
+            "max": 1.505,
+            "p(90)": 0.042,
+            "p(95)": 0.049
+        },
+        "http_req_duration{scenario:responsable}": {
+            "avg": 3033.9881367139924,
+            "min": 147.775,
+            "med": 2789.234,
+            "max": 12311.609,
+            "p(90)": 6216.4474,
+            "p(95)": 7192.602,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "data_sent": {
+            "count": 2717322,
+            "rate": 19392.920781241555
+        },
+        "data_received": {
+            "count": 18685019,
+            "rate": 133350.81129987293
+        },
+        "http_req_receiving": {
+            "min": 0.009,
+            "med": 0.068,
+            "max": 1.09,
+            "p(90)": 0.1853000000000001,
+            "p(95)": 0.22,
+            "avg": 0.087590446358653
+        },
+        "vus_max": {
+            "max": 270,
+            "value": 270,
+            "min": 30
+        },
+        "http_req_duration{scenario:publico}": {
+            "avg": 8834.161564705873,
+            "min": 144.996,
+            "med": 7167.942,
+            "max": 26208.055,
+            "p(90)": 17105.8405,
+            "p(95)": 18090.20885,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "dropped_iterations": {
+            "count": 258,
+            "rate": 1.8412884308743391
+        },
+        "checks": {
+            "passes": 4654,
+            "fails": 454,
+            "value": 0.9111198120595145
+        },
+        "iteration_duration": {
+            "avg": 13461.880957222122,
+            "min": 768.877,
+            "med": 14059.548333,
+            "max": 32375.14125,
+            "p(90)": 22380.928779500002,
+            "p(95)": 24842.372301699994
+        },
+        "http_req_waiting": {
+            "avg": 4050.867492169131,
+            "min": 141.877,
+            "med": 2885.6075,
+            "max": 26207.889,
+            "p(90)": 9959.593700000021,
+            "p(95)": 15098.777799999998
+        },
+        "iterations": {
+            "rate": 11.01918347779062,
+            "count": 1544
+        },
+        "http_reqs": {
+            "count": 5108,
+            "rate": 36.45465622056638
+        },
+        "group_duration": {
+            "med": 14059.463396,
+            "max": 32375.025958,
+            "p(90)": 22380.8810788,
+            "p(95)": 24842.263620649992,
+            "avg": 13461.797177023976,
+            "min": 768.831375
+        },
+        "http_req_duration": {
+            "avg": 4050.980322631165,
+            "min": 142.063,
+            "med": 2885.745,
+            "max": 26208.055,
+            "p(90)": 9959.777200000022,
+            "p(95)": 15098.832499999999
+        }
+    }
+}

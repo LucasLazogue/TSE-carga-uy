@@ -1,0 +1,97 @@
+escalon1 150/s inicio 22:37:54
+escalon1 cortado 22:44:23: postgres OOMKilled x2, cpu postgres 1000m, procesa ~14/s
+central apagado 22:44:53 para frenar OOM de postgres
+postgres a 2Gi/2CPU (req 250m/512Mi) 22:49:21
+reinicio perfil performance con indices 22:55:59
+corrida2 escalon 150/s inicio 22:57:19
+corrida2 escalon 300/s inicio 23:03:38
+corrida2 escalon 600/s inicio 23:10:59
+k6 TASA=5 5m inicio 23:13:30
+k6 fin 23:18:51
+600/s+k6: colapso; carga cortada 23:19:18
+k6 solo TASA=5 2m inicio 23:25:21
+pausa 23:29:50: k6 solo satura postgres; indicadores publicos dominan
+corrida3 (cache indicadores, pg 2cpu) k6 solo TASA=5 2m inicio 00:51:21
+corrida3 k6 solo fin 00:53:23
+corrida3 600/s inicio 00:54:23
+corrida3 600/s + k6 TASA=5 5m inicio 00:57:25
+corrida3 600/s + k6 fin 01:02:30
+corrida3 carga cortada 01:04:31
+cola vacia 01:06:32
+postgres a 4 CPU / 2Gi 01:06:57
+corrida4 (cache, pg 4cpu) 600/s inicio 01:09:16
+corrida4 600/s + k6 TASA=5 5m inicio 01:12:18
+corrida4 600/s + k6 fin 01:17:20
+corrida4 900/s inicio 01:18:20
+corrida4 900/s fin 01:23:22
+corrida4 carga cortada 01:23:23
+pico 1800/s (intervalo 10 s, flota 600/s) inicio 01:25:09
+pico fin, vuelve a 600/s 01:30:10
+pico: fin de la observacion 01:40:12
+pico carga cortada 01:40:13
+cola vacia tras pico 01:42:10
+balanza caida inicio 01:42:24
+balanza caida fin 01:50:07
+larga 600/s inicio 01:50:08
+larga k6 TASA=5 40m inicio 01:52:10
+larga k6 fin 02:32:12
+larga carga cortada 02:32:13
+reset perfil performance (datos nuevos) 02:39:29
+balanza caida 2 (con #131) inicio 02:41:49
+balanza caida 2 fin 02:50:28
+balanza caida 3 (con #131, solo viajes en curso/terminados) inicio 02:51:12
+balanza caida 3 (con #131, solo en curso/terminados) inicio 02:51:49
+balanza caida 3 fin 02:59:45
+balanza caida 4 (con #131 y #134) inicio 03:05:58
+movil+balanza: 600/s inicio 03:14:14
+pdi caida (local) inicio 03:14:56
+movil+balanza: k6 TASA=5 TASA_MOVIL=1 12m inicio 03:16:16
+movil+balanza: norte CAIDA 03:19:16
+pdi caida fin 03:21:32
+movil+balanza: norte restaurada 03:23:18
+movil+balanza: k6 fin 03:28:18
+movil+balanza: carga cortada 03:28:19
+movil+balanza: fin 03:31:19
+escalado: mongo a 2 CPU 03:32:20
+escalado 1 instancias listas 03:32:33
+escalado: llenado de cola 1800/s 3.5 min inicio 03:32:33
+escalado: nodos apagados, vaciado con 1 instancia 03:36:05
+escalado: paso a 2 03:39:25
+escalado 2 instancias listas 03:40:09
+escalado: paso a 4 03:43:09
+escalado 4 instancias listas 03:43:52
+escalado: fin de la medicion 03:46:52
+escalado2: 2 instancias 03:47:56
+escalado 2 instancias listas 03:48:04
+escalado2: llenado 1800/s 6 min inicio 03:48:04
+escalado2: nodos apagados, vaciado con 2 instancias 03:54:07
+escalado2: paso a 4 03:56:37
+escalado 4 instancias listas 03:57:26
+escalado2: fin de la medicion 04:00:26
+escalado3: 4 instancias fijas, carga 2700/s 4 min inicio 04:01:26
+escalado 4 instancias listas 04:01:28
+escalado3: nodos apagados, vaciado con 4 instancias 04:05:31
+escalado3: fin 04:08:51
+
+# 19/11/2026, tarde: rafaga de casos, controles y pool 20 contra 40
+rafaga 600/s inicio 13:38:23
+rafaga k6 TASA=5 16m inicio 13:41:25
+rafaga 1: ITV vencida al 10 % de la flota 13:46:25
+rafaga 2: ITV vencida a otro 40 % de la flota 13:51:27
+k6 exit=99
+rafaga k6 fin 13:57:27
+SIN_HABILITACION|9000
+control k6 solo inicio 13:58:26
+control k6 solo fin 14:02:31
+control 600/s inicio 14:03:18
+control k6 5m inicio 14:05:48
+control fin 14:10:50
+control2 ITV vigentes de nuevo 14:11:33
+control2 fin 14:17:36
+pool 20: 1 instancia, 900 pos/s 14:18:05
+pool 40: cambio de DB_POOL_MAX 14:25:06
+pool 40: instancia nueva lista 14:25:40
+pool fin 14:32:40
+pool restaurado: DB_POOL_MAX=20, autoescalado 1-4, nodos sin carga extra 14:32:43
+pool 20 de nuevo (vaciando la cola, 1 instancia) 14:33:17
+pool 20 de nuevo fin, autoescalado 1-4 14:40:18
