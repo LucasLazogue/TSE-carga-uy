@@ -142,7 +142,7 @@ class CasoFiscalizacionDAOTest {
         dao.presentarDescargo(7L, 2L, "texto", AHORA);
 
         assertEquals(DestinatarioNotificacion.FUNCIONARIO, notificacion.getDestinatario());
-        assertEquals("Transportes Sur presento un descargo en el caso 7 (EXCESO_CARGA, vehiculo SBA1234).", notificacion.getMensaje());
+        assertEquals("Transportes Sur presento un descargo en el caso 7 (Exceso de carga, vehiculo SBA1234).", notificacion.getMensaje());
     }
 
     @Test
@@ -150,6 +150,6 @@ class CasoFiscalizacionDAOTest {
         dao.resolver(7L, 2L, EstadoCaso.DESESTIMADA, "fundamento", AHORA);
 
         assertEquals(DestinatarioNotificacion.EMPRESA, notificacion.getDestinatario());
-        assertEquals("El caso 7 (EXCESO_CARGA, vehiculo SBA1234) fue desestimado.", notificacion.getMensaje());
+        assertEquals("El caso 7 (Exceso de carga, vehiculo SBA1234) fue desestimado.", notificacion.getMensaje());
     }
 }

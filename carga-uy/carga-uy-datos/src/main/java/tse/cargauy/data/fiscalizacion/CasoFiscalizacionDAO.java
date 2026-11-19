@@ -162,7 +162,7 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     public void notificar(Long id, LocalDateTime fecha, LocalDateTime venceDescargo) {
         CasoFiscalizacion caso = entityManager.find(CasoFiscalizacion.class, id);
         EstadoCaso anterior = caso.getEstado();
-        String mensaje = "Se detecto un posible incumplimiento (" + caso.getTipo() + ") del vehiculo " + caso.getVehiculo().getMatricula()
+        String mensaje = "Se detecto un posible incumplimiento (" + caso.getTipo().getNombre() + ") del vehiculo " + caso.getVehiculo().getMatricula()
                 + ". Puede presentar un descargo hasta el " + venceDescargo.format(CasoFiscalizacionDto.FORMATO_FECHA) + ".";
         caso.setEstado(EstadoCaso.NOTIFICADA);
         caso.setFechaNotificacion(fecha);
@@ -181,7 +181,7 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         entityManager.persist(descargo);
         caso.setDescargo(descargo);
         caso.setEstado(EstadoCaso.EN_DESCARGO);
-        String mensaje = caso.getEmpresa().getNombrePublico() + " presento un descargo en el caso " + caso.getId() + " (" + caso.getTipo()
+        String mensaje = caso.getEmpresa().getNombrePublico() + " presento un descargo en el caso " + caso.getId() + " (" + caso.getTipo().getNombre()
                 + ", vehiculo " + caso.getVehiculo().getMatricula() + ").";
         entityManager.persist(new Notificacion(caso, DestinatarioNotificacion.FUNCIONARIO, fecha, mensaje));
         auditar(caso, ciudadano.getCedula(), Rol.RESPONSABLE, AccionAuditoria.PRESENTAR_DESCARGO, anterior, texto, fecha);
@@ -197,7 +197,7 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
         entityManager.persist(resolucion);
         caso.setResolucion(resolucion);
         caso.setEstado(resultado);
-        String mensaje = "El caso " + caso.getId() + " (" + caso.getTipo() + ", vehiculo " + caso.getVehiculo().getMatricula() + ") fue "
+        String mensaje = "El caso " + caso.getId() + " (" + caso.getTipo().getNombre() + ", vehiculo " + caso.getVehiculo().getMatricula() + ") fue "
                 + (resultado == EstadoCaso.CONFIRMADA ? "confirmado" : "desestimado") + ".";
         entityManager.persist(new Notificacion(caso, DestinatarioNotificacion.EMPRESA, fecha, mensaje));
         AccionAuditoria accion = resultado == EstadoCaso.CONFIRMADA ? AccionAuditoria.CONFIRMAR : AccionAuditoria.DESESTIMAR;
