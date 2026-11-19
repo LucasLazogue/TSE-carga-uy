@@ -118,7 +118,7 @@ La prueba se realizó el 18 y el 19 de noviembre de 2026 en el Escenario 2 de la
     \textbf{AC} & \textbf{Resultado} \\
     \hline
     \endhead
-    AC07 & Con la cola llena, 1, 2 y 4 instancias procesan unas 610, 1.170 y 1.600 posiciones por segundo (opcional 4). Hasta 2 instancias el límite es la CPU de cada una; con 4, la base de datos que comparten. Las conexiones (20 por instancia) quedan por debajo del límite de PostgreSQL, aunque dentro de cada instancia el pool está siempre ocupado y hay esperas por conexión. \\
+    AC07 & Con la cola llena, 1, 2 y 4 instancias procesan unas 610, 1.170 y 1.600 posiciones por segundo (opcional 4). Hasta 2 instancias el límite es la CPU de cada una; con 4, la base de datos que comparten. El pool de 20 conexiones por instancia no limita: con 40 una instancia procesa casi lo mismo, y 4 instancias con 40 superarían las 100 conexiones de PostgreSQL. \\
     \hline
     AC08 & Con 600 posiciones por segundo el componente central procesa lo que llega, sin mensajes en la cola de mensajes muertos: los únicos errores son transacciones deshechas cuando el autoescalado apaga una instancia, cuyos mensajes el broker reentrega a otra. Un pico de 1.800 por segundo durante 5 minutos se acumula en la cola (hasta unos 240.000 mensajes) y se procesa con atraso, sin pérdida. \\
     \hline
@@ -126,7 +126,7 @@ La prueba se realizó el 18 y el 19 de noviembre de 2026 en el Escenario 2 de la
     \hline
     AC10 & En una corrida de 40 minutos el percentil 95, medido en tramos de 5 minutos, se mantiene estable después del primero, que incluye el arranque de las instancias. \\
     \hline
-    AC11 & Los cuellos de botella encontrados, en orden: índices faltantes en las claves foráneas que consulta la ingesta; la memoria y la CPU de PostgreSQL; el cálculo de los indicadores públicos en cada pedido, que pasó a guardarse 5 minutos en cada instancia; y, por encima del volumen objetivo, MongoDB, la CPU del componente central y de nuevo la de PostgreSQL. El punto de quiebre es de unas 1.600 posiciones por segundo con 4 instancias, limitado por la CPU de PostgreSQL. \\
+    AC11 & Los cuellos de botella encontrados, en orden: índices faltantes en las claves foráneas que consulta la ingesta; la memoria y la CPU de PostgreSQL; el cálculo de los indicadores públicos en cada pedido, que pasó a guardarse 5 minutos en cada instancia; y, por encima del volumen objetivo, MongoDB, la CPU del componente central y de nuevo la de PostgreSQL. El punto de quiebre es de unas 1.600 posiciones por segundo con 4 instancias, limitado por la CPU de PostgreSQL. Abrir 9.000 casos en menos de un minuto no afecta la ingesta, pero cada posición de un vehículo con un caso ya abierto lo vuelve a cargar completo: con la mitad de la flota en infracción, el percentil 95 del frontoffice supera los 700 ms. \\
     \hline
     AC12, AC14 & Con un nodo de balanzas sin responder durante la carga completa (con el corte común a todos los nodos que había entonces), el frontoffice no se ve afectado y los viajes que quedan pendientes se evalúan unos 4 minutos después de que el nodo vuelve. Con la PDI sin responder (entorno local), todos los ingresos funcionan con el perfil pendiente. \\
     \hline
