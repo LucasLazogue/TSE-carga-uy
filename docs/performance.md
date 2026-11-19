@@ -312,10 +312,44 @@ ciudadano nuevo por segundo (cada uno consulta la PDI) y una consulta pública p
 - El 100 % de los ingresos funcionó, y la consulta pública siguió en ~19 ms (p95 < 70 ms) todo el tiempo.
 - Al volver la PDI, los ingresos vuelven a consultarla enseguida.
 
+### Ráfaga de casos
+
+¿Abrir casos en masa afecta al resto? La clave de deduplicación de "sin habilitación" es por vehículo y por día: a
+medianoche, todos los vehículos con el permiso o la ITV vencidos abren su caso del día nuevo con su primera posición.
+El 19/11 se simuló con 600 pos/s y k6 estables, venciendo por SQL la ITV del 10 % de la flota y 5 minutos después la de
+otro 40 % ([prueba-openshift/rafaga_casos.sh](../performance/prueba-openshift/rafaga_casos.sh)):
+
+| Tramo | Casos abiertos | Procesadas (pos/s) | Procesamiento p95 | Espera por conexión | CPU PostgreSQL | Frontoffice p95 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Antes | | 604 | 42 ms | 3,2 ms | 2,9 | 581 / 580 / 196 ms |
+| Ráfaga 1 | 1.800 en unos 30 s | 600 | 45 ms | 3,4 ms | 2,9 | 538 / 575 / 191 ms |
+| Ráfaga 2 | 7.200 en unos 45 s | 602 | 47 ms | 3,4 ms | 3,3 (pico 3,5) | 581 / 614 / 199 ms |
+| Después, con la mitad de la flota con caso | | 599 | 49 ms | 3,5 ms | 3,4 | 588 / 629 / 206 ms |
+
+Abrir los casos no se nota: la ingesta siguió en 600 pos/s sin errores, el procesamiento subió unos milisegundos y el
+pool no cambió. El frontoffice ya estaba por encima de 500 ms antes de las ráfagas porque la corrida arrancó con la base
+recién cargada (como el primer tramo de la [corrida larga](#sin-degradación-en-el-tiempo)).
+
+Lo que sí pesa es lo que viene después. Cada posición de un vehículo que ya tiene su caso del día vuelve a evaluar la
+regla, encuentra el caso por la clave (0,04 ms con el índice) y lo carga entero con sus relaciones para devolverlo, aunque
+el motor no lo usa. Con la base ya caliente, dos controles de 5 minutos con 600 pos/s y k6:
+
+| Control | CPU PostgreSQL | Frontoffice p95 (funcionario / responsable / público) |
+| --- | --- | --- |
+| La mitad de la flota con caso abierto | 3,3 a 3,7 | **734 / 762 / 254 ms** |
+| Las ITV vigentes de nuevo | ~2,6 | 371 / 379 / 199 ms |
+
+Una flota con la mitad de los vehículos en infracción es un extremo, pero el costo es proporcional: cada vehículo con
+caso abierto suma esas consultas con cada posición, todo el día. Se resolvería sin tocar el criterio de las reglas: si el
+caso ya existe, no cargarlo entero (alcanza con saber que existe), o recordar en cada instancia las claves ya
+registradas ese día.
+
 ### Lo que esta prueba no cubre
 
 - **Exceso de carga:** los nodos de balanzas no tienen pesajes de los vehículos `SIM`, así que la regla se evalúa en
   cada fin de viaje pero nunca abre un caso.
+- **Abrir casos en masa:** en las corridas 1 a 6 se abren pocos casos; se probó aparte, con la regla de habilitación
+  ([ráfaga de casos](#ráfaga-de-casos)).
 - **Casos de desvío:** el nodo desvía uno de cada 100 vehículos en el tercio central de su ruta, a más de una hora del
   arranque; en corridas de minutos el costo medido es el de evaluar la regla con cada posición, no el de abrir casos.
 - **Una sola corrida por configuración**, con k6 desde la máquina de desarrollo: los p95 incluyen unos 280 ms de red y
@@ -401,11 +435,24 @@ oc exec deployment/carga-uy -- /opt/jboss/wildfly/bin/jboss-cli.sh -c --commands
 
 En todas las corridas con carga, cada instancia tuvo su pool lleno (`datasources_pool_in_use_count` en 20) y
 `datasources_pool_wait_count` subió en proporción a lo procesado: unas 2,3 esperas por posición, por ejemplo unas
-1.450 por segundo con una instancia a 610 pos/s y unas 3.600 con cuatro a 1.600 pos/s. El límite de cada fase fue la
-CPU (del central o de PostgreSQL) y el procesamiento de una posición siguió en decenas de ms (p95), así que las esperas
-son cortas, pero no se midió cuánto duran (`datasources_pool_max_wait_time` no se registró) ni si con un pool más
-grande una instancia procesa más. Para saberlo: una instancia fija, la cola llena y `DB_POOL_MAX` en 20 y en 40,
-comparando lo procesado, el p95 del procesamiento y el tiempo máximo de espera.
+1.450 por segundo con una instancia a 610 pos/s y unas 3.600 con cuatro a 1.600 pos/s.
+
+El 19/11 se midió si eso limita ([prueba-openshift/pool.sh](../performance/prueba-openshift/pool.sh)): una sola
+instancia, la cola con más posiciones de las que puede procesar y `DB_POOL_MAX` en 20 y en 40. La espera de cada
+pedido que espera sale de `datasources_pool_total_blocking_time` sobre `datasources_pool_wait_count`.
+
+| Pool | Procesadas (pos/s) | Procesamiento p95 | Espera por conexión | Hilos esperando (promedio) | Conexiones en uso | CPU de la instancia |
+| --- | --- | --- | --- | --- | --- | --- |
+| 20 (pod que venía de la corrida anterior) | ~510 | ~28 ms | ~4,5 ms | ~3 | 20 | 1,95 de 2 |
+| 40 (pod nuevo) | ~585 | ~14 ms | sin esperas | 0 | 20 a 24 | 1,93 de 2 |
+| 20 otra vez (pod nuevo, en el mismo nodo) | ~570 | ~15 ms | ~1,4 ms | ~2 | 20 | 1,95 de 2 |
+
+La primera comparación (510 contra 585) parecía darle la razón al pool, pero al volver a 20 en un pod nuevo la
+instancia procesó casi lo mismo que con 40: la diferencia venía del pod, no del pool. Con 20 conexiones las esperas son
+de 1 a 5 ms y la instancia está igual en su límite de CPU; con 40 desaparecen, y el uso máximo (24) muestra que a la
+instancia le faltan unas pocas conexiones en los picos. **El pool no es el cuello de botella**: lo es la CPU de cada
+instancia y, con cuatro, la de PostgreSQL. Tampoco conviene subirlo: con 40 por instancia, 4 instancias pedirían 160
+conexiones y PostgreSQL acepta 100. Queda en 20.
 
 ### Si las conexiones son el cuello de botella
 
