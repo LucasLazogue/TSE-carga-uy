@@ -37,8 +37,38 @@ Se mira en Grafana, en el tablero **carga.uy · ingesta, nodo y API**:
 - la espera en la cola y la antigüedad de cada posición al procesarse;
 - el tiempo de procesamiento.
 
-Las matrículas simuladas no están registradas: se guardan sin vehículo y no pasan por la
-fiscalización, así que la carga real por posición es algo mayor que la medida.
+Sin el [juego de datos](#juego-de-datos), las matrículas simuladas no están registradas: se guardan sin vehículo y no
+pasan por la fiscalización, así que la carga por posición queda por debajo de la real.
+
+## Juego de datos
+
+[performance/datos.sql](../performance/datos.sql) registra en el central la flota del volumen objetivo, para que cada
+posición recorra la operativa real: vehículo conocido, viaje en curso, permiso e ITV vigentes, y las reglas de
+fiscalización. Con los valores por defecto:
+
+| Qué | Cantidad |
+| --- | --- |
+| Empresas, cada una con su responsable | 90 |
+| Vehículos `SIM0001` a `SIM18000`, con permiso aprobado, ITV, chofer y un viaje en curso | 18.000 |
+| Vehículos con la ITV vencida (su primera posición del día abre un caso "sin habilitación") | 180 (1 %) |
+| Viajes terminados, con su Guía y sus eventos de inicio y fin: 6 meses de historia | 108.000 |
+| Casos de exceso de carga notificados, con su evidencia | 2.160 |
+| Funcionarios para el escenario de k6 | 5 |
+
+Los nodos generan exactamente esas matrículas: `tracking-1` desde `SIM0001` y `tracking-2` desde `SIM9001`
+(`NODO_VEHICULOS_DESDE`). Las cantidades se cambian con parámetros de `psql` (`-v vehiculos=6000 -v meses=3`;
+la lista está en el encabezado del script). Los ids arrancan en 10.000.000, lejos de los que asigna la aplicación, y
+las cédulas son inventadas.
+
+Se carga sobre una base con solo los datos de referencia, con el perfil `performance` del reinicio
+([datos del central](infraestructura.md#datos-del-central)):
+
+```sh
+cd carga-uy/openshift && ./reiniciar-datos.sh --perfil performance     # unos 15 s de carga
+```
+
+Para volver a la demo, `./reiniciar-datos.sh`. Como el reinicio parte siempre de una base vacía y el script da
+siempre los mismos datos, cada corrida arranca del mismo punto; las fechas son relativas al día de la carga.
 
 ## Usuarios simulados del frontoffice (k6)
 

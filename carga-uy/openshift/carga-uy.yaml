@@ -24,7 +24,7 @@ spec:
             - secretRef:
                 name: carga-uy-secretos
             # elenco de la demo (ElencoDemo): cedulas de las cuentas de gub.uy y nodos con sus claves. Optativo: sin
-            # el Secret el central arranca igual. Ver "Datos de la demo y reinicio" en docs/infraestructura.md
+            # el Secret el central arranca igual. Ver "Datos del central" en docs/infraestructura.md
             - secretRef:
                 name: carga-uy-demo
                 optional: true
