@@ -52,6 +52,7 @@ class ConsultaPublicaEJBTest {
 
     @BeforeEach
     void iniciar() {
+        ejb.cache = new CacheIndicadoresPublicos();
         ejb.empresaDAO = new EmpresaDAO() {
             @Override
             public EmpresaDto getEmpresaByNro(int nroEmpresa) {
@@ -233,5 +234,21 @@ class ConsultaPublicaEJBTest {
                 () -> ejb.getIndicadores(new FiltroInforme(null, LocalDate.of(2026, 1, 1), null, null)));
         assertCodigo(CodigoError.INFORME_RANGO_FECHAS_INVALIDO,
                 () -> ejb.getIndicadores(new FiltroInforme(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 1, 1), null, null)));
+    }
+
+    @Test
+    void elMismoFiltroSeCalculaUnaSolaVez() {
+        ejb.getIndicadores(anio());
+        ejb.getIndicadores(anio());
+
+        assertEquals(2, filtros.size());
+    }
+
+    @Test
+    void otroFiltroSeCalculaAparte() {
+        ejb.getIndicadores(anio());
+        ejb.getIndicadores(new FiltroInforme(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), null, null));
+
+        assertEquals(4, filtros.size());
     }
 }
