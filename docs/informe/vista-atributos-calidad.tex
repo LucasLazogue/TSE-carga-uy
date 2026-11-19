@@ -44,14 +44,14 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC13 & Resiliencia & Las integraciones con sistemas externos y nodos periféricos aplican un tiempo de espera, reintentos y un corte ante fallas sostenidas, con un comportamiento degradado definido:
     \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-        \item \textbf{Balanzas:} espera de 3 s por llamada, con 2 s para conectar y 3 s para leer la respuesta en el propio cliente HTTP; 1 reintento a 0,5 s; tope de 7 s para la consulta a todos los nodos, que se hace en paralelo; y corte por 60 s tras 5 fallas en 10 llamadas, uno solo para todos los nodos. La consulta no mantiene una transacción abierta, así que un nodo que no responde no retiene conexiones a la base. La evaluación de exceso de carga queda pendiente y se reintenta cada minuto; el resto de las reglas se evalúa igual.
+        \item \textbf{Balanzas:} espera de 3 s por llamada, con 2 s para conectar y 3 s para leer la respuesta en el propio cliente HTTP; 1 reintento a 0,5 s; tope de 7 s para la consulta a todos los nodos, que se hace en paralelo; y corte por 60 s tras 5 fallas en las últimas 10 llamadas, uno por nodo: mientras un nodo está cortado los demás se siguen consultando. La consulta no mantiene una transacción abierta, así que un nodo que no responde no retiene conexiones a la base. La evaluación de exceso de carga queda pendiente y se reintenta cada minuto; el resto de las reglas se evalúa igual.
         \item \textbf{PDI:} espera de 3 s, 1 reintento a 1 s, y corte por 30 s tras 5 fallas en 10 llamadas. El perfil del ciudadano se crea sin los datos de la PDI, que se completan en su próximo ingreso.
         \item \textbf{Usuario gub.uy:} espera de 5 s, sin reintentos. El ingreso falla con un mensaje y las sesiones ya iniciadas siguen funcionando.
         \item \textbf{Correo:} espera de 5 s y 3 reintentos a 1, 5 y 30 min. El caso avanza igual y la notificación se reintenta.
         \item \textbf{Servicio de rutas:} \pendiente{definir la espera, los reintentos y el corte}. La Guía se registra igual y el recorrido esperado queda pendiente hasta que se pueda obtener (CU-07).
         \item \textbf{Directorio LDAP:} espera de 3 s, sin reintentos, y corte por 30 s tras 5 fallas en 10 llamadas; una contraseña incorrecta no cuenta como falla. El ingreso al backoffice falla con un mensaje; las sesiones ya iniciadas siguen funcionando, porque el JWT no depende del directorio (DA03).
     \end{itemize}
-    Los tiempos de espera, los reintentos y el corte de balanzas, PDI, Usuario gub.uy, el servicio de rutas y el directorio LDAP se implementan con la biblioteca de tolerancia a fallas que trae WildFly (MicroProfile Fault Tolerance), mediante anotaciones en los adaptadores (\texttt{@Timeout}, \texttt{@Retry}, \texttt{@CircuitBreaker}), y el comportamiento degradado con \texttt{@Fallback}. Los reintentos del correo, que se espacian en minutos, los realiza un temporizador que reprocesa los envíos pendientes. \\
+    Los tiempos de espera, los reintentos y el corte de PDI, Usuario gub.uy, el servicio de rutas y el directorio LDAP se implementan con la biblioteca de tolerancia a fallas que trae WildFly (MicroProfile Fault Tolerance), mediante anotaciones en los adaptadores (\texttt{@Timeout}, \texttt{@Retry}, \texttt{@CircuitBreaker}), y el comportamiento degradado con \texttt{@Fallback}. Balanzas usa las mismas anotaciones para la espera, los reintentos y el comportamiento degradado, y un corte propio por nodo, porque la anotación guarda un estado por método y un mismo método consulta a todos los nodos. Los reintentos del correo, que se espacian en minutos, los realiza un temporizador que reprocesa los envíos pendientes. \\
     \hline
     AC14 & Resiliencia & Las pruebas incluyen un escenario con el Sistema de Balanzas indisponible y otro con la PDI sin responder. \\
     \hline
@@ -120,7 +120,7 @@ La prueba se realizó el 18 y el 19 de noviembre de 2026 en el Escenario 2 de la
     \endhead
     AC07 & Con la cola llena, 1, 2 y 4 instancias procesan unas 610, 1.170 y 1.600 posiciones por segundo (opcional 4). Hasta 2 instancias el límite es la CPU de cada una; con 4, la base de datos que comparten. \\
     \hline
-    AC08 & Con 600 posiciones por segundo el componente central procesa lo que llega, sin errores de ingesta ni mensajes en la cola de mensajes muertos. Un pico de 1.800 por segundo durante 5 minutos se acumula en la cola (hasta unos 240.000 mensajes) y se procesa con atraso, sin pérdida. \\
+    AC08 & Con 600 posiciones por segundo el componente central procesa lo que llega, sin mensajes en la cola de mensajes muertos: los únicos errores son transacciones deshechas cuando el autoescalado apaga una instancia, cuyos mensajes el broker reentrega a otra. Un pico de 1.800 por segundo durante 5 minutos se acumula en la cola (hasta unos 240.000 mensajes) y se procesa con atraso, sin pérdida. \\
     \hline
     AC09 & Con 600 posiciones por segundo, el percentil 95 de las consultas del frontoffice queda entre 168 y 426 ms, medido desde fuera del clúster (incluye unos 280 ms de red y TLS), y sin errores. \\
     \hline
@@ -128,7 +128,7 @@ La prueba se realizó el 18 y el 19 de noviembre de 2026 en el Escenario 2 de la
     \hline
     AC11 & Los cuellos de botella encontrados, en orden: índices faltantes en las claves foráneas que consulta la ingesta; la memoria y la CPU de PostgreSQL; el cálculo de los indicadores públicos en cada pedido, que pasó a guardarse 5 minutos en cada instancia; y, por encima del volumen objetivo, MongoDB, la CPU del componente central y de nuevo la de PostgreSQL. El punto de quiebre es de unas 1.600 posiciones por segundo con 4 instancias, limitado por la CPU de PostgreSQL. \\
     \hline
-    AC12, AC14 & Con un nodo de balanzas sin responder durante la carga completa, el frontoffice no se ve afectado y los viajes que quedan pendientes se evalúan unos 4 minutos después de que el nodo vuelve. Con la PDI sin responder (entorno local), todos los ingresos funcionan con el perfil pendiente. \\
+    AC12, AC14 & Con un nodo de balanzas sin responder durante la carga completa (con el corte común a todos los nodos que había entonces), el frontoffice no se ve afectado y los viajes que quedan pendientes se evalúan unos 4 minutos después de que el nodo vuelve. Con la PDI sin responder (entorno local), todos los ingresos funcionan con el perfil pendiente. \\
     \hline
 \end{longtable}
 

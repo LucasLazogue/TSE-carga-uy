@@ -11,7 +11,7 @@ momento.
 ## Para la entrega final
 
 1. **Largo.** La letra pide entre 8 y 12 páginas para Ingeniería (Entrega Final, punto 4), y el
-   artículo tiene 17. Hay que recortar unas 2.000 palabras. Consultar en el monitoreo si la
+   artículo tiene 18. Primero completar el contenido y después ver qué recortar. Consultar en el monitoreo si la
    bibliografía (casi 2 páginas) entra en el límite. Dónde hay más para recortar:
    - la tabla de productos de Detalles de Implementación (13 filas, casi una página y media);
    - Solución Propuesta (~1.800 palabras), que repite parte del documento de arquitectura;
