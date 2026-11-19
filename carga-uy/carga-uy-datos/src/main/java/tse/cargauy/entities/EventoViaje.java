@@ -8,11 +8,15 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(name = "uk_evento_viaje_id", columnNames = {"idEvento"}))
+// PostgreSQL no indexa las claves foraneas: sin estos indices, cada busqueda por vehiculo recorre la tabla entera
+// (docs/performance.md, primera corrida de la prueba)
+@Table(uniqueConstraints = @UniqueConstraint(name = "uk_evento_viaje_id", columnNames = {"idEvento"}),
+        indexes = @Index(name = "ix_evento_viaje_viaje", columnList = "idViaje"))
 public class EventoViaje {
     @Id @GeneratedValue private Long id;
     @Column(nullable = false) private String idEvento;      // UUID generado en el celular

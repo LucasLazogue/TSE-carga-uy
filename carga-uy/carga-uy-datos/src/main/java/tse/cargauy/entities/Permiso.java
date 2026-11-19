@@ -14,7 +14,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(indexes = @Index(name = "ix_permiso_estado_vigencia", columnList = "estado, validoDesde, validoHasta"))
+// PostgreSQL no indexa las claves foraneas: sin estos indices, cada busqueda por vehiculo recorre la tabla entera
+// (docs/performance.md, primera corrida de la prueba)
+@Table(indexes = {
+        @Index(name = "ix_permiso_estado_vigencia", columnList = "estado, validoDesde, validoHasta"),
+        @Index(name = "ix_permiso_vehiculo", columnList = "vehiculo_id")})
 public class Permiso {
 
     @Id @GeneratedValue

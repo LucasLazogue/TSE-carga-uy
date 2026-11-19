@@ -7,10 +7,15 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
+// PostgreSQL no indexa las claves foraneas: sin estos indices, cada busqueda por vehiculo recorre la tabla entera
+// (docs/performance.md, primera corrida de la prueba)
 @Entity
+@Table(indexes = @Index(name = "ix_vehiculo_empresa", columnList = "empresa_id"))
 public class Vehiculo {
 
     @Id @GeneratedValue

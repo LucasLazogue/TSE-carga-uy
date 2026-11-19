@@ -179,6 +179,14 @@ El Service queda como `postgres`, y el usuario y la base como `cargauy`: son los
 del datasource en el [Dockerfile](../carga-uy/Dockerfile), así que el central solo necesita la clave.
 Los datos quedan en un volumen persistente.
 
+La plantilla deja PostgreSQL con 512 MiB y sin CPU propia, así que el Sandbox le aplica su límite por defecto de
+1 CPU. Con varias instancias del central eso no alcanza: en la prueba de performance se quedó sin memoria con 4
+instancias (`OOMKilled`). Hay que darle recursos propios:
+
+```sh
+oc set resources dc/postgres --limits=cpu=2,memory=2Gi --requests=cpu=250m,memory=512Mi
+```
+
 Las claves del central van en el Secret `carga-uy-secretos`:
 
 ```sh

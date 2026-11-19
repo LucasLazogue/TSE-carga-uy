@@ -19,7 +19,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 @Entity
-@Table(indexes = @Index(name = "ix_caso_deteccion", columnList = "fechaDeteccion"))
+// PostgreSQL no indexa las claves foraneas: sin estos indices, cada busqueda por vehiculo recorre la tabla entera
+// (docs/performance.md, primera corrida de la prueba)
+@Table(indexes = {
+        @Index(name = "ix_caso_deteccion", columnList = "fechaDeteccion"),
+        @Index(name = "ix_caso_empresa", columnList = "empresa_id"),
+        @Index(name = "ix_caso_vehiculo", columnList = "vehiculo_id")})
 public class CasoFiscalizacion {
 
     @Id @GeneratedValue
