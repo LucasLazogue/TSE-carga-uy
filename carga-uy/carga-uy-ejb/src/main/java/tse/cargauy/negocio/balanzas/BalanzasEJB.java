@@ -66,9 +66,14 @@ public class BalanzasEJB implements BalanzasEJBLocal {
 
     public PesajesViajeDto getPesajesDelViaje(ViajeDto viaje) {
         LocalDateTime inicio = viaje.getFechaInicio();
+        PesajesViajeDto resultado = new PesajesViajeDto();
+        // un viaje asignado que todavia no empezo no tiene pesajes: no se le pregunta a nadie y la respuesta esta
+        // completa. Antes fallaba al armar la consulta y los nodos figuraban como si no hubieran respondido
+        if (inicio == null) {
+            return resultado;
+        }
         LocalDateTime fin = viaje.getFechaFin() == null ? ahora() : viaje.getFechaFin();
         // a cada nodo se le pregunta en paralelo: si uno tarda o esta caido no demora a los demas
-        PesajesViajeDto resultado = new PesajesViajeDto();
         // cada nodo con la "promesa" de su respuesta, para saber despues que respuesta es de quien
         Map<NodoPerifericoDto, CompletableFuture<List<PesajeDto>>> consultas = new LinkedHashMap<>();
         // los hilos del ejecutor no heredan la traza en curso: sin esto cada consulta a un nodo queda como una traza

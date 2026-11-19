@@ -53,7 +53,7 @@ mismo `PesajesViajeDto`.
 
 | Mecanismo | Valor (AC13) |
 | --- | --- |
-| Espera por llamada | 3 s |
+| Espera por llamada | 3 s, con topes del propio socket: 2 s para conectar y 3 s para leer |
 | Reintentos | 1, a los 0,5 s (6,5 s en el peor caso) |
 | Espera total por todos los nodos | 7 s: el nodo que no respondió queda como sin responder |
 | Corte | 60 s tras 5 fallas en 10 llamadas |

@@ -241,4 +241,19 @@ class BalanzasEJBTest {
             Thread.interrupted();
         }
     }
+
+    @Test
+    void unViajeSinIniciarNoTienePesajesNiConsultaALosNodos() {
+        nodo(1L, "balanzas-sur");
+        respuestas.put("balanzas-sur", List.of());
+        ViajeDto asignado = viaje();
+        asignado.setFechaInicio(null);
+        asignado.setFechaFin(null);
+
+        PesajesViajeDto resultado = ejb.getPesajesDelViaje(asignado);
+
+        assertTrue(resultado.isCompleto());
+        assertTrue(resultado.getPesajes().isEmpty());
+        assertTrue(consultas.isEmpty());
+    }
 }
