@@ -123,6 +123,9 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     // unico que declara la Guia. Un caso por viaje; las posiciones siguientes del mismo desvio no crean otro
     private void evaluarDesvio(ViajeDto viaje, EventoPosicionDto posicion, LocalDateTime momento, String origen) {
         GuiaDto guia = guiaDAO.getGuiaById(viaje.getIdGuia());
+        if (guia == null) {
+            return;
+        }
         int maximo = normaVigente(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, momento.toLocalDate());
         long metros = Math.round(distanciaAlTramoKm(posicion.getLatitud(), posicion.getLongitud(), guia) * 1000);
         if (metros > maximo) {

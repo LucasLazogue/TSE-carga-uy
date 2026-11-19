@@ -59,6 +59,7 @@ class MotorFiscalizacionEJBTest {
     private final EventoPosicionDto posicion = new EventoPosicionDto();
     private final PesajesViajeDto pesajes = new PesajesViajeDto();
     private final GuiaDto guia = new GuiaDto();
+    private boolean sinGuia;
     private ViajeDto viajeEnCurso;
     private ViajeDto viajeAsignado;
     private ViajeDto viaje;
@@ -86,7 +87,7 @@ class MotorFiscalizacionEJBTest {
         motor.guiaDAO = new GuiaDAO() {
             @Override
             public GuiaDto getGuiaById(Long id) {
-                return guia;
+                return sinGuia ? null : guia;
             }
         };
         motor.eventoDAO = new EventoPosicionDAO() {
@@ -247,6 +248,18 @@ class MotorFiscalizacionEJBTest {
         motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         assertEquals(1, casosDe(TipoInfraccion.DESVIO_RUTA).size());
+    }
+
+    @Test
+    void sinLaGuiaNoSeEvaluaElDesvio() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        posicion.setLatitud(-34.0);
+        posicion.setLongitud(-56.0);
+        sinGuia = true;
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        assertTrue(casosDe(TipoInfraccion.DESVIO_RUTA).isEmpty());
     }
 
     @Test
