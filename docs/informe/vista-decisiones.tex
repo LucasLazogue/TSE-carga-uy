@@ -289,6 +289,34 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
     \end{tabular}
 \end{table}
 
+\begin{table}[H]
+    \small
+    \centering
+    \caption{DA12: Criterio de desvío de ruta}
+    \label{tab:da12}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Identificador} & DA12 \\
+        \hline
+            \textbf{Nombre} & Criterio de desvío de ruta \\
+        \hline
+            \textbf{Categorías} & Servicios de negocio; CU-11; CU-17. \\
+        \hline
+            \textbf{Problema} & La letra pide detectar cuando la ruta reportada por el tracking se aparta significativamente del recorrido esperado entre el origen y el destino declarados en la Guía, y que cada grupo defina y justifique el criterio. La Guía solo declara el origen y el destino. Obtener el recorrido por las rutas reales exige un servicio externo de rutas y guardarlo con soporte geoespacial, y eso no entraba en el tiempo que quedaba antes de la entrega final. \\
+        \hline
+            \textbf{Alternativas} & Recorrido por las rutas reales, obtenido de un servicio de rutas al registrar la Guía y guardado en PostGIS, con un corredor y un tiempo máximo fuera de él; distancia de cada posición al tramo recto entre el origen y el destino de la Guía; evaluar el desvío al finalizar el viaje con todas sus posiciones. \\
+        \hline
+            \textbf{Decisión} & Con cada posición de un viaje en curso, el Motor de Fiscalización calcula la distancia de la posición al tramo recto entre el origen y el destino de la Guía. Si supera la distancia máxima vigente (norma \texttt{DESVIO\_RUTA\_DISTANCIA}, 5000~m por defecto, parametrizable con fecha de vigencia en el CU-17), registra un caso de desvío con esa posición como evidencia. Hay un caso por viaje: las posiciones siguientes del mismo desvío no crean otro. \\
+        \hline
+            \textbf{Justificación} & Por el tiempo disponible se eligió el criterio que se podía implementar con lo que ya existía: el origen y el destino de la Guía, la norma parametrizable y el simulador del nodo de tracking, que genera los desvíos con el mismo criterio. El corredor es amplio, de 5~km, para absorber la diferencia entre el tramo recto y las rutas reales; en recorridos con muchas curvas puede dar falsos positivos, que el funcionario desestima en el descargo, y la distancia se ajusta sin redespliegue. No se exige un tiempo fuera del corredor porque el error del GPS es de metros: una posición a más de 5~km ya es un apartamiento real y no ruido. Evaluar con cada posición detecta el desvío durante el viaje, como las otras reglas de tracking, sin leer todas las posiciones del viaje del Almacén de Posiciones. \\
+        \hline
+            \textbf{Siguiente paso} & Al registrar la Guía (CU-07), obtener el recorrido por las rutas reales de un servicio de rutas y guardarlo como una línea en PostGIS (opcional 11). El motor pasa a medir la distancia a esa línea en la base, en lugar de al tramo recto, y a exigir un tiempo mínimo fuera del corredor para no reaccionar a un solo tramo distinto. La norma, la deduplicación por viaje y la evidencia quedan igual. El mismo recorrido sirve para mostrarle al chofer el camino sugerido. \\
+        \hline
+            \textbf{Decisiones Relacionadas} & DA07, DA10 \\
+        \hline
+    \end{tabular}
+\end{table}
+
 \subsection{Decisiones Pendientes}
 
 La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y justificar, junto con otras decisiones que surgieron durante el desarrollo, que todavía no están definidas.
@@ -304,10 +332,6 @@ La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y ju
     \hline
     \endhead
     Servicio de rutas y geocodificación & Qué servicio externo se usa para ubicar el origen y el destino y obtener el recorrido esperado, con sus límites de uso. & CU-07, Vista Lógica, Distribución. \\
-    \hline
-    Criterio de desvío de ruta & Distancia máxima al recorrido esperado, tiempo fuera de él y cantidad mínima de posiciones, con sus valores por defecto. & CU-11, parametrización de reglas. \\
-    \hline
-    Momento de evaluación del desvío & Si el desvío se evalúa al finalizar el viaje o con cada posición recibida. & CU-11, Motor de Fiscalización. \\
     \hline
     Umbral de agregación & Umbral mínimo de agregación de la información pública. & AC06, R12. \\
     \hline

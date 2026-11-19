@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +36,12 @@ class BalanzasEJBTest {
     private static final LocalDateTime INICIO = LocalDateTime.of(2026, 10, 20, 22, 0);
     private static final LocalDateTime FIN = LocalDateTime.of(2026, 10, 21, 3, 0);
 
-    private final BalanzasEJB ejb = new BalanzasEJB();
+    private final BalanzasEJB ejb = new BalanzasEJB() {
+        @Override
+        long tope() {
+            return 300;
+        }
+    };
     private final ExecutorService ejecutor = Executors.newFixedThreadPool(2);
     private final List<NodoPerifericoDto> nodos = new ArrayList<>();
     private final Map<String, List<PesajeDto>> respuestas = new HashMap<>();
@@ -68,6 +74,9 @@ class BalanzasEJBTest {
             public List<PesajeDto> getPesajes(NodoPerifericoDto nodo, String clave, String matricula, LocalDate fecha) {
                 synchronized (consultas) {
                     consultas.add(nodo.getIdentificador() + " " + clave + " " + matricula + " " + fecha);
+                }
+                if (nodo.getIdentificador().equals("balanzas-colgado")) {
+                    colgarse();
                 }
                 if (!respuestas.containsKey(nodo.getIdentificador())) {
                     throw new CargaUYException(CodigoError.BALANZAS_NO_DISPONIBLE);
@@ -180,5 +189,56 @@ class BalanzasEJBTest {
         pesaje.setFechaHora(fechaHora);
         pesaje.setPesoRegistrado(36500);
         return pesaje;
+    }
+
+    private static void colgarse() {
+        try {
+            Thread.sleep(10_000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        throw new CargaUYException(CodigoError.BALANZAS_NO_DISPONIBLE);
+    }
+
+    @Test
+    void unNodoColgadoNoDemoraElPedidoMasQueElTope() {
+        nodo(1L, "balanzas-sur");
+        nodo(2L, "balanzas-colgado");
+        respuestas.put("balanzas-sur", List.of(pesaje("balanzas-sur/b1/1", LocalDateTime.of(2026, 10, 21, 1, 0))));
+        long inicio = System.nanoTime();
+
+        PesajesViajeDto resultado = ejb.getPesajesDelViaje(viaje());
+
+        long demora = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - inicio);
+        assertTrue(demora < 2000, "demoro " + demora + " ms");
+        assertFalse(resultado.isCompleto());
+        assertEquals(List.of("balanzas-colgado"), resultado.getNodosSinResponder());
+        assertEquals(1, resultado.getPesajes().size());
+    }
+
+    @Test
+    void conElEjecutorLlenoElNodoQuedaSinResponder() {
+        nodo(1L, "balanzas-sur");
+        respuestas.put("balanzas-sur", List.of());
+        ejecutor.shutdownNow();
+
+        PesajesViajeDto resultado = ejb.getPesajesDelViaje(viaje());
+
+        assertFalse(resultado.isCompleto());
+        assertEquals(List.of("balanzas-sur"), resultado.getNodosSinResponder());
+    }
+
+    @Test
+    void siInterrumpenElPedidoLosNodosQuedanSinResponderYSeConservaLaInterrupcion() {
+        nodo(1L, "balanzas-colgado");
+        Thread.currentThread().interrupt();
+        try {
+            PesajesViajeDto resultado = ejb.getPesajesDelViaje(viaje());
+
+            assertEquals(List.of("balanzas-colgado"), resultado.getNodosSinResponder());
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
     }
 }

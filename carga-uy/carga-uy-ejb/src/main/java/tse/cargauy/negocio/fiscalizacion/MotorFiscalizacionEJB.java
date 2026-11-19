@@ -23,6 +23,7 @@ import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.inject.Inject;
 import tse.cargauy.data.fiscalizacion.CasoFiscalizacionDAOLocal;
+import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.itv.ItvDAOLocal;
 import tse.cargauy.data.permiso.PermisoDAOLocal;
 import tse.cargauy.data.posicion.EventoPosicionDAOLocal;
@@ -32,6 +33,7 @@ import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroViajes;
+import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PesajeDto;
 import tse.cargauy.dtos.PesajesViajeDto;
@@ -56,8 +58,13 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
 
     private static final Logger LOGGER = Logger.getLogger(MotorFiscalizacionEJB.class.getName());
 
+    private static final double KM_POR_GRADO = 111.0;
+
     @EJB
     EventoPosicionDAOLocal eventoDAO;
+
+    @EJB
+    GuiaDAOLocal guiaDAO;
 
     @EJB
     ViajeDAOLocal viajeDAO;
@@ -73,6 +80,9 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
 
     @EJB
     CasoFiscalizacionDAOLocal casoDAO;
+
+    @EJB
+    CacheNormas cacheNormas;
 
     @EJB
     VehiculoDAOLocal vehiculoDAO;
@@ -98,7 +108,8 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         LocalDateTime momento = LocalDateTime.ofInstant(posicion.getTimestampGeneracion(), ZONA);
         String origen = posicion.getNodo() + "/" + posicion.getIdEvento();
 
-        if (viajeDAO.getEnCursoDelVehiculo(idVehiculo, momento) == null && !tieneViajeAsignado(idVehiculo)) {
+        ViajeDto enCurso = viajeDAO.getEnCursoDelVehiculo(idVehiculo, momento);
+        if (enCurso == null && !tieneViajeAsignado(idVehiculo)) {
             CasoFiscalizacionDto caso = new CasoFiscalizacionDto(TipoInfraccion.VIAJE_SIN_GUIA,
                     clave(TipoInfraccion.VIAJE_SIN_GUIA, idVehiculo, momento.toLocalDate()), momento, idVehiculo, null);
             registrar(caso, List.of(new EvidenciaDto(TipoEvidencia.POSICION, origen, momento,
@@ -106,6 +117,41 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
                     "El vehiculo circulaba sin un viaje en curso.")));
         }
         evaluarHabilitacion(idVehiculo, momento, null, origen);
+        if (enCurso != null) {
+            evaluarDesvio(enCurso, posicion, momento, origen);
+        }
+    }
+
+    // criterio de DA12: distancia de la posicion al tramo recto entre el origen y el destino de la Guia, que es lo
+    // unico que declara la Guia. Un caso por viaje; las posiciones siguientes del mismo desvio no crean otro
+    private void evaluarDesvio(ViajeDto viaje, EventoPosicionDto posicion, LocalDateTime momento, String origen) {
+        GuiaDto guia = guiaDAO.getGuiaById(viaje.getIdGuia());
+        if (guia == null) {
+            return;
+        }
+        int maximo = normaVigente(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, momento.toLocalDate());
+        long metros = Math.round(distanciaAlTramoKm(posicion.getLatitud(), posicion.getLongitud(), guia) * 1000);
+        if (metros > maximo) {
+            CasoFiscalizacionDto caso = new CasoFiscalizacionDto(TipoInfraccion.DESVIO_RUTA,
+                    TipoInfraccion.DESVIO_RUTA + "|" + viaje.getIdVehiculo() + "|viaje-" + viaje.getId(),
+                    momento, viaje.getIdVehiculo(), viaje.getId());
+            registrar(caso, List.of(new EvidenciaDto(TipoEvidencia.POSICION, origen, momento, metros + " m", "0 m",
+                    maximo + " m", "Posicion " + posicion.getLatitud() + ", " + posicion.getLongitud()
+                            + " fuera del tramo entre el origen y el destino de la Guia.")));
+        }
+    }
+
+    // se pasa a km alrededor del origen, como en el simulador del nodo de tracking: a las distancias de Uruguay
+    // el error de aplanar es de metros, muy por debajo del umbral
+    static double distanciaAlTramoKm(double lat, double lon, GuiaDto guia) {
+        double kmPorGradoLon = KM_POR_GRADO * Math.cos(Math.toRadians(guia.getOrigenLat()));
+        double x = (lon - guia.getOrigenLon()) * kmPorGradoLon;
+        double y = (lat - guia.getOrigenLat()) * KM_POR_GRADO;
+        double dx = (guia.getDestinoLon() - guia.getOrigenLon()) * kmPorGradoLon;
+        double dy = (guia.getDestinoLat() - guia.getOrigenLat()) * KM_POR_GRADO;
+        // punto del tramo mas cercano: antes del origen o despues del destino se mide contra el extremo
+        double t = Math.max(0, Math.min(1, (x * dx + y * dy) / (dx * dx + dy * dy)));
+        return Math.hypot(x - t * dx, y - t * dy);
     }
 
     @Asynchronous
@@ -185,7 +231,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         int maximo = vehiculo.getPesoVehiculo() + vehiculo.getCapacidadCarga();
         List<EvidenciaDto> evidencias = new ArrayList<>();
         for (PesajeDto pesaje : resultado.getPesajes()) {
-            int tolerancia = toleranciaExceso(pesaje.getFechaHora().toLocalDate());
+            int tolerancia = normaVigente(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, pesaje.getFechaHora().toLocalDate());
             int limite = maximo + maximo * tolerancia / 100;
             if (pesaje.getPesoRegistrado() > limite) {
                 evidencias.add(new EvidenciaDto(TipoEvidencia.PESAJE, pesaje.getIdOrigen(), pesaje.getFechaHora(),
@@ -205,13 +251,13 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         viajeDAO.marcarEvaluacionCarga(viaje.getId(), resultado.isCompleto() ? null : ahora.plusMinutes(1));
     }
 
-    // la vigente a la fecha del pesaje, no la de hoy: reevaluar un viaje viejo no cambia el criterio con que se juzga
-    private int toleranciaExceso(LocalDate fecha) {
-        Integer tolerancia = casoDAO.getNormaVigente(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, fecha);
-        if (tolerancia == null) {
-            throw new CargaUYException(CodigoError.NORMA_NO_VIGENTE, NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA);
+    // la vigente a la fecha del hecho, no la de hoy: reevaluar un viaje viejo no cambia el criterio con que se juzga
+    private int normaVigente(String clave, LocalDate fecha) {
+        Integer valor = cacheNormas.vigente(clave, fecha, () -> casoDAO.getNormaVigente(clave, fecha));
+        if (valor == null) {
+            throw new CargaUYException(CodigoError.NORMA_NO_VIGENTE, clave);
         }
-        return tolerancia;
+        return valor;
     }
 
     // si el inicio del viaje todavia no llego desde el movil, el viaje sigue asignado y no es un caso

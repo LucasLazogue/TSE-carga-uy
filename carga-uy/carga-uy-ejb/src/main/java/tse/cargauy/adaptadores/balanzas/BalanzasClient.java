@@ -24,14 +24,15 @@ public class BalanzasClient {
 
     private final Map<String, NodoBalanzasApi> nodos = new ConcurrentHashMap<>();
 
-    // cada consulta espera hasta 5 s y si falla se reintenta a 1 s y a 2 s. si fallan 5 de las ultimas 10 se corta
+    // cada consulta espera hasta 3 s y si falla se reintenta una vez a los 0,5 s: 6,5 s en el peor caso, dentro del
+    // tope de BalanzasEJB. si fallan 5 de las ultimas 10 se corta
     // 60 s: en ese tiempo se responde "no disponible" al instante sin llamar a los nodos.
     // el corte es uno solo para todas las balanzas (las anotaciones guardan un estado por metodo, no por nodo):
     // si se cae un nodo tambien se deja de preguntar a los demas, pero la evaluacion de exceso de carga necesita
     // los pesajes de todos los nodos y queda pendiente igual.
     // los rechazos del nodo (CargaUYException) no se reintentan ni cuentan para el corte: no se arreglan solos
-    @Timeout(5000)
-    @Retry(maxRetries = 2, delay = 1000, jitter = 0, abortOn = {CargaUYException.class, CircuitBreakerOpenException.class})
+    @Timeout(3000)
+    @Retry(maxRetries = 1, delay = 500, jitter = 0, abortOn = {CargaUYException.class, CircuitBreakerOpenException.class})
     @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5, delay = 60000, skipOn = CargaUYException.class)
     @Fallback(fallbackMethod = "noDisponible", skipOn = CargaUYException.class)
     public List<PesajeDto> getPesajes(NodoPerifericoDto nodo, String clave, String matricula, LocalDate fecha) {

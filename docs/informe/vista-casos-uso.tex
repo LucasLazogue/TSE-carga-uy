@@ -320,7 +320,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item Si el evento es el fin de un viaje, consulta a Balanzas los pesajes del vehículo y evalúa el exceso de carga.
     \item Verifica la vigencia del Permiso y la ITV.
     \item Detecta actividad de vehículos sin Guía.
-    \item Compara las posiciones del viaje con el recorrido esperado y los umbrales configurados: las posiciones se leen del Almacén de Posiciones y PostGIS calcula su distancia al recorrido (opcional 11).
+    \item Con cada posición de un viaje en curso, compara su distancia al tramo entre el origen y el destino de la Guía con la distancia máxima configurada (DA12).
     \item Comprueba que el hecho no haya generado otro caso.
     \item Crea el caso en estado \emph{detectada} y almacena la evidencia.
     \item Lo publica y solicita la notificación a la empresa; al confirmarse el envío, el caso pasa a \emph{notificada} e inicia el plazo de descargo.
@@ -330,7 +330,6 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma.
     \item La evidencia nueva se agrega a un caso existente por el mismo hecho.
-    \item No se determina un desvío con posiciones insuficientes.
     \item Una falla del correo no bloquea el caso y provoca un reintento.
 \end{itemize} \\ \hline
 \textbf{\underline{Postcondiciones:}} Existe un caso con evidencia, en estado \emph{notificada} o en \emph{detectada} hasta que se confirme el envío, sin duplicados y con su creación auditada. \\ \hline

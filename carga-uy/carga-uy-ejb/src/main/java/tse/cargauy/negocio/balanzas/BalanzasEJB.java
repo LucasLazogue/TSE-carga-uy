@@ -8,9 +8,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import io.opentelemetry.context.Context;
@@ -41,6 +44,10 @@ import tse.cargauy.seguridad.Cifrado;
 public class BalanzasEJB implements BalanzasEJBLocal {
 
     private static final Logger LOGGER = Logger.getLogger(BalanzasEJB.class.getName());
+    // cuanto se espera, en total, a que respondan todos los nodos. Cada consulta ya tiene su timeout y su reintento
+    // (BalanzasClient), pero puede esperar en la cola del ejecutor detras de las de un nodo colgado: el tope acota
+    // lo que tarda el pedido pase lo que pase. El nodo que no respondio a tiempo queda como sin responder
+    static final long TOPE_MS = 7000;
 
     @EJB
     NodoPerifericoDAOLocal nodoDAO;
@@ -76,21 +83,36 @@ public class BalanzasEJB implements BalanzasEJBLocal {
             } catch (CargaUYException e) {
                 LOGGER.warning("balanzas consulta=FALLIDA nodo=" + nodo.getIdentificador() + " error=" + e.getCodigo());
                 resultado.getNodosSinResponder().add(nodo.getIdentificador());
+            } catch (RejectedExecutionException e) {
+                LOGGER.warning("balanzas consulta=FALLIDA nodo=" + nodo.getIdentificador() + " error=ejecutor lleno");
+                resultado.getNodosSinResponder().add(nodo.getIdentificador());
             }
         }
+        long vence = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(tope());
         for (Map.Entry<NodoPerifericoDto, CompletableFuture<List<PesajeDto>>> consulta : consultas.entrySet()) {
             try {
-                // join espera a que ese nodo termine; si fallo, tira CompletionException
-                for (PesajeDto pesaje : consulta.getValue().join()) {
+                // get espera a que ese nodo termine, como mucho hasta el tope; si fallo, tira ExecutionException
+                long resto = Math.max(0, vence - System.nanoTime());
+                for (PesajeDto pesaje : consulta.getValue().get(resto, TimeUnit.NANOSECONDS)) {
                     boolean enElViaje = !pesaje.getFechaHora().isBefore(inicio) && !pesaje.getFechaHora().isAfter(fin);
                     guardar(pesaje, viaje.getIdVehiculo(), enElViaje ? viaje.getId() : null);
                     if (enElViaje) {
                         resultado.getPesajes().add(pesaje);
                     }
                 }
-            } catch (CompletionException e) {
+            } catch (ExecutionException e) {
                 LOGGER.warning("balanzas consulta=FALLIDA nodo=" + consulta.getKey().getIdentificador()
                         + " viaje=" + viaje.getId() + " error=" + e.getCause());
+                resultado.getNodosSinResponder().add(consulta.getKey().getIdentificador());
+            } catch (TimeoutException e) {
+                // si la consulta todavia estaba en la cola del ejecutor, cancelada ya no corre
+                consulta.getValue().cancel(true);
+                LOGGER.warning("balanzas consulta=FALLIDA nodo=" + consulta.getKey().getIdentificador()
+                        + " viaje=" + viaje.getId() + " error=sin respuesta en " + tope() + " ms");
+                resultado.getNodosSinResponder().add(consulta.getKey().getIdentificador());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                consulta.getValue().cancel(true);
                 resultado.getNodosSinResponder().add(consulta.getKey().getIdentificador());
             }
         }
@@ -120,6 +142,11 @@ public class BalanzasEJB implements BalanzasEJBLocal {
                 throw e;
             }
         }
+    }
+
+    // package-private para que los tests usen un tope corto
+    long tope() {
+        return TOPE_MS;
     }
 
     LocalDateTime ahora() {
