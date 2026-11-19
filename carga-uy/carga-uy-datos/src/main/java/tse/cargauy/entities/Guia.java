@@ -5,10 +5,15 @@ import java.time.LocalDate;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
+// PostgreSQL no indexa las claves foraneas: sin este indice, el listado de viajes de una empresa recorre todas
+// las guias (docs/performance.md, prueba con el frontoffice)
 @Entity
+@Table(indexes = @Index(name = "ix_guia_empresa", columnList = "empresa_id"))
 public class Guia {
 
     @Id @GeneratedValue

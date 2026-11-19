@@ -34,10 +34,19 @@ public class ConsultaPublicaEJB implements ConsultaPublicaEJBLocal {
     @EJB
     GuiaDAOLocal guiaDAO;
 
+    @EJB
+    CacheIndicadoresPublicos cacheIndicadores;
+
     @Override
     public IndicadoresPublicosDto getIndicadores(FiltroInforme filtro) {
         InformeEJB.validar(filtro);
         LocalDate hoy = hoy();
+        CacheIndicadoresPublicos.Clave clave = new CacheIndicadoresPublicos.Clave(hoy, filtro.getDesde(),
+                filtro.getHasta(), filtro.getIdTipoCarga(), filtro.getIdRubro());
+        return cacheIndicadores.obtener(clave, () -> calcular(filtro, hoy));
+    }
+
+    private IndicadoresPublicosDto calcular(FiltroInforme filtro, LocalDate hoy) {
         IndicadoresPublicosDto indicadores = new IndicadoresPublicosDto();
         indicadores.setUmbral(UMBRAL_AGREGACION);
         indicadores.setHabilitadosAl(hoy);
