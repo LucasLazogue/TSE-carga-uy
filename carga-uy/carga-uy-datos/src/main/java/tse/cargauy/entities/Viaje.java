@@ -19,7 +19,13 @@ import jakarta.persistence.Version;
 
 // si un viaje del vehiculo quedo sin fin registrado y empezo otro, una posicion es del que empezo ultimo
 @Entity
-@Table(indexes = @Index(name = "ix_viaje_estado_fin", columnList = "estado, fechaFin"))
+// PostgreSQL no indexa las claves foraneas: sin estos indices, cada busqueda por vehiculo recorre la tabla entera
+// (docs/performance.md, primera corrida de la prueba)
+@Table(indexes = {
+        @Index(name = "ix_viaje_estado_fin", columnList = "estado, fechaFin"),
+        // el viaje en curso de un vehiculo, que se busca con cada posicion
+        @Index(name = "ix_viaje_vehiculo_inicio", columnList = "vehiculo_id, fechaInicio"),
+        @Index(name = "ix_viaje_chofer", columnList = "chofer_id")})
 @NamedQueries({
     @NamedQuery(name = Viaje.EN_CURSO_DEL_VEHICULO,
             query = "SELECT v FROM Viaje v WHERE v.vehiculo.id = :idVehiculo AND v.fechaInicio <= :momento"
