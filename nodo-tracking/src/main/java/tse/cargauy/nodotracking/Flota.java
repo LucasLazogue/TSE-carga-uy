@@ -58,19 +58,30 @@ final class Flota {
         }
     }
 
+    // uno de cada CADA_DESVIO vehiculos simulados se aparta DESVIO_KM de su ruta en el tercio central, por encima de la
+    // distancia de desvio de la norma (5 km): la regla de desvio de ruta se ejercita en la prueba sin que la mayoria
+    // de los viajes la dispare
+    static final int CADA_DESVIO = 100;
+    static final double DESVIO_KM = 8;
+
     // matriculas SIM0001, SIM0002... desde 'primero': no estan registradas en el central salvo que se carguen aparte
-    // (performance/datos.sql registra SIM0001 a SIM18000)
+    // (performance/datos.sql registra SIM0001 a SIM18000). La ruta sale del numero, no del azar, para que la Guia del
+    // viaje que registra performance/datos.sql tenga el mismo origen y destino: si no, casi todas las posiciones
+    // quedarian fuera del tramo de la Guia y abririan casos de desvio que no son
     static List<VehiculoSimulado> generar(int cantidad, int primero, Random azar) {
         List<VehiculoSimulado> flota = new ArrayList<>();
         for (int i = primero; i < primero + cantidad; i++) {
-            Punto origen = CIUDADES.get(azar.nextInt(CIUDADES.size()));
-            Punto destino = origen;
-            while (destino.equals(origen)) {
-                destino = CIUDADES.get(azar.nextInt(CIUDADES.size()));
-            }
-            flota.add(new VehiculoSimulado(String.format("SIM%04d", i), new Ruta(origen, destino), 60 + azar.nextInt(31), 0));
+            double desvio = i % CADA_DESVIO == 0 ? DESVIO_KM : 0;
+            flota.add(new VehiculoSimulado(String.format("SIM%04d", i), ruta(i), 60 + azar.nextInt(31), desvio));
         }
         return flota;
+    }
+
+    // la misma cuenta que performance/datos.sql: origen CIUDADES[n % 10] y destino a 1 a 9 lugares, nunca el mismo
+    static Ruta ruta(int n) {
+        Punto origen = CIUDADES.get(n % CIUDADES.size());
+        Punto destino = CIUDADES.get((n + 1 + (n / CIUDADES.size()) % (CIUDADES.size() - 1)) % CIUDADES.size());
+        return new Ruta(origen, destino);
     }
 
     private static Punto punto(JsonObject json) {

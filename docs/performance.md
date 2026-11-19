@@ -49,7 +49,7 @@ fiscalización. Con los valores por defecto:
 | Qué | Cantidad |
 | --- | --- |
 | Empresas, cada una con su responsable | 90 |
-| Vehículos `SIM0001` a `SIM18000`, con permiso aprobado, ITV, chofer y un viaje en curso | 18.000 |
+| Vehículos `SIM0001` a `SIM18000`, con permiso aprobado, ITV, chofer, un viaje en curso y el siguiente asignado | 18.000 |
 | Vehículos con la ITV vencida (su primera posición del día abre un caso "sin habilitación") | 180 (1 %) |
 | Viajes terminados, con su Guía y sus eventos de inicio y fin: 6 meses de historia | 108.000 |
 | Casos de exceso de carga notificados, con su evidencia | 2.160 |
@@ -80,6 +80,13 @@ segundo cada uno):
 - **Responsable de empresa:** sus viajes, el detalle y los eventos de uno, sus vehículos y sus infracciones.
 - **Funcionario:** empresas, vehículos y casos de fiscalización.
 - **Público, sin sesión:** validación de una empresa e indicadores del año.
+- **Móvil (opcional, `TASA_MOVIL` choferes por segundo):** el chofer de un vehículo `SIM` pide sus viajes en la app y
+  manda en un mismo envío el fin del viaje en curso y el inicio del siguiente, que el
+  [juego de datos](#juego-de-datos) deja asignado. Al terminar el viaje, el central lo evalúa en segundo plano y le pide
+  los pesajes a los nodos de balanzas: es el camino que ejercita la fiscalización de exceso de carga y las balanzas
+  con carga. Con 18.000 vehículos y viajes de unas 5 horas termina un viaje por segundo (`TASA_MOVIL=1`). Cada
+  iteración usa el vehículo siguiente, desde `MOVIL_DESDE` (1 por defecto): en otra corrida sobre la misma carga de
+  datos hay que arrancar después de los ya usados, o reiniciar los datos.
 
 Los tokens no pasan por gub.uy: el script los firma con el mismo secreto del central
 (`CARGAUY_JWT_SECRET`) y las mismas claims que `UsuarioEJB`. Los usuarios salen de la base:
@@ -87,6 +94,7 @@ Los tokens no pasan por gub.uy: el script los firma con el mismo secreto del cen
 ```bash
 KUBECONFIG=~/.kube/demo-central performance/usuarios.sh   # genera performance/usuarios.json (no se versiona)
 k6 run -e JWT_SECRETO="$CARGAUY_JWT_SECRET" -e TASA=10 -e DURACION=10m performance/frontoffice.js
+k6 run -e JWT_SECRETO="$CARGAUY_JWT_SECRET" -e TASA=5 -e TASA_MOVIL=1 -e DURACION=10m performance/frontoffice.js
 ```
 
 Los umbrales de k6 fallan la corrida si el p95 de algún escenario pasa de 500 ms o si más del 1 %
