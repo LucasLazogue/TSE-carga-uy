@@ -53,14 +53,22 @@ mismo `PesajesViajeDto`.
 
 | Mecanismo | Valor (AC13) |
 | --- | --- |
-| Espera por llamada | 5 s |
-| Reintentos | 2, a 1 s y a 2 s |
+| Espera por llamada | 3 s |
+| Reintentos | 1, a los 0,5 s (6,5 s en el peor caso) |
+| Espera total por todos los nodos | 7 s: el nodo que no respondió queda como sin responder |
 | Corte | 60 s tras 5 fallas en 10 llamadas |
 | Rechazo del nodo (4xx, clave mala) | No se reintenta ni cuenta para el corte |
 
 El corte es uno solo para todas las balanzas: las anotaciones guardan un estado por método, no por nodo.
 Si se cae un nodo también se deja de preguntar a los demás durante 60 s. La evaluación de exceso de carga
 necesita los pesajes de todos los nodos, así que queda pendiente igual.
+
+Las consultas a los nodos corren en el ejecutor del servidor (`DefaultManagedExecutorService`, 4 hilos). Si un nodo
+se cuelga, sus consultas ocupan esos hilos y las de los demás esperan en la cola; la espera total de 7 s acota lo que
+tarda el pedido igual. Ni la pantalla de pesajes (`ViajeEJB.getPesajes`) ni el motor de fiscalización tienen una
+transacción abierta mientras esperan a los nodos: si la tuvieran, cada pedido retendría una conexión a la base durante
+la espera y, con un nodo colgado, agotarían el pool de conexiones del central. Así pasó en la prueba de performance
+(ver [performance](performance.md)).
 
 ## Evaluación pendiente
 
