@@ -118,7 +118,7 @@ La prueba se realizó el 18 y el 19 de noviembre de 2026 en el Escenario 2 de la
     \textbf{AC} & \textbf{Resultado} \\
     \hline
     \endhead
-    AC07 & Con la cola llena, 1, 2 y 4 instancias procesan unas 610, 1.170 y 1.600 posiciones por segundo (opcional 4). Hasta 2 instancias el límite es la CPU de cada una; con 4, la base de datos que comparten. \\
+    AC07 & Con la cola llena, 1, 2 y 4 instancias procesan unas 610, 1.170 y 1.600 posiciones por segundo (opcional 4). Hasta 2 instancias el límite es la CPU de cada una; con 4, la base de datos que comparten. Las conexiones (20 por instancia) quedan por debajo del límite de PostgreSQL, aunque dentro de cada instancia el pool está siempre ocupado y hay esperas por conexión. \\
     \hline
     AC08 & Con 600 posiciones por segundo el componente central procesa lo que llega, sin mensajes en la cola de mensajes muertos: los únicos errores son transacciones deshechas cuando el autoescalado apaga una instancia, cuyos mensajes el broker reentrega a otra. Un pico de 1.800 por segundo durante 5 minutos se acumula en la cola (hasta unos 240.000 mensajes) y se procesa con atraso, sin pérdida. \\
     \hline
