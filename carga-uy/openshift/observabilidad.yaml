@@ -126,7 +126,9 @@ spec:
               memory: 1Gi
             limits:
               cpu: "1"
-              memory: 2Gi
+              # 3 GiB: con 2, despues de la prueba de performance (horas de metricas, logs y trazas) la cache de
+              # archivos y Grafana lo dejaban sin margen y el chequeo de salud dejaba de responder (19/11)
+              memory: 3Gi
           readinessProbe:
             httpGet:
               path: /api/health
