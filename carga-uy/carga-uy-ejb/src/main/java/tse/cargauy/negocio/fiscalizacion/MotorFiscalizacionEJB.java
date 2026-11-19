@@ -82,6 +82,9 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
     CasoFiscalizacionDAOLocal casoDAO;
 
     @EJB
+    CacheNormas cacheNormas;
+
+    @EJB
     VehiculoDAOLocal vehiculoDAO;
 
     @EJB
@@ -250,7 +253,7 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
 
     // la vigente a la fecha del hecho, no la de hoy: reevaluar un viaje viejo no cambia el criterio con que se juzga
     private int normaVigente(String clave, LocalDate fecha) {
-        Integer valor = casoDAO.getNormaVigente(clave, fecha);
+        Integer valor = cacheNormas.vigente(clave, fecha, () -> casoDAO.getNormaVigente(clave, fecha));
         if (valor == null) {
             throw new CargaUYException(CodigoError.NORMA_NO_VIGENTE, clave);
         }
