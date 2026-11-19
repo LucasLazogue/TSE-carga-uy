@@ -37,8 +37,65 @@ Se mira en Grafana, en el tablero **carga.uy · ingesta, nodo y API**:
 - la espera en la cola y la antigüedad de cada posición al procesarse;
 - el tiempo de procesamiento.
 
-Las matrículas simuladas no están registradas: se guardan sin vehículo y no pasan por la
-fiscalización, así que la carga real por posición es algo mayor que la medida.
+Sin el [juego de datos](#juego-de-datos), las matrículas simuladas no están registradas: se guardan sin vehículo y no
+pasan por la fiscalización, así que la carga por posición queda por debajo de la real.
+
+## Juego de datos
+
+[performance/datos.sql](../performance/datos.sql) registra en el central la flota del volumen objetivo, para que cada
+posición recorra la operativa real: vehículo conocido, viaje en curso, permiso e ITV vigentes, y las reglas de
+fiscalización. Con los valores por defecto:
+
+| Qué | Cantidad |
+| --- | --- |
+| Empresas, cada una con su responsable | 90 |
+| Vehículos `SIM0001` a `SIM18000`, con permiso aprobado, ITV, chofer y un viaje en curso | 18.000 |
+| Vehículos con la ITV vencida (su primera posición del día abre un caso "sin habilitación") | 180 (1 %) |
+| Viajes terminados, con su Guía y sus eventos de inicio y fin: 6 meses de historia | 108.000 |
+| Casos de exceso de carga notificados, con su evidencia | 2.160 |
+| Funcionarios para el escenario de k6 | 5 |
+
+Los nodos generan exactamente esas matrículas: `tracking-1` desde `SIM0001` y `tracking-2` desde `SIM9001`
+(`NODO_VEHICULOS_DESDE`). Las cantidades se cambian con parámetros de `psql` (`-v vehiculos=6000 -v meses=3`;
+la lista está en el encabezado del script). Los ids arrancan en 10.000.000, lejos de los que asigna la aplicación, y
+las cédulas son inventadas.
+
+Se carga sobre una base con solo los datos de referencia, con el perfil `performance` del reinicio
+([datos del central](infraestructura.md#datos-del-central)):
+
+```sh
+cd carga-uy/openshift && ./reiniciar-datos.sh --perfil performance     # unos 15 s de carga
+```
+
+Para volver a la demo, `./reiniciar-datos.sh`. Como el reinicio parte siempre de una base vacía y el script da
+siempre los mismos datos, cada corrida arranca del mismo punto; las fechas son relativas al día de la carga.
+
+## Usuarios simulados del frontoffice (k6)
+
+Mientras el generador de tracking carga la ingesta, `performance/frontoffice.js` simula con
+[k6](https://k6.io) a los usuarios del frontoffice, para verificar el objetivo de p95 < 500 ms en
+sus consultas (AC09). Tiene tres escenarios con llegada constante de pedidos (`TASA` iteraciones por
+segundo cada uno):
+
+- **Responsable de empresa:** sus viajes, el detalle y los eventos de uno, sus vehículos y sus infracciones.
+- **Funcionario:** empresas, vehículos y casos de fiscalización.
+- **Público, sin sesión:** validación de una empresa e indicadores del año.
+
+Los tokens no pasan por gub.uy: el script los firma con el mismo secreto del central
+(`CARGAUY_JWT_SECRET`) y las mismas claims que `UsuarioEJB`. Los usuarios salen de la base:
+
+```bash
+KUBECONFIG=~/.kube/demo-central performance/usuarios.sh   # genera performance/usuarios.json (no se versiona)
+k6 run -e JWT_SECRETO="$CARGAUY_JWT_SECRET" -e TASA=10 -e DURACION=10m performance/frontoffice.js
+```
+
+Los umbrales de k6 fallan la corrida si el p95 de algún escenario pasa de 500 ms o si más del 1 %
+de los pedidos fallan. `BASE_URL` cambia el destino (por defecto, el central en OpenShift).
+
+Corrida de humo del 18/11/2026 contra OpenShift (`TASA=1`, `DURACION=30s`, una instancia, sin carga de
+tracking): 298 pedidos sin errores, p95 de 164 ms (público), 174 ms (responsable) y 206 ms
+(funcionario). El pedido más rápido tardó 147 ms, que es casi todo red entre la máquina que corre k6 y el
+clúster: conviene anotar ese piso junto con los resultados de la prueba.
 
 ## Prueba preliminar (26/10/2026, máquina de desarrollo)
 
@@ -65,3 +122,90 @@ Conclusión: en la máquina de desarrollo el punto de quiebre está entre 250 y 
 la prueba de performance de la entrega final (AC09 a AC11) hay que separar el generador del central
 y correrla con el central en Elastic Cloud. Las varias instancias del central consumen la misma cola
 (DA02), así que se puede medir también el escalado horizontal.
+
+## Conexiones a la base
+
+Cada instancia del central tiene su propio pool de conexiones a PostgreSQL (`CargaUyDS`), así que al
+escalar horizontalmente las conexiones se multiplican: el total es el pool por instancia por la cantidad
+de instancias, y tiene que quedar por debajo del `max_connections` de PostgreSQL (100 en OpenShift, de
+las que 3 quedan reservadas al superusuario).
+
+| Parámetro (variable de entorno) | Valor por defecto | Qué limita |
+| --- | --- | --- |
+| `DB_POOL_MAX` | 20 | Conexiones abiertas por instancia |
+| `DB_POOL_MIN` | 2 | Conexiones que la instancia mantiene abiertas aunque no las use |
+| `DB_POOL_ESPERA_MS` | 5.000 | Cuánto espera un pedido por una conexión libre antes de fallar |
+| `TRACKING_CONSUMIDORES` | 15 | Consumidores concurrentes de la cola de tracking por instancia (`maxSession` del MDB) |
+
+Con el autoescalado de 1 a 4 instancias, 4 × 20 = 80 conexiones, más las de las herramientas
+(`psql`, el script de reinicio). Una quinta instancia ya pasaría el límite y PostgreSQL rechazaría las
+conexiones nuevas ("too many clients"). Antes de llegar a eso aparece el otro síntoma: cuando una
+instancia usa todo su pool, los pedidos siguientes esperan una conexión y la latencia sube aunque la
+CPU no esté saturada.
+
+Cada consumidor de la cola de tracking ocupa una conexión mientras procesa una posición, desde que
+empieza la transacción hasta el commit. La concurrencia real de la ingesta es la menor entre
+`TRACKING_CONSUMIDORES` (las sesiones abiertas contra la cola) y el pool de instancias del MDB
+(`mdb-strict-max-pool`, 4 por procesador que ve la JVM). En OpenShift, con el límite de 2 CPU, ese pool
+es de 8: cada instancia procesa como mucho 8 posiciones a la vez y las demás sesiones esperan con un
+mensaje tomado. La ingesta ocupa entonces hasta 8 de las 20 conexiones y quedan 12 para la API REST y el
+backoffice. Si se sube el límite de CPU, el pool de MDB crece y el tope pasa a ser
+`TRACKING_CONSUMIDORES`, que tiene que seguir por debajo de `DB_POOL_MAX`.
+
+### Límites de cada instancia
+
+Leídos el 18/11/2026 en un pod del central en OpenShift (límite de 2 CPU y 2 GiB):
+
+| Qué | Por instancia | Con 4 instancias | De dónde sale |
+| --- | --- | --- | --- |
+| Pedidos HTTP atendidos a la vez (Undertow) | 32 | 128 | `task-max-threads` del worker `default`: 16 por procesador |
+| Conexiones a PostgreSQL | 20 | 80 | `DB_POOL_MAX` |
+| Posiciones procesándose a la vez | 8 | 32 | `mdb-strict-max-pool`: 4 por procesador |
+| Consumidores de `queue_tracking` en Artemis | 15 | 60 | `TRACKING_CONSUMIDORES` |
+| Hilos de las tareas programadas (`@Schedule`) | 10 | 40 | Pool `default` del subsistema `ejb3` |
+| Conexiones a MongoDB | hasta 100 | hasta 400 | Valor por defecto del driver (`maxPoolSize` en `MONGO_URI`) |
+
+Hay más pedidos HTTP a la vez (32) que conexiones (20): con carga de la API sola, el pool se puede
+agotar antes que los hilos, y eso se ve en `datasources_pool_wait_count`. MongoDB no pasa por WildFly:
+el cliente del driver (`AlmacenPosiciones`, uno por instancia) tiene su propio pool, que no aparece en
+las estadísticas del datasource; las conexiones abiertas se ven del lado de MongoDB, con
+`db.serverStatus().connections`.
+
+Para leer los valores de un pod:
+
+```sh
+oc exec deployment/carga-uy -- /opt/jboss/wildfly/bin/jboss-cli.sh -c --commands='/subsystem=io/worker=default:read-attribute(name=task-max-threads),/subsystem=ejb3/strict-max-bean-instance-pool=mdb-strict-max-pool:read-attribute(name=derived-size),/subsystem=ejb3/thread-pool=default:read-attribute(name=max-threads)'
+```
+
+### Cómo se mide en la prueba
+
+- **Del lado del central:** las estadísticas del pool están activadas y salen por la Plataforma de
+  Observabilidad, con la instancia en la etiqueta `instance` (el nombre del pod, por
+  `OTEL_RESOURCE_ATTRIBUTES`). En Prometheus: `datasources_pool_in_use_count{name="CargaUyDS"}`
+  (conexiones en uso), `datasources_pool_available_count`, `datasources_pool_max_used_count`,
+  `datasources_pool_wait_count` (pedidos que esperaron una conexión) y `datasources_pool_max_wait_time`.
+  La etiqueta `instance` también separa por instancia los tiempos y contadores de la ingesta
+  (`ingesta_*`). Las que exporta el SDK de OpenTelemetry de WildFly (`http_server_request_duration`, JVM) no
+  la llevan: ese subsistema no toma `OTEL_RESOURCE_ATTRIBUTES`, así que las series de las instancias se pisan. El p95 del
+  frontoffice se mide del lado del cliente, con k6.
+- **Del lado de la base:** cada instancia se identifica en `pg_stat_activity` con el nombre de su pod
+  (`ApplicationName`):
+
+  ```sql
+  SELECT application_name, state, count(*) FROM pg_stat_activity
+  WHERE datname = 'cargauy' GROUP BY 1, 2 ORDER BY 1, 2;
+  ```
+
+- **Qué se busca:** si al pasar de 1 a 4 instancias el throughput de la ingesta y el p95 del
+  frontoffice escalan, o si aparecen esperas por conexión antes de que la CPU se sature.
+
+### Si las conexiones son el cuello de botella
+
+1. Ajustar `DB_POOL_MAX` y `TRACKING_CONSUMIDORES` según lo medido, siempre con instancias × pool por
+   debajo del límite.
+2. Poner un pooler de conexiones (PgBouncer, en modo transacción) entre las instancias y PostgreSQL: las
+   instancias abren muchas conexiones contra el pooler y él las multiplexa sobre pocas conexiones reales,
+   así que la cantidad de instancias deja de depender de `max_connections`. En modo transacción hay que
+   desactivar las sentencias preparadas del lado del servidor en el driver (`prepareThreshold=0`).
+3. Subir `max_connections` con moderación: cada conexión de PostgreSQL es un proceso con su memoria, y
+   muchas conexiones activas compitiendo por pocas CPU rinden peor que menos conexiones bien usadas.

@@ -3,19 +3,22 @@ package tse.cargauy.web.beans;
 import java.io.Serializable;
 import java.util.List;
 
+import org.omnifaces.cdi.ViewScoped;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import jakarta.enterprise.inject.Model;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
-import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Named;
 import tse.cargauy.dtos.NodoPerifericoDto;
 import tse.cargauy.entities.EstadoNodo;
 import tse.cargauy.entities.TipoNodo;
 import tse.cargauy.negocio.nodo.NodoPerifericoEJBLocal;
 
-@Named
-@ViewScoped
+// @Model es solo para que WildFly descubra el bean: dentro del EAR no reconoce como alcance la anotacion de
+// OmniFaces, que viene en WEB-INF/lib. vale el alcance explicito (@ViewScoped), no el de pedido de @Model
+@Model
+@ViewScoped(saveInViewState = true)
 public class NodoView implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -42,6 +45,8 @@ public class NodoView implements Serializable {
     public void createNodo() {
         nodoEJB.addNodo(nodo);
         mensaje("Nodo " + nodo.getIdentificador() + " registrado. Queda deshabilitado hasta que se habilite.");
+        // el bean viaja (cifrado) en la pagina: la clave del nodo no tiene que quedar en el
+        nuevo();
         cargar();
     }
 

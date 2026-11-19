@@ -72,10 +72,63 @@ public class DatosPrueba {
     @EJB
     private CasoFiscalizacionDAOLocal casoDAO;
 
+    // CARGAUY_DATOS: "demo" (por defecto) carga todo; "base" solo los datos de referencia, para empezar sin empresas ni
+    // personas inventadas (la prueba de performance carga despues las suyas con performance/datos.sql)
+    static final String PERFIL_DEMO = "demo";
+    static final String PERFIL_BASE = "base";
+
     @PostConstruct
     public void init() {
         // con varias instancias, una sola carga los datos: las demas esperan y despues los encuentran
         CerrojoArranque.tomar(entityManager);
+        referencia();
+        if (PERFIL_DEMO.equals(perfil(System.getenv("CARGAUY_DATOS")))) {
+            demo();
+        }
+    }
+
+    static String perfil(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return PERFIL_DEMO;
+        }
+        String perfil = valor.trim().toLowerCase();
+        if (!PERFIL_DEMO.equals(perfil) && !PERFIL_BASE.equals(perfil)) {
+            throw new IllegalStateException("CARGAUY_DATOS tiene que ser demo o base, no " + valor);
+        }
+        return perfil;
+    }
+
+    // lo que necesita cualquier instalacion, con datos o sin ellos: roles, rubros, tipos de carga y normas de
+    // fiscalizacion. Solo agrega lo que falta
+    private void referencia() {
+        for (String rol : List.of(Rol.CIUDADANO, Rol.FUNCIONARIO, Rol.AUTORIDAD, Rol.ADMINISTRADOR)) {
+            if (!usuarioDAO.getRoles().contains(rol)) {
+                usuarioDAO.addRol(rol);
+            }
+        }
+
+        if (guiaDAO.getRubros().isEmpty()) {
+            for (String rubro : List.of("Agropecuario", "Comercio", "Construccion", "Forestal", "Industria", "Logistica")) {
+                guiaDAO.addRubro(rubro);
+            }
+            for (String tipo : List.of("Carga general", "Granos", "Madera", "Contenedores", "Refrigerada", "Combustibles")) {
+                guiaDAO.addTipoCarga(tipo);
+            }
+        }
+
+        if (casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, LocalDate.now()) == null) {
+            casoDAO.addNorma(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, 10, LocalDate.of(2026, 1, 1));
+        }
+        if (casoDAO.getNormaVigente(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, LocalDate.now()) == null) {
+            casoDAO.addNorma(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, LocalDate.of(2026, 1, 1));
+        }
+        if (casoDAO.getNormaVigente(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, LocalDate.now()) == null) {
+            casoDAO.addNorma(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, 5000, LocalDate.of(2026, 1, 1));
+        }
+    }
+
+    // empresas, vehiculos, personas, Guias, viajes y casos inventados, para desarrollo y la demo
+    private void demo() {
         // solo la primera vez, si no se duplican en cada arranque
         if (empresaDAO.getAll(new Paginacion(0, 3)).getTotal() == 0) {
             empresaDAO.addEmpresa(new EmpresaDto(1001, "Transportes del Sur", "Transportes del Sur S.A.", "Av. Italia 3456, Montevideo", LocalDate.of(2020, 3, 15)));
@@ -117,15 +170,8 @@ public class DatosPrueba {
             itvDAO.addItv(new ItvDto(sdd, LocalDate.of(2025, 4, 10), LocalDate.of(2026, 4, 10)));
         }
 
-        if (usuarioDAO.getRoles().isEmpty()) {
-            usuarioDAO.addRol(Rol.CIUDADANO);
-            usuarioDAO.addRol(Rol.FUNCIONARIO);
+        if (usuarioDAO.getFuncionarioByCedula("11111111") == null) {
             usuarioDAO.addFuncionario("11111111");
-        }
-        for (String rol : List.of(Rol.AUTORIDAD, Rol.ADMINISTRADOR)) {
-            if (!usuarioDAO.getRoles().contains(rol)) {
-                usuarioDAO.addRol(rol);
-            }
         }
 
         UsuarioDto carlos = usuarioDAO.getCiudadanoByCedula("55555555");
@@ -148,14 +194,6 @@ public class DatosPrueba {
             usuarioDAO.addResponsable(ana.getId(), empresas.get(1).getId(), ingreso);
         }
 
-        if (guiaDAO.getRubros().isEmpty()) {
-            for (String rubro : List.of("Agropecuario", "Comercio", "Construccion", "Forestal", "Industria", "Logistica")) {
-                guiaDAO.addRubro(rubro);
-            }
-            for (String tipo : List.of("Carga general", "Granos", "Madera", "Contenedores", "Refrigerada", "Combustibles")) {
-                guiaDAO.addTipoCarga(tipo);
-            }
-        }
 
         if (guiaDAO.getAll().isEmpty() && empresas.size() >= 3) {
             List<RubroDto> rubros = guiaDAO.getRubros();
@@ -191,16 +229,6 @@ public class DatosPrueba {
                             rubros.get((mes + 2) % rubros.size()).getId(), tipos.get((mes + 1) % tipos.size()).getId(), 18000 + mes * 500);
                 }
             }
-        }
-
-        if (casoDAO.getNormaVigente(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, LocalDate.now()) == null) {
-            casoDAO.addNorma(NormaFiscalizacion.PLAZO_DESCARGO_DIAS, 10, LocalDate.of(2026, 1, 1));
-        }
-        if (casoDAO.getNormaVigente(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, LocalDate.now()) == null) {
-            casoDAO.addNorma(NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA, 5, LocalDate.of(2026, 1, 1));
-        }
-        if (casoDAO.getNormaVigente(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, LocalDate.now()) == null) {
-            casoDAO.addNorma(NormaFiscalizacion.DESVIO_RUTA_DISTANCIA, 5000, LocalDate.of(2026, 1, 1));
         }
 
         // fechas relativas a hoy para que siempre haya un caso en plazo, uno vencido y uno en descargo

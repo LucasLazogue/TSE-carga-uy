@@ -24,10 +24,27 @@ spec:
             - secretRef:
                 name: carga-uy-secretos
             # elenco de la demo (ElencoDemo): cedulas de las cuentas de gub.uy y nodos con sus claves. Optativo: sin
-            # el Secret el central arranca igual. Ver "Datos de la demo y reinicio" en docs/infraestructura.md
+            # el Secret el central arranca igual. Ver "Datos del central" en docs/infraestructura.md
             - secretRef:
                 name: carga-uy-demo
                 optional: true
+          env:
+            # cada instancia se identifica en las metricas con el nombre de su pod (etiqueta instance en Prometheus).
+            # sin esto todas exportan con las mismas etiquetas y sus series se pisan: con el autoescalado, los contadores
+            # y el uso del pool de cada instancia se mezclan
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.instance.id=$(POD_NAME)
+            # clave del estado de las pantallas del backoffice, la misma en todas las instancias. el Secret se crea antes
+            # de aplicar este manifiesto: si falta, la instancia nueva no arranca y la anterior sigue atendiendo
+            - name: CARGAUY_CLAVE_VISTAS
+              valueFrom:
+                secretKeyRef:
+                  name: carga-uy-vistas
+                  key: CARGAUY_CLAVE_VISTAS
           # el autoescalado mide el uso de CPU contra el request. Cuota del proyecto: 3 CPU de requests; Artemis,
           # Mongo, LDAP, Postgres y la plataforma de observabilidad piden ~0,5. Con 400m entran 4 instancias mas la
           # extra que agrega un despliegue (maxSurge)
@@ -62,9 +79,10 @@ kind: Route
 metadata:
   name: carga-uy
   annotations:
-    # afinidad: el backoffice (JSF) guarda el estado de cada pantalla en la instancia que la abrio; el login es un JWT
-    # y no depende de la instancia. El router de OpenShift ya da afinidad con una cookie; aca se le pone nombre
-    router.openshift.io/cookie_name: carga-uy-instancia
+    # sin afinidad: el login es un JWT y el estado de cada pantalla del backoffice viaja en la pagina, asi que
+    # cualquier instancia atiende cualquier pedido. sin esto el router pone una cookie y deja a cada usuario en una
+    # instancia
+    haproxy.router.openshift.io/disable_cookies: "true"
 spec:
   to:
     kind: Service
@@ -76,7 +94,7 @@ spec:
     insecureEdgeTerminationPolicy: Redirect
 ---
 # autoescalado del central (opcional 4): entre 1 y 4 instancias segun el uso de CPU. Todas consumen de la misma cola
-# de tracking (cada mensaje lo procesa una sola) y no guardan estado propio de la API. Ver "Varias instancias y autoescalado" en docs/infraestructura.md
+# de tracking (cada mensaje lo procesa una sola) y no guardan estado propio ni de la API ni del backoffice. Ver "Varias instancias y autoescalado" en docs/infraestructura.md
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
