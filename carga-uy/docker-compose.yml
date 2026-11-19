@@ -127,6 +127,8 @@ services:
       CARGAUY_CLAVE_VISTAS: ${CARGAUY_CLAVE_VISTAS:-}
       # identifica la instancia en las metricas (etiqueta instance); docker-compose.dos-instancias.yml le da otra a la segunda
       OTEL_RESOURCE_ATTRIBUTES: service.instance.id=carga-uy
+      # demo: datos de prueba inventados; base: solo roles, rubros, tipos de carga y normas (docs/infraestructura.md)
+      CARGAUY_DATOS: ${CARGAUY_DATOS:-demo}
       CARGAUY_CLAVE_CIFRADO: ${CARGAUY_CLAVE_CIFRADO:-CKuP6o0GEmQKWAowdHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY3J5cHRvLnRpbmsuQWVzR2NtS2V5EiIaIKJ+jG4eVk75SBQBKzLBb0ZNlX4XSY8KQVqS8w5WdreOGAEQARirj+qNBiAB}
       MONGO_URI: ${MONGO_URI:-mongodb://cargauy:cargauy@mongo:27017/?authSource=admin}
       MONGO_DB: ${MONGO_DB:-cargauy}
@@ -202,6 +204,8 @@ services:
       NODO_INTERVALO_SEG: ${NODO_INTERVALO_SEG:-10}
       NODO_ACELERAR: ${NODO_ACELERAR:-1}
       NODO_VEHICULOS_EXTRA: ${NODO_2_VEHICULOS_EXTRA:-0}
+      # sus SIM arrancan donde terminan los de tracking-1, como en performance/datos.sql
+      NODO_VEHICULOS_DESDE: ${NODO_2_VEHICULOS_DESDE:-9001}
       NODO_DUPLICADOS: ${NODO_DUPLICADOS:-0}
       NODO_DESORDENAR: ${NODO_DESORDENAR:-false}
       NODO_LOG_METRICAS_SEG: ${NODO_LOG_METRICAS_SEG:-60}

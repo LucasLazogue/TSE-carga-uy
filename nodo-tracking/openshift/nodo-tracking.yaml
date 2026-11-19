@@ -185,6 +185,9 @@ spec:
             # la carga de la prueba: oc set env deployment/nodo-tracking-2 NODO_VEHICULOS_EXTRA=9000
             - name: NODO_VEHICULOS_EXTRA
               value: "0"
+            # sus SIM arrancan donde terminan los de tracking-1 (SIM9001...), como en performance/datos.sql
+            - name: NODO_VEHICULOS_DESDE
+              value: "9001"
             # senales a la Plataforma de Observabilidad del proyecto del central, por su Route con TLS y token
             - name: OTLP_NODOS_TOKEN
               valueFrom:

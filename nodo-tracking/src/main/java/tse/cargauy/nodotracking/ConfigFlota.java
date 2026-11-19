@@ -11,7 +11,13 @@ public record ConfigFlota(
         double duplicados,          // fraccion de eventos que se publican dos veces (idempotencia)
         boolean desordenar,         // mezcla cada lote antes de publicarlo (orden por timestampGeneracion)
         Duration sinCoberturaDesde, // null = siempre con cobertura
-        Duration sinCoberturaDurante) {
+        Duration sinCoberturaDurante,
+        int primerVehiculo) {       // numero del primer SIM: cada nodo de la prueba usa matriculas distintas
+
+    public ConfigFlota(String rutas, int vehiculosExtra, Duration intervalo, double acelerar, double duplicados,
+            boolean desordenar, Duration sinCoberturaDesde, Duration sinCoberturaDurante) {
+        this(rutas, vehiculosExtra, intervalo, acelerar, duplicados, desordenar, sinCoberturaDesde, sinCoberturaDurante, 1);
+    }
 
     public static ConfigFlota desdeEntorno() {
         String rutas = Config.texto("NODO_RUTAS", null);
@@ -35,6 +41,7 @@ public record ConfigFlota(
                 Config.decimal("NODO_DUPLICADOS", 0),
                 Boolean.parseBoolean(Config.texto("NODO_DESORDENAR", "false")),
                 desde,
-                durante);
+                durante,
+                Config.numero("NODO_VEHICULOS_DESDE", 1));
     }
 }
