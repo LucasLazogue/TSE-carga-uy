@@ -1,6 +1,7 @@
 package tse.cargauy.data.fiscalizacion;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.function.Executable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
+import jakarta.persistence.TypedQuery;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.entities.CasoFiscalizacion;
 import tse.cargauy.entities.DestinatarioNotificacion;
@@ -36,6 +38,8 @@ class CasoFiscalizacionDAOTest {
     private final CasoFiscalizacionDAO dao = new CasoFiscalizacionDAO();
     private RuntimeException alHacerFlush;
     private Notificacion notificacion;
+    private List<?> resultado = List.of();
+    private Object claveConsultada;
 
     // sin base: find devuelve entidades vacias (salvo el caso, con su vehiculo y empresa), persist guarda la
     // notificacion y el flush falla con lo que diga cada test
@@ -43,6 +47,9 @@ class CasoFiscalizacionDAOTest {
     void preparar() throws Exception {
         EntityManager entityManager = (EntityManager) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class<?>[] { EntityManager.class }, (proxy, metodo, args) -> {
+                    if (metodo.getName().equals("createQuery")) {
+                        return consulta();
+                    }
                     if (metodo.getName().equals("find")) {
                         return args[0] == CasoFiscalizacion.class ? caso() : ((Class<?>) args[0]).getConstructor().newInstance();
                     }
@@ -59,6 +66,17 @@ class CasoFiscalizacionDAOTest {
         campo.set(dao, entityManager);
     }
 
+    // la consulta devuelve 'resultado' y guarda el parametro clave
+    private TypedQuery<?> consulta() {
+        return (TypedQuery<?>) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { TypedQuery.class },
+                (proxy, metodo, args) -> {
+                    if (metodo.getName().equals("setParameter") && "clave".equals(args[0])) {
+                        claveConsultada = args[1];
+                    }
+                    return metodo.getName().equals("getResultList") ? resultado : proxy;
+                });
+    }
+
     private static CasoFiscalizacion caso() {
         Empresa empresa = new Empresa(1, "Transportes Sur", "Transportes Sur SA", "Ruta 5 km 30", LocalDate.of(2020, 1, 1));
         Vehiculo vehiculo = new Vehiculo("SBA1234", "Volvo", "FH", 9000, 30000, empresa);
@@ -73,6 +91,19 @@ class CasoFiscalizacionDAOTest {
 
     private static void rechaza(CodigoError codigo, Executable accion) {
         assertEquals(codigo, assertThrows(CargaUYException.class, accion).getCodigo());
+    }
+
+    @Test
+    void elIdDeUnCasoYaRegistradoPorSuClave() {
+        resultado = List.of(7L);
+
+        assertEquals(7L, dao.getIdPorClave("SIN_HABILITACION|11|2026-10-13"));
+        assertEquals("SIN_HABILITACION|11|2026-10-13", claveConsultada);
+    }
+
+    @Test
+    void sinCasoConEsaClaveNoHayId() {
+        assertNull(dao.getIdPorClave("SIN_HABILITACION|11|2026-10-13"));
     }
 
     @Test
