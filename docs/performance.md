@@ -62,6 +62,11 @@ k6 run -e JWT_SECRETO="$CARGAUY_JWT_SECRET" -e TASA=10 -e DURACION=10m performan
 Los umbrales de k6 fallan la corrida si el p95 de algún escenario pasa de 500 ms o si más del 1 %
 de los pedidos fallan. `BASE_URL` cambia el destino (por defecto, el central en OpenShift).
 
+Corrida de humo del 18/11/2026 contra OpenShift (`TASA=1`, `DURACION=30s`, una instancia, sin carga de
+tracking): 298 pedidos sin errores, p95 de 164 ms (público), 174 ms (responsable) y 206 ms
+(funcionario). El pedido más rápido tardó 147 ms, que es casi todo red entre la máquina que corre k6 y el
+clúster: conviene anotar ese piso junto con los resultados de la prueba.
+
 ## Prueba preliminar (26/10/2026, máquina de desarrollo)
 
 Todo el compose en una sola Mac de 8 núcleos y 8 GB para Docker: el nodo de tracking que genera la
@@ -108,11 +113,39 @@ conexiones nuevas ("too many clients"). Antes de llegar a eso aparece el otro s�
 instancia usa todo su pool, los pedidos siguientes esperan una conexión y la latencia sube aunque la
 CPU no esté saturada.
 
-Cada consumidor de la cola de tracking ocupa una conexión mientras procesa una posición, así que
-`TRACKING_CONSUMIDORES` tiene que quedar por debajo de `DB_POOL_MAX` para que la API REST y el
-backoffice no se queden sin conexiones durante un pico de tracking. Además, WildFly limita las
-instancias de MDB con su pool `mdb-strict-max-pool` (por defecto, 4 por procesador disponible), que
-puede ser el límite real de la concurrencia de la ingesta.
+Cada consumidor de la cola de tracking ocupa una conexión mientras procesa una posición, desde que
+empieza la transacción hasta el commit. La concurrencia real de la ingesta es la menor entre
+`TRACKING_CONSUMIDORES` (las sesiones abiertas contra la cola) y el pool de instancias del MDB
+(`mdb-strict-max-pool`, 4 por procesador que ve la JVM). En OpenShift, con el límite de 2 CPU, ese pool
+es de 8: cada instancia procesa como mucho 8 posiciones a la vez y las demás sesiones esperan con un
+mensaje tomado. La ingesta ocupa entonces hasta 8 de las 20 conexiones y quedan 12 para la API REST y el
+backoffice. Si se sube el límite de CPU, el pool de MDB crece y el tope pasa a ser
+`TRACKING_CONSUMIDORES`, que tiene que seguir por debajo de `DB_POOL_MAX`.
+
+### Límites de cada instancia
+
+Leídos el 18/11/2026 en un pod del central en OpenShift (límite de 2 CPU y 2 GiB):
+
+| Qué | Por instancia | Con 4 instancias | De dónde sale |
+| --- | --- | --- | --- |
+| Pedidos HTTP atendidos a la vez (Undertow) | 32 | 128 | `task-max-threads` del worker `default`: 16 por procesador |
+| Conexiones a PostgreSQL | 20 | 80 | `DB_POOL_MAX` |
+| Posiciones procesándose a la vez | 8 | 32 | `mdb-strict-max-pool`: 4 por procesador |
+| Consumidores de `queue_tracking` en Artemis | 15 | 60 | `TRACKING_CONSUMIDORES` |
+| Hilos de las tareas programadas (`@Schedule`) | 10 | 40 | Pool `default` del subsistema `ejb3` |
+| Conexiones a MongoDB | hasta 100 | hasta 400 | Valor por defecto del driver (`maxPoolSize` en `MONGO_URI`) |
+
+Hay más pedidos HTTP a la vez (32) que conexiones (20): con carga de la API sola, el pool se puede
+agotar antes que los hilos, y eso se ve en `datasources_pool_wait_count`. MongoDB no pasa por WildFly:
+el cliente del driver (`AlmacenPosiciones`, uno por instancia) tiene su propio pool, que no aparece en
+las estadísticas del datasource; las conexiones abiertas se ven del lado de MongoDB, con
+`db.serverStatus().connections`.
+
+Para leer los valores de un pod:
+
+```sh
+oc exec deployment/carga-uy -- /opt/jboss/wildfly/bin/jboss-cli.sh -c --commands='/subsystem=io/worker=default:read-attribute(name=task-max-threads),/subsystem=ejb3/strict-max-bean-instance-pool=mdb-strict-max-pool:read-attribute(name=derived-size),/subsystem=ejb3/thread-pool=default:read-attribute(name=max-threads)'
+```
 
 ### Cómo se mide en la prueba
 

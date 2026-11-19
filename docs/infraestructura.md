@@ -136,6 +136,25 @@ el central los encuentra con sus valores por defecto.
 Los nodos de tracking corren en otro proyecto y llegan al broker por la Route `artemis-nodos`; su
 despliegue está en la [guía del nodo](../nodo-tracking/README.md#despliegue-en-openshift).
 
+Los nodos de balanzas corren en otro proyecto, en otro clúster (`rm1`). El central los llama por HTTPS a
+la dirección con la que está registrado cada nodo ([balanzas](balanzas.md)).
+
+El suplantador de la PDI no está desplegado en OpenShift: sin `PDI_URL`, los ciudadanos entran sin los
+datos de la PDI y sin control de mayoría de edad ([suplantador](../pdi-suplantador/README.md#despliegue)).
+
+El Developer Sandbox escala a 0 los Deployments de un proyecto unas 12 horas después de levantarlos.
+Para volver a usar el sistema hay que escalarlos de nuevo: primero los servicios y después el central,
+que al arrancar necesita la base y el broker.
+
+```sh
+oc scale dc/postgres --replicas=1
+oc scale deployment/mongo deployment/artemis deployment/ldap deployment/observabilidad --replicas=1
+oc rollout status deployment/artemis
+oc scale deployment/carga-uy --replicas=1
+```
+
+Los proyectos de los nodos se apagan igual y se levantan por separado.
+
 El Service `artemis` publica también la consola (`8161`), solo dentro del proyecto: por ahí el central lee
 cada 10 s los mensajes esperando y los consumidores de `queue_tracking`, y los mensajes muertos (`DLQ`). Se
 autentica como el usuario `artemis` del broker, con `ARTEMIS_CONSOLA_USUARIO` (ConfigMap) y
@@ -260,6 +279,7 @@ Lo que hace que el central funcione con varias instancias:
 | Preparación de la base al arrancar | Los triggers de la auditoría y los datos de prueba toman un cerrojo de PostgreSQL (`pg_advisory_xact_lock`): si dos instancias arrancan a la vez, la segunda espera y encuentra todo hecho |
 | API (frontend y app) | Sin estado en el servidor: JWT firmado y DPoP sin guardar `jti` |
 | Backoffice (JSF) | El login es el mismo JWT, en una cookie, que se valida en cada pedido. El estado de cada pantalla (el árbol de JSF y los beans `@ViewScoped` de OmniFaces con `saveInViewState`) viaja cifrado en la página, en `jakarta.faces.ViewState`, y no en la sesión: no se crea sesión HTTP. Cualquier instancia atiende el clic siguiente, así que el Route no tiene afinidad (`disable_cookies`) |
+| Beans `@Singleton` | Hay uno por instancia, no uno en total. Ninguno guarda estado que tenga que ser único: el cliente de MongoDB y las métricas de la cola son por instancia, y la carga inicial se coordina con el cerrojo de PostgreSQL |
 | Métricas de la cola | Cada instancia publica el tamaño de la cola; el tablero toma el máximo |
 
 #### Estado de las pantallas del backoffice
