@@ -147,6 +147,7 @@ class MotorFiscalizacionEJBTest {
         motor.vehiculoDAO = vehiculoDAO;
         motor.balanzas = consultado -> pesajes;
         motor.casoDAO = casos;
+        motor.cacheNormas = new CacheNormas();
 
         CasoFiscalizacionEJB casoEJB = new CasoFiscalizacionEJB();
         casoEJB.casoDAO = casos;
