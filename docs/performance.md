@@ -340,9 +340,29 @@ el motor no lo usa. Con la base ya caliente, dos controles de 5 minutos con 600 
 | Las ITV vigentes de nuevo | ~2,6 | 371 / 379 / 199 ms |
 
 Una flota con la mitad de los vehículos en infracción es un extremo, pero el costo es proporcional: cada vehículo con
-caso abierto suma esas consultas con cada posición, todo el día. Se resolvería sin tocar el criterio de las reglas: si el
-caso ya existe, no cargarlo entero (alcanza con saber que existe), o recordar en cada instancia las claves ya
-registradas ese día.
+caso abierto suma esas consultas con cada posición, todo el día.
+
+Se corrigió en [#141](https://github.com/LucasLazogue/TSE-carga-uy/pull/141) sin tocar el criterio de las reglas: si el
+caso ya existe, el motor pregunta solo su id. En el compose local, con todos los vehículos con caso abierto, las
+consultas por posición bajaron de 25,8 a 19,8: las del caso pasan de 5 (el caso, su descargo, su resolución, la empresa
+y el vehículo) a 1. Con #141 desplegado se repitieron los controles esa noche
+([prueba-openshift/control_casos.sh](../performance/prueba-openshift/control_casos.sh)), con 5 minutos de k6 para
+calentar la base recién cargada y después alternando las dos situaciones dos veces:
+
+| Control, con #141 | CPU PostgreSQL | Frontoffice p95 (funcionario / responsable / público) |
+| --- | --- | --- |
+| La mitad de la flota con caso abierto | 2,8 | 507 / 568 / 211 ms |
+| Las ITV vigentes de nuevo | 2,8 | 512 / 572 / 217 ms |
+| Las ITV vigentes (repetición) | 2,8 | 593 / 624 / 242 ms |
+| La mitad de la flota con caso abierto (repetición) | 2,8 | 578 / 629 / 222 ms |
+
+Con el arreglo, la mitad de la flota con caso abierto cuesta lo mismo que ningún caso: la CPU de PostgreSQL y los tiempos
+del frontoffice son iguales en las dos situaciones, las dos veces.
+
+Lo que no se repitió es la línea de base. Esa noche, sin casos abiertos, funcionario y responsable dieron entre 510 y
+630 ms, contra 371 / 379 ms de la tarde, con PostgreSQL unos 0,3 CPU más arriba en todas las fases. La mediana fue la
+misma (unos 155 ms): lo que se mueve es la cola de la distribución. Con 600 pos/s y k6 a la vez, el p95 de esos dos
+escenarios queda cerca de los 500 ms y cambia de una sesión a otra.
 
 ### Lo que esta prueba no cubre
 
