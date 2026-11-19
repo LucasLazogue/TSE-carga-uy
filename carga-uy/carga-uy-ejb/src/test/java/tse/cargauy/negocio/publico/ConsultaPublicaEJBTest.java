@@ -52,7 +52,7 @@ class ConsultaPublicaEJBTest {
 
     @BeforeEach
     void iniciar() {
-        ejb.cache = new CacheIndicadoresPublicos();
+        ejb.cacheIndicadores = new CacheIndicadoresPublicos();
         ejb.empresaDAO = new EmpresaDAO() {
             @Override
             public EmpresaDto getEmpresaByNro(int nroEmpresa) {

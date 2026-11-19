@@ -24,8 +24,6 @@ import tse.cargauy.negocio.informe.InformeEJB;
 public class ConsultaPublicaEJB implements ConsultaPublicaEJBLocal {
 
     static final int UMBRAL_AGREGACION = 5;
-    // una por instancia del central, compartida por todos los EJB del pool
-    private static final CacheIndicadoresPublicos CACHE = new CacheIndicadoresPublicos();
 
     @EJB
     EmpresaDAOLocal empresaDAO;
@@ -36,8 +34,8 @@ public class ConsultaPublicaEJB implements ConsultaPublicaEJBLocal {
     @EJB
     GuiaDAOLocal guiaDAO;
 
-    // package-private para que los tests usen una propia
-    CacheIndicadoresPublicos cache = CACHE;
+    @EJB
+    CacheIndicadoresPublicos cacheIndicadores;
 
     @Override
     public IndicadoresPublicosDto getIndicadores(FiltroInforme filtro) {
@@ -45,7 +43,7 @@ public class ConsultaPublicaEJB implements ConsultaPublicaEJBLocal {
         LocalDate hoy = hoy();
         CacheIndicadoresPublicos.Clave clave = new CacheIndicadoresPublicos.Clave(hoy, filtro.getDesde(),
                 filtro.getHasta(), filtro.getIdTipoCarga(), filtro.getIdRubro());
-        return cache.obtener(clave, () -> calcular(filtro, hoy));
+        return cacheIndicadores.obtener(clave, () -> calcular(filtro, hoy));
     }
 
     private IndicadoresPublicosDto calcular(FiltroInforme filtro, LocalDate hoy) {

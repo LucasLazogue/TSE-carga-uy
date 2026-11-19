@@ -8,6 +8,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import jakarta.ejb.ConcurrencyManagement;
+import jakarta.ejb.ConcurrencyManagementType;
+import jakarta.ejb.Singleton;
 import tse.cargauy.dtos.IndicadoresPublicosDto;
 
 // Los indicadores publicos son agregados de meses, iguales para cualquiera que los pida con el mismo filtro, y
@@ -15,6 +18,9 @@ import tse.cargauy.dtos.IndicadoresPublicosDto;
 // a PostgreSQL, por encima de la ingesta de posiciones (docs/performance.md). Cada instancia del central guarda el
 // resultado unos minutos: un agregado de meses con minutos de atraso no le cambia nada a quien lo consulta.
 // Si llegan varios pedidos iguales mientras se calcula, esperan ese mismo calculo en lugar de repetirlo.
+// Un singleton por instancia; la concurrencia la resuelve el mapa, sin el bloqueo del contenedor.
+@Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class CacheIndicadoresPublicos {
 
     static final Duration VIGENCIA = Duration.ofMinutes(5);
