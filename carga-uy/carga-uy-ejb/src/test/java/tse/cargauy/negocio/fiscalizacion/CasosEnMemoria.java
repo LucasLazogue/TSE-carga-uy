@@ -36,6 +36,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     final List<NotificacionDto> notificacionesFuncionario = new ArrayList<>();
     Integer plazoDescargo = 10;
     Integer toleranciaExceso = 0;
+    Integer distanciaDesvio = 5000;
     Long empresaDeLosVehiculos;
     FiltroCasos ultimoFiltro;
 
@@ -141,7 +142,10 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
 
     @Override
     public Integer getNormaVigente(String clave, LocalDate fecha) {
-        return NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA.equals(clave) ? toleranciaExceso : plazoDescargo;
+        if (NormaFiscalizacion.TOLERANCIA_EXCESO_CARGA.equals(clave)) {
+            return toleranciaExceso;
+        }
+        return NormaFiscalizacion.DESVIO_RUTA_DISTANCIA.equals(clave) ? distanciaDesvio : plazoDescargo;
     }
 
     CasoFiscalizacionDto agregar(String clave, Long idEmpresa, EstadoCaso estado, LocalDateTime venceDescargo) {

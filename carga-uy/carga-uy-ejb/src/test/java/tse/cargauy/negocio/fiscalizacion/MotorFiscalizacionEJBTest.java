@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.opentelemetry.context.Context;
+import tse.cargauy.data.guia.GuiaDAO;
 import tse.cargauy.data.itv.ItvDAO;
 import tse.cargauy.data.permiso.PermisoDAO;
 import tse.cargauy.data.posicion.EventoPosicionDAO;
@@ -24,6 +25,7 @@ import tse.cargauy.dtos.CasoFiscalizacionDto;
 import tse.cargauy.dtos.EventoPosicionDto;
 import tse.cargauy.dtos.EvidenciaDto;
 import tse.cargauy.dtos.FiltroViajes;
+import tse.cargauy.dtos.GuiaDto;
 import tse.cargauy.dtos.ItvDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
@@ -56,6 +58,8 @@ class MotorFiscalizacionEJBTest {
     private final CasosEnMemoria casos = new CasosEnMemoria();
     private final EventoPosicionDto posicion = new EventoPosicionDto();
     private final PesajesViajeDto pesajes = new PesajesViajeDto();
+    private final GuiaDto guia = new GuiaDto();
+    private boolean sinGuia;
     private ViajeDto viajeEnCurso;
     private ViajeDto viajeAsignado;
     private ViajeDto viaje;
@@ -74,7 +78,18 @@ class MotorFiscalizacionEJBTest {
         posicion.setLatitud(-34.9);
         posicion.setLongitud(-56.2);
         posicion.setTimestampGeneracion(GENERADA);
+        // de Montevideo derecho al norte; la posicion arranca en el origen
+        guia.setOrigenLat(-34.9);
+        guia.setOrigenLon(-56.2);
+        guia.setDestinoLat(-32.3);
+        guia.setDestinoLon(-56.2);
 
+        motor.guiaDAO = new GuiaDAO() {
+            @Override
+            public GuiaDto getGuiaById(Long id) {
+                return sinGuia ? null : guia;
+            }
+        };
         motor.eventoDAO = new EventoPosicionDAO() {
             @Override
             public EventoPosicionDto get(Long idNodo, String idEvento) {
@@ -146,6 +161,7 @@ class MotorFiscalizacionEJBTest {
     private static ViajeDto viaje(EstadoViaje estado, LocalDateTime inicio) {
         ViajeDto viaje = new ViajeDto();
         viaje.setId(21L);
+        viaje.setIdGuia(31L);
         viaje.setIdVehiculo(VEHICULO);
         viaje.setEstado(estado);
         viaje.setFechaInicio(inicio);
@@ -191,6 +207,73 @@ class MotorFiscalizacionEJBTest {
         motor.evaluarPosicion(3L, "ev-1", Context.root());
 
         assertTrue(casos.casos.isEmpty());
+    }
+
+    // 0,2 grados de longitud al este de la ruta son unos 18 km, por encima de los 5000 m
+    @Test
+    void unaPosicionLejosDelTramoGeneraUnCasoDeDesvio() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        posicion.setLatitud(-34.0);
+        posicion.setLongitud(-56.0);
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        List<CasoFiscalizacionDto> desvios = casosDe(TipoInfraccion.DESVIO_RUTA);
+        assertEquals(1, desvios.size());
+        assertEquals("DESVIO_RUTA|11|viaje-21", desvios.get(0).getClaveDeduplicacion());
+        assertEquals(21L, desvios.get(0).getIdViaje());
+        EvidenciaDto evidencia = desvios.get(0).getEvidencias().get(0);
+        assertEquals(TipoEvidencia.POSICION, evidencia.getTipo());
+        assertEquals("5000 m", evidencia.getUmbral());
+    }
+
+    // unos 2,7 km de la ruta: dentro del margen
+    @Test
+    void unaPosicionCercaDelTramoNoEsDesvio() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        posicion.setLatitud(-34.0);
+        posicion.setLongitud(-56.23);
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        assertTrue(casosDe(TipoInfraccion.DESVIO_RUTA).isEmpty());
+    }
+
+    // 0,1 grados al sur del origen son unos 11 km: fuera del tramo se mide contra el extremo
+    @Test
+    void antesDelOrigenSeMideContraElOrigen() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        posicion.setLatitud(-35.0);
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        assertEquals(1, casosDe(TipoInfraccion.DESVIO_RUTA).size());
+    }
+
+    @Test
+    void sinLaGuiaNoSeEvaluaElDesvio() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        posicion.setLatitud(-34.0);
+        posicion.setLongitud(-56.0);
+        sinGuia = true;
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+
+        assertTrue(casosDe(TipoInfraccion.DESVIO_RUTA).isEmpty());
+    }
+
+    @Test
+    void variasPosicionesDelMismoDesvioDanUnSoloCaso() {
+        viajeEnCurso = viaje(EstadoViaje.EN_CURSO, LocalDateTime.of(2026, 10, 6, 8, 0));
+        posicion.setLatitud(-34.0);
+        posicion.setLongitud(-56.0);
+
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+        posicion.setIdEvento("ev-2");
+        posicion.setLongitud(-55.9);
+        motor.evaluarPosicion(3L, "ev-2", Context.root());
+
+        assertEquals(1, casosDe(TipoInfraccion.DESVIO_RUTA).size());
     }
 
     @Test
