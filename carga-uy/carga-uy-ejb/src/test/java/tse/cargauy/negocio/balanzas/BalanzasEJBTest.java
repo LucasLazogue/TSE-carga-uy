@@ -215,4 +215,30 @@ class BalanzasEJBTest {
         assertEquals(List.of("balanzas-colgado"), resultado.getNodosSinResponder());
         assertEquals(1, resultado.getPesajes().size());
     }
+
+    @Test
+    void conElEjecutorLlenoElNodoQuedaSinResponder() {
+        nodo(1L, "balanzas-sur");
+        respuestas.put("balanzas-sur", List.of());
+        ejecutor.shutdownNow();
+
+        PesajesViajeDto resultado = ejb.getPesajesDelViaje(viaje());
+
+        assertFalse(resultado.isCompleto());
+        assertEquals(List.of("balanzas-sur"), resultado.getNodosSinResponder());
+    }
+
+    @Test
+    void siInterrumpenElPedidoLosNodosQuedanSinResponderYSeConservaLaInterrupcion() {
+        nodo(1L, "balanzas-colgado");
+        Thread.currentThread().interrupt();
+        try {
+            PesajesViajeDto resultado = ejb.getPesajesDelViaje(viaje());
+
+            assertEquals(List.of("balanzas-colgado"), resultado.getNodosSinResponder());
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+    }
 }
