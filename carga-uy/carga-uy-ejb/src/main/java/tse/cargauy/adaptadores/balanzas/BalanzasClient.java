@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
 import org.eclipse.microprofile.faulttolerance.Fallback;
@@ -45,9 +46,18 @@ public class BalanzasClient {
         throw new CargaUYException(CodigoError.BALANZAS_NO_DISPONIBLE);
     }
 
+    // el @Timeout no puede cortar un socket bloqueado: contra un nodo que no contesta, la conexion quedaba esperando
+    // el timeout del sistema operativo (minutos) y ocupaba los hilos del ejecutor (docs/performance.md, balanzas
+    // caidas). Con estos topes el propio socket se corta y la falla llega a tiempo al reintento y al corte
+    static final int CONEXION_MS = 2000;
+    static final int LECTURA_MS = 3000;
+
     private NodoBalanzasApi api(String puntoAcceso) {
-        return nodos.computeIfAbsent(puntoAcceso,
-                url -> RestClientBuilder.newBuilder().baseUri(URI.create(url)).build(NodoBalanzasApi.class));
+        return nodos.computeIfAbsent(puntoAcceso, url -> RestClientBuilder.newBuilder()
+                .baseUri(URI.create(url))
+                .connectTimeout(CONEXION_MS, TimeUnit.MILLISECONDS)
+                .readTimeout(LECTURA_MS, TimeUnit.MILLISECONDS)
+                .build(NodoBalanzasApi.class));
     }
 
     static PesajeDto toDto(PesajeNodo pesaje, NodoPerifericoDto nodo) {
