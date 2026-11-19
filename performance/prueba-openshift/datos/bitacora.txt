@@ -95,3 +95,28 @@ pool fin 14:32:40
 pool restaurado: DB_POOL_MAX=20, autoescalado 1-4, nodos sin carga extra 14:32:43
 pool 20 de nuevo (vaciando la cola, 1 instancia) 14:33:17
 pool 20 de nuevo fin, autoescalado 1-4 14:40:18
+
+# 19/11/2026, noche: control de los casos abiertos con #141 desplegado (b7508b1)
+control casos 600/s inicio 17:05:41
+control casos k6 5m inicio (calentamiento, ITV vigentes) 17:08:42
+k6 control-141-calentamiento exit=99
+control casos: ITV vencida a la mitad de la flota 17:13:48
+control casos: casos abiertos 17:14:31
+control casos k6 5m inicio (mitad de la flota con caso abierto) 17:16:01
+k6 control-141 exit=99
+control casos: ITV vigentes de nuevo 17:21:03
+control casos k6 5m inicio (ITV vigentes) 17:21:36
+k6 control-141-vigentes exit=99
+control casos fin 17:26:39
+SIN_HABILITACION|9000
+control casos: nodos sin carga extra 17:26:43
+repeticion 600/s inicio (ITV vigentes; los casos de hoy ya existen) 17:27:41
+repeticion k6 5m inicio (ITV vigentes) 17:30:42
+k6 control-141-vigentes-2 exit=99
+repeticion: ITV vencida a la mitad de la flota (sus casos de hoy ya existen) 17:35:45
+repeticion k6 5m inicio (mitad de la flota con caso abierto) 17:36:19
+k6 control-141-2 exit=99
+repeticion fin 17:41:24
+SIN_HABILITACION|9000
+repeticion: nodos sin carga extra 17:41:28
+reinicio perfil demo 17:43:08
