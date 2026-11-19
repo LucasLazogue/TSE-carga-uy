@@ -73,6 +73,22 @@ puede encontrar la posición ya almacenada. La ingesta detecta ese caso y, si si
 como procesada, retoma los pasos posteriores. Los resultados distinguen `REGISTRADO`,
 `COMPLETADO` y `DUPLICADO`.
 
+El nodo genera `idEvento` como un UUID versión 4 (122 bits al azar), sin usar la hora ni el contenido
+de la posición, y lo conserva en cada reintento. La deduplicación es por identidad del mensaje y no por
+contenido, porque lo que se repite es la entrega: el reintento del nodo cuando el broker no confirmó, la
+reentrega del broker después de un rollback, o una caída del central entre la inserción en MongoDB y el
+commit. Una clave por matrícula, hora y coordenadas descartaría lecturas distintas (un vehículo detenido
+cuyo GPS redondea la hora al segundo, o dos nodos que reportan el mismo vehículo) y dejaría pasar
+reenvíos si las coordenadas cambian de precisión en el camino. La clave lleva `idNodo` para no depender
+de cómo genera cada nodo sus identificadores: alcanza con que no se repitan dentro del nodo.
+
+Artemis no deduplica. Su detección de duplicados solo mira lo que se publica y no cubre la reentrega
+después de un rollback del central, así que el índice único haría falta igual.
+
+Con más volumen hay dos mejoras posibles del lado del nodo: un identificador ordenado en el tiempo
+(UUID versión 7), para que las inserciones en el índice único sean secuenciales en lugar de caer al
+azar, o un número de secuencia por nodo, que además permitiría detectar posiciones perdidas.
+
 Referencias: [IngestaTrackingEJB](../carga-uy/carga-uy-ejb/src/main/java/tse/cargauy/negocio/tracking/IngestaTrackingEJB.java)
 y [EventoPosicionDAO](../carga-uy/carga-uy-datos/src/main/java/tse/cargauy/data/posicion/EventoPosicionDAO.java).
 
