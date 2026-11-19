@@ -28,8 +28,10 @@ vehículos cada 30 s, repartidos entre los dos nodos. Desde `carga-uy`:
     NODO_INTERVALO_SEG=30 NODO_VEHICULOS_EXTRA=9000 NODO_2_VEHICULOS_EXTRA=9000 \
       docker compose up -d nodo-tracking nodo-tracking-2
 
-Para el pico, `NODO_SIN_COBERTURA=desde,durante` (en minutos) retiene las posiciones y las publica
-todas juntas al volver la cobertura. Para volver a la flota normal, `NODO_VEHICULOS_EXTRA=0`.
+Para el pico hay dos formas. `NODO_INTERVALO_SEG=10` con la misma flota triplica la carga de forma pareja (1.800
+posiciones/s con los 18.000 vehículos): es la que se usó en OpenShift. `NODO_SIN_COBERTURA=desde,durante` (en minutos)
+retiene las posiciones y las publica todas juntas al volver la cobertura, que es más fiel al caso real pero llega de
+golpe. Para volver a la flota normal, `NODO_VEHICULOS_EXTRA=0`.
 
 Se mira en Grafana, en el tablero **carga.uy · ingesta, nodo y API**:
 - posiciones generadas en el nodo frente a procesadas en el central;
@@ -130,6 +132,80 @@ Conclusión: en la máquina de desarrollo el punto de quiebre está entre 250 y 
 la prueba de performance de la entrega final (AC09 a AC11) hay que separar el generador del central
 y correrla con el central en Elastic Cloud. Las varias instancias del central consumen la misma cola
 (DA02), así que se puede medir también el escalado horizontal.
+
+## Prueba en OpenShift (18 y 19/11/2026)
+
+### Entorno
+
+| Componente | Recursos (límite) | Notas |
+| --- | --- | --- |
+| Central (WildFly) | 2 CPU, 2 GiB por instancia | Autoescalado de 1 a 4 instancias por CPU (70 %) |
+| PostgreSQL | 1 CPU y 512 MiB al empezar; 2 CPU y 2 GiB; 4 CPU y 2 GiB al final | Ver cada corrida |
+| MongoDB | 1 CPU, 1 GiB, 5 GiB de disco | |
+| Artemis | 1 CPU, 2,5 GiB | Cola `queue_tracking` |
+| Nodos de tracking (2) | 1 CPU cada uno | En otro proyecto del mismo clúster; publican al Artemis del central por su ruta |
+| k6 | Máquina de desarrollo | Unos 280 ms de cada pedido son TLS y red hasta el clúster |
+
+La base se carga con el [juego de datos](#juego-de-datos) antes de cada corrida (perfil `performance`). La carga de
+tracking se sube por escalones con `NODO_VEHICULOS_EXTRA` (2.250 vehículos extra por nodo = 150 posiciones/s en total)
+y el frontoffice se simula con k6 con `TASA=5` (15 iteraciones/s entre los tres escenarios, unos 50 pedidos/s). Cada
+15 s se registran las métricas de Prometheus (generadas, publicadas y procesadas por segundo, cola, tiempos de la
+ingesta, uso del pool) y la CPU de cada pod (`oc adm top`).
+
+### Resultados
+
+| Corrida | Cambios | Carga | Procesadas (pos/s) | Frontoffice p95 | Errores k6 | CPU PostgreSQL |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Ninguno: PostgreSQL con el límite por defecto (1 CPU, 512 MiB) | 150 pos/s | ~14 | | | 1 CPU (tope); reinicios por memoria (OOMKilled) |
+| 2 | Índices de claves foráneas; PostgreSQL a 2 CPU y 2 GiB | 150 / 300 / 600 pos/s | 150 / 300 / 600 | | | 0,44 / 0,85 / 1,7–2 CPU |
+| 2 | | 600 pos/s + k6 | ~22 | 8,5 s / 9,3 s / 20,7 s | 10 % | 2 CPU (tope) |
+| 2 | | k6 solo | | 6,5 s / 7,2 s / 18,1 s | 8,9 % | 2 CPU (tope) |
+| 3 | Caché de indicadores públicos e índice de guías por empresa | k6 solo | | 296 / 258 / 163 ms | 0 % | |
+| 3 | | 600 pos/s + k6 | ~460 | 1,9 s / 2,4 s / 3,4 s | 2,4 % | 2 CPU (tope) |
+| 4 | PostgreSQL a 4 CPU | 600 pos/s + k6 | **600** | **347 / 351 / 168 ms** | **0 %** | ~2,2 CPU |
+| 4 | | 900 pos/s | **900** | | | ~2,1 CPU |
+
+Los p95 del frontoffice son de los escenarios funcionario / responsable / público. El tiempo de procesamiento de una
+posición (p95) fue de 13 ms a 150 pos/s, 65 ms a 300 y unos 50 ms a 600 con k6 en la corrida 4; la espera en la cola
+(p95), de unos 350 ms a 600 pos/s y 600 ms a 900. El autoescalado llevó el central a 4 instancias en todas las corridas
+con carga.
+
+### Qué limitó cada corrida
+
+1. **Faltaban índices.** PostgreSQL no indexa las claves foráneas, y la ingesta busca el viaje en curso, el permiso y
+   la ITV por vehículo en cada posición. Sin índice, la búsqueda del viaje recorría la tabla entera (24 ms); con el
+   índice, 0,1 ms. Se agregaron como `@Index` en las entidades.
+2. **El límite por defecto del proyecto (1 CPU, 512 MiB) no alcanza para PostgreSQL.** Con 18.000 vehículos, la base
+   se quedaba sin memoria y el contenedor se reiniciaba. Se subió a 2 CPU y 2 GiB
+   ([infraestructura](infraestructura.md)).
+3. **Una consulta pública repetida.** Con k6, la consulta de los indicadores públicos (agregados de meses sobre todos
+   los viajes) era la que más aparecía en `pg_stat_activity`: se calculaba entera en cada pedido, aunque el resultado
+   es el mismo para cualquiera que pida el mismo período. Le sacaba a la base la CPU que necesitaba la ingesta, que
+   bajaba a 22 pos/s. Ahora cada instancia guarda el resultado 5 minutos (`CacheIndicadoresPublicos`). También
+   faltaba un índice en `guia(empresa_id)` para el listado de viajes de una empresa.
+4. **La CPU de PostgreSQL.** Con 2 CPU la base quedaba en su tope con 600 pos/s y k6 juntos; con 4 CPU usa unas 2,2 y
+   se cumplen los dos objetivos a la vez.
+
+### Pico de 1.800 posiciones/s
+
+Con PostgreSQL en 4 CPU, la flota del volumen objetivo reportó cada 10 s durante 5 minutos (1.800 pos/s) y después
+volvió a cada 30 s (600 pos/s):
+
+- Durante el pico el central procesó unas **950 pos/s**: la diferencia se acumuló en la cola de Artemis, que llegó a
+  unos **240.000 mensajes**, sin errores ni mensajes en la DLQ.
+- De vuelta a 600 pos/s, la cola bajó unos 340 mensajes por segundo (procesando ~940): se vacía en unos 12 minutos.
+  Mientras tanto, la antigüedad de las posiciones al procesarse pasa del tope del histograma (30 s).
+- El límite de esas 950 pos/s no fue PostgreSQL (2,4 de sus 4 CPU) ni el central (unos 3 CPU entre las 4 instancias):
+  MongoDB estuvo todo el pico en su límite de 1 CPU. En `pg_stat_activity`, unas 8 conexiones por instancia estaban
+  `idle in transaction` y casi ninguna ejecutando: son los 8 consumidores de cada instancia (`mdb-strict-max-pool`) con
+  la transacción abierta mientras guardan la posición en MongoDB. El pool de conexiones no es el límite: está lleno
+  porque cada consumidor retiene su conexión mientras espera.
+
+La cola cumple su función: el pico no se pierde ni tira abajo al central, se procesa con atraso.
+
+Las instancias del central nunca fueron el cuello de botella: en la corrida 2 el autoescalado subió a 4 instancias
+mientras la ingesta caía, porque el límite estaba en la base. Agregar instancias solo suma conexiones a una base que
+ya no da más.
 
 ## Conexiones a la base
 
