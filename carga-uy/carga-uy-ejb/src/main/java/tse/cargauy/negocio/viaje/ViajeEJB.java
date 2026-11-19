@@ -5,6 +5,8 @@ import java.util.List;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import tse.cargauy.data.eventoviaje.EventoViajeDAOLocal;
 import tse.cargauy.data.guia.GuiaDAOLocal;
 import tse.cargauy.data.itv.ItvDAOLocal;
@@ -80,7 +82,11 @@ public class ViajeEJB implements ViajeEJBLocal, ViajeEJBRemote {
         return eventoViajeDAO.getByViaje(id, paginacion);
     }
 
+    // sin transaccion: con una abierta, la conexion a la base que tomo la primera lectura queda retenida mientras se
+    // espera a las balanzas, y con un nodo colgado esos pedidos agotan el pool y hacen fallar al resto del central
+    // (docs/performance.md, balanzas caidas). Cada lectura toma y devuelve su conexion por su cuenta
     @RolesAllowed({ Rol.RESPONSABLE, Rol.FUNCIONARIO })
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public PesajesViajeDto getPesajes(Long idEmpresa, Long id) {
         empresaEJB.validarAcceso(idEmpresa);
         return balanzas.getPesajesDelViaje(getDeEmpresa(idEmpresa, id));
