@@ -275,8 +275,9 @@ una con la cola llena. El panel de instancias cuenta las que procesaron algo en 
 autoescalado.*
 
 Hasta 2 instancias el límite es la CPU de cada instancia y agregar una casi duplica la capacidad. Con 4, el límite
-pasa a ser PostgreSQL, que comparten todas: ahí agregar instancias ya no rinde lo mismo. Las conexiones no limitaron en
-ningún caso (4 × 20 = 80, por debajo de las 100 de PostgreSQL). El paso siguiente para escalar más sería la base:
+pasa a ser PostgreSQL, que comparten todas: ahí agregar instancias ya no rinde lo mismo. Las conexiones no limitaron la
+cantidad de instancias (4 × 20 = 80, por debajo de las 100 de PostgreSQL), pero ver [el pool de cada
+instancia](#el-pool-de-cada-instancia-en-la-prueba). El paso siguiente para escalar más sería la base:
 más CPU, una réplica de lectura para el frontoffice, o sacar lecturas de la ingesta con cachés como la de normas.
 
 ### Escenarios de falla
@@ -395,6 +396,16 @@ oc exec deployment/carga-uy -- /opt/jboss/wildfly/bin/jboss-cli.sh -c --commands
 
 - **Qué se busca:** si al pasar de 1 a 4 instancias el throughput de la ingesta y el p95 del
   frontoffice escalan, o si aparecen esperas por conexión antes de que la CPU se sature.
+
+### El pool de cada instancia en la prueba
+
+En todas las corridas con carga, cada instancia tuvo su pool lleno (`datasources_pool_in_use_count` en 20) y
+`datasources_pool_wait_count` subió en proporción a lo procesado: unas 2,3 esperas por posición, por ejemplo unas
+1.450 por segundo con una instancia a 610 pos/s y unas 3.600 con cuatro a 1.600 pos/s. El límite de cada fase fue la
+CPU (del central o de PostgreSQL) y el procesamiento de una posición siguió en decenas de ms (p95), así que las esperas
+son cortas, pero no se midió cuánto duran (`datasources_pool_max_wait_time` no se registró) ni si con un pool más
+grande una instancia procesa más. Para saberlo: una instancia fija, la cola llena y `DB_POOL_MAX` en 20 y en 40,
+comparando lo procesado, el p95 del procesamiento y el tiempo máximo de espera.
 
 ### Si las conexiones son el cuello de botella
 
