@@ -313,13 +313,23 @@ afinidad que alterna las instancias en cada pedido; el encabezado `X-Instancia` 
 Con una pantalla abierta, `docker compose stop carga-uy` apaga una instancia y el clic siguiente lo
 atiende la otra.
 
-### Datos de la demo y reinicio
+### Datos del central
 
-El central carga dos capas de datos al arrancar, y las dos solo agregan lo que falta, así que reiniciarlo no duplica
-nada:
+El central carga sus datos al arrancar, y solo agrega lo que falta, así que reiniciarlo no duplica nada. Qué carga
+depende del perfil, en `CARGAUY_DATOS`:
 
-- **Datos de prueba** (`DatosPrueba`): empresas, vehículos con sus permisos e ITV, Guías, viajes, casos en cada
-  estado y las normas de fiscalización, con personas ficticias. Están siempre. Incluyen cinco empresas más
+| Perfil | Qué hay | Para qué |
+| --- | --- | --- |
+| `demo` (por defecto) | Datos de referencia, datos de prueba y, si existe el Secret, el elenco | Desarrollo y la demo |
+| `base` | Solo los datos de referencia (y los nodos del elenco, si existe el Secret) | Empezar sin empresas ni personas inventadas |
+| `performance` | `base` más [performance/datos.sql](../performance/datos.sql): la flota del volumen objetivo | La [prueba de performance](performance.md#juego-de-datos) |
+
+`performance` no es un valor de `CARGAUY_DATOS`: es `base` más el script, que se carga con el reinicio.
+
+- **Datos de referencia** (`DatosPrueba`, en todos los perfiles): los roles, los rubros, los tipos de carga y las
+  normas de fiscalización vigentes.
+- **Datos de prueba** (`DatosPrueba`, solo en `demo`): empresas, vehículos con sus permisos e ITV, Guías, viajes y
+  casos en cada estado, con personas ficticias. Incluyen cinco empresas más
   (1005 a 1009, `HistoriaPublica`) con un viaje terminado por mes de febrero a octubre: la información pública solo
   muestra un mes o un rubro con al menos 5 empresas y 5 vehículos detrás, y sin ellas Estadísticas quedaba vacía.
 - **Elenco de la demo** (`ElencoDemo`): quién es funcionario, responsable o chofer, y los nodos periféricos
@@ -346,21 +356,44 @@ oc create secret generic carga-uy-demo \
   --from-literal='DEMO_NODOS=tracking-1;tracking-2;balanzas-sur|https://URL/nodo-balanzas|CLAVE_CENTRAL;balanzas-norte|https://URL/nodo-balanzas|CLAVE_CENTRAL'
 ```
 
-[openshift/reiniciar-datos.sh](../carga-uy/openshift/reiniciar-datos.sh) deja el central como recién instalado, para
-repetir la demo o una prueba desde el mismo punto:
+Sin los datos de prueba, el elenco carga igual los nodos, los funcionarios y los ciudadanos; los responsables y los
+choferes quedan sin empresa, porque la de la demo no existe.
+
+[openshift/reiniciar-datos.sh](../carga-uy/openshift/reiniciar-datos.sh) deja el central como recién instalado, con el
+perfil que se elija, para repetir la demo o una prueba desde el mismo punto:
+
+```sh
+./reiniciar-datos.sh                          # demo
+./reiniciar-datos.sh --perfil base
+./reiniciar-datos.sh --perfil performance
+./reiniciar-datos.sh --perfil performance -- -v vehiculos=6000 -v meses=3   # parámetros de datos.sql
+```
 
 1. apaga el central;
 2. borra y vuelve a crear la base de PostgreSQL. No alcanza con vaciar las tablas: los triggers de la auditoría no
    dejan borrar la pista;
 3. borra las posiciones de MongoDB;
-4. enciende el central, que crea el esquema y carga las dos capas.
+4. deja el perfil en el Deployment (`CARGAUY_DATOS`), donde queda hasta el próximo reinicio: un despliegue no lo
+   cambia;
+5. enciende el central, que crea el esquema y carga los datos del perfil;
+6. con `performance`, carga `performance/datos.sql`.
 
 Pide confirmación escribiendo el nombre del proyecto. No toca los usuarios de LDAP, las cuentas de gub.uy, la cola de
 Artemis ni los pesajes de los nodos de balanzas. Después del reinicio, cualquier cuenta de gub.uy que no esté en el
 elenco entra como ciudadano sin rol.
 
-En Compose, el elenco se define en el `.env` con las mismas variables, y el reinicio es
-`docker compose down -v && docker compose up -d`.
+En Compose, el perfil y el elenco se definen en el `.env` con las mismas variables (`CARGAUY_DATOS`, `DEMO_*`). El
+reinicio, desde `carga-uy`:
+
+```sh
+docker compose down -v && docker compose up -d                                   # demo
+docker compose down -v && CARGAUY_DATOS=base docker compose up -d                # base
+# performance: base y, con el central ya arrancado, el script
+docker compose exec -T postgres psql -U cargauy -d cargauy < ../performance/datos.sql
+```
+
+Para que el central acepte las posiciones de la prueba, los nodos `tracking-1` y `tracking-2` tienen que estar
+registrados y habilitados: en el perfil `base`, eso lo hace el elenco con `DEMO_NODOS`.
 
 ### Broker y almacén de posiciones
 

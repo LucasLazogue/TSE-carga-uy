@@ -35,7 +35,7 @@ final class Flota {
 
     static List<VehiculoSimulado> armar(ConfigFlota config, Random azar) throws IOException {
         List<VehiculoSimulado> flota = new ArrayList<>(cargar(config.rutas()));
-        flota.addAll(generar(config.vehiculosExtra(), azar));
+        flota.addAll(generar(config.vehiculosExtra(), config.primerVehiculo(), azar));
         return flota;
     }
 
@@ -58,10 +58,11 @@ final class Flota {
         }
     }
 
-    // matriculas SIM0001, SIM0002...: no estan registradas en el central salvo que se carguen aparte
-    static List<VehiculoSimulado> generar(int cantidad, Random azar) {
+    // matriculas SIM0001, SIM0002... desde 'primero': no estan registradas en el central salvo que se carguen aparte
+    // (performance/datos.sql registra SIM0001 a SIM18000)
+    static List<VehiculoSimulado> generar(int cantidad, int primero, Random azar) {
         List<VehiculoSimulado> flota = new ArrayList<>();
-        for (int i = 1; i <= cantidad; i++) {
+        for (int i = primero; i < primero + cantidad; i++) {
             Punto origen = CIUDADES.get(azar.nextInt(CIUDADES.size()));
             Punto destino = origen;
             while (destino.equals(origen)) {
