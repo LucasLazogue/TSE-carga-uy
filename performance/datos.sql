@@ -145,7 +145,7 @@ SELECT 20000000 + n, 'FINALIZADO', fecha + time '08:00', fecha + time '14:00', 0
 FROM historia;
 
 INSERT INTO eventoviaje (id, idevento, idviaje, idchofer, tipo, resultado, timestampgeneracion, timestamprecepcion)
-SELECT 20000000 + 2 * n - 1 + k, 'prf-' || n || (ARRAY['-inicio', '-fin'])[k + 1], 20000000 + n, 10000000 + v,
+SELECT 20000000 + 2 * n - 1 + k, 'prf-' || n || (ARRAY['-inicio', '-fin'])[k + 1], 20000000 + n, 11000000 + v,
        (ARRAY['INICIO', 'FIN'])[k + 1], 'APLICADO',
        ((fecha + time '08:00' + k * interval '6 hours') AT TIME ZONE 'America/Montevideo'),
        ((fecha + time '08:00' + k * interval '6 hours' + interval '2 seconds') AT TIME ZONE 'America/Montevideo')
@@ -179,15 +179,28 @@ SELECT 10000000 + v, 'EN_CURSO', p.ahora - interval '1 hour' - make_interval(min
 FROM flota, param p;
 
 INSERT INTO eventoviaje (id, idevento, idviaje, idchofer, tipo, resultado, timestampgeneracion, timestamprecepcion)
-SELECT 10000000 + v, 'prf-curso-' || v, 10000000 + v, 10000000 + v, 'INICIO', 'APLICADO',
+SELECT 10000000 + v, 'prf-curso-' || v, 10000000 + v, 11000000 + v, 'INICIO', 'APLICADO',
        (p.ahora - interval '1 hour' - make_interval(mins => v % 60)) AT TIME ZONE 'America/Montevideo',
        (p.ahora - interval '1 hour' - make_interval(mins => v % 60) + interval '2 seconds') AT TIME ZONE 'America/Montevideo'
 FROM flota, param p;
 
+-- el siguiente viaje de cada vehiculo, asignado al mismo chofer: el escenario movil de k6 termina el viaje en curso e
+-- inicia este, como en la operativa real, donde el vehiculo no queda circulando sin viaje
+INSERT INTO guia (id, fecha, origenlat, origenlon, destinolat, destinolon, volumen, empresa_id, responsable_id, rubro_id, tipocarga_id)
+SELECT 30000000 + v, p.hoy, -30.9053, -55.5508, -34.9011, -56.1645, 15000 + (v % 10) * 500,
+       10000000 + e, 10000000 + e,
+       p.rubros[v % array_length(p.rubros, 1) + 1], p.tipos[v % array_length(p.tipos, 1) + 1]
+FROM flota, param p;
+
+INSERT INTO viaje (id, estado, version, chofer_id, guia_id, vehiculo_id)
+SELECT 30000000 + v, 'ASIGNADO', 0, 10000000 + v, 30000000 + v, 10000000 + v
+FROM flota;
+
 SELECT (SELECT count(*) FROM empresa WHERE id >= 10000000) AS empresas,
        (SELECT count(*) FROM vehiculo WHERE id >= 10000000) AS vehiculos,
        (SELECT count(*) FROM viaje WHERE id >= 10000000 AND estado = 'EN_CURSO') AS viajes_en_curso,
-       (SELECT count(*) FROM viaje WHERE id >= 20000000) AS viajes_terminados,
+       (SELECT count(*) FROM viaje WHERE id >= 30000000 AND estado = 'ASIGNADO') AS viajes_asignados,
+       (SELECT count(*) FROM viaje WHERE id BETWEEN 20000000 AND 29999999) AS viajes_terminados,
        (SELECT count(*) FROM casofiscalizacion WHERE id >= 20000000) AS casos,
        (SELECT count(*) FROM itv WHERE id >= 10000000 AND fechavencimiento < (SELECT hoy FROM param)) AS itv_vencidas;
 

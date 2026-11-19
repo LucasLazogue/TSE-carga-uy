@@ -9,6 +9,7 @@
 //   k6 run -e JWT_SECRETO="$CARGAUY_JWT_SECRET" -e TASA=20 -e DURACION=10m performance/frontoffice.js
 import http from 'k6/http';
 import { check, group } from 'k6';
+import exec from 'k6/execution';
 import crypto from 'k6/crypto';
 import encoding from 'k6/encoding';
 
@@ -17,6 +18,13 @@ const SECRETO = __ENV.JWT_SECRETO;
 // pedidos por segundo de cada tipo de usuario (cada iteracion hace varias consultas, ver abajo)
 const TASA = Number(__ENV.TASA || 10);
 const DURACION = __ENV.DURACION || '5m';
+// choferes que terminan su viaje por segundo desde la app movil (0 = sin escenario movil). Con 18.000 vehiculos y
+// viajes de unas 5 horas, termina un viaje por segundo. Ver "Escenario movil" en docs/performance.md
+const TASA_MOVIL = Number(__ENV.TASA_MOVIL || 0);
+// primer vehiculo SIM que usa el escenario movil: cada iteracion toma el siguiente. En una segunda corrida sobre la
+// misma carga de datos, arrancar despues de los que ya se usaron
+const MOVIL_DESDE = Number(__ENV.MOVIL_DESDE || 1);
+const VEHICULOS = Number(__ENV.VEHICULOS || 18000);
 const USUARIOS = JSON.parse(open(__ENV.USUARIOS || './usuarios.json'));
 
 if (!SECRETO) {
@@ -33,12 +41,17 @@ const escenario = (funcion) => ({
   maxVUs: TASA * 20,
 });
 
+const escenarios = {
+  responsable: escenario('responsable'),
+  funcionario: escenario('funcionario'),
+  publico: escenario('publico'),
+};
+if (TASA_MOVIL > 0) {
+  escenarios.movil = { ...escenario('movil'), rate: TASA_MOVIL };
+}
+
 export const options = {
-  scenarios: {
-    responsable: escenario('responsable'),
-    funcionario: escenario('funcionario'),
-    publico: escenario('publico'),
-  },
+  scenarios: escenarios,
   thresholds: {
     // el SLO de la letra, por tipo de usuario
     'http_req_duration{scenario:responsable}': ['p(95)<500'],
@@ -47,6 +60,10 @@ export const options = {
     http_req_failed: ['rate<0.01'],
   },
 };
+if (TASA_MOVIL > 0) {
+  // el fin y el inicio se tienen que aplicar: un rechazo indica un problema de datos o de concurrencia
+  options.thresholds['checks{scenario:movil}'] = ['rate>0.99'];
+}
 
 const b64 = (texto) => encoding.b64encode(texto, 'rawurl');
 
@@ -112,3 +129,51 @@ export function publico(datos) {
     ok(http.get(`${BASE}/api/publico/indicadores?desde=${anio}-01-01&hasta=${anio}-12-31`, { tags: { name: 'indicadores' } }));
   });
 }
+
+// uuid v4 como el que genera la app para cada evento
+function uuid() {
+  const b = new Uint8Array(crypto.randomBytes(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+// el chofer de un vehiculo SIM termina el viaje en curso e inicia el siguiente, como la app: pide sus viajes y manda
+// los dos eventos en un mismo envio. Al terminar el viaje, el central lo evalua en segundo plano y le pide los pesajes
+// a los nodos de balanzas. Los ids salen de performance/datos.sql: el chofer del vehiculo n es el usuario 11000000 + n
+export function movil() {
+  const n = MOVIL_DESDE + exec.scenario.iterationInTest;
+  if (n > VEHICULOS) {
+    return;
+  }
+  const chofer = { id: 11000000 + n, cedula: String(71000000 + n) };
+  const t = token(chofer, ['CHOFER']);
+  group('movil', () => {
+    const viajes = http.get(`${BASE}/api/movil/viajes`, conToken(t, 'movil viajes'));
+    ok(viajes);
+    // cada elemento es { viaje, guia }
+    const lista = viajes.status === 200 ? viajes.json().map((x) => x.viaje) : [];
+    const enCurso = lista.find((v) => v.estado === 'EN_CURSO');
+    const siguiente = lista.find((v) => v.estado === 'ASIGNADO');
+    const ahora = Date.now();
+    const eventos = [];
+    if (enCurso) {
+      eventos.push({ idEvento: uuid(), idViaje: enCurso.id, tipo: 'FIN', timestampGeneracion: new Date(ahora).toISOString() });
+    }
+    if (siguiente) {
+      eventos.push({ idEvento: uuid(), idViaje: siguiente.id, tipo: 'INICIO', timestampGeneracion: new Date(ahora + 1000).toISOString() });
+    }
+    if (!eventos.length) {
+      return;
+    }
+    const sync = http.post(`${BASE}/api/movil/sync`, JSON.stringify(eventos),
+      { headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, tags: { name: 'movil sync' } });
+    check(sync, {
+      'sync 200': (x) => x.status === 200,
+      'eventos aplicados': (x) => x.status === 200
+        && (x.json('resultados') || []).every((r) => r.resultado === 'APLICADO'),
+    });
+  });
+}
+
