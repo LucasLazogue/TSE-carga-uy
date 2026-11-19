@@ -140,7 +140,7 @@ y correrla con el central en la nube (se hizo en OpenShift: ver la sección sigu
 | Objetivo (letra, sección 4.3) | Resultado | Dónde |
 | --- | --- | --- |
 | p95 de las consultas del frontoffice < 500 ms | ✅ 168 a 426 ms con 600 pos/s, también durante 40 minutos y con una balanza caída | [Resultados](#resultados), [corrida larga](#sin-degradación-en-el-tiempo) |
-| Sostener el volumen estimado (600 pos/s) sin pérdida | ✅ procesa lo que llega, cola estable, DLQ en 0 y sin errores de ingesta | [Resultados](#resultados) |
+| Sostener el volumen estimado (600 pos/s) sin pérdida | ✅ procesa lo que llega, cola estable y DLQ en 0 (los únicos errores son reentregas al apagarse una instancia) | [Resultados](#resultados) |
 | Los tiempos no se degradan a lo largo de la prueba | ✅ 40 minutos con p95 estable | [Corrida larga](#sin-degradación-en-el-tiempo) |
 | Punto de quiebre | ~1.600 pos/s con 4 instancias, limitado por la CPU de PostgreSQL | [Escalado](#escalado-horizontal) |
 | Cuellos de botella, con evidencia de la observabilidad | Índices, memoria y CPU de PostgreSQL, una consulta pública repetida, MongoDB, CPU del central | [Qué limitó cada corrida](#qué-limitó-cada-corrida) |
@@ -222,6 +222,13 @@ Corrida 5: 600 pos/s y k6 durante 40 minutos. p95 del frontoffice por tramos de 
 | 30–35 | 363 ms | 392 ms | 179 ms |
 | 35–40 | 366 ms | 413 ms | 182 ms |
 
+![Tablero de la ingesta durante la corrida larga](imagenes/performance/corrida-larga-40-min.jpg)
+
+*Corrida 5 en el tablero de la ingesta: 600 pos/s parejas durante 40 minutos, con el procesamiento y la espera en la
+cola planos después del arranque y 4 instancias. El único error, al principio, es una transacción deshecha cuando el
+autoescalado apagó una instancia: el broker reentrega el mensaje a otra y no llega a la DLQ
+([infraestructura](infraestructura.md#varias-instancias-y-autoescalado)).*
+
 El primer tramo es más lento por el arranque (compilación de la JVM, cachés vacías y el autoescalado subiendo
 instancias); después los tiempos quedan estables, sin tendencia a crecer. La ingesta se mantuvo en 600 pos/s todo el
 tiempo, con el procesamiento en unos 80 ms (p95) y la CPU de PostgreSQL entre 2,2 y 2,35.
@@ -241,6 +248,12 @@ volvió a cada 30 s (600 pos/s):
   la transacción abierta mientras guardan la posición en MongoDB. El pool de conexiones no es el límite: está lleno
   porque cada consumidor retiene su conexión mientras espera.
 
+![Tablero de la ingesta en la corrida 4 y el pico](imagenes/performance/corrida4-600-900-y-pico-1800.jpg)
+
+*Corrida 4 y el pico: 600 y 900 pos/s sin cola; desde las 01:26, el pico de 1.800 pos/s procesado a unas 950 mientras
+la cola sube a ~240.000 mensajes y después baja. La espera y la antigüedad quedan en el tope del histograma (30 s)
+mientras hay cola.*
+
 La cola cumple su función: el pico no se pierde ni tira abajo al central, se procesa con atraso. Con MongoDB en 2 CPU,
 4 instancias procesan unas 1.600 pos/s ([escalado](#escalado-horizontal)): un pico de 1.800 casi no se acumula.
 
@@ -254,6 +267,12 @@ que se pueden procesar (llenada a 1.800 o 2.700 pos/s), lo que procesa el centra
 | 1 | ~610 | 12 ms | CPU del central | 1,9 (de 2) / 1,2 / 0,5 |
 | 2 | ~1.170 (×1,9) | 60–75 ms | CPU del central | 3,8 (de 4) / 2,6 / 1,1 |
 | 4 | ~1.600 (×1,4) | ~50 ms | CPU de PostgreSQL | 4,5 (de 8) / 3,9 (de 4) / 1,6 |
+
+![Tablero de la ingesta con 1, 2 y 4 instancias](imagenes/performance/escalado-1-2-4-instancias.jpg)
+
+*Escalado: las tres mesetas de posiciones procesadas son 1, 2 y 4 instancias (unas 610, 1.170 y 1.600 pos/s), cada
+una con la cola llena. El panel de instancias cuenta las que procesaron algo en el último minuto, no las que fijó el
+autoescalado.*
 
 Hasta 2 instancias el límite es la CPU de cada instancia y agregar una casi duplica la capacidad. Con 4, el límite
 pasa a ser PostgreSQL, que comparten todas: ahí agregar instancias ya no rinde lo mismo. Las conexiones no limitaron en
@@ -276,6 +295,11 @@ En la corrida 6 la caída fue con la carga completa: el frontoffice no se movió
 quedaron pendientes de evaluar (hasta 251) y el job de reevaluación los completó en unos 4 minutos y medio después de
 que volvió el nodo. El corte es uno solo para todas las balanzas ([balanzas](balanzas.md#tolerancia-a-fallas)):
 mientras está abierto tampoco se le pregunta al nodo que funciona.
+
+![Tablero de la ingesta en la corrida 6](imagenes/performance/corrida-final-600-k6-movil-balanza-caida.jpg)
+
+*Corrida 6 (600 pos/s, k6, el móvil y `balanzas-norte` caída 4 minutos): la ingesta no cambia durante la caída del
+nodo; la cola del arranque se vacía en unos 3 minutos, cuando el autoescalado llega a 4 instancias.*
 
 **PDI que no responde.** En el compose local, con el ingreso simulado de gub.uy (`GUBUY_MOCK=true`): un ingreso de un
 ciudadano nuevo por segundo (cada uno consulta la PDI) y una consulta pública por segundo, con el suplantador pausado
