@@ -73,13 +73,20 @@ SELECT :vehiculos::int AS vehiculos,
        (SELECT id FROM rol WHERE nombre = 'CIUDADANO') AS rol_ciudadano,
        (SELECT id FROM rol WHERE nombre = 'FUNCIONARIO') AS rol_funcionario,
        (SELECT array_agg(id ORDER BY id) FROM rubro) AS rubros,
-       (SELECT array_agg(id ORDER BY id) FROM tipocarga) AS tipos;
+       (SELECT array_agg(id ORDER BY id) FROM tipocarga) AS tipos,
+       -- las CIUDADES del nodo de tracking (Flota.java), en el mismo orden
+       ARRAY[-34.9011, -31.3833, -32.3214, -30.9053, -31.7110, -32.3703, -34.4626, -33.1325, -34.9000, -33.3806] AS lat,
+       ARRAY[-56.1645, -57.9667, -58.0756, -55.5508, -55.9811, -54.1675, -57.8400, -58.2956, -54.9500, -56.5236] AS lon;
 
--- matricula como la arma el nodo: String.format("SIM%04d", n)
+-- matricula como la arma el nodo: String.format("SIM%04d", n). La ruta tambien, como Flota.ruta(n): origen o y
+-- destino d (indices de base 0 en las ciudades). Las Guias de los viajes en curso y asignados usan esos extremos, asi
+-- las posiciones quedan sobre el tramo de la Guia y solo los vehiculos que el nodo desvia a proposito abren casos
 CREATE TEMP TABLE flota ON COMMIT DROP AS
 SELECT v,
        'SIM' || CASE WHEN v < 10000 THEN lpad(v::text, 4, '0') ELSE v::text END AS matricula,
-       (v - 1) / p.por_empresa + 1 AS e
+       (v - 1) / p.por_empresa + 1 AS e,
+       v % 10 AS o,
+       (v + 1 + (v / 10) % 9) % 10 AS d
 FROM param p, generate_series(1, p.vehiculos) AS v;
 
 -- empresas, con un responsable cada una
@@ -168,7 +175,7 @@ WHERE p.cada_caso > 0 AND n % p.cada_caso = 0;
 
 -- el viaje en curso de cada vehiculo, que reciben sus posiciones: empezo entre 1 y 2 horas antes de la carga
 INSERT INTO guia (id, fecha, origenlat, origenlon, destinolat, destinolon, volumen, empresa_id, responsable_id, rubro_id, tipocarga_id)
-SELECT 10000000 + v, p.hoy, -34.9011, -56.1645, -30.9053, -55.5508, 15000 + (v % 10) * 500,
+SELECT 10000000 + v, p.hoy, p.lat[o + 1], p.lon[o + 1], p.lat[d + 1], p.lon[d + 1], 15000 + (v % 10) * 500,
        10000000 + e, 10000000 + e,
        p.rubros[v % array_length(p.rubros, 1) + 1], p.tipos[v % array_length(p.tipos, 1) + 1]
 FROM flota, param p;
@@ -184,10 +191,11 @@ SELECT 10000000 + v, 'prf-curso-' || v, 10000000 + v, 11000000 + v, 'INICIO', 'A
        (p.ahora - interval '1 hour' - make_interval(mins => v % 60) + interval '2 seconds') AT TIME ZONE 'America/Montevideo'
 FROM flota, param p;
 
--- el siguiente viaje de cada vehiculo, asignado al mismo chofer: el escenario movil de k6 termina el viaje en curso e
--- inicia este, como en la operativa real, donde el vehiculo no queda circulando sin viaje
+-- el siguiente viaje de cada vehiculo, asignado al mismo chofer y con la ruta de vuelta, como el nodo al llegar al
+-- destino: el escenario movil de k6 termina el viaje en curso e inicia este, como en la operativa real, donde el
+-- vehiculo no queda circulando sin viaje
 INSERT INTO guia (id, fecha, origenlat, origenlon, destinolat, destinolon, volumen, empresa_id, responsable_id, rubro_id, tipocarga_id)
-SELECT 30000000 + v, p.hoy, -30.9053, -55.5508, -34.9011, -56.1645, 15000 + (v % 10) * 500,
+SELECT 30000000 + v, p.hoy, p.lat[d + 1], p.lon[d + 1], p.lat[o + 1], p.lon[o + 1], 15000 + (v % 10) * 500,
        10000000 + e, 10000000 + e,
        p.rubros[v % array_length(p.rubros, 1) + 1], p.tipos[v % array_length(p.tipos, 1) + 1]
 FROM flota, param p;

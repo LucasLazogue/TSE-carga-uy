@@ -37,4 +37,8 @@ public class VehiculoSimulado {
     public String getMatricula() {
         return matricula;
     }
+
+    double getDesvioKm() {
+        return desvioKm;
+    }
 }
