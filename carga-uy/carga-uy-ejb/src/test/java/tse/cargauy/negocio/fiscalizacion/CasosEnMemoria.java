@@ -39,6 +39,7 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
     Integer distanciaDesvio = 5000;
     Long empresaDeLosVehiculos;
     FiltroCasos ultimoFiltro;
+    int casosCargadosPorClave;
 
     @Override
     public CasoFiscalizacionDto getCasoById(Long id) {
@@ -47,8 +48,15 @@ class CasosEnMemoria extends CasoFiscalizacionDAO {
 
     @Override
     public CasoFiscalizacionDto getByClave(String claveDeduplicacion) {
+        casosCargadosPorClave++;
         return casos.values().stream().filter(c -> c.getClaveDeduplicacion().equals(claveDeduplicacion)).findFirst().map(CasosEnMemoria::copia)
                 .orElse(null);
+    }
+
+    @Override
+    public Long getIdPorClave(String claveDeduplicacion) {
+        return casos.values().stream().filter(c -> c.getClaveDeduplicacion().equals(claveDeduplicacion)).findFirst()
+                .map(CasoFiscalizacionDto::getId).orElse(null);
     }
 
     @Override

@@ -19,6 +19,8 @@ import tse.cargauy.entities.EstadoCaso;
 public interface CasoFiscalizacionDAOLocal {
     CasoFiscalizacionDto getCasoById(Long id);
     CasoFiscalizacionDto getByClave(String claveDeduplicacion);
+    // solo el id, sin cargar el caso: el motor lo pregunta en cada posicion de un vehiculo con una infraccion abierta
+    Long getIdPorClave(String claveDeduplicacion);
     PaginaDto<CasoFiscalizacionDto> buscar(FiltroCasos filtro, Paginacion paginacion);
     CasoFiscalizacionDto addCaso(CasoFiscalizacionDto casoDto, List<EvidenciaDto> evidencias, LocalDateTime fecha);
     // solo las que el caso todavia no tiene, por su idOrigen

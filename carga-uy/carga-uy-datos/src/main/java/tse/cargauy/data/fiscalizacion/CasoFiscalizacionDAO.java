@@ -70,6 +70,15 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
     }
 
     @Override
+    public Long getIdPorClave(String claveDeduplicacion) {
+        List<Long> ids = entityManager.createQuery(
+                        "SELECT c.id FROM CasoFiscalizacion c WHERE c.claveDeduplicacion = :clave", Long.class)
+                .setParameter("clave", claveDeduplicacion)
+                .getResultList();
+        return ids.isEmpty() ? null : ids.get(0);
+    }
+
+    @Override
     public PaginaDto<CasoFiscalizacionDto> buscar(FiltroCasos filtro, Paginacion paginacion) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 

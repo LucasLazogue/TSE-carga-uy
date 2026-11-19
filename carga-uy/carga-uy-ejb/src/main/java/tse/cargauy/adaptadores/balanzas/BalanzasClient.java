@@ -7,14 +7,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
 import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.faulttolerance.exceptions.CircuitBreakerOpenException;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import tse.cargauy.dtos.NodoPerifericoDto;
 import tse.cargauy.dtos.PesajeDto;
 import tse.cargauy.exceptions.CargaUYException;
@@ -25,21 +27,64 @@ public class BalanzasClient {
 
     private final Map<String, NodoBalanzasApi> nodos = new ConcurrentHashMap<>();
 
+    // un corte por nodo (CortePorNodo): si se cae uno se le sigue preguntando a los demas
+    private final CortePorNodo corte = new CortePorNodo();
+
+    // lo pone WildFly; en los tests sin contenedor queda en null y no se publican metricas
+    @Inject
+    MeterRegistry registro;
+
     // cada consulta espera hasta 3 s y si falla se reintenta una vez a los 0,5 s: 6,5 s en el peor caso, dentro del
-    // tope de BalanzasEJB. si fallan 5 de las ultimas 10 se corta
-    // 60 s: en ese tiempo se responde "no disponible" al instante sin llamar a los nodos.
-    // el corte es uno solo para todas las balanzas (las anotaciones guardan un estado por metodo, no por nodo):
-    // si se cae un nodo tambien se deja de preguntar a los demas, pero la evaluacion de exceso de carga necesita
-    // los pesajes de todos los nodos y queda pendiente igual.
-    // los rechazos del nodo (CargaUYException) no se reintentan ni cuentan para el corte: no se arreglan solos
+    // tope de BalanzasEJB. si fallan 5 de las ultimas 10 llamadas a un nodo, ese nodo se corta 60 s: en ese tiempo se
+    // responde "no disponible" al instante sin llamarlo. Cada intento cuenta para el corte, como con @CircuitBreaker.
+    // los rechazos del nodo (CargaUYException) no se reintentan ni cuentan como falla: no se arreglan solos
     @Timeout(3000)
     @Retry(maxRetries = 1, delay = 500, jitter = 0, abortOn = {CargaUYException.class, CircuitBreakerOpenException.class})
-    @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5, delay = 60000, skipOn = CargaUYException.class)
     @Fallback(fallbackMethod = "noDisponible", skipOn = CargaUYException.class)
     public List<PesajeDto> getPesajes(NodoPerifericoDto nodo, String clave, String matricula, LocalDate fecha) {
-        return api(nodo.getPuntoAcceso()).getPesajes("Bearer " + clave, matricula, fecha).stream()
-                .map(pesaje -> toDto(pesaje, nodo))
-                .toList();
+        String id = nodo.getIdentificador();
+        publicarEstado(id);
+        if (!corte.permite(id)) {
+            contar(id, "cortada");
+            throw new CircuitBreakerOpenException("corte abierto para el nodo " + id);
+        }
+        try {
+            List<PesajeDto> pesajes = api(nodo.getPuntoAcceso()).getPesajes("Bearer " + clave, matricula, fecha).stream()
+                    .map(pesaje -> toDto(pesaje, nodo))
+                    .toList();
+            corte.exito(id);
+            contar(id, "exito");
+            return pesajes;
+        } catch (CargaUYException e) {
+            corte.exito(id);
+            contar(id, "rechazo");
+            throw e;
+        } catch (RuntimeException e) {
+            corte.falla(id);
+            contar(id, "falla");
+            throw e;
+        }
+    }
+
+    // estado del corte de cada nodo para el tablero (AC13): 0 cerrado, 0,5 probando, 1 abierto. Uno por instancia
+    private void publicarEstado(String id) {
+        if (registro != null && !corte.conoce(id)) {
+            Gauge.builder("balanzas.corte", corte, c -> c.estado(id).valor)
+                    .description("Corte del nodo de balanzas: 0 cerrado, 0,5 probando, 1 abierto")
+                    .tag("nodo", id)
+                    .register(registro);
+        }
+    }
+
+    private void contar(String id, String resultado) {
+        if (registro != null) {
+            registro.counter("balanzas.llamadas", "nodo", id, "resultado", resultado).increment();
+        }
+    }
+
+    // package-private para los tests
+    CortePorNodo corte() {
+        return corte;
     }
 
     List<PesajeDto> noDisponible(NodoPerifericoDto nodo, String clave, String matricula, LocalDate fecha) {

@@ -49,19 +49,25 @@ mismo `PesajesViajeDto`.
 
 ## Tolerancia a fallas
 
-`BalanzasClient` usa las anotaciones de MicroProfile Fault Tolerance, como `LdapClient`:
+`BalanzasClient` usa las anotaciones de MicroProfile Fault Tolerance para la espera, los reintentos y la respuesta
+degradada, como `LdapClient`, y un corte propio por nodo (`CortePorNodo`):
 
 | Mecanismo | Valor (AC13) |
 | --- | --- |
 | Espera por llamada | 3 s, con topes del propio socket: 2 s para conectar y 3 s para leer |
 | Reintentos | 1, a los 0,5 s (6,5 s en el peor caso) |
 | Espera total por todos los nodos | 7 s: el nodo que no respondió queda como sin responder |
-| Corte | 60 s tras 5 fallas en 10 llamadas |
+| Corte, uno por nodo | 60 s tras 5 fallas en las últimas 10 llamadas a ese nodo; después, una llamada de prueba |
 | Rechazo del nodo (4xx, clave mala) | No se reintenta ni cuenta para el corte |
 
-El corte es uno solo para todas las balanzas: las anotaciones guardan un estado por método, no por nodo.
-Si se cae un nodo también se deja de preguntar a los demás durante 60 s. La evaluación de exceso de carga
-necesita los pesajes de todos los nodos, así que queda pendiente igual.
+El corte no usa `@CircuitBreaker`: la anotación guarda un estado por método, y como el mismo método consulta a
+todos los nodos, con uno caído se dejaba de preguntar también a los demás. Así se vio en la prueba de performance
+(19/11/2026). Con un corte por nodo, mientras uno está cortado los otros se siguen consultando: la pantalla de pesajes
+muestra los de los nodos que responden, y el caso de exceso de carga se registra con ellos y se completa cuando vuelve
+el que faltaba. Mismo criterio que la anotación: cada intento cuenta, los rechazos (4xx) no son fallas, y pasados los
+60 s una sola llamada prueba si el nodo volvió. El estado de cada corte se publica como `balanzas_corte{nodo}`
+(0 cerrado, 0,5 probando, 1 abierto) y las llamadas como `balanzas_llamadas_total{nodo,resultado}`, en el panel de
+integraciones del tablero.
 
 Las consultas a los nodos corren en el ejecutor del servidor (`DefaultManagedExecutorService`, 4 hilos). Si un nodo
 se cuelga, sus consultas ocupan esos hilos y las de los demás esperan en la cola; la espera total de 7 s acota lo que
