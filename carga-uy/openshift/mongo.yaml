@@ -16,7 +16,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      # 5 GiB: con la prueba de performance (600 posiciones/s) 1 GiB se llena en horas
+      storage: 5Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -58,7 +59,8 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              cpu: "1"
+              # 2 CPU: en el pico de 1.800 posiciones/s MongoDB quedaba en su tope de 1 (docs/performance.md)
+              cpu: "2"
               memory: 1Gi
           volumeMounts:
             - name: datos

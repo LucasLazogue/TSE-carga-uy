@@ -153,7 +153,15 @@ oc rollout status deployment/artemis
 oc scale deployment/carga-uy --replicas=1
 ```
 
-Los proyectos de los nodos se apagan igual y se levantan por separado.
+Los proyectos de los nodos se apagan igual y se levantan por separado. En el de los nodos de balanzas, primero las
+bases y después los nodos: un nodo que arranca sin su base queda corriendo y figura como listo, pero sin la aplicación
+desplegada, y responde 404 a todas las consultas del central (así pasó el 18/11):
+
+```sh
+oc scale dc/pg-balanzas-sur dc/pg-balanzas-norte --replicas=1
+oc rollout status dc/pg-balanzas-sur && oc rollout status dc/pg-balanzas-norte
+oc scale deployment/cargauy-balanzas-sur deployment/cargauy-balanzas-norte --replicas=1
+```
 
 El Service `artemis` publica también la consola (`8161`), solo dentro del proyecto: por ahí el central lee
 cada 10 s los mensajes esperando y los consumidores de `queue_tracking`, y los mensajes muertos (`DLQ`). Se
@@ -181,11 +189,15 @@ Los datos quedan en un volumen persistente.
 
 La plantilla deja PostgreSQL con 512 MiB y sin CPU propia, así que el Sandbox le aplica su límite por defecto de
 1 CPU. Con varias instancias del central eso no alcanza: en la prueba de performance se quedó sin memoria con 4
-instancias (`OOMKilled`). Hay que darle recursos propios:
+instancias (`OOMKilled`), y con 2 CPU no se sostienen a la vez las 600 posiciones/s y el frontoffice
+([performance](performance.md#qué-limitó-cada-corrida)). Hay que darle recursos propios:
 
 ```sh
-oc set resources dc/postgres --limits=cpu=2,memory=2Gi --requests=cpu=250m,memory=512Mi
+oc set resources dc/postgres --limits=cpu=4,memory=2Gi --requests=cpu=250m,memory=512Mi
 ```
+
+Con la carga del volumen objetivo usa unas 2,2 a 2,9 CPU. MongoDB queda con 2 CPU y 5 GiB de disco en su
+[manifiesto](../carga-uy/openshift/mongo.yaml).
 
 Las claves del central van en el Secret `carga-uy-secretos`:
 
