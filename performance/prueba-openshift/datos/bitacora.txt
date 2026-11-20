@@ -120,3 +120,24 @@ repeticion fin 17:41:24
 SIN_HABILITACION|9000
 repeticion: nodos sin carga extra 17:41:28
 reinicio perfil demo 17:43:08
+
+== 20/11: las cuatro reglas de fiscalizacion (todas_las_reglas.sh)
+reinicio perfil performance cada_irregular=0 (terminado antes de las 00:18)
+todas las reglas 600/s inicio 00:18:16
+todas las reglas k6 5m inicio (flota en regla) 00:21:18
+k6 reglas-en-regla exit=99
+todas las reglas: pesajes de exceso en balanzas-sur para SIM0001 a SIM0300 00:26:21
+pesajes 204
+todas las reglas: infracciones en la flota 00:26:24
+DESVIO_RUTA|1800
+SIN_HABILITACION|1800
+VIAJE_SIN_GUIA|1800
+todas las reglas: casos de posicion abiertos 00:27:12
+todas las reglas k6 5m inicio (cuatro reglas, escenario movil) 00:28:12
+k6 reglas-todas exit=99
+todas las reglas fin 00:34:14
+DESVIO_RUTA|1800
+EXCESO_CARGA|270
+SIN_HABILITACION|1800
+VIAJE_SIN_GUIA|1800
+todas las reglas: nodos sin carga extra 00:34:18

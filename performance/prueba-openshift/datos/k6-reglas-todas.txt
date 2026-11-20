@@ -1,0 +1,53 @@
+
+
+  █ THRESHOLDS 
+
+    checks{scenario:movil}
+    ✓ 'rate>0.99' rate=100.00%
+
+    http_req_duration{scenario:funcionario}
+    ✗ 'p(95)<500' p(95)=1.12s
+
+    http_req_duration{scenario:publico}
+    ✓ 'p(95)<500' p(95)=308.5ms
+
+    http_req_duration{scenario:responsable}
+    ✗ 'p(95)<500' p(95)=1.08s
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 15786   52.365191/s
+    checks_succeeded...: 100.00% 15786 out of 15786
+    checks_failed......: 0.00%   0 out of 15786
+
+    ✓ respuesta 200
+    ✓ sync 200
+    ✓ eventos aplicados
+
+    HTTP
+    http_req_duration..............: avg=327.07ms min=139.53ms med=174.51ms max=6.11s p(90)=758.97ms p(95)=1.02s  
+      { expected_response:true }...: avg=327.07ms min=139.53ms med=174.51ms max=6.11s p(90)=758.97ms p(95)=1.02s  
+      { scenario:funcionario }.....: avg=350.98ms min=141.81ms med=173.51ms max=3.04s p(90)=874.15ms p(95)=1.12s  
+      { scenario:publico }.........: avg=205.56ms min=139.53ms med=155.48ms max=6.11s p(90)=247.58ms p(95)=308.5ms
+      { scenario:responsable }.....: avg=367.68ms min=142.31ms med=181.9ms  max=2.05s p(90)=846.32ms p(95)=1.08s  
+    http_req_failed................: 0.00%  0 out of 15516
+    http_reqs......................: 15516  51.469549/s
+
+    EXECUTION
+    dropped_iterations.............: 21     0.069661/s
+    iteration_duration.............: avg=1.06s    min=146.34ms med=908.2ms  max=6.68s p(90)=2.11s    p(95)=2.53s  
+    iterations.....................: 4783   15.866129/s
+    vus............................: 1      min=1          max=37
+    vus_max........................: 61     min=40         max=61
+
+    NETWORK
+    data_received..................: 49 MB  162 kB/s
+    data_sent......................: 6.8 MB 23 kB/s
+
+
+
+time="2026-11-20T00:33:14-03:00" level=error msg="thresholds on metrics 'http_req_duration{scenario:funcionario}, http_req_duration{scenario:responsable}' have been crossed"
