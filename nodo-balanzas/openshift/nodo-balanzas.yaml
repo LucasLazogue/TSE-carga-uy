@@ -10,7 +10,8 @@
 # 1. Base: plantilla del catalogo, que crea el DeploymentConfig, el volumen y el Secret pg-balanzas-sur
 #    (claves database-name, database-user y database-password):
 #      oc new-app postgresql-persistent -p DATABASE_SERVICE_NAME=pg-balanzas-sur \
-#        -p POSTGRESQL_DATABASE=balanzas-sur -p POSTGRESQL_USER=admin-balanza -p POSTGRESQL_PASSWORD=CLAVE_DE_LA_BASE
+#        -p POSTGRESQL_DATABASE=balanzas_sur -p POSTGRESQL_USER=admin_balanza -p POSTGRESQL_PASSWORD=CLAVE_DE_LA_BASE
+#    (la base y el usuario van con guion bajo: con guion, PostgreSQL no arranca)
 #
 # 2. Claves del nodo (las del Google Doc: admin para dar de alta peajes y balanzas, central para que consulte carga.uy):
 #      oc create secret generic balanzas-sur-claves \
@@ -19,7 +20,12 @@
 # 3. oc apply -f openshift/nodo-balanzas.yaml -f openshift/rutas.yaml
 #
 # Al pasar los nodos que ya existen a este manifiesto, crear antes los Secrets del paso 2 con las mismas claves que
-# tienen hoy: si cambian, hay que actualizarlas tambien en el central (backoffice, Nodos, Cambiar clave).
+# tienen hoy: si cambian, hay que actualizarlas tambien en el central (backoffice, Nodos, Cambiar clave). En ese caso
+# va oc replace -f en vez de oc apply: los Deployments creados desde la consola tienen las claves como value, apply
+# les agrega el valueFrom y OpenShift rechaza las dos juntas.
+#
+# Con replicas: 1 el manifiesto prende los nodos. Para dejarlos apagados:
+#   oc scale deployment/cargauy-balanzas-sur deployment/cargauy-balanzas-norte --replicas=0
 apiVersion: apps/v1
 kind: Deployment
 metadata:
