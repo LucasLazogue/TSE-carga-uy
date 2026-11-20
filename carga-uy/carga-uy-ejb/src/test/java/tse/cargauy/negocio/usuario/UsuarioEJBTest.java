@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Proxy;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
+import jakarta.ejb.SessionContext;
 import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
 import tse.cargauy.adaptadores.pdi.PdiClient;
@@ -363,5 +366,20 @@ class UsuarioEJBTest {
 
         assertEquals(List.of("CHOFER"), ejb.validarToken(token.getToken()).getRoles());
         assertEquals(15 * 60, token.getSegundosVigencia());
+    }
+
+    @Test
+    void rechazaUsuarioActualQueYaNoExiste() {
+        ejb.contexto = (SessionContext) Proxy.newProxyInstance(getClass().getClassLoader(),
+                new Class<?>[] { SessionContext.class }, (proxy, metodo, args) ->
+                        "getCallerPrincipal".equals(metodo.getName()) ? (Principal) () -> "5" : null);
+        ejb.usuarioDAO = new UsuarioDAO() {
+            @Override
+            public UsuarioDto getById(Long id) {
+                return null;
+            }
+        };
+
+        assertCodigo(CodigoError.AUTH_SESION_INVALIDA, ejb::getUsuarioActual);
     }
 }
