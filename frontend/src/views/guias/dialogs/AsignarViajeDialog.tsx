@@ -42,7 +42,7 @@ function choferActual(viaje?: Viaje) {
 }
 
 function AsignarViajeDialog({ guia, viaje, close, onAssigned }: Props) {
-  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([])
+  const [vehiculos, setVehiculos] = useState<Vehiculo[] | null>(null)
   const [idVehiculo, setIdVehiculo] = useState(viaje?.idVehiculo ?? 0)
   const [idChofer, setIdChofer] = useState(viaje ? String(viaje.idChofer) : undefined)
   const [guardando, setGuardando] = useState(false)
@@ -50,8 +50,14 @@ function AsignarViajeDialog({ guia, viaje, close, onAssigned }: Props) {
   const conocidos = useRef(choferActual(viaje))
 
   useEffect(() => {
-    VehiculosApi.findAll({ idEmpresa: guia.idEmpresa }, { tamanio: TAMANIO_MAXIMO }).then((page) => setVehiculos(page.items))
-  }, [guia.idEmpresa])
+    VehiculosApi.findAll(
+      { idEmpresa: guia.idEmpresa, capacidadMinima: guia.volumen },
+      { tamanio: TAMANIO_MAXIMO },
+    ).then((page) => setVehiculos(page.items))
+  }, [guia.idEmpresa, guia.volumen])
+
+  const sinVehiculos = vehiculos?.length === 0
+  const volumen = guia.volumen.toLocaleString('es-UY')
 
   // solo los choferes vigentes a la fecha de la guia y sin baja, que son los que acepta la asignacion
   const buscarChoferes = useCallback(
@@ -95,7 +101,7 @@ function AsignarViajeDialog({ guia, viaje, close, onAssigned }: Props) {
         </Alert>
       )}
       <p className="text-sm text-muted-foreground">
-        Guía {guia.nroGuia} del {guia.fecha}, {guia.volumen.toLocaleString('es-UY')} kg.
+        Guía {guia.nroGuia} del {guia.fecha}, {volumen} kg.
       </p>
       <div className="space-y-1.5">
         <Label htmlFor="vehiculo">Vehículo</Label>
@@ -106,12 +112,19 @@ function AsignarViajeDialog({ guia, viaje, close, onAssigned }: Props) {
           onChange={(e) => setIdVehiculo(Number(e.target.value))}
         >
           <option value={0}>Seleccione un vehículo</option>
-          {vehiculos.map((v) => (
+          {vehiculos?.map((v) => (
             <option key={v.id} value={v.id}>
-              {v.matricula} - {v.marca} {v.modelo} ({v.capacidadCarga.toLocaleString('es-UY')} kg)
+              {v.matricula} - {v.marca} {v.modelo} (capacidad {v.capacidadCarga.toLocaleString('es-UY')} kg)
             </option>
           ))}
         </select>
+        {vehiculos && (
+          <p className="text-xs text-muted-foreground">
+            {sinVehiculos
+              ? `Ningún vehículo de la empresa tiene capacidad para ${volumen} kg.`
+              : `Solo se listan los vehículos con capacidad para ${volumen} kg.`}
+          </p>
+        )}
       </div>
       <div className="space-y-1.5">
         <Label>Chofer</Label>
@@ -137,7 +150,7 @@ function AsignarViajeDialog({ guia, viaje, close, onAssigned }: Props) {
         <Button type="button" variant="outline" onClick={close}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={guardando}>
+        <Button type="submit" disabled={guardando || sinVehiculos}>
           {viaje ? 'Reasignar' : 'Asignar'}
         </Button>
       </DialogFooter>

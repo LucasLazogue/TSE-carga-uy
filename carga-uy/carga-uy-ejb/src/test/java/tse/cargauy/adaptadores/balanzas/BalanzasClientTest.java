@@ -2,15 +2,18 @@ package tse.cargauy.adaptadores.balanzas;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.eclipse.microprofile.faulttolerance.exceptions.CircuitBreakerOpenException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +27,8 @@ import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
 
 // sin contenedor las anotaciones de tolerancia a fallas no hacen nada: aca se prueba la llamada al nodo y el
-// pasaje de su respuesta al PesajeDto del central. la espera, los reintentos y el corte se prueban con el compose
+// pasaje de su respuesta al PesajeDto del central, y el corte por nodo (es codigo propio, CortePorNodo). la espera
+// y los reintentos se prueban con el compose
 class BalanzasClientTest {
 
     private static final String RESPUESTA = """
@@ -87,6 +91,44 @@ class BalanzasClientTest {
                 () -> client.getPesajes(nodo(), "clave-mala", "SCC9012", LocalDate.of(2026, 10, 22)));
 
         assertEquals(CodigoError.BALANZAS_NODO_RECHAZO, error.getCodigo());
+    }
+
+    @Test
+    void unNodoCaidoSeCortaSinCortarAlOtro() throws IOException {
+        codigo = 200;
+        NodoPerifericoDto caido = nodoCaido();
+        for (int i = 0; i < CortePorNodo.VENTANA; i++) {
+            assertThrows(RuntimeException.class,
+                    () -> client.getPesajes(caido, "clave", "SCC9012", LocalDate.of(2026, 10, 22)));
+        }
+
+        assertThrows(CircuitBreakerOpenException.class,
+                () -> client.getPesajes(caido, "clave", "SCC9012", LocalDate.of(2026, 10, 22)));
+        assertEquals(1, client.getPesajes(nodo(), "clave-central", "SCC9012", LocalDate.of(2026, 10, 22)).size());
+        assertEquals(CortePorNodo.Estado.CERRADO, client.corte().estado("balanzas-sur"));
+    }
+
+    @Test
+    void losRechazosNoAbrenElCorte() {
+        codigo = 401;
+        for (int i = 0; i < CortePorNodo.VENTANA; i++) {
+            assertThrows(CargaUYException.class,
+                    () -> client.getPesajes(nodo(), "clave-mala", "SCC9012", LocalDate.of(2026, 10, 22)));
+        }
+
+        assertTrue(client.corte().permite("balanzas-sur"));
+    }
+
+    // un puerto que se libera enseguida: la conexion se rechaza al instante
+    private NodoPerifericoDto nodoCaido() throws IOException {
+        int puerto;
+        try (ServerSocket libre = new ServerSocket(0)) {
+            puerto = libre.getLocalPort();
+        }
+        NodoPerifericoDto dto = new NodoPerifericoDto("balanzas-norte", TipoNodo.BALANZAS,
+                "http://localhost:" + puerto + "/nodo-balanzas");
+        dto.setId(8L);
+        return dto;
     }
 
     private NodoPerifericoDto nodo() {

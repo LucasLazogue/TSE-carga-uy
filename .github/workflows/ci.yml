@@ -80,13 +80,16 @@ jobs:
       - if: env.CAMBIOS == 'true' && matrix.module == 'carga-uy-client'
         run: mvn -B install -DskipTests
         working-directory: carga-uy
-      - if: env.CAMBIOS == 'true'
+      - if: env.CAMBIOS == 'true' && !(matrix.module == 'carga-uy' && env.SONAR_TOKEN != '')
         run: mvn -B verify ${{ matrix.perfil }}
         working-directory: ${{ matrix.module }}
-      # analisis en SonarCloud: necesita el secreto SONAR_TOKEN y las variables SONAR_ORGANIZATION y SONAR_PROJECT_KEY
+      # analisis en SonarCloud: necesita el secreto SONAR_TOKEN y las variables SONAR_ORGANIZATION y SONAR_PROJECT_KEY.
+      # Va en la misma invocacion que el verify, como recomienda la documentacion del scanner de Maven, para que
+      # resuelva los modulos del reactor desde el build y no desde SNAPSHOT viejos de la cache de ~/.m2
       - if: env.CAMBIOS == 'true' && matrix.module == 'carga-uy' && env.SONAR_TOKEN != ''
         run: >
-          mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
+          mvn -B verify ${{ matrix.perfil }}
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
           -Dsonar.host.url=https://sonarcloud.io
           -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
           -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}

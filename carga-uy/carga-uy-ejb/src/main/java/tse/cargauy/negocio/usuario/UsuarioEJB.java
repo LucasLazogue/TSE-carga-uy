@@ -209,7 +209,11 @@ public class UsuarioEJB implements UsuarioEJBLocal {
 
     public UsuarioActualDto getUsuarioActual() {
         Long id = idSesion();
-        return new UsuarioActualDto(usuarioDAO.getById(id), empresaDAO.getByResponsable(id, LocalDate.now()));
+        UsuarioDto usuario = usuarioDAO.getById(id);
+        if (usuario == null) {
+            throw new CargaUYException(CodigoError.AUTH_SESION_INVALIDA);
+        }
+        return new UsuarioActualDto(usuario, empresaDAO.getByResponsable(id, LocalDate.now()));
     }
 
     private Long idSesion() {

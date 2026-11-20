@@ -129,6 +129,13 @@
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.3.0</version>
+          <configuration>
+            <!-- AuthRest las lee al cargar la clase; en el servidor las pone el compose -->
+            <environmentVariables>
+              <CARGAUY_FRONTEND_URL>http://localhost:5173</CARGAUY_FRONTEND_URL>
+              <CARGAUY_MOBILE_REDIRECT>cargauy://ingreso</CARGAUY_MOBILE_REDIRECT>
+            </environmentVariables>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-war-plugin</artifactId>

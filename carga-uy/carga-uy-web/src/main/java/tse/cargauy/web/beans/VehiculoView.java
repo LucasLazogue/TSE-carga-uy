@@ -11,6 +11,7 @@ import jakarta.enterprise.inject.Model;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.FiltroVehiculos;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.negocio.empresa.EmpresaEJBLocal;
@@ -50,7 +51,7 @@ public class VehiculoView implements Serializable {
         if (idEmpresa == null) {
             vehiculos = vehiculoEJB.getAll(new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         } else {
-            vehiculos = vehiculoEJB.getByEmpresa(idEmpresa, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
+            vehiculos = vehiculoEJB.getByEmpresa(new FiltroVehiculos(idEmpresa, null), new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
         }
     }
 

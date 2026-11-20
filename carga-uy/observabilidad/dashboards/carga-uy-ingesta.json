@@ -706,7 +706,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "1 mientras el corte (circuit breaker) está abierto y las llamadas responden \"no disponible\" sin salir; 0,5 medio abierto, probando de nuevo (AC13).",
+      "description": "1 mientras el corte (circuit breaker) está abierto y las llamadas responden \"no disponible\" sin salir; 0,5 medio abierto, probando de nuevo (AC13). Las balanzas tienen un corte por nodo; LDAP, el de MicroProfile Fault Tolerance.",
       "gridPos": {
         "h": 8,
         "w": 8,
@@ -743,6 +743,15 @@
             "type": "prometheus",
             "uid": "prometheus"
           }
+        },
+        {
+          "refId": "B",
+          "expr": "max by (nodo) (balanzas_corte)",
+          "legendFormat": "Balanzas {{nodo}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
         }
       ]
     },
@@ -754,7 +763,7 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Resultado de cada llamada según el corte: éxito, falla (espera vencida o error) o rechazada porque el corte estaba abierto.",
+      "description": "Resultado de cada llamada según el corte: éxito, falla (espera vencida o error) o rechazada porque el corte estaba abierto. Las balanzas, por nodo: éxito, falla, rechazo del nodo (4xx) o cortada.",
       "gridPos": {
         "h": 8,
         "w": 8,
@@ -785,6 +794,15 @@
           "refId": "A",
           "expr": "sum by (integracion, circuitBreakerResult) (label_replace(rate(ft_circuitbreaker_calls_total[1m]), \"integracion\", \"$1\", \"method\", \".*\\\\.([A-Za-z]+)Client\\\\..*\"))",
           "legendFormat": "{{integracion}} {{circuitBreakerResult}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (nodo, resultado) (rate(balanzas_llamadas_total[1m]))",
+          "legendFormat": "Balanzas {{nodo}} {{resultado}}",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
