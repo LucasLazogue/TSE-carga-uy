@@ -55,6 +55,14 @@ spec:
             limits:
               cpu: "2"
               memory: 2Gi
+          # al apagar una instancia (el autoescalado baja, un despliegue) el router tarda unos segundos en dejar de
+          # mandarle pedidos; si WildFly da de baja la aplicacion antes, esos pedidos reciben 404 o 503. La pausa le da
+          # tiempo al router; despues WildFly recibe SIGTERM y termina lo que tiene en curso. Entra en los 30 s de
+          # terminationGracePeriodSeconds
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "10"]
           # el health de WildFly (puerto de administracion) no depende de Mongo, que en la fase 1 no esta
           readinessProbe:
             httpGet:
