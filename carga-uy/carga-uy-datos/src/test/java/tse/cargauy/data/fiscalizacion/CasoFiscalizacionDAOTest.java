@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
@@ -20,7 +21,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.JoinType;
+import tse.cargauy.data.CriteriaGrabada;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
+import tse.cargauy.dtos.FiltroCasos;
+import tse.cargauy.dtos.PaginaDto;
+import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.entities.CasoFiscalizacion;
 import tse.cargauy.entities.DestinatarioNotificacion;
 import tse.cargauy.entities.Empresa;
@@ -142,7 +148,7 @@ class CasoFiscalizacionDAOTest {
         dao.presentarDescargo(7L, 2L, "texto", AHORA);
 
         assertEquals(DestinatarioNotificacion.FUNCIONARIO, notificacion.getDestinatario());
-        assertEquals("Transportes Sur presento un descargo en el caso 7 (EXCESO_CARGA, vehiculo SBA1234).", notificacion.getMensaje());
+        assertEquals("Transportes Sur presento un descargo en el caso 7 (Exceso de carga, vehiculo SBA1234).", notificacion.getMensaje());
     }
 
     @Test
@@ -150,6 +156,26 @@ class CasoFiscalizacionDAOTest {
         dao.resolver(7L, 2L, EstadoCaso.DESESTIMADA, "fundamento", AHORA);
 
         assertEquals(DestinatarioNotificacion.EMPRESA, notificacion.getDestinatario());
-        assertEquals("El caso 7 (EXCESO_CARGA, vehiculo SBA1234) fue desestimado.", notificacion.getMensaje());
+        assertEquals("El caso 7 (Exceso de carga, vehiculo SBA1234) fue desestimado.", notificacion.getMensaje());
+    }
+
+    // la pagina de casos trae el descargo y la resolucion en la misma consulta (son @OneToOne del lado mappedBy: si no,
+    // se buscan de a uno por caso) y se lee como lista, para que el resto de las relaciones se carguen por lotes
+    @Test
+    void laPaginaDeCasosTraeDescargoYResolucionEnLaMismaConsulta() throws Exception {
+        CriteriaGrabada criteria = new CriteriaGrabada();
+        criteria.total = 3;
+        CasoFiscalizacionDAO otro = new CasoFiscalizacionDAO();
+        Field campo = CasoFiscalizacionDAO.class.getDeclaredField("entityManager");
+        campo.setAccessible(true);
+        campo.set(otro, criteria.entityManager());
+
+        PaginaDto<CasoFiscalizacionDto> pagina = otro.buscar(new FiltroCasos(), new Paginacion(0, 20));
+
+        assertEquals(3, pagina.getTotal());
+        assertEquals(2, criteria.de("fetch").size());
+        assertTrue(criteria.de("fetch").stream().allMatch(l -> l.argumentos().get(1) == JoinType.LEFT));
+        assertEquals(1, criteria.de("getResultList").size());
+        assertTrue(criteria.de("getResultStream").isEmpty());
     }
 }

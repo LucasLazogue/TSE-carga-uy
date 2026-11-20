@@ -13,6 +13,7 @@ import jakarta.jms.ConnectionFactory;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 import tse.cargauy.dtos.EmpresaDto;
+import tse.cargauy.dtos.FiltroVehiculos;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.PermisoDto;
 import tse.cargauy.dtos.SolicitudPermisoDto;
@@ -186,7 +187,7 @@ public class App {
         try {
             System.out.print("Ingrese el id de la empresa: ");
             Long idEmpresa = Long.parseLong(System.console().readLine().trim());
-            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(idEmpresa, new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
+            List<VehiculoDto> vehiculos = vehiculoEJB.getByEmpresa(new FiltroVehiculos(idEmpresa, null), new Paginacion(0, Paginacion.TAMANIO_MAXIMO)).getItems();
             for (VehiculoDto vehiculo : vehiculos) {
                 System.out.println(vehiculo);
             }
