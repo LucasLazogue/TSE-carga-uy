@@ -16,7 +16,7 @@ La prueba se realizó en el Developer Sandbox de Red Hat OpenShift, con el compo
 \hline
 Objetivo & Resultado \\
 \hline
-p95 del frontoffice $<$ 500 ms & Entre 168 y 426 ms con 600 pos/s, medido desde fuera del clúster \\
+p95 del frontoffice $<$ 500 ms & Entre 204 y 278 ms con 600 pos/s, medido desde fuera del clúster; hasta unos 830 ms con 5.400 infracciones abiertas a la vez \\
 \hline
 600 pos/s sin pérdida & Se procesa lo que llega y ningún mensaje llega a la cola de mensajes muertos \\
 \hline
@@ -33,7 +33,7 @@ Los cuellos de botella se identificaron con esas métricas y con las consultas a
 
 Para el escalado horizontal se fijó la cantidad de instancias y se llenó la cola con más posiciones de las que se pueden procesar, de modo que lo procesado mide la capacidad (Tabla~\ref{tab:escalado}). Hasta dos instancias el límite es la CPU de cada una y agregar otra casi duplica la capacidad; con cuatro, el límite pasa a ser PostgreSQL, que comparten todas. El pool de conexiones de cada instancia (20) estuvo siempre ocupado, con esperas de 1 a 5 ms por una conexión libre; con 40 conexiones una instancia procesó casi lo mismo, porque el límite seguía siendo su CPU, y cuatro instancias con 40 superarían las 100 conexiones que acepta PostgreSQL. El paso siguiente para escalar más es la base de datos.
 
-Abrir casos en masa, como ocurre a medianoche cuando cambia el día de la clave de deduplicación, tampoco afectó a la ingesta: 9.000 casos en menos de un minuto no cambiaron lo procesado ni el pool. Sí pesa que cada posición de un vehículo con un caso ya abierto vuelva a cargar ese caso completo: con la mitad de la flota en infracción, PostgreSQL pasó de 2,6 a 3,5 CPU y el percentil 95 del frontoffice superó los 700 ms. Se corrigió consultando solo el identificador del caso existente: con el arreglo, la mitad de la flota con un caso abierto cuesta lo mismo que ningún caso, con PostgreSQL en 2,8 CPU en las dos situaciones.
+Abrir casos en masa, como ocurre a medianoche cuando cambia el día de la clave de deduplicación, tampoco afectó a la ingesta: 9.000 casos en menos de un minuto no cambiaron lo procesado ni el pool. Sí pesa que cada posición de un vehículo con un caso ya abierto vuelva a cargar ese caso completo: con la mitad de la flota en infracción, PostgreSQL pasó de 2,6 a 3,5 CPU y el percentil 95 del frontoffice superó los 700 ms. Se corrigió consultando solo el identificador del caso existente: con el arreglo, la mitad de la flota con un caso abierto cuesta lo mismo que ningún caso, con PostgreSQL en 2,8 CPU en las dos situaciones. La cola del frontoffice eran tres listados que cargaban cada relación de cada fila por separado (hasta 103 consultas por pedido); cargarlas por lotes llevó el percentil 95 a menos de 300 ms.
 
 \begin{table}
 \caption{Capacidad de ingesta según la cantidad de instancias.}\label{tab:escalado}
