@@ -139,8 +139,8 @@ despliegue está en la [guía del nodo](../nodo-tracking/README.md#despliegue-en
 Los nodos de balanzas corren en otro proyecto, en otro clúster (`rm1`). El central los llama por HTTPS a
 la dirección con la que está registrado cada nodo ([balanzas](balanzas.md)).
 
-El suplantador de la PDI no está desplegado en OpenShift: sin `PDI_URL`, los ciudadanos entran sin los
-datos de la PDI y sin control de mayoría de edad ([suplantador](../pdi-suplantador/README.md#despliegue)).
+El suplantador de la PDI corre en el proyecto de los nodos de tracking, como sistema externo, y el central lo llama
+por HTTPS ([suplantador](../pdi-suplantador/README.md#despliegue)).
 
 El Developer Sandbox escala a 0 los Deployments de un proyecto unas 12 horas después de levantarlos.
 Para volver a usar el sistema hay que escalarlos de nuevo: primero los servicios y después el central,
@@ -161,6 +161,12 @@ desplegada, y responde 404 a todas las consultas del central (así pasó el 18/1
 oc scale dc/pg-balanzas-sur dc/pg-balanzas-norte --replicas=1
 oc rollout status dc/pg-balanzas-sur && oc rollout status dc/pg-balanzas-norte
 oc scale deployment/cargauy-balanzas-sur deployment/cargauy-balanzas-norte --replicas=1
+```
+
+En el de los nodos de tracking también está el suplantador de la PDI:
+
+```sh
+oc scale deployment/nodo-tracking-1 deployment/nodo-tracking-2 deployment/pdi-suplantador --replicas=1
 ```
 
 El Service `artemis` publica también la consola (`8161`), solo dentro del proyecto: por ahí el central lee
