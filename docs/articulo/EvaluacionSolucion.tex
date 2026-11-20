@@ -2,28 +2,56 @@
 \subsection{Puntos fuertes y débiles}
 Entre los puntos fuertes de la solución se destacan la separación entre la recepción de los eventos y su procesamiento, que permite tolerar la indisponibilidad del componente central y de los nodos periféricos sin perder información; el control de acceso aplicado en la capa de servicios y no solo en las interfaces; la posibilidad de seguir cada operación de punta a punta mediante trazas distribuidas; y un entorno de desarrollo completo que se levanta con un solo comando.
 
-Entre los puntos débiles, la regla de desvío de ruta mide la distancia al tramo recto entre el origen y el destino de la Guía y no al recorrido por las rutas reales. Al momento de esta entrega quedan pendientes la asignación de choferes a una empresa; el filtro por ubicación de los reportes; la validación de viajes solapados de un mismo vehículo; y la notificación de los casos por correo. Además, la performance se evaluó solo en forma preliminar.
+Entre los puntos débiles, la regla de desvío de ruta mide la distancia al tramo recto entre el origen y el destino de la Guía y no al recorrido por las rutas reales. Al momento de esta entrega quedan pendientes la asignación de choferes a una empresa; el filtro por ubicación de los reportes; la validación de viajes solapados de un mismo vehículo; y la notificación de los casos por correo.
 
-\subsection{Volumen de tracking y performance de la ingesta}
+\subsection{Volumen de tracking y performance}
 El volumen objetivo toma el peor caso: los 17.869 vehículos con motor registrados para el transporte profesional de carga \cite{BID2022}, redondeados a 18.000, todos con un viaje en curso al mismo tiempo. Cada uno reporta una posición cada 30 segundos, una frecuencia que fija la plataforma: 600 posiciones por segundo, con picos del triple.
 
-Una prueba preliminar, con todos los componentes y el generador de carga en una misma computadora de 8 núcleos, dio los resultados de la Tabla~\ref{tab:prueba-preliminar}. Hasta 250 posiciones por segundo la cola se mantiene acotada; con 500, el central procesa en promedio lo que llega, pero la computadora se satura. El procesamiento de cada posición no supera los 8~ms en el percentil 95, por lo que el cuello de botella, identificado con las métricas de la plataforma de observabilidad, es la CPU compartida y no la ingesta. Queda pendiente repetir la prueba con el generador separado y el central en la nube, medir el frontoffice bajo carga y verificar el escalado horizontal.
+La prueba se realizó en el Developer Sandbox de Red Hat OpenShift, con el componente central en un orquestador que mantiene entre una y cuatro instancias, de hasta 2 CPU cada una, según el uso de CPU (opcional 4). Los nodos de tracking simularon la flota del volumen objetivo desde otro proyecto del mismo clúster, y k6 \cite{k6} simuló a los usuarios del frontoffice: funcionarios, responsables de empresa y público, unos 50 pedidos por segundo que incluyen los indicadores públicos. En la última corrida se sumaron la regla de desvío de ruta y el fin de un viaje por segundo sincronizado desde el móvil, que dispara la evaluación de exceso de carga. Cada 15 segundos se registraron las métricas de la plataforma de observabilidad (posiciones publicadas y procesadas, tamaño de la cola, tiempos de procesamiento y uso del pool de conexiones) y la CPU de cada componente. La Tabla~\ref{tab:prueba-performance} resume el resultado frente a los objetivos de la letra.
 
 \begin{table}
-\caption{Prueba preliminar de la ingesta de tracking.}\label{tab:prueba-preliminar}
+\caption{Prueba de performance en OpenShift.}\label{tab:prueba-performance}
 \centering
-\begin{tabular}{|r|r|r|r|}
+\begin{tabular}{|p{0.34\textwidth}|p{0.52\textwidth}|}
 \hline
-Objetivo (pos/s) & Procesadas (pos/s) & Cola máxima & Procesamiento p95 \\
+Objetivo & Resultado \\
 \hline
-100 & 88 & 1.002 & 38 ms \\
+p95 del frontoffice $<$ 500 ms & Entre 204 y 278 ms con 600 pos/s, medido desde fuera del clúster; hasta unos 830 ms con 5.400 infracciones abiertas a la vez \\
 \hline
-250 & 279 & 2.192 & 8,4 ms \\
+600 pos/s sin pérdida & Se procesa lo que llega y ningún mensaje llega a la cola de mensajes muertos \\
 \hline
-500 & 521 & 9.932 & 7,7 ms \\
+Sin degradación & p95 estable durante 40 minutos \\
+\hline
+Pico de 1.800 pos/s & Se acumula en la cola (hasta 240.000 mensajes) y se procesa con atraso, sin pérdida \\
+\hline
+Punto de quiebre & Unas 1.600 pos/s con 4 instancias, limitado por la CPU de PostgreSQL \\
+\hline
+\end{tabular}
+\end{table}
+
+Los cuellos de botella se identificaron con esas métricas y con las consultas activas en la base. La primera corrida procesó apenas 14 pos/s: faltaban índices en las claves foráneas que la ingesta consulta con cada posición (el viaje en curso, el permiso y la ITV del vehículo), y PostgreSQL, con el límite de memoria por defecto del proyecto, se reiniciaba. Con los índices y 2 CPU la ingesta sola llegó a 600 pos/s, pero con los usuarios del frontoffice cayó a 22 y el percentil 95 de las consultas superó los 8 segundos: los indicadores públicos, agregados de meses sobre todos los viajes, se calculaban completos en cada pedido y le quitaban la CPU a la ingesta. Guardar ese resultado cinco minutos en cada instancia, agregar un índice que faltaba en las Guías y llevar PostgreSQL a 4 CPU permitió cumplir los dos objetivos a la vez. Una corrida de 40 minutos no mostró degradación, y el pico se acumuló en la cola sin errores: el broker cumple su función de amortiguar la carga.
+
+Para el escalado horizontal se fijó la cantidad de instancias y se llenó la cola con más posiciones de las que se pueden procesar, de modo que lo procesado mide la capacidad (Tabla~\ref{tab:escalado}). Hasta dos instancias el límite es la CPU de cada una y agregar otra casi duplica la capacidad; con cuatro, el límite pasa a ser PostgreSQL, que comparten todas. El pool de conexiones de cada instancia (20) estuvo siempre ocupado, con esperas de 1 a 5 ms por una conexión libre; con 40 conexiones una instancia procesó casi lo mismo, porque el límite seguía siendo su CPU, y cuatro instancias con 40 superarían las 100 conexiones que acepta PostgreSQL. El paso siguiente para escalar más es la base de datos.
+
+Abrir casos en masa, como ocurre a medianoche cuando cambia el día de la clave de deduplicación, tampoco afectó a la ingesta: 9.000 casos en menos de un minuto no cambiaron lo procesado ni el pool. Sí pesa que cada posición de un vehículo con un caso ya abierto vuelva a cargar ese caso completo: con la mitad de la flota en infracción, PostgreSQL pasó de 2,6 a 3,5 CPU y el percentil 95 del frontoffice superó los 700 ms. Se corrigió consultando solo el identificador del caso existente: con el arreglo, la mitad de la flota con un caso abierto cuesta lo mismo que ningún caso, con PostgreSQL en 2,8 CPU en las dos situaciones. La cola del frontoffice eran tres listados que cargaban cada relación de cada fila por separado (hasta 103 consultas por pedido); cargarlas por lotes llevó el percentil 95 a menos de 300 ms.
+
+\begin{table}
+\caption{Capacidad de ingesta según la cantidad de instancias.}\label{tab:escalado}
+\centering
+\begin{tabular}{|r|r|l|}
+\hline
+Instancias & Procesadas (pos/s) & Límite \\
+\hline
+1 & 610 & CPU del componente central \\
+\hline
+2 & 1.170 & CPU del componente central \\
+\hline
+4 & 1.600 & CPU de PostgreSQL \\
 \hline
 \end{tabular}
 \end{table}
 
 \subsection{Resiliencia ante fallas}
 Con el componente central detenido, el nodo de tracking siguió publicando y las posiciones esperaron en la cola; al reiniciarlo, se procesaron todas. Con PostgreSQL detenido durante un minuto, el central se recuperó sin intervención y ninguna posición llegó a la cola de mensajes muertos. Al detener un nodo de balanzas, el caso de exceso de carga se registró con los pesajes del otro nodo, y el pesaje faltante se agregó al mismo caso cuando el nodo volvió.
+
+En la nube, con un nodo de balanzas que no respondía, la prueba mostró dos problemas. Cada consulta retenía su conexión a la base mientras esperaba al nodo, hasta agotar el pool y hacer fallar también pedidos ajenos a las balanzas; se corrigió liberando la transacción durante la consulta y fijando tiempos máximos de conexión y de lectura en el cliente. Además, el corte ante fallas era uno solo para todos los nodos, porque la anotación de MicroProfile Fault Tolerance guarda un estado por método: con un nodo caído tampoco se consultaba al otro. Se reemplazó por un corte por nodo. Con la carga completa y un nodo caído durante cuatro minutos, el frontoffice no se vio afectado y los viajes que quedaron pendientes se evaluaron unos cuatro minutos y medio después de que el nodo volviera. En el entorno local, con la PDI sin responder, todos los ingresos de ciudadanos funcionaron, con los datos de la PDI pendientes hasta el próximo ingreso.
