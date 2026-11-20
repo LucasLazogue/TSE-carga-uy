@@ -29,6 +29,14 @@ public class ApiEnMemoria {
         return invocar(MockHttpRequest.post(uri).contentType(MediaType.APPLICATION_JSON).content(json.getBytes(StandardCharsets.UTF_8)));
     }
 
+    public MockHttpResponse put(String uri, String json) throws URISyntaxException {
+        return invocar(MockHttpRequest.put(uri).contentType(MediaType.APPLICATION_JSON).content(json.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    public MockHttpResponse delete(String uri) throws URISyntaxException {
+        return invocar(MockHttpRequest.delete(uri));
+    }
+
     private MockHttpResponse invocar(MockHttpRequest request) {
         MockHttpResponse response = new MockHttpResponse();
         dispatcher.invoke(request, response);
