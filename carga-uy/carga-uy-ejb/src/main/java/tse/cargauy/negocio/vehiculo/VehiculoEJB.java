@@ -5,6 +5,7 @@ import jakarta.ejb.Stateless;
 import jakarta.ejb.EJB;
 import tse.cargauy.data.empresa.EmpresaDAOLocal;
 import tse.cargauy.data.vehiculo.VehiculoDAOLocal;
+import tse.cargauy.dtos.FiltroVehiculos;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
@@ -39,9 +40,9 @@ public class VehiculoEJB implements VehiculoEJBLocal, VehiculoEJBRemote {
         return vehiculoDAO.getAll(paginacion);
     }
 
-    public PaginaDto<VehiculoDto> getByEmpresa(Long idEmpresa, Paginacion paginacion) {
-        empresaEJB.validarAcceso(idEmpresa);
-        return vehiculoDAO.getByEmpresa(idEmpresa, paginacion);
+    public PaginaDto<VehiculoDto> getByEmpresa(FiltroVehiculos filtro, Paginacion paginacion) {
+        empresaEJB.validarAcceso(filtro.getIdEmpresa());
+        return vehiculoDAO.getByEmpresa(filtro, paginacion);
     }
 
     @RolesAllowed(Rol.RESPONSABLE)

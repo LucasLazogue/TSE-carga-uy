@@ -6,6 +6,7 @@ import java.util.List;
 import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import tse.cargauy.dtos.FiltroVehiculos;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
 import tse.cargauy.dtos.VehiculoDto;
@@ -55,12 +56,15 @@ public class VehiculoDAO implements VehiculoDAOLocal {
     }
 
     @Override
-    public PaginaDto<VehiculoDto> getByEmpresa(Long idEmpresa, Paginacion paginacion) {
+    public PaginaDto<VehiculoDto> getByEmpresa(FiltroVehiculos filtro, Paginacion paginacion) {
         List<VehiculoDto> res = new ArrayList<>();
+        int minimo = filtro.getCapacidadMinima() == null ? 0 : filtro.getCapacidadMinima();
 
         List<Vehiculo> vehiculos = entityManager.createQuery(
-                        "SELECT v FROM Vehiculo v WHERE v.empresa.id = :idEmpresa ORDER BY v.matricula", Vehiculo.class)
-                .setParameter("idEmpresa", idEmpresa)
+                        "SELECT v FROM Vehiculo v WHERE v.empresa.id = :idEmpresa AND v.capacidadCarga >= :capacidadMinima"
+                                + " ORDER BY v.matricula", Vehiculo.class)
+                .setParameter("idEmpresa", filtro.getIdEmpresa())
+                .setParameter("capacidadMinima", minimo)
                 .setFirstResult(paginacion.getDesde())
                 .setMaxResults(paginacion.getTamanio())
                 .getResultList();
@@ -68,8 +72,10 @@ public class VehiculoDAO implements VehiculoDAOLocal {
             res.add(Serializers.toDto(v));
         }
         long total = entityManager.createQuery(
-                        "SELECT COUNT(v) FROM Vehiculo v WHERE v.empresa.id = :idEmpresa", Long.class)
-                .setParameter("idEmpresa", idEmpresa)
+                        "SELECT COUNT(v) FROM Vehiculo v WHERE v.empresa.id = :idEmpresa AND v.capacidadCarga >= :capacidadMinima",
+                        Long.class)
+                .setParameter("idEmpresa", filtro.getIdEmpresa())
+                .setParameter("capacidadMinima", minimo)
                 .getSingleResult();
         return new PaginaDto<>(res, total, paginacion.getPagina(), paginacion.getTamanio());
     }
