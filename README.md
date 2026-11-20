@@ -76,6 +76,7 @@ el backoffice. Las guías de [tracking](nodo-tracking/README.md#cómo-levantarlo
 | [Mensajería](docs/mensajeria.md) | Brokers, destinos JMS, contratos, persistencia, deduplicación y reentregas |
 | [Infraestructura](docs/infraestructura.md) | Servicios, dependencias, puertos, volúmenes, configuración, acceso remoto y despliegue en OpenShift |
 | [Performance](docs/performance.md) | Volumen objetivo de tracking, cómo generar la carga y resultados de las pruebas |
+| [Registro de decisiones](docs/registro-de-decisiones.md) | Siete decisiones de arquitectura con contexto, alternativas descartadas y consecuencias |
 
 ## Verificación
 
