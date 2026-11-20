@@ -489,7 +489,10 @@ Dos cosas que aparecieron en un primer intento esa misma noche:
   objetivo antes de medir.
 - **Bajar instancias corta algunos pedidos.** Sin la carga de tracking, el autoescalado bajó de 4 a 3 instancias y de
   3 a 2; en esos dos segundos hubo 19 errores (404 y 503, el 0,04 % de los pedidos). WildFly empieza a dar de baja la
-  aplicación mientras el router todavía le manda pedidos. Una pausa antes de apagar (`preStop`) lo evitaría.
+  aplicación mientras el router todavía le manda pedidos. Se agregó una pausa de 10 segundos antes de apagar
+  (`preStop`, ver [varias instancias](infraestructura.md#varias-instancias-y-autoescalado)). El efecto no quedó
+  medido: al repetir el caso borrando instancias con 40 y 100 pedidos por segundo, no hubo errores ni sin la pausa
+  (3 instancias, unos 14.000 pedidos) ni con ella (2 instancias, unos 10.000).
 
 ### Lo que esta prueba no cubre
 

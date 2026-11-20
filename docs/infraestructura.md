@@ -290,6 +290,13 @@ Mientras una instancia nueva arranca, que en WildFly lleva alrededor de un minut
 esperan en la cola de Artemis. Si una instancia se apaga con mensajes en proceso, sus transacciones
 se deshacen y el broker se los entrega a otra; el procesamiento idempotente evita duplicados.
 
+Cuando una instancia se apaga, porque el autoescalado baja o por un despliegue, el router tarda unos
+segundos en dejar de mandarle pedidos, y WildFly da de baja la aplicación en menos de medio segundo
+después de recibir la señal de apagado. Los pedidos que llegan en ese intervalo reciben 404 o 503.
+Para evitarlo, el contenedor espera 10 segundos (`preStop`) antes de recibir la señal: en ese tiempo
+el router deja de mandarle pedidos nuevos y la instancia termina los que tiene. El apagado completo lleva
+unos 13 segundos, dentro de los 30 de `terminationGracePeriodSeconds`.
+
 Lo que hace que el central funcione con varias instancias:
 
 | Qué | Cómo se resuelve |
