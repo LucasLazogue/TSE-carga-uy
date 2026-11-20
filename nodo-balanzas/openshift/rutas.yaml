@@ -21,7 +21,8 @@ spec:
     kind: Service
     name: cargauy-balanzas-norte
   port:
-    targetPort: 8080-tcp
+    # el puerto se llama igual en los dos Services (nodo-balanzas.yaml)
+    targetPort: http
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: None
