@@ -243,9 +243,9 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
             CasoFiscalizacionDto caso = new CasoFiscalizacionDto(TipoInfraccion.EXCESO_CARGA,
                     TipoInfraccion.EXCESO_CARGA + "|" + viaje.getIdVehiculo() + "|viaje-" + viaje.getId(),
                     evidencias.get(0).getFechaEvento(), viaje.getIdVehiculo(), viaje.getId());
-            CasoFiscalizacionDto registrado = registrar(caso, evidencias);
-            if (registrado != null) {
-                casoDAO.agregarEvidencias(registrado.getId(), evidencias);
+            Long idCaso = registrar(caso, evidencias);
+            if (idCaso != null) {
+                casoDAO.agregarEvidencias(idCaso, evidencias);
             }
         }
         viajeDAO.marcarEvaluacionCarga(viaje.getId(), resultado.isCompleto() ? null : ahora.plusMinutes(1));
@@ -271,10 +271,17 @@ public class MotorFiscalizacionEJB implements MotorFiscalizacionEJBLocal {
         return tipo + "|" + idVehiculo + "|" + fecha;
     }
 
-    // devuelve el caso nuevo o el que ya existia, o null si no se pudo registrar
-    private CasoFiscalizacionDto registrar(CasoFiscalizacionDto caso, List<EvidenciaDto> evidencias) {
+    // devuelve el id del caso nuevo o del que ya existia, o null si no se pudo registrar.
+    // Mientras dura una infraccion, cada posicion del vehiculo vuelve a dar el mismo hecho: si el caso ya existe se
+    // pregunta solo su id, sin cargarlo con el vehiculo, la empresa y el viaje. En la prueba de performance, con la
+    // mitad de la flota con caso abierto, recargarlo en cada posicion llevaba la base de 2,6 a 3,5 CPU
+    private Long registrar(CasoFiscalizacionDto caso, List<EvidenciaDto> evidencias) {
+        Long existente = casoDAO.getIdPorClave(caso.getClaveDeduplicacion());
+        if (existente != null) {
+            return existente;
+        }
         try {
-            return casoEJB.registrarCaso(caso, evidencias);
+            return casoEJB.registrarCaso(caso, evidencias).getId();
         } catch (CargaUYException e) {
             // CASO_YA_REGISTRADO: otra posicion del mismo vehiculo registro el caso al mismo tiempo.
             // Los otros errores se loguean aca porque en segundo plano no le llegan a nadie

@@ -334,6 +334,19 @@ class MotorFiscalizacionEJBTest {
     }
 
     @Test
+    void conElCasoYaRegistradoLasPosicionesSiguientesNoLoVuelvenACargar() {
+        permiso = null;
+        motor.evaluarPosicion(3L, "ev-1", Context.root());
+        int cargadosAlRegistrar = casos.casosCargadosPorClave;
+
+        motor.evaluarPosicion(3L, "ev-2", Context.root());
+        motor.evaluarPosicion(3L, "ev-3", Context.root());
+
+        assertEquals(cargadosAlRegistrar, casos.casosCargadosPorClave);
+        assertEquals(2, casos.casos.size());
+    }
+
+    @Test
     void elViajeSeEvaluaRecienCuandoTermina() {
         pesajes.getPesajes().add(pesaje(SUR, 36500));
         permiso = null;

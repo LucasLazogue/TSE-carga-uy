@@ -294,8 +294,8 @@ no contesta) mientras se pedían pesajes de viajes, a 2 pedidos/s con una instan
 
 En la corrida 6 la caída fue con la carga completa: el frontoffice no se movió, los viajes terminados durante la caída
 quedaron pendientes de evaluar (hasta 251) y el job de reevaluación los completó en unos 4 minutos y medio después de
-que volvió el nodo. El corte es uno solo para todas las balanzas ([balanzas](balanzas.md#tolerancia-a-fallas)):
-mientras está abierto tampoco se le pregunta al nodo que funciona.
+que volvió el nodo. En esta prueba el corte era uno solo para todas las balanzas: mientras estaba abierto tampoco se le preguntaba al
+nodo que funcionaba. Ahora hay uno por nodo ([balanzas](balanzas.md#tolerancia-a-fallas)).
 
 ![Tablero de la ingesta en la corrida 6](imagenes/performance/corrida-final-600-k6-movil-balanza-caida.jpg)
 

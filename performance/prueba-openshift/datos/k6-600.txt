@@ -1,0 +1,51 @@
+time="2026-11-18T23:15:16-03:00" level=warning msg="Insufficient VUs, reached 100 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=responsable
+time="2026-11-18T23:15:27-03:00" level=warning msg="Insufficient VUs, reached 100 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=publico
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{scenario:funcionario}
+    ✗ 'p(95)<500' p(95)=8.55s
+
+    http_req_duration{scenario:publico}
+    ✗ 'p(95)<500' p(95)=20.69s
+
+    http_req_duration{scenario:responsable}
+    ✗ 'p(95)<500' p(95)=9.29s
+
+    http_req_failed
+    ✗ 'rate<0.01' rate=10.19%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 12038  37.648725/s
+    checks_succeeded...: 89.80% 10811 out of 12038
+    checks_failed......: 10.19% 1227 out of 12038
+
+    ✗ respuesta 200
+      ↳  89% — ✓ 10811 / ✗ 1227
+
+    HTTP
+    http_req_duration..............: avg=6.08s  min=157.33ms med=5.22s  max=29.59s p(90)=12.57s p(95)=17.5s 
+      { expected_response:true }...: avg=4.81s  min=157.33ms med=4.89s  max=25.21s p(90)=7.96s  p(95)=8.95s 
+      { scenario:funcionario }.....: avg=4.71s  min=157.33ms med=4.89s  max=14.09s p(90)=7.66s  p(95)=8.55s 
+      { scenario:publico }.........: avg=10.86s min=180.15ms med=11.23s max=29.59s p(90)=19.51s p(95)=20.69s
+      { scenario:responsable }.....: avg=4.95s  min=191.63ms med=4.94s  max=15.56s p(90)=8.31s  p(95)=9.29s 
+    http_req_failed................: 10.19% 1227 out of 12038
+    http_reqs......................: 12038  37.648725/s
+
+    EXECUTION
+    dropped_iterations.............: 785    2.45508/s
+    iteration_duration.............: avg=19.73s min=1.06s    med=19.46s max=44.64s p(90)=30.15s p(95)=32.94s
+    iterations.....................: 3718   11.628008/s
+    vus............................: 20     min=15            max=291
+    vus_max........................: 295    min=30            max=295
+
+    NETWORK
+    data_received..................: 42 MB  130 kB/s
+    data_sent......................: 5.6 MB 18 kB/s
+
+
+
+time="2026-11-18T23:18:51-03:00" level=error msg="thresholds on metrics 'http_req_duration{scenario:funcionario}, http_req_duration{scenario:publico}, http_req_duration{scenario:responsable}, http_req_failed' have been crossed"
