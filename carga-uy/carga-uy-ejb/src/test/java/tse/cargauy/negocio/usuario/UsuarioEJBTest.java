@@ -23,9 +23,12 @@ import tse.cargauy.adaptadores.gubuy.GubUyClient;
 import tse.cargauy.adaptadores.gubuy.IdentidadGubUy;
 import tse.cargauy.adaptadores.pdi.PdiClient;
 import tse.cargauy.adaptadores.pdi.PersonaPdi;
+import tse.cargauy.data.empresa.EmpresaDAO;
 import tse.cargauy.data.usuario.UsuarioDAO;
+import tse.cargauy.dtos.EmpresaDto;
 import tse.cargauy.dtos.EstadoLoginDto;
 import tse.cargauy.dtos.TokenDto;
+import tse.cargauy.dtos.UsuarioActualDto;
 import tse.cargauy.dtos.UsuarioDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
@@ -368,17 +371,38 @@ class UsuarioEJBTest {
         assertEquals(15 * 60, token.getSegundosVigencia());
     }
 
-    @Test
-    void rechazaUsuarioActualQueYaNoExiste() {
+    private void sesionDe(String id, UsuarioDto usuario) {
         ejb.contexto = (SessionContext) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class<?>[] { SessionContext.class }, (proxy, metodo, args) ->
-                        "getCallerPrincipal".equals(metodo.getName()) ? (Principal) () -> "5" : null);
+                        "getCallerPrincipal".equals(metodo.getName()) ? (Principal) () -> id : null);
         ejb.usuarioDAO = new UsuarioDAO() {
             @Override
-            public UsuarioDto getById(Long id) {
-                return null;
+            public UsuarioDto getById(Long idUsuario) {
+                return usuario;
             }
         };
+    }
+
+    @Test
+    void usuarioActualIncluyeSusEmpresas() {
+        sesionDe("5001", chofer());
+        List<EmpresaDto> empresas = List.of(new EmpresaDto());
+        ejb.empresaDAO = new EmpresaDAO() {
+            @Override
+            public List<EmpresaDto> getByResponsable(Long idCiudadano, LocalDate fecha) {
+                return idCiudadano == 5001L ? empresas : List.of();
+            }
+        };
+
+        UsuarioActualDto actual = ejb.getUsuarioActual();
+
+        assertEquals(5001L, actual.getId());
+        assertEquals(empresas, actual.getEmpresas());
+    }
+
+    @Test
+    void rechazaUsuarioActualQueYaNoExiste() {
+        sesionDe("5", null);
 
         assertCodigo(CodigoError.AUTH_SESION_INVALIDA, ejb::getUsuarioActual);
     }

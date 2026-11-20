@@ -80,22 +80,21 @@ jobs:
       - if: env.CAMBIOS == 'true' && matrix.module == 'carga-uy-client'
         run: mvn -B install -DskipTests
         working-directory: carga-uy
-      # analisis en SonarCloud: necesita el secreto SONAR_TOKEN y las variables SONAR_ORGANIZATION y SONAR_PROJECT_KEY.
-      # Corre en la misma invocacion que el build para que resuelva los modulos del reactor desde sus target/
-      # y no desde los SNAPSHOT que haya en la cache de ~/.m2 (con la cache, el analisis entre modulos
-      # dependia de que job guardaba la cache primero)
-      - if: env.CAMBIOS == 'true'
-        run: |
-          SONAR=()
-          if [ "${{ matrix.module }}" = carga-uy ] && [ -n "$SONAR_TOKEN" ]; then
-            SONAR=(org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
-              -Dsonar.host.url=https://sonarcloud.io
-              -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-              -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-              -Dsonar.coverage.jacoco.xmlReportPaths=${{ github.workspace }}/carga-uy/carga-uy-ear/target/site/jacoco-aggregate/jacoco.xml)
-          fi
-          mvn -B verify ${{ matrix.perfil }} "${SONAR[@]}"
+      - if: env.CAMBIOS == 'true' && !(matrix.module == 'carga-uy' && env.SONAR_TOKEN != '')
+        run: mvn -B verify ${{ matrix.perfil }}
         working-directory: ${{ matrix.module }}
+      # analisis en SonarCloud: necesita el secreto SONAR_TOKEN y las variables SONAR_ORGANIZATION y SONAR_PROJECT_KEY.
+      # Va en la misma invocacion que el verify, como recomienda la documentacion del scanner de Maven, para que
+      # resuelva los modulos del reactor desde el build y no desde SNAPSHOT viejos de la cache de ~/.m2
+      - if: env.CAMBIOS == 'true' && matrix.module == 'carga-uy' && env.SONAR_TOKEN != ''
+        run: >
+          mvn -B verify ${{ matrix.perfil }}
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+          -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+          -Dsonar.coverage.jacoco.xmlReportPaths=${{ github.workspace }}/carga-uy/carga-uy-ear/target/site/jacoco-aggregate/jacoco.xml
+        working-directory: carga-uy
       - if: always() && env.CAMBIOS == 'true'
         uses: actions/upload-artifact@v7
         with:
