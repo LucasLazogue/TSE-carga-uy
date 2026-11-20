@@ -2,8 +2,10 @@ package tse.cargauy.data.testdata;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static tse.cargauy.data.testdata.DaosFalsos.conId;
+import static tse.cargauy.data.testdata.DaosFalsos.falso;
+import static tse.cargauy.data.testdata.DaosFalsos.lista;
 
-import java.lang.reflect.Proxy;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 
@@ -139,35 +140,5 @@ class HistoriaPublicaTest {
                             },
                             "cambiarEstado", a -> cambiosDeEstado.add((EstadoViaje) a[1]))));
         }
-    }
-
-    private static <T> List<T> lista(int cantidad, Function<Integer, T> elemento) {
-        List<T> lista = new ArrayList<>();
-        for (int i = 0; i < cantidad; i++) {
-            lista.add(elemento.apply(i));
-        }
-        return lista;
-    }
-
-    private static <T> T conId(T dto, long id) {
-        try {
-            dto.getClass().getMethod("setId", Long.class).invoke(dto, id);
-            return dto;
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    // implementa la interfaz con los metodos dados; cualquier otro falla, asi el test muestra si se llamo algo de mas
-    private static <T> T falso(Class<T> tipo, Map<String, Function<Object[], Object>> metodos) {
-        return tipo.cast(Proxy.newProxyInstance(HistoriaPublicaTest.class.getClassLoader(), new Class<?>[] { tipo },
-                (proxy, metodo, args) -> {
-                    Function<Object[], Object> implementacion = metodos.get(metodo.getName());
-                    if (implementacion == null) {
-                        throw new UnsupportedOperationException(tipo.getSimpleName() + "." + metodo.getName());
-                    }
-                    Object resultado = implementacion.apply(args);
-                    return metodo.getReturnType() == void.class ? null : resultado;
-                }));
     }
 }
