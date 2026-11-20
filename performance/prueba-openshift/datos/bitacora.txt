@@ -186,3 +186,26 @@ VIAJE_SIN_GUIA|1800
 todas las reglas: nodos sin carga extra 01:18:59
 reinicio perfil demo 01:20:42
 postgres: proceso terminado (signal 9) 01:13:54
+
+== 20/11: consultas de detalle y movil con eventos acumulados, primer intento (no valido)
+el Sandbox apago Artemis y LDAP a la 01:42 (unas 12 horas encendidos): los nodos generaron pero no publicaron, asi que
+el frontoffice se midio sin ingesta. Validos de ese intento: los 601 lotes acumulados aplicados y sus reenvios como
+duplicados, y 19 errores (404 y 503) en los dos segundos en que el autoescalado bajo de 4 a 3 (02:18:37) y de 3 a 2
+instancias (02:19:52). Datos en resultados-performance/20-11/prueba6-sin-broker (no se versionan)
+
+== 20/11: consultas de detalle y movil con eventos acumulados (consultas_detalle.sh)
+artemis y ldap encendidos de nuevo (el Sandbox los apago a la 01:42) 02:23:18
+reinicio perfil performance (por defecto) 02:23:31
+consultas de detalle 600/s inicio 02:24:38
+consultas de detalle k6 5m inicio (escenarios de siempre, calentamiento) 02:27:40
+k6 detalle-calentamiento exit=0
+consultas de detalle k6 10m inicio (detalle, movil y eventos acumulados) 02:32:41
+k6 detalle exit=0
+consultas de detalle fin 02:42:44
+CARGA_PARCIAL|APLICADO|4207
+DESCARGA_PARCIAL|APLICADO|4207
+FIN|APLICADO|601
+INCIDENTE|APLICADO|3606
+INICIO|APLICADO|601
+consultas de detalle: nodos sin carga extra 02:42:48
+reinicio perfil demo 02:44:08
