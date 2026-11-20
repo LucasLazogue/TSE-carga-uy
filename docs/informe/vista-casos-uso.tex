@@ -47,7 +47,7 @@ La Tabla \ref{tab:cu-criticos} muestra qué componentes de la vista lógica (Sec
         \hline
         CU-10 Ingerir y procesar eventos de tracking & Nodo Periférico Tracking, Mensajería, Ingesta de Eventos, Persistencia y Motor de Fiscalización. \\
         \hline
-        CU-11 Detectar un incumplimiento y generar el caso & Ingesta de Eventos o Servicios de Negocio (fin del viaje registrado desde el Componente Móvil), Motor de Fiscalización, Almacén de Posiciones, Adaptador Balanzas, Nodo Periférico Balanzas, Persistencia, Notificaciones y Servicio de correo. \\
+        CU-11 Detectar un incumplimiento y generar el caso & Ingesta de Eventos o Servicios de Negocio (fin del viaje registrado desde el Componente Móvil), Motor de Fiscalización, Almacén de Posiciones, Adaptador Balanzas, Nodo Periférico Balanzas, Persistencia y Notificaciones (bandeja de la plataforma). \\
         \hline
         CU-16 Consultar reportes gerenciales y exportarlos & Backoffice, Generación de Reportes, Mensajería y Persistencia. \\
         \hline
@@ -86,7 +86,7 @@ Se eligieron como críticos los casos de uso que hacen intervenir la mayor canti
 \begin{enumerate}
     \item Autenticación mediante Usuario gub.uy.
     \item Consulta de la Guía y del viaje asignado al chofer.
-    \item Registro del comienzo y finalización del viaje, cargas o descargas parciales e incidentes con fotografía opcional.
+    \item Registro del comienzo y finalización del viaje, cargas o descargas parciales e incidentes con fotografía opcional (la fotografía no está implementada).
     \item Operación sin conectividad: la Guía debe estar disponible localmente; los eventos deben persistirse y sincronizarse al recuperar la conexión; cada evento debe tener un identificador generado en el dispositivo para evitar duplicados; y se debe definir una política de resolución de conflictos.
 \end{enumerate}
 
@@ -105,19 +105,19 @@ Se eligieron como críticos los casos de uso que hacen intervenir la mayor canti
 \begin{enumerate}
     \item Autenticación contra un directorio LDAP (opcional 8), que emite la misma sesión JWT que el resto de la plataforma, y autorización basada en roles.
     \item Tablero para autoridades con cantidad de empresas y vehículos habilitados, viajes por período, volumen transportado por rubro, infracciones por tipo y tasa de confirmación.
-    \item Filtrado de reportes por tipo de carga, ubicación y período, con exportación en al menos dos formatos.
+    \item Filtrado de reportes por tipo de carga, ubicación y período, con exportación en al menos dos formatos (el filtro por ubicación no está implementado).
     \item Gestión de usuarios y roles, incluida la asignación del rol Funcionario por cédula, y de nodos periféricos.
     \item Parametrización, sin redespliegue, de los umbrales de exceso de carga y desvío de ruta.
 \end{enumerate}
 
 \subsection{Requerimientos Opcionales}
 
-Los doce requerimientos opcionales de la letra se repartieron entre los integrantes. Como la letra exige al menos cuatro puntos, se definió un conjunto mínimo comprometido, con un requerimiento por integrante, elegido porque además resuelve aspectos de la arquitectura. El resto se implementa como adicional.
+Como la letra exige al menos cuatro puntos, de sus doce requerimientos opcionales se implementaron tres que los suman, elegidos porque además resuelven aspectos de la arquitectura.
 
 \begin{table}[H]
     \small
     \centering
-    \caption{Requerimientos opcionales comprometidos}
+    \caption{Requerimientos opcionales implementados}
     \label{tab:opcionales}
     \begin{tabular}{|p{9.6cm}|p{1.4cm}|p{4.2cm}|}
         \hline
@@ -129,9 +129,7 @@ Los doce requerimientos opcionales de la letra se repartieron entre los integran
         \hline
         10. Base de datos NoSQL o de series temporales para los eventos de posición & 1 & Lógica, Distribución, Implementación \\
         \hline
-        11. Base de datos con soporte geoespacial para las rutas y el cálculo de desvíos & 1 & Lógica, Distribución, Implementación \\
-        \hline
-        \textbf{Total comprometido} & \textbf{5} & \\
+        \textbf{Total} & \textbf{4} & \\
         \hline
     \end{tabular}
 \end{table}
@@ -143,7 +141,7 @@ La plataforma debe detectar como mínimo:
 \begin{itemize}
     \item \textbf{Exceso de carga:} el pesaje supera el peso del vehículo más su capacidad declarada.
     \item \textbf{Vehículo sin habilitación vigente:} el permiso o la ITV están vencidos a la fecha del viaje.
-    \item \textbf{Viaje sin Guía:} se recibe tracking o un pesaje para un vehículo sin un viaje asignado y en curso.
+    \item \textbf{Viaje sin Guía:} se recibe tracking o un pesaje para un vehículo sin un viaje asignado y en curso. En la implementación, la regla se detecta con las posiciones de tracking; un vehículo sin viaje no se consulta a balanzas (DA10).
     \item \textbf{Desvío de ruta:} el recorrido reportado se aparta significativamente del trayecto esperado entre el origen y el destino declarados.
 \end{itemize}
 
@@ -210,22 +208,20 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item El responsable selecciona “nueva Guía”.
     \item Ingresa rubro, volumen y tipo de carga, fecha, origen y destino.
-    \item El sistema valida los datos, obtiene el recorrido esperado entre el origen y el destino de un servicio externo de rutas y lo guarda como una línea geográfica en PostGIS (opcional 11).
+    \item El sistema valida los datos. El origen y el destino se marcan en un mapa.
     \item Genera una Guía única en estado \emph{registrada}.
     \item El responsable selecciona un vehículo habilitado y un chofer.
-    \item El sistema valida que no existan viajes solapados.
+    \item El sistema valida que la capacidad del vehículo alcance el volumen de la Guía. Al iniciar el viaje se rechaza si el chofer o el vehículo tiene otro viaje en curso; los viajes solapados no se validan al asignar.
     \item Crea el viaje en estado \emph{asignado}.
     \item El chofer recibe el viaje la próxima vez que la aplicación consulta su viaje asignado.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Se rechaza la asignación si el Permiso o la ITV no están vigentes.
-    \item Se rechaza si la capacidad del vehículo es insuficiente o existe un solapamiento.
-    \item Un origen o destino no georreferenciable debe corregirse.
-    \item Si el servicio de rutas no responde, la Guía se registra igual y el recorrido esperado queda pendiente hasta que se pueda obtener.
+    \item Se rechaza si la capacidad del vehículo es insuficiente.
     \item Mientras el viaje no comenzó, el responsable puede eliminarlo o reasignarlo a otro vehículo o chofer.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} Existe una Guía con viaje, vehículo, chofer y recorrido esperado. El viaje queda disponible para el chofer y sirve como referencia para tracking y pesajes. \\ \hline
+\textbf{\underline{Postcondiciones:}} Existe una Guía con viaje, vehículo y chofer. El viaje queda disponible para el chofer y sirve como referencia para tracking y pesajes. \\ \hline
 \end{tabular}
 \end{table}
 
@@ -257,7 +253,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
     \item Si la fecha del evento no es válida o la transición no corresponde al estado del viaje, el evento queda \emph{rechazado} y se registra con el motivo.
     \item La aplicación muestra al chofer los eventos en conflicto o rechazados, con el motivo, y no los reenvía.
     \item Si el envío se interrumpe o el componente central no responde, los eventos siguen pendientes y se reenvían más tarde; los que ya se habían procesado vuelven como \emph{duplicados}.
-    \item Si la sesión venció, la aplicación vuelve al ingreso (CU-01) y los eventos quedan guardados hasta que el chofer ingrese de nuevo.
+    \item Si el token de acceso venció, la aplicación lo renueva con el token de renovación; si este tampoco es válido, vuelve al ingreso (CU-01) y los eventos quedan guardados hasta que el chofer ingrese de nuevo.
 \end{itemize} \\ \hline
 \textbf{\underline{Postcondiciones:}} Cada evento queda registrado una sola vez con su resultado (aplicado, conflicto o rechazado), sin pérdida de información. El estado del viaje cambia solo por eventos aplicados. \\ \hline
 \end{tabular}
@@ -277,7 +273,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \textbf{\underline{Flujo principal:}}\par
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item El nodo publica eventos con vehículo, coordenadas, marca de tiempo e identificador.
-    \item El componente central recibe y encola los eventos.
+    \item El broker de mensajería recibe y encola los eventos.
     \item Un consumidor toma los eventos de la cola.
     \item Descarta los identificadores ya procesados.
     \item Asocia cada evento al viaje que estaba en curso cuando se generó.
@@ -286,7 +282,7 @@ Cada caso de uso crítico se describe en una de las siguientes subsecciones, con
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item Un vehículo sin viaje en curso al generarse el evento dispara la regla \emph{viaje sin Guía}.
+    \item Un vehículo sin viaje en curso ni asignado al generarse el evento dispara la regla \emph{viaje sin Guía}.
     \item Un evento con una matrícula que no corresponde a un vehículo registrado se guarda igual, con su matrícula, para no perder información: si después se registra el vehículo, sus viajes encuentran esas posiciones.
     \item Ante saturación, los eventos permanecen encolados y el broker los guarda en disco cuando se llena su memoria; se procesan más tarde, sin pérdida (AC17).
     \item Si el nodo no responde, el componente central continúa funcionando.
@@ -323,20 +319,19 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item Con cada posición de un viaje en curso, compara su distancia al tramo entre el origen y el destino de la Guía con la distancia máxima configurada (DA12).
     \item Comprueba que el hecho no haya generado otro caso.
     \item Crea el caso en estado \emph{detectada} y almacena la evidencia.
-    \item Lo publica y solicita la notificación a la empresa; al confirmarse el envío, el caso pasa a \emph{notificada} e inicia el plazo de descargo.
+    \item Lo notifica a la empresa en la bandeja de la plataforma; el caso pasa a \emph{notificada} e inicia el plazo de descargo.
     \item Registra la creación en la pista de auditoría.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma.
-    \item La evidencia nueva se agrega a un caso existente por el mismo hecho.
-    \item Una falla del correo no bloquea el caso y provoca un reintento.
+    \item En el exceso de carga, la evidencia nueva se agrega al caso existente del mismo viaje; en las reglas de posición, un hecho ya registrado no abre otro caso.
 \end{itemize} \\ \hline
 \textbf{\underline{Postcondiciones:}} Existe un caso con evidencia, en estado \emph{notificada} o en \emph{detectada} hasta que se confirme el envío, sin duplicados y con su creación auditada. \\ \hline
 \end{tabular}
 \end{table}
 
-\textbf{Consulta a balanzas.} La integración con balanzas es de solicitud--respuesta (R3): los pesajes no llegan solos, el componente central los pide por vehículo y fecha. Por eso el exceso de carga se evalúa cuando el viaje finaliza: el motor pide los pesajes de cada fecha del viaje y compara cada pesada del horario del viaje con el peso del vehículo más su capacidad declarada. La justificación está en la decisión DA10 (Tabla \ref{tab:da10}).
+\textbf{Consulta a balanzas.} La integración con balanzas es de solicitud--respuesta (R3): los pesajes no llegan solos, el componente central los pide por vehículo y fecha. Por eso el exceso de carga se evalúa cuando el viaje finaliza: el motor pide los pesajes de cada fecha del viaje y compara cada pesada del horario del viaje con el peso del vehículo más su capacidad declarada y la tolerancia vigente. La justificación está en la decisión DA10 (Tabla \ref{tab:da10}).
 
 \subsubsection{CU-16 Consultar reportes gerenciales y exportarlos}\label{sec:cu-16}
 \begin{table}[H]
@@ -353,7 +348,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
     \item La autoridad accede al dashboard.
     \item El sistema presenta los indicadores obligatorios.
-    \item La autoridad filtra por carga, ubicación y período.
+    \item La autoridad filtra por tipo de carga y período.
     \item El sistema recalcula los indicadores.
     \item La autoridad solicita la exportación del tablero completo en CSV o PDF, con los filtros aplicados.
     \item El sistema registra la solicitud y genera el archivo en segundo plano.
@@ -399,7 +394,7 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
     \item Si el identificador ya está en uso, se rechaza el registro.
     \item Si es un nodo de balanzas y no se indica la clave, se rechaza el registro. La clave se puede cambiar después sin modificar el estado del nodo.
     \item Modificar el punto de acceso de un nodo habilitado lo vuelve a \emph{deshabilitado} hasta que el administrador lo habilite de nuevo.
-    \item Deshabilitar un nodo de balanzas deja pendiente la evaluación de exceso de carga sin detener la plataforma.
+    \item Deshabilitar un nodo de balanzas lo saca de la consulta de pesajes; la evaluación queda pendiente solo si un nodo habilitado no responde.
     \item Deshabilitar un nodo de tracking hace que se descarten sus eventos y los viajes en curso quedan sin actualización de ruta.
     \item La baja es lógica: los pesajes y las posiciones que el nodo reportó siguen siendo evidencia de los casos generados.
 \end{itemize} \\ \hline

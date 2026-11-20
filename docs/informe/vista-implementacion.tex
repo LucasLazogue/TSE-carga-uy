@@ -16,31 +16,70 @@ La Tabla \ref{tab:ejecutables} muestra los componentes ejecutables de la soluci�
     \textbf{Componente} & \textbf{Tecnología} & \textbf{Subsistemas que implementa} \\
     \hline
     \endhead
-    \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, Java 24. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Exportación de reportes con Apache Commons CSV 1.14 y OpenPDF 1.4, y gráficos del backoffice con el componente \texttt{p:chart} de PrimeFaces 16 (Chart.js). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. Los adaptadores usan MicroProfile Fault Tolerance (AC13) y el acceso al Almacén de Posiciones, el controlador de MongoDB. Logs, métricas y trazas, con los subsistemas de OpenTelemetry y de Micrometer de WildFly (AC21 a AC24). & API REST, Backoffice, Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización, adaptadores (gub.uy, PDI, rutas, balanzas y notificaciones) y acceso a la Persistencia y al Almacén de Posiciones. \\
+    \texttt{carga-uy.ear} & Jakarta EE 10 sobre WildFly 41, compilado para Java 24 y ejecutado sobre Java 25. Módulos \texttt{carga-uy-web} (JAX-RS y JSF), \texttt{carga-uy-ejb} (EJB) y \texttt{carga-uy-datos} (JPA con Hibernate). Exportación de reportes con Apache Commons CSV 1.14 y OpenPDF 1.4, y gráficos del backoffice con el componente \texttt{p:chart} de PrimeFaces 16 (Chart.js). Sesiones con JWT mediante JJWT 0.13; cada request se autentica con un mecanismo de Jakarta Security que valida el JWT, y la autorización se declara con \texttt{@RolesAllowed} en los EJB. Los adaptadores usan MicroProfile Fault Tolerance (AC13) y el acceso al Almacén de Posiciones, el controlador de MongoDB. Logs, métricas y trazas, con los subsistemas de OpenTelemetry y de Micrometer de WildFly (AC21 a AC24). & API REST, Backoffice, Servicios de Negocio, Generación de Reportes, Ingesta de Eventos, Motor de Fiscalización, adaptadores (gub.uy, PDI y balanzas), notificaciones y acceso a la Persistencia y al Almacén de Posiciones. \\
     \hline
-    Frontend web & React 19 con TypeScript, Tailwind CSS 4 y componentes shadcn/ui, construido con Vite 8. & Frontoffice, un único artefacto para el público, los ciudadanos y los funcionarios. \\
+    Frontend web & React 19 con TypeScript 6, Tailwind CSS 4, componentes shadcn/ui y Leaflet para los mapas, construido con Vite 8. & Frontoffice, un único artefacto para el público, los ciudadanos y los funcionarios. \\
     \hline
-    Aplicación móvil & Android (\textit{compileSdk} 37, \textit{minSdk} 26), Kotlin 2.4, Jetpack Compose y Room 2.8 para la persistencia local. Retrofit con OkHttp para la API REST, WorkManager para la sincronización en segundo plano y Custom Tabs para el ingreso. & Componente Móvil y su persistencia local. \\
+    Aplicación móvil & Android (\textit{compileSdk} 37, \textit{minSdk} 26), Kotlin 2.4, Jetpack Compose y Room 2.8 para la persistencia local. Retrofit con OkHttp para la API REST, WorkManager para la sincronización en segundo plano, Custom Tabs para el ingreso, una clave del Android Keystore con Nimbus JOSE+JWT para las pruebas DPoP del token de renovación y el SDK de OpenTelemetry para las trazas. & Componente Móvil y su persistencia local. \\
     \hline
-    Base de datos & PostgreSQL 17 con PostGIS (opcional 11), con el controlador JDBC 42.7.7. & Persistencia, incluidos los recorridos esperados. \\
+    Base de datos & PostgreSQL 17, con el controlador JDBC 42.7.7. & Persistencia. \\
     \hline
-    Almacén de posiciones & MongoDB (opcional 10). & Almacén de Posiciones. \\
+    Almacén de posiciones & MongoDB 8.0 (opcional 10). & Almacén de Posiciones. \\
     \hline
     Broker de mensajería & Apache Artemis 2.57 en su propio contenedor, con los mensajes en un volumen y las colas \texttt{queue\_tracking} y \texttt{queue\_informes}. Acepta a las instancias de WildFly en la red interna y a los nodos con TLS. & Mensajería. \\
     \hline
-    Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS de Artemis. Incluye el generador de carga. Expone \texttt{/health} y \texttt{/metricas}, guarda los eventos mientras el broker no responde y exporta logs, métricas y trazas con el SDK de OpenTelemetry. & Nodo Periférico Tracking. \\
+    Nodo de tracking & Java 24 en su propia imagen de contenedor, con el cliente JMS de Artemis. Incluye el generador de carga. Expone \texttt{/health} y \texttt{/metricas}, guarda hasta 200.000 eventos mientras el broker no responde (después descarta los nuevos) y exporta logs, métricas y trazas con el SDK de OpenTelemetry. & Nodo Periférico Tracking. \\
     \hline
-    Nodo de balanzas & Servicio de solicitud--respuesta sobre HTTPS (R3): un WAR de Jakarta EE sobre WildFly 41, con MicroProfile Config, y su propia base de pesajes en PostgreSQL 17. Una misma imagen de contenedor sirve para cada operador, con otra base y otras claves. & Nodo Periférico Balanzas. \\
+    Nodo de balanzas & Servicio de solicitud--respuesta sobre HTTPS (R3): un WAR de Jakarta EE sobre WildFly 41, con MicroProfile Config, y su propia base de pesajes en PostgreSQL 17. Exporta su telemetría con el subsistema de OpenTelemetry de WildFly. Una misma imagen de contenedor sirve para cada operador, con otra base y otras claves. & Nodo Periférico Balanzas. \\
     \hline
-    Suplantador de la PDI & Servicio SOAP sobre HTTPS (R1) que respeta la interfaz de la PDI (R5): un WAR de Jakarta EE con JAX-WS sobre WildFly 41, generado desde un WSDL armado a partir de la descripción funcional del Servicio Básico de Información de DNIC. No tiene base de datos; responde con personas ficticias. & PDI. \\
+    Suplantador de la PDI & Servicio SOAP (R1) que respeta la interfaz de la PDI (R5): un WAR de Jakarta EE con JAX-WS sobre WildFly 41, generado desde un WSDL armado a partir de la descripción funcional del Servicio Básico de Información de DNIC. No tiene base de datos; responde con personas ficticias. Se ejecuta solo en el entorno local, por HTTP. & PDI. \\
     \hline
-    Directorio LDAP & 389 Directory Server 3.1, en la imagen de contenedor que publica el proyecto. Accedido por LDAPS (opcional 8). & Directorio LDAP. \\
+    Directorio LDAP & 389 Directory Server 3.1, en la imagen de contenedor que publica el proyecto. Accedido por LDAP dentro de la red interna (opcional 8). & Directorio LDAP. \\
     \hline
-    Plataforma de Observabilidad & \texttt{grafana/otel-lgtm} 0.34 en un contenedor: colector de OpenTelemetry, Prometheus (métricas), Tempo (trazas), Loki (logs) y Grafana, con un tablero de la ingesta, el nodo de tracking y la API REST. & Plataforma de Observabilidad. \\
+    Plataforma de Observabilidad & \texttt{grafana/otel-lgtm} 0.34 en un contenedor: colector de OpenTelemetry, Prometheus (métricas), Tempo (trazas), Loki (logs) y Grafana, con un tablero de la ingesta, la cola de mensajes, el nodo de tracking, la API REST, las integraciones, el pool de conexiones y los \emph{health checks}. & Plataforma de Observabilidad. \\
     \hline
 \end{longtable}
 
-\pendiente{describir los pros y los contras de las tecnologías elegidas y las habilidades necesarias para el proyecto, como pide la plantilla para esta vista.}
+La Tabla \ref{tab:pros-contras} resume los puntos fuertes y débiles de los principales productos, según lo observado durante el desarrollo y la prueba de performance.
+
+{\small
+\begin{longtable}{|p{3.4cm}|p{6cm}|p{6.2cm}|}
+    \caption{Pros y contras de las tecnologías elegidas}\label{tab:pros-contras}\\
+    \hline
+    \textbf{Producto} & \textbf{Pros} & \textbf{Contras} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Producto} & \textbf{Pros} & \textbf{Contras} \\
+    \hline
+    \endhead
+    ActiveMQ Artemis & Integrado con WildFly; reentregas, cola de mensajes muertos y paginado a disco. & Protocolo propio sobre TCP, difícil de exponer en plataformas que solo publican HTTP: se expuso con TLS de extremo a extremo y SNI por el router. \\
+    \hline
+    MongoDB & Escritura rápida; índice único para descartar duplicados. & Sin transacciones compartidas con PostgreSQL. \\
+    \hline
+    OpenTelemetry y Grafana & Estándar abierto; instrumentación automática en WildFly. & La propagación por mensajería y en procesos asíncronos requirió código propio. \\
+    \hline
+    389 Directory Server & Imagen oficial; contraseñas con \textit{salt} y bloqueo por intentos fallidos sin código propio. & La estructura y la carga inicial se configuran aparte; requiere ajustes para ejecutarse sin privilegios en OpenShift. \\
+    \hline
+    PrimeFaces & Formularios, tablas paginadas, diálogos y gráficos listos para usar sobre Jakarta Faces. & Por defecto guarda el estado de las vistas en la sesión; para escalar sin afinidad se pasó al cliente, cifrado con la misma clave en todas las instancias. \\
+    \hline
+    MicroProfile Rest Client y Fault Tolerance & Clientes REST como interfaces Java; espera, reintentos, corte y comportamiento degradado declarados con anotaciones. & El corte guarda un estado por método y no por nodo: el de los nodos de balanzas se implementó aparte. \\
+    \hline
+    OpenPDF y Apache Commons CSV & Generan los reportes en PDF y CSV dentro del central, sin servicios externos, a partir del mismo modelo de tabla. & El diseño del PDF (fuentes, tablas y celdas) se arma en código, sin plantillas. \\
+    \hline
+    Jetpack Compose, Room y WorkManager & Bibliotecas oficiales de Android; la sincronización continúa con la aplicación cerrada y reintenta con esperas crecientes. & Cada cambio en el esquema local exige una migración; sin ella, la aplicación se cierra al abrir la base anterior. \\
+    \hline
+    Android Studio & Reúne el SDK, el emulador y el JDK; permitió probar sin un dispositivo físico. & La configuración local (ruta del SDK y URL del servidor) es propia de cada equipo y no se versiona. \\
+    \hline
+    OpenShift Developer Sandbox & Gratuito; ejecuta las mismas imágenes que publica el pipeline; volúmenes persistentes y plantillas de catálogo. & Vence a los 30 días, detiene los contenedores cada 12 horas, los ejecuta con un usuario arbitrario y solo admite tráfico entrante por su router web; la cuota de 3 CPU reservadas limita el central a cuatro instancias y el nodo compartido puede terminar procesos de PostgreSQL. \\
+    \hline
+    PostgreSQL & Transacciones; \textit{triggers} que protegen la pista de auditoría. & Los \textit{triggers} se instalan desde la aplicación al arrancar, porque Hibernate no los genera. \\
+    \hline
+    GitHub Actions, JaCoCo, SpotBugs y SonarCloud & Compilación, pruebas, cobertura mínima del 80~\% y análisis estático de cada cambio antes de integrarlo. & El acceso a datos se prueba con bases reales en contenedores, pero no hay pruebas automatizadas sobre WildFly. \\
+    \hline
+\end{longtable}}
+
+Las habilidades necesarias para el proyecto se desprenden de esas tecnologías: Jakarta EE sobre WildFly (EJB, JPA con Hibernate, Jakarta Messaging, Jakarta Faces, JAX-RS, JAX-WS y Jakarta Security) y MicroProfile para el componente central; SQL y modelado documental para PostgreSQL y MongoDB; OpenID Connect, PKCE y JWT para la autenticación; React con TypeScript para el frontoffice; Kotlin con Jetpack Compose, Room y WorkManager para la aplicación móvil; contenedores, Kubernetes y OpenShift para el despliegue; OpenTelemetry con Prometheus, Tempo, Loki y Grafana para la observabilidad, y k6 para la prueba de performance.
 
 \subsection{Dependencias entre Componentes}
 
@@ -57,18 +96,18 @@ La Figura \ref{fig:vista_impl} muestra, con un diagrama de deployment UML \cite{
     \item Dentro del EAR, \texttt{carga-uy-web} depende de \texttt{carga-uy-ejb}, y este de \texttt{carga-uy-datos}.
     \item El frontend web y la aplicación móvil consumen la API REST del EAR. El frontend redirige las llamadas a \texttt{/api} hacia el componente central.
     \item El nodo de tracking publica en la cola \texttt{queue\_tracking} del broker, con TLS. El EAR la consume con un adaptador de recursos de WildFly configurado hacia ese broker.
-    \item El EAR accede a PostgreSQL mediante el \textit{datasource} \texttt{CargaUyDS}, a MongoDB mediante su controlador y al directorio LDAP por LDAPS.
-    \item El EAR consume Usuario gub.uy (OpenID Connect), la PDI (SOAP), el servicio de rutas y el nodo de balanzas por HTTPS, y el servidor de correo por SMTP.
-    \item El EAR y los nodos periféricos envían sus logs, métricas y trazas a la Plataforma de Observabilidad por OTLP. En WildFly lo hacen los subsistemas de OpenTelemetry (trazas y logs) y de Micrometer (métricas); en el nodo de tracking, el SDK de OpenTelemetry.
+    \item El EAR accede a PostgreSQL mediante el \textit{datasource} \texttt{CargaUyDS}, a MongoDB mediante su controlador y al directorio LDAP por LDAP en la red interna.
+    \item El EAR consume Usuario gub.uy (OpenID Connect), la PDI (SOAP) y el nodo de balanzas por HTTPS.
+    \item El EAR y los nodos periféricos envían sus logs, métricas y trazas a la Plataforma de Observabilidad por OTLP. En WildFly lo hacen los subsistemas de OpenTelemetry (trazas y logs) y de Micrometer (métricas); en el nodo de tracking y en la aplicación móvil, el SDK de OpenTelemetry.
 \end{itemize}
 
 \subsection{Empaquetado}
 
-Todos los componentes se distribuyen como imágenes de contenedor (R13), salvo el frontend en producción: se construye con Vite como sitio estático y lo sirve Vercel, que redirige las llamadas a \texttt{/api} hacia el componente central (DA05). En el entorno local, el mismo sitio estático corre en un contenedor, para que el Docker Compose levante todo. El componente central se construye en dos etapas: la primera compila el proyecto con Maven y la segunda configura WildFly 41 con el controlador de PostgreSQL, el \textit{datasource}, la conexión al broker de mensajería y MicroProfile Fault Tolerance, y despliega el EAR. El nodo de tracking también se construye en dos etapas y corre sobre la imagen de Java 24. PostgreSQL con PostGIS, MongoDB, el broker de mensajería, el directorio LDAP, el nodo de balanzas, el suplantador de la PDI y la Plataforma de Observabilidad corren cada uno en su contenedor. Un archivo de Docker Compose levanta el entorno completo con un único comando documentado en el README.
+Todos los componentes se distribuyen como imágenes de contenedor (R13), salvo el frontend en producción: se construye con Vite como sitio estático y lo sirve Vercel, que redirige las llamadas a \texttt{/api} hacia el componente central (DA05). En el entorno local, el frontend se ejecuta por separado con el servidor de desarrollo de Vite. El componente central se construye en dos etapas: la primera compila el proyecto con Maven y la segunda configura WildFly 41 con el controlador de PostgreSQL, el \textit{datasource}, la conexión al broker de mensajería y MicroProfile Fault Tolerance, y despliega el EAR. El nodo de tracking también se construye en dos etapas y corre sobre la imagen de Java 24. PostgreSQL, MongoDB, el broker de mensajería, el directorio LDAP, el nodo de balanzas, el suplantador de la PDI y la Plataforma de Observabilidad corren cada uno en su contenedor. Un archivo de Docker Compose levanta con un único comando, documentado en el README, todo el entorno salvo el frontend.
 
-La configuración sensible (credenciales de gub.uy, secreto de los tokens de sesión, credenciales de la base de datos, de MongoDB, del directorio LDAP y de la mensajería, y la clave del servicio de rutas) se pasa por variables de entorno desde un archivo \texttt{.env} que no se sube al repositorio (R11).
+La configuración sensible (credenciales de gub.uy, secreto de los tokens de sesión, credenciales de la base de datos, de MongoDB, del directorio LDAP y y de la mensajería) se pasa por variables de entorno desde un archivo \texttt{.env} que no se sube al repositorio y, en OpenShift, desde secretos de la plataforma (R11). Los valores por defecto del Docker Compose son solo de desarrollo.
 
 \subsection{Integración Continua}
 
-El repositorio, en GitHub, tiene un pipeline de GitHub Actions que se ejecuta en cada \textit{pull request} y en cada cambio en la rama principal (R16). El pipeline compila todos los componentes, corre las pruebas automatizadas y mide su cobertura con JaCoCo (AC25), ejecuta el análisis estático y construye las imágenes de contenedor. El análisis estático usa SpotBugs en los módulos Java, ESLint en el frontend y Android Lint en la aplicación móvil, que además se compila y se prueba en su propio paso. Cuando está configurado, el pipeline publica también el análisis y la cobertura en SonarCloud. El pipeline debe estar en estado exitoso al momento de la entrega final (R17).
+El repositorio, en GitHub, tiene un pipeline de GitHub Actions que se ejecuta en cada \textit{pull request} y en cada cambio en la rama principal (R16). El pipeline compila todos los componentes, corre las pruebas automatizadas y mide su cobertura con JaCoCo, con un mínimo del 80~\% de las líneas en el componente central y en los nodos (AC25), ejecuta el análisis estático y construye las imágenes del componente central y de los nodos. El análisis estático usa SpotBugs en los módulos Java, ESLint en el frontend y Android Lint en la aplicación móvil, que además se compila y se prueba en su propio paso. El pipeline publica también el análisis y la cobertura en SonarCloud. Desde una rama de release se despliegan automáticamente el frontoffice en Vercel y el componente central, los nodos de tracking y la Plataforma de Observabilidad en OpenShift. El pipeline debe estar en estado exitoso al momento de la entrega final (R17).
 

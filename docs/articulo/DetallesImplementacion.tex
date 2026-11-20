@@ -7,21 +7,21 @@ Para almacenar los datos de empresas, vehículos, viajes y demás entidades del 
 
 Para la comunicación asíncrona se utiliza Jakarta Messaging (JMS), integrado con un broker Apache ActiveMQ Artemis que se ejecuta en un contenedor separado. Los mensajes se envían a colas y se procesan mediante Message-Driven Beans (MDB), componentes ejecutados por WildFly al recibir los mensajes. Esta integración se utiliza para la recepción de eventos de tracking y la generación de reportes, permitiendo separar el envío de las solicitudes de su procesamiento.
 
-Para las interfaces del backoffice se utilizó Jakarta Faces, una tecnología de Jakarta EE para construir interfaces web mediante componentes, cuya implementación es proporcionada por WildFly. Sobre esta base se incorporó PrimeFaces, una biblioteca adicional de componentes para Jakarta Faces, que permitió construir formularios, tablas paginadas y diálogos.
+Para las interfaces del backoffice se utilizó Jakarta Faces, una tecnología de Jakarta EE para construir interfaces web mediante componentes, cuya implementación es proporcionada por WildFly. Sobre esta base se incorporó PrimeFaces, una biblioteca adicional de componentes para Jakarta Faces, que permitió construir formularios, tablas paginadas y diálogos. El estado de cada pantalla viaja cifrado en la propia página, de modo que cualquier instancia del central atiende el pedido siguiente.
 
 Para el directorio de usuarios del backoffice se utilizó 389 Directory Server. Se eligió por contar con una imagen de contenedor publicada por el propio proyecto y por gestionar el almacenamiento de contraseñas con \textit{salt}, sin implementar ese mecanismo en la aplicación. También permite configurar el bloqueo por intentos de ingreso fallidos. Como trabajo adicional, fue necesario configurar la creación de la estructura del directorio y la carga inicial de los datos.
 
-Se utilizaron especificaciones de MicroProfile integradas en WildFly. MicroProfile Rest Client permitió implementar las consultas a los nodos de balanzas mediante interfaces Java~\cite{MicroProfileRestClient40}. Para el control de fallas en esas consultas y en la autenticación contra LDAP se utilizó MicroProfile Fault Tolerance, que permite declarar políticas de timeout, circuit breaker y fallback mediante anotaciones, las cuales también se usaron en los nodos de balanzas para el sistema de reintentos~\cite{MicroProfileFaultTolerance41}.
+Se utilizaron especificaciones de MicroProfile integradas en WildFly. MicroProfile Rest Client permitió implementar las consultas a los nodos de balanzas mediante interfaces Java~\cite{MicroProfileRestClient40}. Para el control de fallas en esas consultas, en la consulta a la PDI y en la autenticación contra LDAP se utilizó MicroProfile Fault Tolerance, que permite declarar políticas de timeout, reintentos, circuit breaker y fallback mediante anotaciones~\cite{MicroProfileFaultTolerance41}; como su corte guarda un estado por método, el de los nodos de balanzas se implementó aparte, uno por nodo.
 
 Para las posiciones de tracking se utilizó MongoDB, una base de datos documental. Son el mayor volumen de datos del sistema, se agregan en forma continua y se consultan por vehículo o por viaje; separarlas de PostgreSQL evita que ese volumen afecte a las operaciones transaccionales.
 
-Para la observabilidad se utilizaron los subsistemas de OpenTelemetry y Micrometer de WildFly, el SDK de OpenTelemetry en el nodo de tracking y en la aplicación móvil, y la imagen \texttt{grafana/otel-lgtm}, que reúne el colector, Prometheus, Tempo, Loki y Grafana en un solo contenedor, pensada para desarrollo y pruebas. El entorno completo, con dos nodos de tracking y dos de balanzas, se levanta con un único comando mediante Docker Compose; el nodo de tracking incluye un generador de carga para las pruebas de performance.
+Para la observabilidad se utilizaron los subsistemas de OpenTelemetry y Micrometer de WildFly, el SDK de OpenTelemetry en el nodo de tracking y en la aplicación móvil, y la imagen \texttt{grafana/otel-lgtm}, que reúne el colector, Prometheus, Tempo, Loki y Grafana en un solo contenedor, pensada para desarrollo y pruebas. El entorno completo, con dos nodos de tracking, dos de balanzas y el suplantador de la PDI, se levanta con un único comando mediante Docker Compose; el nodo de tracking incluye un generador de carga para las pruebas de performance.
 
 La aplicación móvil se desarrolló en Kotlin para Android con Android Studio, que provee el SDK, el emulador y el JDK con el que Gradle la compila. La interfaz se construyó con Jetpack Compose, la persistencia local con Room y la sincronización en segundo plano con WorkManager. Las llamadas a la API REST usan Retrofit con OkHttp, el ingreso se abre en el navegador mediante Custom Tabs, y la prueba de posesión de la clave del dispositivo se firma con Nimbus JOSE+JWT sobre una clave del Android Keystore.
 
-Para la integración continua se utilizó GitHub Actions, con JaCoCo para la cobertura y SpotBugs para el análisis estático del componente central.
+Para la integración continua se utilizó GitHub Actions, con JaCoCo para la cobertura, con un mínimo del 80~\% de las líneas en el central y en los nodos, SpotBugs y SonarCloud para el análisis estático, y Testcontainers para probar el acceso a datos contra PostgreSQL y MongoDB reales.
 
-Para el despliegue transitorio del componente central se utilizó el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes. El pipeline publica las imágenes en GitHub Container Registry y actualiza el despliegue con la herramienta de línea de comandos \texttt{oc}. PostgreSQL se creó a partir de una plantilla del catálogo de la plataforma, y el componente central y el directorio LDAP se describen mediante manifiestos versionados en el repositorio.
+Para el despliegue se utilizó el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes. El pipeline publica las imágenes en GitHub Container Registry y actualiza los despliegues del componente central, de los nodos de tracking y de la plataforma de observabilidad con la herramienta de línea de comandos \texttt{oc}. PostgreSQL se creó a partir de una plantilla del catálogo de la plataforma; el resto (componente central, Artemis, MongoDB, el directorio LDAP, la plataforma de observabilidad y los nodos periféricos) se describe mediante manifiestos versionados en el repositorio.
 
 La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de los principales productos utilizados.
 
@@ -36,7 +36,7 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
     Producto &  Puntos Fuertes & Puntos Débiles & Evaluación General\\
 \hline
 \endhead
-    ActiveMQ Artemis & Integrado con WildFly; reentregas, cola de mensajes muertos y paginado a disco. & Protocolo propio sobre TCP, difícil de exponer en plataformas que solo publican HTTP. & Adecuado: sin pérdida de posiciones con el central detenido. \\
+    ActiveMQ Artemis & Integrado con WildFly; reentregas, cola de mensajes muertos y paginado a disco. & Protocolo propio sobre TCP, difícil de exponer en plataformas que solo publican HTTP: se expuso con TLS de extremo a extremo y SNI por el router. & Adecuado: sin pérdida de posiciones con el central detenido. \\
 \hline
     MongoDB & Escritura rápida; índice único para descartar duplicados. & Sin transacciones compartidas con PostgreSQL. & Adecuado para las posiciones. \\
 \hline
@@ -44,9 +44,9 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 \hline
     389 Directory Server & Imagen oficial; contraseñas con \textit{salt} y bloqueo por intentos fallidos sin código propio. & La estructura y la carga inicial se configuran aparte; requiere ajustes para ejecutarse sin privilegios en OpenShift. & Adecuado para el login del backoffice. \\
 \hline
-    PrimeFaces & Formularios, tablas paginadas, diálogos y gráficos listos para usar sobre Jakarta Faces. & El estado de las vistas queda en la sesión del servidor: con varias instancias del central, el backoffice requiere afinidad de sesión. & Adecuado para el backoffice. \\
+    PrimeFaces & Formularios, tablas paginadas, diálogos y gráficos listos para usar sobre Jakarta Faces. & Por defecto guarda el estado de las vistas en la sesión; para escalar sin afinidad se pasó al cliente, cifrado con la misma clave en todas las instancias. & Adecuado para el backoffice. \\
 \hline
-    MicroProfile Rest Client y Fault Tolerance & Clientes REST como interfaces Java; espera, reintentos, corte y comportamiento degradado declarados con anotaciones. & El corte guarda un estado por método y no por nodo: si un nodo de balanzas falla, se deja de consultar también a los demás durante 60~s. & Adecuado para las integraciones con LDAP y con los nodos de balanzas. \\
+    MicroProfile Rest Client y Fault Tolerance & Clientes REST como interfaces Java; espera, reintentos, corte y comportamiento degradado declarados con anotaciones. & El corte guarda un estado por método y no por nodo: el de los nodos de balanzas se implementó aparte. & Adecuado para las integraciones con LDAP, la PDI y los nodos de balanzas. \\
 \hline
     OpenPDF y Apache Commons CSV & Generan los reportes en PDF y CSV dentro del central, sin servicios externos, a partir del mismo modelo de tabla. & El diseño del PDF (fuentes, tablas y celdas) se arma en código, sin plantillas. & Adecuado para exportar los reportes en dos formatos. \\
 \hline
@@ -54,11 +54,11 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 \hline
     Android Studio & Reúne el SDK, el emulador y el JDK; permitió probar sin un dispositivo físico. & La configuración local (ruta del SDK y URL del servidor) es propia de cada equipo y no se versiona. & Adecuado para el desarrollo de la aplicación. \\
 \hline
-    OpenShift Developer Sandbox & Gratuito; ejecuta las mismas imágenes que publica el pipeline; volúmenes persistentes y plantillas de catálogo. & Vence a los 30 días, detiene los contenedores cada 12 horas, los ejecuta con un usuario arbitrario y solo admite tráfico entrante por su router web. & Adecuado como alternativa transitoria a Elastic Cloud. \\
+    OpenShift Developer Sandbox & Gratuito; ejecuta las mismas imágenes que publica el pipeline; volúmenes persistentes y plantillas de catálogo. & Vence a los 30 días, detiene los contenedores cada 12 horas, los ejecuta con un usuario arbitrario y solo admite tráfico entrante por su router web; la cuota de 3 CPU reservadas limita el central a cuatro instancias y el nodo compartido puede terminar procesos de PostgreSQL. & Adecuado para desplegar y probar toda la plataforma. \\
 \hline
     PostgreSQL & Transacciones; \textit{triggers} que protegen la pista de auditoría. & Los \textit{triggers} se instalan desde la aplicación al arrancar, porque Hibernate no los genera. & Adecuado para los datos transaccionales. \\
 \hline
-    GitHub Actions, JaCoCo y SpotBugs & Compilación, pruebas y análisis de cada cambio del central antes de integrarlo. & Sin pruebas automatizadas sobre WildFly; la integración se verificó aparte. & Adecuado para detectar regresiones. \\
+    GitHub Actions, JaCoCo, SpotBugs y SonarCloud & Compilación, pruebas, cobertura mínima del 80~\% y análisis estático de cada cambio antes de integrarlo. & El acceso a datos se prueba con bases reales en contenedores, pero no hay pruebas automatizadas sobre WildFly. & Adecuado para detectar regresiones. \\
 \hline
 \end{longtable}}
 
@@ -69,7 +69,7 @@ La Tabla~\ref{tab:evaluacion-productos-herramientas} resume la evaluación de lo
 
 \textbf{Caída de la base de datos.} Al detener PostgreSQL unos segundos, el broker agotaba los reintentos inmediatos y las posiciones terminaban en la cola de mensajes muertos; al volver la base, el central conservaba conexiones inválidas. Se configuraron reentregas con espera creciente y la validación de las conexiones del pool.
 
-\textbf{Despliegue sin Elastic Cloud.} Elastic Cloud no estuvo disponible, por lo que el componente central, PostgreSQL y el directorio se desplegaron en forma transitoria en el Developer Sandbox de OpenShift; las imágenes que publica el pipeline servirán igual para Elastic Cloud. El sandbox vence a los 30 días, detiene los contenedores cada 12 horas y solo admite tráfico entrante por su router web, por lo que los nodos de tracking deberán llegar al broker con TLS de extremo a extremo, indicando el destino mediante SNI, como en la prueba de performance.
+\textbf{Despliegue sin Elastic Cloud.} Como Elastic Cloud no estuvo disponible, la plataforma se desplegó en el Developer Sandbox de OpenShift, en tres proyectos: el componente central (de una a cuatro instancias), PostgreSQL, MongoDB, Artemis, el directorio LDAP y la plataforma de observabilidad en uno; los dos nodos de tracking y el suplantador de la PDI en otro, y los dos nodos de balanzas, cada uno con su base, en un tercero, en otro clúster. El frontoffice se publica en Vercel. Como el sandbox solo admite tráfico entrante por su router web, los nodos de tracking llegan al broker con TLS de extremo a extremo, indicando el destino mediante SNI, y los nodos envían su telemetría por rutas con TLS y un token. Las imágenes que publica el pipeline sirven igual para Elastic Cloud.
 
 \textbf{Contenedores sin privilegios.} El directorio LDAP, que funcionaba en Docker Compose, se reiniciaba en forma continua en OpenShift. La plataforma ejecuta los contenedores con un usuario arbitrario y sin capacidades del kernel, y el ejecutable de 389 Directory Server solo lo puede ejecutar su grupo y requiere la capacidad \texttt{NET\_BIND\_SERVICE}. Además, el primer arranque dejaba la instalación incompleta en el volumen, y los reinicios mostraban otro error que ocultaba la causa. Se diagnosticó reproduciendo el arranque en un contenedor descartable, y se resolvió agregando ese grupo y esa capacidad, que la política de seguridad admite, sin otros privilegios.
 
