@@ -67,6 +67,13 @@
       <version>1.1.7</version>
       <scope>runtime</scope>
     </dependency>
+    <!-- un broker Artemis embebido para probar el publicador sin el central -->
+    <dependency>
+      <groupId>org.apache.activemq</groupId>
+      <artifactId>artemis-server</artifactId>
+      <version>2.57.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -83,6 +90,45 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.2</version>
+        <configuration>
+          <!-- la configuracion del nodo sale del entorno: ConfigTest lee estos valores -->
+          <environmentVariables>
+            <NODO_ID>nodo-prueba</NODO_ID>
+            <NODO_JMS_USUARIO>usuario-prueba</NODO_JMS_USUARIO>
+            <NODO_JMS_CLAVE>clave-prueba</NODO_JMS_CLAVE>
+            <NODO_PUERTO>9091</NODO_PUERTO>
+            <NODO_VEHICULOS_EXTRA>3</NODO_VEHICULOS_EXTRA>
+            <NODO_ACELERAR>2.5</NODO_ACELERAR>
+            <NODO_SIN_COBERTURA>10, 5</NODO_SIN_COBERTURA>
+            <NODO_PRUEBA_NUMERO_INVALIDO>diez</NODO_PRUEBA_NUMERO_INVALIDO>
+          </environmentVariables>
+        </configuration>
+      </plugin>
+      <!-- cobertura de las pruebas (AC25), en target/site/jacoco. NodoTracking solo arma las piezas y arranca los hilos -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.15</version>
+        <executions>
+          <execution>
+            <id>preparar-agente</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>reporte-cobertura</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <excludes>
+                <exclude>tse/cargauy/nodotracking/NodoTracking*</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
