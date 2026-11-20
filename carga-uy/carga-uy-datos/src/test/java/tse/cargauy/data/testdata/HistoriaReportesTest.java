@@ -56,7 +56,7 @@ class HistoriaReportesTest {
         for (HistoriaReportes.ViajeHistorico viaje : viajes) {
             assertTrue(camionesPorDia.computeIfAbsent(viaje.fecha(), d -> new HashSet<>()).add(viaje.camion()));
             assertTrue(!viaje.fecha().isBefore(HistoriaReportes.PRIMER_DIA) && !viaje.fecha().isAfter(HistoriaReportes.ULTIMO_DIA));
-            assertTrue(viaje.fecha().getDayOfWeek() != DayOfWeek.SUNDAY);
+            assertTrue(!viaje.fecha().getDayOfWeek().equals(DayOfWeek.SUNDAY));
             assertTrue(viaje.tipoCarga() >= 0 && viaje.tipoCarga() < TIPOS);
             assertTrue(viaje.volumen() >= 8000 && viaje.volumen() <= 21000);
             rubros.add(viaje.rubro());

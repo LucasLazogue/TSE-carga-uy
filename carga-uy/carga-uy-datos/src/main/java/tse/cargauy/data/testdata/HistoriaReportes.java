@@ -81,9 +81,9 @@ final class HistoriaReportes {
         for (LocalDate dia = PRIMER_DIA; !dia.isAfter(ULTIMO_DIA); dia = dia.plusDays(1)) {
             int n = dia.getDayOfYear();
             int cantidad;
-            if (dia.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            if (dia.getDayOfWeek().equals(DayOfWeek.SUNDAY)) {
                 cantidad = 0;
-            } else if (dia.getDayOfWeek() == DayOfWeek.SATURDAY) {
+            } else if (dia.getDayOfWeek().equals(DayOfWeek.SATURDAY)) {
                 cantidad = n % 2;
             } else {
                 cantidad = 2 + (n * 7) % 3 + (dia.getMonthValue() >= 3 && dia.getMonthValue() <= 5 ? 1 : 0);
