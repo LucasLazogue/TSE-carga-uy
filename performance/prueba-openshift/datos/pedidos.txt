@@ -60,3 +60,47 @@
   viaje          n=  1494 p50=   158 p95=   206 p99=   393
   empresas       n=  1499 p50=   156 p95=   199 p99=   451
   indicadores    n=  1489 p50=   144 p95=   174 p99=  2733
+== k6-reglas-en-regla-145-detalle.csv.gz
+  viajes         n=  1497 p50=   193 p95=   336 p99=   483
+  infracciones   n=  1497 p50=   164 p95=   244 p99=   327
+  casos          n=  1500 p50=   164 p95=   239 p99=   328
+  habilitacion   n=  1498 p50=   161 p95=   220 p99=   291
+  eventos        n=  1497 p50=   156 p95=   219 p99=   284
+  viaje          n=  1497 p50=   153 p95=   205 p99=   294
+  vehiculos      n=  2997 p50=   153 p95=   187 p99=   225
+  empresas       n=  1500 p50=   152 p95=   179 p99=   234
+  indicadores    n=  1498 p50=   144 p95=   160 p99=   462
+== k6-reglas-todas-145-detalle.csv.gz
+  movil sync     n=   270 p50=   426 p95=  1646 p99=  1944
+  viajes         n=  1495 p50=   599 p95=  1223 p99=  1449
+  casos          n=  1501 p50=   234 p95=   845 p99=   997
+  infracciones   n=  1495 p50=   229 p95=   730 p99=   955
+  eventos        n=  1488 p50=   177 p95=   525 p99=   700
+  viaje          n=  1488 p50=   169 p95=   507 p99=   652
+  habilitacion   n=  1468 p50=   241 p95=   489 p99=   609
+  movil viajes   n=   301 p50=   184 p95=   314 p99=   577
+  vehiculos      n=  2996 p50=   175 p95=   275 p99=   377
+  empresas       n=  1501 p50=   162 p95=   209 p99=   340
+  indicadores    n=  1468 p50=   143 p95=   185 p99= 13567
+== k6-reglas-en-regla-145-3gib-detalle.csv.gz
+  viajes         n=  1498 p50=   397 p95=   764 p99=   923
+  infracciones   n=  1498 p50=   192 p95=   501 p99=   669
+  casos          n=  1500 p50=   193 p95=   482 p99=   677
+  habilitacion   n=  1493 p50=   202 p95=   405 p99=   527
+  eventos        n=  1498 p50=   174 p95=   405 p99=   575
+  viaje          n=  1498 p50=   166 p95=   370 p99=   530
+  vehiculos      n=  2998 p50=   167 p95=   239 p99=   336
+  empresas       n=  1500 p50=   158 p95=   194 p99=   389
+  indicadores    n=  1493 p50=   144 p95=   165 p99=  3386
+== k6-reglas-todas-145-3gib-detalle.csv.gz
+  movil sync     n=   268 p50=   413 p95=  1483 p99=  2037
+  viajes         n=  1495 p50=   691 p95=  1078 p99=  1244
+  casos          n=  1500 p50=   237 p95=   671 p99=   839
+  infracciones   n=  1495 p50=   232 p95=   656 p99=   881
+  eventos        n=  1485 p50=   179 p95=   482 p99=   624
+  habilitacion   n=  1464 p50=   237 p95=   461 p99=   565
+  viaje          n=  1485 p50=   170 p95=   451 p99=   584
+  movil viajes   n=   301 p50=   184 p95=   341 p99=   568
+  vehiculos      n=  2995 p50=   174 p95=   272 p99=   431
+  empresas       n=  1500 p50=   161 p95=   213 p99=   411
+  indicadores    n=  1464 p50=   144 p95=   208 p99= 12358

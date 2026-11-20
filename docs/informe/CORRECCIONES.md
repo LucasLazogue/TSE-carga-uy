@@ -37,13 +37,12 @@ Las propuestas son un punto de partida para discutir. Cada decisión hay que tom
 
 Puntos en los que la solución descrita podría no cumplir con la letra o quedar incompleta.
 
-1. **Escalado horizontal con estado en las instancias.** La sesión del backoffice JSF guarda estado en cada instancia (AC07). La mensajería ya no: el broker está en su propio contenedor. Obs. 3.
-2. **Opcional 4 frente a R14.** Elastic Cloud no estuvo disponible y el componente central corre en forma transitoria en OpenShift (#84). Falta describir el Escenario 2 y demostrar el escalado con varias réplicas durante la prueba de carga. Obs. 7.
-3. **Elementos "a definir" en el diagrama de distribución.** La plataforma de los componentes periféricos (R15) y la de la Plataforma de Observabilidad. El diagrama todavía dibuja el directorio LDAP en la caja "a definir". Obs. 4; Obs. 6.
-4. **DA10 deja casos sin cubrir.** Un viaje cuyo fin nunca se registra no se evalúa por exceso de carga, y la regla "viaje sin Guía" no puede detectarse por pesaje. Obs. 10.
-5. **Fotografía de los incidentes sin diseño.** Obs. 1.
-6. **Plazo de descargo: días hábiles o corridos.** Obs. 2.
-7. **Registro de decisiones de la entrega final.** Se piden entre cinco y ocho decisiones con sus consecuencias, y el documento tiene once. Obs. 8.
+1. **Opcional 4 frente a R14.** Elastic Cloud no estuvo disponible y el componente central corre en OpenShift (#84). El Escenario 2 ya describe ese despliegue y la prueba de performance demostró el escalado con 1, 2 y 4 instancias; falta explicar cómo se relaciona con R14. Obs. 7.
+2. **Elementos "a definir" en el diagrama de distribución.** La plataforma de los componentes periféricos (R15) y la de la Plataforma de Observabilidad. El diagrama todavía dibuja el directorio LDAP en la caja "a definir". Obs. 4; Obs. 6.
+3. **DA10 deja casos sin cubrir.** Un viaje cuyo fin nunca se registra no se evalúa por exceso de carga, y la regla "viaje sin Guía" no puede detectarse por pesaje. Obs. 10.
+4. **Fotografía de los incidentes sin diseño.** Obs. 1.
+5. **Plazo de descargo: días hábiles o corridos.** Obs. 2.
+6. **Registro de decisiones de la entrega final.** Se piden entre cinco y ocho decisiones con sus consecuencias, y el documento tiene once. Obs. 8.
 8. **Conexión del nodo de tracking con TLS y no con HTTPS (R8).** Obs. 5.
 
 ## 2. Decisiones importantes
@@ -83,15 +82,11 @@ Los reintentos con espera creciente y la cola de mensajes muertos ya están en D
 
 *Dónde:* AC06 · R12 · Fila Umbral
 
-### D9. Escalado horizontal y tecnología del backoffice (JSF o React)
+### D9. Tecnología del backoffice (JSF o React)
 
-La tecnología ya está decidida: DA05 deja el backoffice en JSF y el código lo implementa con PrimeFaces (#46). Falta en el documento quitar la fila "Tecnología del backoffice" de las decisiones pendientes.
+La tecnología ya está decidida: DA05 deja el backoffice en JSF y el código lo implementa con PrimeFaces (#46). Falta en el documento quitar la fila "Tecnología del backoffice" de las decisiones pendientes. El escalado con varias instancias ya está resuelto (#117): el estado de cada pantalla viaja cifrado en la página y no en la sesión, y el Escenario 2 lo describe.
 
-**Por qué importa:** AC07 pide escalar sin estado local en las instancias. DA03 sacó de la sesión el estado del ingreso, pero quedan cinco beans JSF con `@ViewScoped` (`EmpresaView`, `NodoView`, `NormaView`, `UsuarioView` y `VehiculoView`), que JSF guarda en la sesión HTTP de cada instancia.
-
-**Propuesta:** documentar la afinidad de sesión en el balanceador y aceptar que, si se cae una réplica, se pierden las pantallas abiertas en ella.
-
-*Dónde:* Obs. 3 · AC07 · DA05 · Filas Escalado y Tecnología del backoffice
+*Dónde:* DA05 · Fila Tecnología del backoffice
 
 ### D10. Alternativas y justificación de las decisiones, y registro de decisiones
 
@@ -101,18 +96,15 @@ La tecnología ya está decidida: DA05 deja el backoffice en JSF y el código lo
 
 *Dónde:* Obs. 8 · DA01 a DA09
 
-### D11. Orquestador del opcional 4, Escenario 2 y prueba de performance
+### D11. Opcional 4 frente a R14
 
-**Por qué importa:** El grupo comprometió el despliegue del componente central en un orquestador con escalado horizontal (opcional 4), que exige demostrar el escalado durante la prueba de carga. R14 pide Elastic Cloud, que no estuvo disponible: el componente central corre en forma transitoria en OpenShift, basado en Kubernetes (#84). El Escenario 2 tiene que describir ese despliegue, que sirve también para la prueba de carga.
+El Escenario 2 describe el despliegue en OpenShift, y la Vista de Atributos de Calidad, el resultado de la prueba de performance (escalado con 1, 2 y 4 instancias, detalle en `docs/performance.md`). Las filas "Escalado y orquestador" y "Prueba de performance" ya no están en las decisiones pendientes.
 
-**Propuesta:**
+**Por qué importa:** R14 pide Elastic Cloud, que no estuvo disponible: el componente central corre en OpenShift, basado en Kubernetes (#84).
 
-- Consultar en el monitoreo si el escalado demostrado en OpenShift alcanza para el opcional 4, dado que Elastic Cloud no estuvo disponible.
-- Describirlo como Escenario 2: orquestador, réplicas del componente central y balanceador.
-- Con varias réplicas, la sesión del backoffice JSF (D9) tiene que estar resuelta antes de la prueba. La ingesta ya escala: las réplicas comparten el broker.
-- Herramientas de la prueba: k6 para las consultas del frontoffice, donde se mide el percentil 95 menor a 500 ms, y el nodo de tracking en modo carga para la ingesta. La evidencia sale del tablero de Grafana, que ya está armado, bajando la proporción de trazas con `OTEL_PROPORCION_TRAZAS`.
+**Propuesta:** consultar en el monitoreo si el escalado demostrado en OpenShift alcanza para el opcional 4 y completar el pendiente del Escenario 2 sobre R14.
 
-*Dónde:* Obs. 7 · §7.2 · R14 · AC07 · Filas Escalado y Prueba de performance
+*Dónde:* Obs. 7 · §7.2 · R14
 
 ## 3. Decisiones y tareas menores
 
@@ -186,9 +178,7 @@ El plazo ya es un parámetro con fecha de vigencia (10 días por defecto), y un 
 
 ### Obs. 3. AC07: escalado horizontal
 
-*Dónde:* §5 Vista de Atributos de Calidad, AC07 · *Ítem:* D9, D11
-
-La mensajería ya no guarda estado en las instancias: el broker está en su propio contenedor y lo comparten todas (DA02). Queda el backoffice JSF: sus cinco beans `@ViewScoped` viven en la sesión HTTP de cada instancia. Definir cómo escala con ellos (por ejemplo, afinidad de sesión o replicación de la sesión) y reflejarlo en la vista de distribución.
+Resuelta (#117): el backoffice JSF guarda el estado de cada pantalla cifrado en la página, con una clave común a todas las instancias, y no usa la sesión HTTP. El Escenario 2 lo describe.
 
 ### Obs. 4. Elementos "a definir" en el diagrama
 
@@ -212,7 +202,7 @@ El texto no nombra la plataforma y el diagrama la rotula "plataforma a definir".
 
 *Dónde:* §7.2 Escenario 2 · *Ítem:* D11
 
-El orquestador del opcional 4 se tiene que compatibilizar con R14, que exige ejecutar el componente central en Elastic Cloud. Elastic Cloud no estuvo disponible y el componente central corre en OpenShift (#84): consultar en el monitoreo si eso alcanza. Con varias réplicas, la sesión del backoffice JSF pasa a ser un problema concreto (Obs. 3); la ingesta ya escala, porque las réplicas comparten el broker. Indicar también con qué herramienta se ejecuta la prueba de performance.
+El orquestador del opcional 4 se tiene que compatibilizar con R14, que exige ejecutar el componente central en Elastic Cloud. Elastic Cloud no estuvo disponible y el componente central corre en OpenShift (#84): consultar en el monitoreo si eso alcanza. El Escenario 2 ya describe el despliegue, y la prueba de performance (k6 y el generador del nodo de tracking) demostró el escalado.
 
 ### Obs. 8. Registro de decisiones de la entrega final
 
@@ -237,17 +227,16 @@ Los 21 pendientes que el documento marca en rojo y el ítem de este archivo que 
 | §6.2 | Agregar los refinamientos de otros subsistemas que hagan falta | M15 |
 | §7.1 | Definir en qué plataforma se ejecuta la Plataforma de Observabilidad | M1 |
 | §7.1 | Describir los requerimientos no funcionales que justifican el escenario | M13 |
-| §7.2 | Describir el despliegue en un orquestador de contenedores (opcional 4), compatible con R14 | D11 |
+| §7.2 | Completar cómo se relaciona el Escenario 2 con R14 | D11 |
 | §8.1 | Describir pros y contras de las tecnologías y las habilidades necesarias | M14 |
 | §9 DA01, DA02, DA04, DA05, DA06, DA08 y DA09 (14) | Completar las alternativas consideradas y la justificación | D10 |
 
-La tabla "Decisiones pendientes" del documento (§9.1) tiene 12 filas:
+La tabla "Decisiones pendientes" del documento (§9.1) tiene 10 filas:
 
 | Fila | Ítem |
 |---|---|
 | Servicio de rutas y geocodificación · Criterio de desvío de ruta · Momento de evaluación del desvío | D5 |
 | Umbral de agregación | D6 |
-| Escalado y orquestador · Prueba de performance | D11 |
 | Tecnología del backoffice | D9 |
 | Plataforma de los periféricos · Plataforma de observabilidad | M1 |
 | Fotografías de los incidentes | M5 |

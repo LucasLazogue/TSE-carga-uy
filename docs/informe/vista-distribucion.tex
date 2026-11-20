@@ -35,4 +35,13 @@ La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas l
 
 \subsection{Escenario 2}
 
-\pendiente{describir el despliegue del componente central en un orquestador de contenedores con escalado horizontal (opcional 4), compatible con R14, que sirve también como escenario de la prueba de performance.}
+El componente central se despliega en el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes, con las mismas imágenes que publica el pipeline de integración continua (opcional 4). Es el escenario de la prueba de performance (Sección \ref{sec:resultado-performance}).
+
+\begin{itemize}
+    \item \textbf{Componente central.} Entre 1 y 4 instancias de WildFly, de hasta 2 CPU y 2 GiB cada una. Un \emph{HorizontalPodAutoscaler} agrega instancias cuando el uso medio de CPU supera el 70~\% de lo pedido y las quita después de 5 minutos por debajo. El límite de 4 sale de la cuota del Sandbox.
+    \item \textbf{Sin estado en las instancias (AC07).} La API usa JWT sin sesión, y el backoffice guarda el estado de cada pantalla cifrado en la propia página, con una clave común a todas las instancias, así que la ruta de entrada reparte los pedidos sin afinidad. Todas las instancias consumen de la misma cola de Artemis, los casos y las reevaluaciones se deduplican en la base, y las tareas programadas toleran correr en todas.
+    \item \textbf{Servicios compartidos.} PostgreSQL (4 CPU y 2 GiB), MongoDB (2 CPU), Artemis y el Directorio LDAP corren en el mismo proyecto, cada uno en su contenedor con su volumen (DA02), al igual que la Plataforma de Observabilidad.
+    \item \textbf{Nodos periféricos.} Los nodos de tracking corren en otro proyecto del mismo clúster y publican en Artemis por su ruta con TLS; los nodos de balanzas, en otro clúster, y el componente central los consulta por HTTPS.
+\end{itemize}
+
+\pendiente{completar cómo se relaciona este escenario con R14.}
