@@ -1,0 +1,47 @@
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{scenario:funcionario}
+    ✓ 'p(95)<500' p(95)=220.33ms
+
+    http_req_duration{scenario:publico}
+    ✓ 'p(95)<500' p(95)=270.56ms
+
+    http_req_duration{scenario:responsable}
+    ✓ 'p(95)<500' p(95)=382.41ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 14978   49.825871/s
+    checks_succeeded...: 100.00% 14978 out of 14978
+    checks_failed......: 0.00%   0 out of 14978
+
+    ✓ respuesta 200
+
+    HTTP
+    http_req_duration..............: avg=194.81ms min=139.47ms med=161.27ms max=6.28s    p(90)=264.75ms p(95)=342.11ms
+      { expected_response:true }...: avg=194.81ms min=139.47ms med=161.27ms max=6.28s    p(90)=264.75ms p(95)=342.11ms
+      { scenario:funcionario }.....: avg=173.62ms min=142.24ms med=157.83ms max=977.79ms p(90)=187.91ms p(95)=220.33ms
+      { scenario:publico }.........: avg=194.39ms min=139.47ms med=152ms    max=6.28s    p(90)=216.73ms p(95)=270.56ms
+      { scenario:responsable }.....: avg=207.71ms min=142.68ms med=168.89ms max=1.43s    p(90)=305.09ms p(95)=382.41ms
+    http_req_failed................: 0.00%  0 out of 14978
+    http_reqs......................: 14978  49.825871/s
+
+    EXECUTION
+    dropped_iterations.............: 10     0.033266/s
+    iteration_duration.............: avg=658.54ms min=287.15ms med=489.15ms max=7.26s    p(90)=1.1s     p(95)=1.31s   
+    iterations.....................: 4492   14.943104/s
+    vus............................: 7      min=6          max=30
+    vus_max........................: 40     min=30         max=40
+
+    NETWORK
+    data_received..................: 48 MB  160 kB/s
+    data_sent......................: 6.6 MB 22 kB/s
+
+
+

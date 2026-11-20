@@ -104,3 +104,35 @@
   vehiculos      n=  2995 p50=   174 p95=   272 p99=   431
   empresas       n=  1500 p50=   161 p95=   213 p99=   411
   indicadores    n=  1464 p50=   144 p95=   208 p99= 12358
+== k6-detalle-calentamiento-detalle.csv.gz
+  viajes         n=  1498 p50=   259 p95=   496 p99=   713
+  infracciones   n=  1498 p50=   184 p95=   362 p99=   616
+  habilitacion   n=  1494 p50=   175 p95=   297 p99=   603
+  eventos        n=  1498 p50=   162 p95=   295 p99=   645
+  viaje          n=  1498 p50=   157 p95=   278 p99=   583
+  empresas       n=  1500 p50=   154 p95=   248 p99=   614
+  casos          n=  1500 p50=   161 p95=   225 p99=   605
+  vehiculos      n=  2998 p50=   158 p95=   206 p99=   599
+  indicadores    n=  1494 p50=   144 p95=   163 p99=   971
+== k6-detalle-detalle.csv.gz
+  movil sync acumulado n=   601 p50=   326 p95=   525 p99=   652
+  viajes en curso n=  1201 p50=   227 p95=   372 p99=   487
+  movil sync reenvio n=   601 p50=   237 p95=   337 p99=   428
+  viajes         n=  3000 p50=   205 p95=   332 p99=   445
+  movil sync     n=   601 p50=   209 p95=   302 p99=   394
+  notificaciones responsable n=  1201 p50=   158 p95=   231 p99=   361
+  pesajes        n=  1201 p50=   176 p95=   223 p99=   506
+  habilitacion   n=  3001 p50=   160 p95=   211 p99=   358
+  auditoria      n=  1201 p50=   153 p95=   209 p99=   369
+  infraccion     n=  1201 p50=   153 p95=   199 p99=   285
+  infracciones   n=  4201 p50=   160 p95=   195 p99=   321
+  movil viajes   n=  1202 p50=   156 p95=   191 p99=   372
+  caso           n=  1201 p50=   150 p95=   189 p99=   285
+  casos          n=  4202 p50=   155 p95=   181 p99=   238
+  eventos        n=  3000 p50=   153 p95=   179 p99=   237
+  vehiculos      n=  6001 p50=   152 p95=   178 p99=   266
+  posiciones     n=  1201 p50=   151 p95=   171 p99=   281
+  viaje          n=  3000 p50=   150 p95=   171 p99=   292
+  empresas       n=  3001 p50=   149 p95=   169 p99=   349
+  notificaciones funcionario n=  1201 p50=   149 p95=   166 p99=   237
+  indicadores    n=  3001 p50=   143 p95=   152 p99=   395

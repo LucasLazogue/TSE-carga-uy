@@ -34,6 +34,7 @@ para los usuarios de k6. Al terminar, `reiniciar-datos.sh` sin parámetros vuelv
 | `pool.sh` | Pool de conexiones 20 contra 40 con una instancia y la cola llena; al terminar deja todo como estaba |
 | `control_casos.sh` | Control de los casos abiertos con #141 desplegado: 5 minutos de k6 para calentar, la mitad de la flota con caso abierto y las ITV vigentes de nuevo. La repetición de las dos fases, alternadas, se hizo a mano con los mismos comandos (ver la bitácora) |
 | `todas_las_reglas.sh` | Las cuatro reglas de fiscalización a la vez con 600 pos/s: 5 minutos de k6 con la flota en regla y otros 5 con sin habilitación, viaje sin guía y desvío en 1.800 vehículos cada una, y exceso de carga con pesajes en balanzas-sur y el escenario móvil. Guarda el detalle de cada pedido |
+| `consultas_detalle.sh` | Consultas de detalle del frontoffice (monitoreo de un viaje, detalle de casos e infracciones, notificaciones) y sincronización del móvil con eventos acumulados y su reenvío, con 600 pos/s. Antes de medir verifica que el broker esté encendido y la ingesta en el volumen objetivo |
 | `pedidos_k6.py` | Mediana, p95 y p99 de cada pedido del frontoffice a partir del detalle de k6 (`--out csv`): el resumen de k6 solo los separa por escenario |
 | `medir_endpoints.py`, `un_pesaje.py` | Auxiliares: tiempo de cada endpoint del frontoffice y un pedido de pesajes suelto |
 
@@ -58,6 +59,7 @@ Las corridas 1 y 2 se hicieron a mano, cambiando `NODO_VEHICULOS_EXTRA` en los n
 | `control.csv`, `control2.csv` | Controles de 5 minutos con 600 pos/s y k6: con la mitad de la flota con caso abierto y con las ITV vigentes |
 | `pool.csv`, `pool-20-otra-vez.csv` | Pool de 20 y de 40, y de nuevo 20 en un pod nuevo |
 | `control-141.csv`, `control-141-repeticion.csv` | Control de los casos abiertos con #141 desplegado, y la repetición |
+| `consultas-detalle.csv` | Consultas de detalle y móvil con eventos acumulados |
 | `todas-las-reglas.csv`, `todas-las-reglas-145.csv`, `todas-las-reglas-145-3gib.csv` | Las cuatro reglas de fiscalización a la vez: antes de #145, con #145 y con #145 y PostgreSQL en 3 GiB |
 
 Los `k6-*.txt` y `k6-*.json` son los resúmenes de k6 de cada corrida; `pedidos.txt`, el tiempo de cada pedido en las corridas con detalle (salida de `pedidos_k6.py`); y `pg-activas.txt`, las consultas que se veían en

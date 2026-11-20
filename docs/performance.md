@@ -89,6 +89,15 @@ segundo cada uno):
   con carga. Con 18.000 vehículos y viajes de unas 5 horas termina un viaje por segundo (`TASA_MOVIL=1`). Cada
   iteración usa el vehículo siguiente, desde `MOVIL_DESDE` (1 por defecto): en otra corrida sobre la misma carga de
   datos hay que arrancar después de los ya usados, o reiniciar los datos.
+- **Consultas de detalle (opcional, `TASA_DETALLE` por segundo para cada perfil):** el funcionario abre el monitoreo de
+  un viaje en curso de una empresa (sus posiciones, que salen de MongoDB, y sus pesajes, que se les piden en vivo a los
+  nodos de balanzas), el detalle de un caso de su bandeja con la auditoría y sus notificaciones; el responsable abre una
+  de sus infracciones con la evidencia y sus notificaciones.
+- **Móvil con eventos acumulados (opcional, `TASA_ACUMULADO` choferes por segundo):** un chofer recupera la señal y
+  manda en un solo envío `EVENTOS_ACUMULADOS` (20) eventos del viaje en curso guardados sin conexión: cargas y
+  descargas parciales e incidentes. Después reenvía el mismo lote, como cuando la app no recibió la respuesta. k6
+  verifica que la primera vez se apliquen todos y que la segunda vuelvan como duplicados. Usa los vehículos desde
+  `ACUMULADO_DESDE` (9001), lejos de los del escenario móvil.
 
 Los tokens no pasan por gub.uy: el script los firma con el mismo secreto del central
 (`CARGAUY_JWT_SECRET`) y las mismas claims que `UsuarioEJB`. Los usuarios salen de la base:
@@ -147,6 +156,7 @@ y correrla con el central en la nube (se hizo en OpenShift: ver la sección sigu
 | Pico ×3 (1.800 pos/s) | Se encola y se procesa con atraso, sin pérdida | [Pico](#pico-de-1800-posicioness) |
 | Balanzas indisponibles | El central sigue respondiendo; el viaje queda pendiente y se reevalúa al volver el nodo | [Escenarios de falla](#escenarios-de-falla) |
 | PDI que no responde | El ingreso sigue funcionando con el perfil pendiente | [Escenarios de falla](#escenarios-de-falla) |
+| Consultas de detalle y sincronización del móvil con eventos acumulados | 16 lecturas del frontoffice con p95 de 177 a 276 ms y 0 errores con 600 pos/s; 600 lotes de 20 eventos aplicados y sus reenvíos como duplicados | [Consultas de detalle](#consultas-de-detalle-y-móvil-con-eventos-acumulados) |
 | Las cuatro reglas de fiscalización con carga | Sin habilitación, viaje sin guía y desvío (1.800 casos cada una) y exceso de carga (unos 250) se abren con 600 pos/s sin afectar la ingesta | [Las cuatro reglas a la vez](#las-cuatro-reglas-a-la-vez) |
 | Escalado horizontal efectivo (opcional 4) | 1 → 2 instancias: ×1,9; 2 → 4: ×1,4 | [Escalado](#escalado-horizontal) |
 
@@ -447,13 +457,56 @@ para terminarlo (`oom_score_adj` 984) cuando el nodo compartido del Sandbox se q
 Guaranteed tendría que pedir lo mismo que su límite, también en CPU (4), y la cuota del proyecto permite pedir 3 CPU en
 total. En un despliegue propio, PostgreSQL iría con sus recursos reservados (Guaranteed) o como servicio gestionado.
 
+### Consultas de detalle y móvil con eventos acumulados
+
+20/11, con [consultas_detalle.sh](../performance/prueba-openshift/consultas_detalle.sh) y #145 desplegado: 600 pos/s,
+5 minutos de k6 con los escenarios de siempre y después 10 minutos sumando las consultas de detalle de funcionarios y
+responsables (`TASA_DETALLE=2`), un chofer por segundo con 20 eventos acumulados y su reenvío (`TASA_ACUMULADO=1`) y un
+fin de viaje por segundo (`TASA_MOVIL=1`). Con eso k6 recorre 16 lecturas del frontoffice; quedan afuera las de las
+pantallas de alta y edición (Guías, permisos, ITV, choferes, perfil de la empresa) y los catálogos.
+
+| Fase | Funcionario | Responsable | Público | Funcionario, detalle | Responsable, detalle | Errores k6 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Escenarios de siempre (vaciando la cola del arranque) | 220 ms | 382 ms | 271 ms | | | 0 % |
+| Todo junto, 10 minutos | **177 ms** | **263 ms** | **198 ms** | **276 ms** | **213 ms** | **0 %** (45.020 pedidos) |
+
+Durante los 10 minutos la ingesta procesó 600 pos/s con 4 instancias, la cola no pasó de unos 300 mensajes y
+PostgreSQL usó unas 2,5 CPU. Por pedido (p95): las posiciones de un viaje 171 ms, sus pesajes 223 ms (dos nodos de
+balanzas consultados en paralelo), el detalle de un caso 189 ms y su auditoría 209 ms; el más lento del frontoffice es
+el listado de viajes en curso de una empresa (372 ms). El detalle está en
+[datos/pedidos.txt](../performance/prueba-openshift/datos/pedidos.txt).
+
+**Eventos acumulados:** los 601 lotes de 20 eventos se aplicaron enteros (4.207 cargas parciales, 4.207 descargas
+parciales y 3.606 incidentes en la base) y los 601 reenvíos volvieron como duplicados, sin registrar nada de nuevo.
+El envío de 20 eventos tarda 525 ms de p95 y el reenvío, 337: la sincronización es idempotente también con carga.
+
+Dos cosas que aparecieron en un primer intento esa misma noche:
+
+- **El Sandbox apaga los pods después de unas 12 horas**, también en medio de una prueba: a la 01:42 bajó Artemis y
+  LDAP a 0 réplicas. Los nodos siguieron generando posiciones pero no las podían publicar, y el intento midió el
+  frontoffice sin ingesta (no se usó). Al volver el broker, los nodos publicaron lo retenido (unos 35.000 mensajes) y el
+  central lo procesó en unos 5 minutos. El script ahora verifica el broker y que la ingesta esté en el volumen
+  objetivo antes de medir.
+- **Bajar instancias corta algunos pedidos.** Sin la carga de tracking, el autoescalado bajó de 4 a 3 instancias y de
+  3 a 2; en esos dos segundos hubo 19 errores (404 y 503, el 0,04 % de los pedidos). WildFly empieza a dar de baja la
+  aplicación mientras el router todavía le manda pedidos. Una pausa antes de apagar (`preStop`) lo evitaría.
+
 ### Lo que esta prueba no cubre
 
 - **Casos de exceso de carga y de desvío en las corridas 1 a 6:** los nodos de balanzas no tienen pesajes de los
   vehículos `SIM` y el nodo desvía a los vehículos recién después de una hora de recorrido. Se probaron aparte, con
   pesajes cargados en `balanzas-sur` y Guías corridas ([las cuatro reglas a la vez](#las-cuatro-reglas-a-la-vez)).
-- **Una sola corrida por configuración**, con k6 desde la máquina de desarrollo: los p95 incluyen unos 280 ms de red y
-  TLS hasta el clúster.
+- **Los reportes de las autoridades (backoffice):** el tablero y la exportación agregan meses de historia; son JSF con
+  ingreso por LDAP y no están en k6.
+- **Escrituras del frontoffice:** alta de Guías y asignación de viajes, vehículos, permisos e ITV, descargos y
+  resoluciones. Su volumen es bajo frente a la ingesta.
+- **Un pico con posiciones atrasadas y duplicadas:** el pico de la nube triplicó la frecuencia de forma pareja; el modo
+  `NODO_SIN_COBERTURA` del nodo, más fiel al caso real, no se usó en OpenShift.
+- **Caídas planificadas de componentes internos** (Artemis, MongoDB, una instancia del central) con carga. Se vieron
+  sin planificarlas: PostgreSQL terminado por el Sandbox, el broker apagado por el Sandbox y el autoescalado bajando
+  instancias.
+- **Una sola corrida por configuración** en general, con k6 desde la máquina de desarrollo: los p95 incluyen la red y
+  TLS hasta el clúster (el pedido más rápido tarda unos 140 ms).
 
 ## Conexiones a la base
 
