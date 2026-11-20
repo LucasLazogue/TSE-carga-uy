@@ -7,13 +7,13 @@ Se utiliza el Diagrama de Deployment UML \cite{Ambysoft2018}. Los nodos físicos
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{figures/vista-distribucion.pdf}
-    \caption{Vista de Distribución, Escenario 1}
+    \caption{Vista de Distribución, Escenario 1 (previsto por la letra)}
     \label{fig:vista_distrib}
 \end{figure}
 
-\subsection{Escenario 1: despliegue de la solución}
+\subsection{Escenario 1: despliegue previsto}
 
-La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas las conexiones entre entornos van por HTTPS (R8), salvo la del nodo de tracking con el broker de mensajería, que usa el protocolo del broker cifrado con TLS.
+La Figura \ref{fig:vista_distrib} muestra el despliegue previsto por la letra, con el componente central en ANTEL Elastic Cloud (R14). Elastic Cloud no estuvo disponible durante el desarrollo, por lo que la solución se desplegó como describe el Escenario 2. Todas las conexiones entre entornos van por HTTPS (R8), salvo la del nodo de tracking con el broker de mensajería, que usa el protocolo del broker cifrado con TLS.
 
 \textbf{Dispositivo del chofer.} Corre el Componente Móvil (Android) con su persistencia local, que conserva la Guía, el estado del viaje y los eventos pendientes. Se comunica con el componente central mediante REST sobre HTTPS, con un token \textit{Bearer} (R2).
 
@@ -21,27 +21,26 @@ La Figura \ref{fig:vista_distrib} muestra el despliegue de la solución. Todas l
 
 \textbf{Vercel.} Sirve el frontoffice, construido en React como sitio estático, y redirige las llamadas a \texttt{/api} hacia el componente central.
 
-\textbf{ANTEL Elastic Cloud (componente central).} Corre el servidor de aplicaciones WildFly con la aplicación empaquetada como EAR (presentación: API REST y backoffice; servicios: Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización; adaptadores: gub.uy, PDI, rutas, notificaciones y balanzas), la base de datos PostgreSQL con PostGIS (opcional 11), el Almacén de Posiciones en MongoDB (opcional 10) y el broker de mensajería, Artemis en su propio contenedor, con los mensajes en un volumen (R14, DA02). Todas las instancias de WildFly consumen la misma cola del broker, así que la ingesta escala con ellas (AC07).
+\textbf{ANTEL Elastic Cloud (componente central).} Corre el servidor de aplicaciones WildFly con la aplicación empaquetada como EAR (presentación: API REST y backoffice; servicios: Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización; adaptadores: gub.uy, PDI, notificaciones y balanzas), la base de datos PostgreSQL, el Almacén de Posiciones en MongoDB (opcional 10) y el broker de mensajería, Artemis en su propio contenedor, con los mensajes en un volumen (R14, DA02). Todas las instancias de WildFly consumen la misma cola del broker, así que la ingesta escala con ellas (AC07).
 
 \textbf{PaaS o IaaS periférica.} Corre los nodos periféricos de balanzas y de tracking, y el suplantador de la PDI (R15). El nodo de balanzas guarda los pesajes en su propia base de datos. El componente central consulta a balanzas en modalidad solicitud--respuesta (R3) y recibe los eventos de tracking a través de la mensajería (R4): el nodo de tracking publica directo en el broker, con TLS y con un usuario que solo puede publicar en la cola de tracking. El nodo de tracking incluye el generador de carga: además de simular la flota, puede sumar vehículos, duplicar y desordenar eventos y acumularlos para publicarlos juntos al recuperar la cobertura, que es lo que se usa en la prueba de performance.
 
-\textbf{Sistemas externos.} Usuario gub.uy (OpenID Connect), el servicio de correo (SMTP) y el servicio de rutas (HTTPS), del que el componente central obtiene el recorrido esperado de cada Guía.
+\textbf{Sistemas externos.} Usuario gub.uy (OpenID Connect). Las notificaciones de los casos se muestran en la bandeja de la plataforma, sin servicio de correo, y la regla de desvío de ruta no usa un servicio de rutas (DA12).
 
-\textbf{Directorio LDAP y Plataforma de Observabilidad.} Se despliegan fuera del componente central. El componente central valida contra el directorio, por LDAPS, el ingreso al backoffice (opcional 8). El componente central y los nodos periféricos envían su telemetría a la Plataforma de Observabilidad, que consulta además los \emph{health checks} del componente central. El Directorio LDAP se ejecuta junto al componente central. \pendiente{definir en qué plataforma se ejecuta la Plataforma de Observabilidad.}
+\textbf{Directorio LDAP y Plataforma de Observabilidad.} Se despliegan fuera del componente central. El componente central valida contra el directorio el ingreso al backoffice (opcional 8), por LDAP dentro de la red interna del proyecto: el directorio no se publica fuera. El componente central, los nodos periféricos y la aplicación móvil envían su telemetría a la Plataforma de Observabilidad, que consulta además los \emph{health checks} del componente central. El Directorio LDAP y la Plataforma de Observabilidad se ejecutan junto al componente central; en el Escenario 2, en su mismo proyecto de OpenShift.
 
-\textbf{Despliegue transitorio.} Elastic Cloud no estuvo disponible durante el desarrollo. Mientras tanto, el componente central, PostgreSQL y el Directorio LDAP se ejecutan en el Developer Sandbox de Red Hat OpenShift, con las mismas imágenes de contenedor que publica el pipeline de integración continua.
+\textbf{Requerimientos que justifican el escenario.} El componente central en Elastic Cloud y los nodos periféricos en otra plataforma responden a R14 y R15. Separar el broker del servidor de aplicaciones permite que todas las instancias consuman la misma cola y que el nodo de tracking publique aunque el componente central esté detenido (DA02, AC07, AC17). Las conexiones entre entornos van por HTTPS (R8) y la aplicación móvil conserva los eventos mientras no tiene conexión (AC18). La consulta a balanzas en modalidad solicitud--respuesta y la ingesta de tracking por mensajería responden a R3 y R4.
 
-\pendiente{describir los requerimientos no funcionales que justifican este escenario.}
+\subsection{Escenario 2: despliegue realizado}
 
-\subsection{Escenario 2}
-
-El componente central se despliega en el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes, con las mismas imágenes que publica el pipeline de integración continua (opcional 4). Es el escenario de la prueba de performance (Sección \ref{sec:resultado-performance}).
+La solución se despliega en el Developer Sandbox de Red Hat OpenShift, una plataforma de contenedores basada en Kubernetes, con las imágenes que publica el pipeline de integración continua para el componente central, los nodos y la Plataforma de Observabilidad (opcional 4). El frontoffice se publica en Vercel, como en el Escenario 1. Es el escenario de la prueba de performance (Sección \ref{sec:resultado-performance}).
 
 \begin{itemize}
     \item \textbf{Componente central.} Entre 1 y 4 instancias de WildFly, de hasta 2 CPU y 2 GiB cada una. Un \emph{HorizontalPodAutoscaler} agrega instancias cuando el uso medio de CPU supera el 70~\% de lo pedido y las quita después de 5 minutos por debajo. El límite de 4 sale de la cuota del Sandbox.
     \item \textbf{Sin estado en las instancias (AC07).} La API usa JWT sin sesión, y el backoffice guarda el estado de cada pantalla cifrado en la propia página, con una clave común a todas las instancias, así que la ruta de entrada reparte los pedidos sin afinidad. Todas las instancias consumen de la misma cola de Artemis, los casos y las reevaluaciones se deduplican en la base, y las tareas programadas toleran correr en todas.
-    \item \textbf{Servicios compartidos.} PostgreSQL (4 CPU y 2 GiB), MongoDB (2 CPU), Artemis y el Directorio LDAP corren en el mismo proyecto, cada uno en su contenedor con su volumen (DA02), al igual que la Plataforma de Observabilidad.
-    \item \textbf{Nodos periféricos.} Los nodos de tracking corren en otro proyecto del mismo clúster y publican en Artemis por su ruta con TLS; los nodos de balanzas, en otro clúster, y el componente central los consulta por HTTPS.
+    \item \textbf{Servicios compartidos.} PostgreSQL (4 CPU y 3 GiB), MongoDB (2 CPU, 1 GiB y 5 GiB de disco), Artemis y el Directorio LDAP corren en el mismo proyecto, cada uno en su contenedor con su volumen (DA02), al igual que la Plataforma de Observabilidad. PostgreSQL sale de una plantilla del catálogo de la plataforma, Artemis se construye en el clúster y MongoDB y LDAP usan imágenes públicas.
+    \item \textbf{Nodos periféricos.} Los nodos de tracking corren en otro proyecto del mismo clúster y publican en Artemis por su ruta con TLS; los nodos de balanzas, cada uno con su base, en un proyecto de otro clúster, y el componente central los consulta por HTTPS. Envían su telemetría por un colector propio de ese proyecto.
+    \item \textbf{Suplantador de la PDI.} Se ejecuta solo en el entorno local. En la nube, sin la PDI configurada, el primer ingreso de un ciudadano continúa sin sus datos.
 \end{itemize}
 
-\pendiente{completar cómo se relaciona este escenario con R14.}
+\textbf{Relación con R14.} R14 pide el componente central en Elastic Cloud, que no estuvo disponible. Este escenario lo reemplaza con otra plataforma de contenedores que ejecuta las mismas imágenes, por lo que pasar a Elastic Cloud no requiere cambios en la aplicación. Los nodos periféricos corren en proyectos separados del componente central, pero sobre la misma plataforma, así que R15 queda cumplido solo en parte.

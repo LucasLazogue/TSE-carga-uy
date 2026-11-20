@@ -6,7 +6,7 @@ La Vista Lógica describe la arquitectura lógica de la plataforma, utilizando v
 
 La plataforma se descompone en dos subsistemas principales: el Componente Móvil, utilizado por los choferes, y el Componente Central, que concentra el resto de las funcionalidades y se comunica con los nodos periféricos y los sistemas externos (Figura \ref{fig:vista_logica}).
 
-El Componente Central se organiza en capas. La capa de presentación está formada por la API REST, consumida por el componente móvil, el Frontoffice, para el público, los ciudadanos y los funcionarios, y el Backoffice de autoridades y administradores. La capa de servicios y procesamiento agrupa los Servicios de Negocio (autenticación interna del backoffice contra el Directorio LDAP, autorización, empresas, vehículos, viajes, casos, parámetros de las reglas de fiscalización y registro de la pista de auditoría), la Generación de Reportes, que calcula los indicadores del tablero de las autoridades y genera sus exportaciones en segundo plano a partir de una cola del subsistema de Mensajería, la Ingesta de Eventos y el Motor de Fiscalización, que es disparado por la ingesta para detectar incumplimientos de forma asincrónica. La Persistencia, en PostgreSQL con PostGIS, almacena los datos declarados, el recorrido esperado de cada Guía como una línea geográfica (opcional 11), los eventos de viaje, los casos, la pista de auditoría y las exportaciones de reportes, y el Almacén de Posiciones guarda los eventos de posición de los nodos de tracking, que llegan en alto volumen y solo se agregan, en una base de datos documental (MongoDB, opcional 10). Finalmente, la capa de adaptadores e infraestructura aísla la integración con Usuario gub.uy (OpenID Connect), la PDI (SOAP), el servicio de correo (SMTP), el servicio externo de rutas, que el Adaptador de Rutas usa al registrar una Guía para obtener el recorrido esperado, el nodo de Balanzas (solicitud--respuesta) y el nodo de Tracking, cuyos eventos llegan de forma asincrónica mediante el subsistema de Mensajería. El Directorio LDAP, que se despliega fuera del Componente Central y se accede por LDAPS, guarda los usuarios del backoffice con sus contraseñas y sus grupos, que corresponden a los roles. La observabilidad es transversal: el Componente Central y los nodos periféricos están instrumentados, emiten logs estructurados con un identificador de correlación y generan trazas y métricas, que envían a la Plataforma de Observabilidad (colector, almacenamiento y visualización), un subsistema propio de la solución que se despliega fuera del Componente Central. La plataforma consulta además los \emph{health checks} del Componente Central. El componente móvil envía el identificador de la traza junto con sus eventos, de modo que una misma operación puede seguirse desde el móvil, a través del Componente Central, hasta un nodo periférico.
+El Componente Central se organiza en capas. La capa de presentación está formada por la API REST, consumida por el componente móvil, el Frontoffice, para el público, los ciudadanos y los funcionarios, y el Backoffice de autoridades y administradores. La capa de servicios y procesamiento agrupa los Servicios de Negocio (autenticación interna del backoffice contra el Directorio LDAP, autorización, empresas, vehículos, viajes, casos, parámetros de las reglas de fiscalización y registro de la pista de auditoría), la Generación de Reportes, que calcula los indicadores del tablero de las autoridades y genera sus exportaciones en segundo plano a partir de una cola del subsistema de Mensajería, la Ingesta de Eventos y el Motor de Fiscalización, que es disparado por la ingesta y por el fin de un viaje registrado desde el componente móvil para detectar incumplimientos de forma asincrónica. La Persistencia, en PostgreSQL, almacena los datos declarados, los eventos de viaje, los casos, la pista de auditoría y las exportaciones de reportes, y el Almacén de Posiciones guarda los eventos de posición de los nodos de tracking, que llegan en alto volumen y solo se agregan, en una base de datos documental (MongoDB, opcional 10). Finalmente, la capa de adaptadores e infraestructura aísla la integración con Usuario gub.uy (OpenID Connect), la PDI (SOAP), el nodo de Balanzas (solicitud--respuesta) y el nodo de Tracking, cuyos eventos llegan de forma asincrónica mediante el subsistema de Mensajería. Las Notificaciones registran los avisos a las empresas y a los funcionarios en la bandeja de la plataforma. El Directorio LDAP, que se despliega fuera del Componente Central y se accede por LDAP dentro de la red interna, guarda los usuarios del backoffice con sus contraseñas y sus grupos, que corresponden a los roles. La observabilidad es transversal: el Componente Central y los nodos periféricos están instrumentados, emiten logs estructurados con un identificador de correlación y generan trazas y métricas, que envían a la Plataforma de Observabilidad (colector, almacenamiento y visualización), un subsistema propio de la solución que se despliega fuera del Componente Central. La plataforma consulta además los \emph{health checks} del Componente Central. El componente móvil envía el identificador de la traza junto con sus eventos, de modo que una misma operación puede seguirse desde el móvil, a través del Componente Central, hasta un nodo periférico.
 
 El Componente Móvil cuenta con su propia persistencia local, donde mantiene la Guía descargada, el estado del viaje y la cola de eventos pendientes, lo que le permite operar sin conectividad y sincronizar con el Componente Central mediante REST sobre HTTPS.
 
@@ -54,7 +54,33 @@ Este refinamiento detalla los subsistemas Mensajería e Ingesta de Eventos, que 
     \end{tabular}
 \end{table}
 
-\pendiente{agregar los refinamientos de otros subsistemas que hagan falta, por ejemplo los Servicios de Negocio o el Motor de Fiscalización.}
+La Tabla \ref{tab:refinamiento-motor} refina el Motor de Fiscalización y su consulta a los nodos de balanzas.
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{Componentes del Motor de Fiscalización}
+    \label{tab:refinamiento-motor}
+    \begin{tabular}{|p{3.6cm}|p{12.2cm}|}
+        \hline
+        \textbf{Componente} & \textbf{Responsabilidad} \\
+        \hline
+        Disparador & Lanza la evaluación de una posición o de un fin de viaje recién cuando se confirma la transacción que lo registró, así un evento que se deshizo no abre casos. \\
+        \hline
+        Motor de reglas & Evalúa las cuatro reglas: viaje sin Guía, habilitación (permiso e ITV) y desvío de ruta con cada posición de un viaje, y exceso de carga al finalizar el viaje. Cada caso se registra en su propia transacción, de modo que la falla de una regla no hace perder el caso de otra. \\
+        \hline
+        Normas vigentes & Guarda en cada instancia, durante un minuto, la norma vigente (distancia de desvío y tolerancia de exceso), que se consulta con cada posición. \\
+        \hline
+        Registro de casos & Registra el caso con su evidencia, usando la clave de deduplicación para no duplicar un hecho ya registrado, lo notifica y lleva la pista de auditoría. Una máquina de estados valida las transiciones del caso (notificación, descargo y resolución). \\
+        \hline
+        Consulta de pesajes & Pide en paralelo los pesajes de cada fecha del viaje a los nodos de balanzas habilitados, con un tope de espera total, y guarda los pesajes recibidos. Un nodo que no responde queda como pendiente. \\
+        \hline
+        Corte por nodo & Deja de consultar a un nodo de balanzas tras 5 fallas en sus últimas 10 llamadas, durante 60 s, sin afectar la consulta a los demás nodos (AC13). \\
+        \hline
+        Reevaluación de pendientes & Un temporizador vuelve a evaluar cada minuto los viajes a los que les faltó la respuesta de algún nodo; cada viaje lo toma una sola instancia. \\
+        \hline
+    \end{tabular}
+\end{table}
 
 \FloatBarrier
 
@@ -92,7 +118,7 @@ La Figura \ref{fig:secuencia-cu10} muestra la interacción para el CU-10, de acu
 
 La Figura \ref{fig:secuencia-cu11} muestra la interacción entre los componentes de la vista lógica para el CU-11. Comienza cuando la Ingesta de Eventos, al terminar el procesamiento del CU-10, dispara de forma asincrónica al Motor de Fiscalización. El fin de un viaje registrado desde el móvil (CU-09) dispara el mismo flujo. El motor evalúa las cuatro reglas de la Sección \ref{sec:vista-casos-de-uso}: exceso de carga, consultando los pesajes al nodo de Balanzas solo cuando el evento es el fin de un viaje (DA10); vigencia del Permiso y la ITV; viaje sin Guía; y desvío de ruta, que compara la distancia de la posición al tramo entre el origen y el destino de la Guía con el umbral parametrizado (DA12). Si detecta un incumplimiento, verifica que el hecho no haya generado otro caso; si no existe, crea el caso con su evidencia, notifica a la empresa, inicia el plazo de descargo y registra la creación en la pista de auditoría. Los pasos y las alternativas siguen la ficha del CU-11.
 
-La notificación a la empresa es asincrónica: el motor le pide el aviso al subsistema de Notificaciones y continúa, para que una falla del correo no bloquee la creación del caso. El caso pasa a \emph{notificada}, y comienza el plazo de descargo, recién cuando el servidor de correo acepta el envío. Si el envío falla, Notificaciones lo reintenta y el caso permanece en \emph{detectada}, de modo que a la empresa no se le cuenta el plazo de un aviso que todavía no recibió. La creación del caso se registra en la pista de auditoría al final, como indica la ficha del CU-11.
+El motor registra el caso y lo notifica a la empresa en la bandeja de la plataforma: el caso pasa a \emph{notificada} en ese momento y comienza el plazo de descargo. La notificación por correo no está implementada. La creación del caso se registra en la pista de auditoría al final, como indica la ficha del CU-11.
 
 \begin{figure}[H]
     \centering

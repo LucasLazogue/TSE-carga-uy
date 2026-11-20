@@ -22,7 +22,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Decisión} & Organizar el componente central en cuatro capas: presentación (API REST, frontoffice y backoffice), servicios y procesamiento (Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización), persistencia, y adaptadores e infraestructura, que aíslan cada integración externa (Figura \ref{fig:vista_logica}). \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & Es la estructura del práctico del curso, sobre el que se construyó el componente central: presentación, negocio con EJB de sesión sin estado y acceso a datos. Los servicios que provee el servidor de aplicaciones (transacciones, seguridad declarativa, inyección de dependencias) permiten concentrar el desarrollo en la lógica de negocio, y los adaptadores separan la comunicación con los sistemas externos de esa lógica, de modo que una falla o un cambio en una integración no la afecta. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA02, DA05 \\
         \hline
@@ -44,11 +44,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La recepción de los eventos de tracking debe estar desacoplada de su procesamiento mediante un mecanismo de mensajería asincrónica (R4). La letra pide justificar la tecnología elegida, la estrategia de particionamiento o distribución de los mensajes y la política de entrega. \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & Mantener el broker embebido en el servidor de aplicaciones, que fue la implementación inicial. \\
         \hline
             \textbf{Decisión} & Usar Apache Artemis (Jakarta Messaging) como broker en su propio contenedor, separado de WildFly y con los mensajes en un volumen. Los nodos de tracking publican en la cola \texttt{queue\_tracking} conectándose directo al broker con TLS (R8), cada uno con un usuario que solo puede publicar en esa cola. Todas las instancias del componente central consumen la misma cola, mediante el componente de recepción (Sección \ref{sec:refinamiento-ingesta}), y compiten por sus mensajes; el orden de la ruta se reconstruye por el momento de generación de cada posición (AC16) y los duplicados se descartan en la ingesta (DA07). La entrega es al menos una vez: un mensaje se borra de la cola cuando se confirma la transacción que lo procesó, y si el procesamiento falla, el broker lo vuelve a entregar. Si el procesamiento falla, la reentrega espera cada vez más (1~s, 2~s, 4~s\ldots{} hasta un minuto) y se hacen hasta 20 entregas: el componente central puede estar unos 14 minutos sin poder procesar sin perder posiciones. Recién entonces el mensaje pasa a la cola de mensajes muertos, que el tablero de la Plataforma de Observabilidad muestra y desde la que se reprocesa con la consola del broker; reprocesar es seguro porque la ingesta descarta los duplicados (DA07). El componente central también usa el broker para las exportaciones de reportes (CU-16): cada solicitud se publica en la cola \texttt{queue\_informes} dentro de la transacción que la registra, la consume una sola instancia y, si falla, el broker la reentrega hasta tres veces antes de pasarla a la cola de mensajes muertos. \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & Con el broker embebido, cada instancia de WildFly tenía su propia cola y el nodo le enviaba todo a una sola; con el broker aparte, todas las instancias consumen la misma cola y la ingesta escala horizontalmente (AC07). Los mensajes pendientes no se pierden si se recrea el contenedor de WildFly, y el nodo publica aunque el componente central esté detenido: las posiciones esperan en la cola (AC17). La entrega es al menos una vez porque Artemis no deduplica la reentrega después de una transacción deshecha, así que la idempotencia tiene que estar en la ingesta de todos modos (DA07). La espera creciente entre reentregas se agregó porque, sin ella, con PostgreSQL detenido 20 segundos algunas posiciones terminaban en la cola de mensajes muertos. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA01, DA07 \\
         \hline
@@ -96,11 +96,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La aplicación móvil debe autenticar al chofer mediante Usuario gub.uy (CU-01) y obtener un token para llamar a la API REST (R2). \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & Devolver el JWT de sesión en el enlace que abre la aplicación (\texttt{cargauy://ingreso\#token=}\ldots), que fue la primera implementación. \\
         \hline
-            \textbf{Decisión} & La aplicación abre el ingreso en el navegador con un \texttt{code\_challenge}, recibe un código de un solo uso por el esquema \texttt{cargauy://ingreso} y lo canjea, junto con el \texttt{code\_verifier}, por el token de sesión. En Android, el ingreso se abre con Custom Tabs. \\
+            \textbf{Decisión} & La aplicación abre el ingreso en el navegador con un \texttt{code\_challenge}, recibe un código de un solo uso por el esquema \texttt{cargauy://ingreso} y lo canjea, junto con el \texttt{code\_verifier} y una prueba DPoP firmada con una clave del Android Keystore, por un token de acceso de 15 minutos y un token de renovación ligado a esa clave. En Android, el ingreso se abre con Custom Tabs. \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & La aplicación realiza el ingreso en el navegador, que no comparte sus cookies con ella, por lo que necesita recibir un token propio. El intercambio con PKCE es el mecanismo estándar para aplicaciones nativas: el enlace lleva solo un código de un solo uso, que únicamente puede canjear quien tiene el \texttt{code\_verifier}, en lugar del token de sesión. El token de renovación queda ligado a una clave del Android Keystore, por lo que una copia de ese token no sirve en otro equipo y no hace falta rotarlo. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA03 \\
         \hline
@@ -122,11 +122,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La plataforma tiene un frontoffice para ciudadanos, otro para funcionarios y un backoffice para autoridades y administradores, todos web. \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & Backoffice en React, como el frontoffice; frontoffice servido por el componente central en Elastic Cloud, en lugar de Vercel. \\
         \hline
             \textbf{Decisión} & Backoffice en JSF dentro del componente central; frontoffice en React, servido como sitio estático desde Vercel (Figura \ref{fig:vista_distrib}). \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & React es la tecnología que el equipo conoce para el frontoffice, y servirlo como sitio estático desde Vercel lo separa del componente central; Vercel reenvía las llamadas a \texttt{/api} al componente central, por lo que el navegador ve un único origen. Para el backoffice, JSF con PrimeFaces corre dentro del componente central y ofrece formularios, tablas paginadas, diálogos y gráficos listos para usar. El estado de cada pantalla del backoffice viaja cifrado en la página, así que no impide escalar sin afinidad de sesión (AC07, DA03). \\
         \hline
             \textbf{Decisiones Relacionadas} & DA01 \\
         \hline
@@ -152,7 +152,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Decisión} & Aplicación nativa para Android en Kotlin con Jetpack Compose, persistencia local con Room y un identificador UUID generado en el dispositivo para cada evento pendiente. La sincronización corre en segundo plano con WorkManager, que espera a tener conexión y reintenta con esperas crecientes, y las llamadas a la API REST usan Retrofit con OkHttp. \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & El práctico del curso ya incluía un cliente Android, y las bibliotecas oficiales de Android cubren lo que pide el problema: Room conserva la Guía y los eventos sin conexión, y WorkManager continúa la sincronización con la aplicación cerrada, espera a que haya red y reintenta con esperas crecientes. El identificador generado en el dispositivo hace idempotente la sincronización (AC19). Como contrapartida, cada cambio en el esquema local exige una migración. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA04 \\
         \hline
@@ -200,11 +200,11 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & Los administradores deben poder gestionar los nodos periféricos (CU-19), y la ingesta de tracking solo debe aceptar eventos de un nodo registrado y habilitado, que es la precondición del CU-10. \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & Verificar la conectividad con el nodo antes de habilitarlo; guardar la clave de los nodos de balanzas con un \textit{hash}, como una contraseña. \\
         \hline
             \textbf{Decisión} & Un registro de nodos con tipo (balanzas o tracking), punto de acceso y estado (deshabilitado, habilitado o baja). Todo nodo nuevo arranca deshabilitado, cambiar el punto de acceso lo vuelve a deshabilitar y la baja es lógica. Un nodo de balanzas se registra además con la clave con la que el componente central se autentica ante él. Como el componente central tiene que enviarla en cada consulta, se guarda cifrada y no con un \textit{hash}, con el identificador del nodo como dato asociado: una clave cifrada copiada a otro nodo no se puede descifrar. \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & Un nodo mal configurado no da error, da silencio: el componente central aceptaría posiciones de una fuente no verificada o consultaría una dirección incorrecta. Por eso todo nodo arranca deshabilitado y vuelve a ese estado si cambia su punto de acceso, hasta que un administrador lo habilita. La verificación de conectividad se descartó porque la letra no la pide y la integración con tracking es en un solo sentido: el componente central no se conecta al nodo. La clave no se guarda con un \textit{hash} porque el componente central tiene que enviarla en cada consulta. La baja es lógica porque las posiciones y los pesajes que reportó el nodo siguen siendo evidencia de casos. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA07 \\
         \hline
@@ -230,7 +230,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Decisión} & Cada request se autentica con un mecanismo de Jakarta Security que valida el JWT de la cookie o del encabezado \texttt{Authorization} y le informa al contenedor el usuario y sus roles. Los EJB declaran los roles permitidos con \texttt{@RolesAllowed} y verifican además que el usuario tenga acceso a la empresa sobre la que opera. \\
         \hline
-            \textbf{Justificación} & \pendiente{completar la justificación.} \\
+            \textbf{Justificación} & La letra exige que la autorización se aplique en la capa de servicios, porque ocultar opciones en la interfaz no es un mecanismo de autorización (R9). Declarar los roles con \texttt{@RolesAllowed} deja la comprobación al servidor de aplicaciones, de modo que vale para todos los clientes (frontoffice, backoffice, móvil) por igual. El acceso a los datos de la propia empresa depende de cada operación, por lo que se verifica en el código de cada EJB. \\
         \hline
             \textbf{Decisiones Relacionadas} & DA03 \\
         \hline
@@ -302,7 +302,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Categorías} & Servicios de negocio; CU-11; CU-17. \\
         \hline
-            \textbf{Problema} & La letra pide detectar cuando la ruta reportada por el tracking se aparta significativamente del recorrido esperado entre el origen y el destino declarados en la Guía, y que cada grupo defina y justifique el criterio. La Guía solo declara el origen y el destino. Obtener el recorrido por las rutas reales exige un servicio externo de rutas y guardarlo con soporte geoespacial, y eso no entraba en el tiempo que quedaba antes de la entrega final. \\
+            \textbf{Problema} & La letra pide detectar cuando la ruta reportada por el tracking se aparta significativamente del recorrido esperado entre el origen y el destino declarados en la Guía, y que se defina y justifique el criterio. La Guía solo declara el origen y el destino. Obtener el recorrido por las rutas reales exige un servicio externo de rutas y guardarlo con soporte geoespacial, y eso no entraba en el tiempo que quedaba antes de la entrega final. \\
         \hline
             \textbf{Alternativas} & Recorrido por las rutas reales, obtenido de un servicio de rutas al registrar la Guía y guardado en PostGIS, con un corredor y un tiempo máximo fuera de él; distancia de cada posición al tramo recto entre el origen y el destino de la Guía; evaluar el desvío al finalizar el viaje con todas sus posiciones. \\
         \hline
@@ -317,32 +317,32 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
     \end{tabular}
 \end{table}
 
-\subsection{Decisiones Pendientes}
+\subsection{Limitaciones y trabajo futuro}
 
-La Tabla \ref{tab:decisiones-pendientes} lista lo que la letra pide definir y justificar, junto con otras decisiones que surgieron durante el desarrollo, que todavía no están definidas.
+La Tabla \ref{tab:decisiones-pendientes} lista los temas que quedaron sin resolver en esta entrega o que se resolvieron solo en parte.
 
 \begin{longtable}{|p{4.6cm}|p{7.4cm}|p{3.5cm}|}
-    \caption{Decisiones pendientes}\label{tab:decisiones-pendientes}\\
+    \caption{Limitaciones y trabajo futuro}\label{tab:decisiones-pendientes}\\
     \hline
-    \textbf{Tema} & \textbf{Qué se necesita definir} & \textbf{Dónde impacta} \\
+    \textbf{Tema} & \textbf{Estado} & \textbf{Dónde impacta} \\
     \hline
     \endfirsthead
     \hline
-    \textbf{Tema} & \textbf{Qué se necesita definir} & \textbf{Dónde impacta} \\
+    \textbf{Tema} & \textbf{Estado} & \textbf{Dónde impacta} \\
     \hline
     \endhead
-    Servicio de rutas y geocodificación & Qué servicio externo se usa para ubicar el origen y el destino y obtener el recorrido esperado, con sus límites de uso. & CU-07, Vista Lógica, Distribución. \\
+    Recorrido por las rutas reales & La regla de desvío mide la distancia al tramo recto entre el origen y el destino (DA12). Usar el recorrido real requiere un servicio de rutas y soporte geoespacial. & CU-07, CU-11, DA12. \\
     \hline
-    Tecnología del backoffice & Si el backoffice queda en JSF o pasa a React. & DA05, AC07. \\
+    Plataforma de los periféricos & Los nodos periféricos corren en otros proyectos del Developer Sandbox, pero sobre la misma plataforma que el componente central, por lo que R15 se cumple solo en parte. El suplantador de la PDI se ejecuta solo en el entorno local. & R15, Vista de Distribución. \\
     \hline
-    Plataforma de los periféricos & Qué PaaS o IaaS ejecuta los nodos periféricos y el suplantador de la PDI. & R15, Vista de Distribución. \\
+    Fotografías de los incidentes & No están implementadas: el incidente se registra con una descripción. & CU-09, Persistencia. \\
     \hline
-    Plataforma de observabilidad & En qué PaaS o IaaS se ejecuta la Plataforma de Observabilidad en el despliegue. & AC21 a AC24, Vista de Distribución. \\
+    Notificación por correo & Los casos se notifican en la bandeja de la plataforma; el envío por correo no está implementado. & CU-11. \\
     \hline
-    Fotografías de los incidentes & Dónde se guardan y cómo se envían desde el móvil al recuperar la conexión. & CU-09, Persistencia. \\
+    Filtro por ubicación de los reportes & Los reportes se filtran por tipo de carga y período. & CU-16. \\
     \hline
-    Plazo de descargo & Si el plazo se cuenta en días hábiles o corridos. & CU-11, parametrización de reglas. \\
+    Plazo de descargo & Se cuenta en días corridos. & CU-11, parametrización de reglas. \\
     \hline
-    Viaje sin fin registrado & Cómo se evalúa el exceso de carga si el chofer nunca registra el fin del viaje, y cómo se cubre la regla de viaje sin Guía por pesaje. Mientras tanto el viaje queda en curso: impide dar de baja al chofer y que el vehículo inicie otro viaje, y se corrige en la base. & DA10, CU-04, CU-11. \\
+    Viaje sin fin registrado & No hay un mecanismo para evaluar el exceso de carga si el chofer nunca registra el fin del viaje, ni para la regla de viaje sin Guía por pesaje. El viaje queda en curso: impide dar de baja al chofer y que el vehículo inicie otro viaje, y se corrige en la base. & DA10, CU-04, CU-11. \\
     \hline
 \end{longtable}
