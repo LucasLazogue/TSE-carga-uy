@@ -11,7 +11,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import tse.cargauy.dtos.FiltroVehiculos;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.VehiculoDto;
 import tse.cargauy.negocio.vehiculo.VehiculoEJBLocal;
@@ -47,11 +47,12 @@ public class VehiculosRest {
     }
 
     @GET
-    public PaginaDto<VehiculoDto> getVehiculos(@QueryParam("idEmpresa") Long idEmpresa, @BeanParam PaginacionQuery paginacion) {
-        if (idEmpresa == null) {
+    public PaginaDto<VehiculoDto> getVehiculos(@BeanParam VehiculosQuery query, @BeanParam PaginacionQuery paginacion) {
+        FiltroVehiculos filtro = query.filtro();
+        if (filtro.getIdEmpresa() == null) {
             return vehiculoEJB.getAll(paginacion.paginacion());
         }
-        return vehiculoEJB.getByEmpresa(idEmpresa, paginacion.paginacion());
+        return vehiculoEJB.getByEmpresa(filtro, paginacion.paginacion());
     }
 
     @Path("/{id}")
