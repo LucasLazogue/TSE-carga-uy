@@ -193,10 +193,13 @@ instancias (`OOMKilled`), y con 2 CPU no se sostienen a la vez las 600 posicione
 ([performance](performance.md#qué-limitó-cada-corrida)). Hay que darle recursos propios:
 
 ```sh
-oc set resources dc/postgres --limits=cpu=4,memory=2Gi --requests=cpu=250m,memory=512Mi
+oc set resources dc/postgres --limits=cpu=4,memory=3Gi --requests=cpu=250m,memory=512Mi
 ```
 
-Con la carga del volumen objetivo usa unas 2,2 a 2,9 CPU. MongoDB queda con 2 CPU y 5 GiB de disco en su
+Con la carga del volumen objetivo usa unas 2,2 a 2,9 CPU y hasta 1,7 GB de memoria (con 2 GiB quedaba sin margen).
+Aun así, el Sandbox puede terminar un proceso de PostgreSQL cuando el nodo compartido se queda sin memoria: el pod es
+Burstable y la cuota del proyecto no alcanza para reservarle sus 4 CPU. Ver
+[performance](performance.md#procesos-de-postgresql-terminados-en-el-sandbox). MongoDB queda con 2 CPU y 5 GiB de disco en su
 [manifiesto](../carga-uy/openshift/mongo.yaml).
 
 Las claves del central van en el Secret `carga-uy-secretos`:
@@ -286,6 +289,13 @@ Cuatro instancias más la extra que agrega un despliegue piden 2 CPU.
 Mientras una instancia nueva arranca, que en WildFly lleva alrededor de un minuto, las posiciones
 esperan en la cola de Artemis. Si una instancia se apaga con mensajes en proceso, sus transacciones
 se deshacen y el broker se los entrega a otra; el procesamiento idempotente evita duplicados.
+
+Cuando una instancia se apaga, porque el autoescalado baja o por un despliegue, el router tarda unos
+segundos en dejar de mandarle pedidos, y WildFly da de baja la aplicación en menos de medio segundo
+después de recibir la señal de apagado. Los pedidos que llegan en ese intervalo reciben 404 o 503.
+Para evitarlo, el contenedor espera 10 segundos (`preStop`) antes de recibir la señal: en ese tiempo
+el router deja de mandarle pedidos nuevos y la instancia termina los que tiene. El apagado completo lleva
+unos 13 segundos, dentro de los 30 de `terminationGracePeriodSeconds`.
 
 Lo que hace que el central funcione con varias instancias:
 

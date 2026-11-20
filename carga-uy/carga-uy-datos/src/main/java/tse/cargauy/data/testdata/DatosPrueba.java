@@ -277,6 +277,12 @@ public class DatosPrueba {
         }
         // mas empresas con viajes terminados, para que Estadisticas (informacion publica) supere el umbral
         new HistoriaPublica(empresaDAO, vehiculoDAO, permisoDAO, itvDAO, usuarioDAO, guiaDAO, viajeDAO).cargar();
+        // y meses de viajes y casos resueltos en esas empresas, para que los reportes de las autoridades tengan datos
+        new HistoriaReportes(empresaDAO, vehiculoDAO, permisoDAO, itvDAO, usuarioDAO, guiaDAO, viajeDAO, casoDAO).cargar();
+        // las notificaciones de esa historia son viejas: leidas, para no sumar decenas sin leer en las bandejas de la demo
+        entityManager.createQuery("UPDATE Notificacion n SET n.leida = true WHERE n.leida = false AND n.caso.id IN"
+                + " (SELECT c.id FROM CasoFiscalizacion c WHERE c.vehiculo.matricula LIKE :historia)")
+                .setParameter("historia", HistoriaReportes.PREFIJO_MATRICULAS + "%").executeUpdate();
     }
 
     private void agregarViajeRealizado(LocalDate fecha, Long idVehiculo, Long idChofer, Long idEmpresa, Long idRubro, Long idTipoCarga,

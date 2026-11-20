@@ -1,0 +1,138 @@
+== k6-larga-detalle.csv.gz
+  infracciones   n= 11996 p50=   249 p95=   553 p99=   677
+  casos          n= 12001 p50=   236 p95=   503 p99=   653
+  viajes         n= 11996 p50=   234 p95=   491 p99=   627
+  habilitacion   n= 11999 p50=   149 p95=   203 p99=   256
+  vehiculos      n= 23997 p50=   147 p95=   172 p99=   202
+  eventos        n= 11996 p50=   147 p95=   168 p99=   192
+  viaje          n= 11996 p50=   145 p95=   163 p99=   187
+  empresas       n= 12001 p50=   143 p95=   159 p99=   175
+  indicadores    n= 11999 p50=   139 p95=   143 p99=   156
+== k6-rafaga-detalle.csv.gz
+  casos          n=  4788 p50=   348 p95=   712 p99=  1154
+  viajes         n=  4784 p50=   349 p95=   705 p99=   948
+  infracciones   n=  4784 p50=   429 p95=   689 p99=  1038
+  habilitacion   n=  4789 p50=   158 p95=   235 p99=   291
+  vehiculos      n=  9572 p50=   151 p95=   191 p99=   215
+  eventos        n=  4784 p50=   150 p95=   188 p99=   227
+  viaje          n=  4784 p50=   147 p95=   176 p99=   213
+  empresas       n=  4788 p50=   147 p95=   161 p99=   203
+  indicadores    n=  4789 p50=   140 p95=   146 p99=   723
+== k6-control-detalle.csv.gz
+  viajes         n=  1487 p50=   456 p95=  1028 p99=  1426
+  casos          n=  1491 p50=   465 p95=   947 p99=  3801
+  infracciones   n=  1487 p50=   491 p95=   939 p99=  3497
+  eventos        n=  1482 p50=   158 p95=   309 p99=   441
+  viaje          n=  1482 p50=   153 p95=   291 p99=   422
+  habilitacion   n=  1489 p50=   166 p95=   275 p99=   409
+  vehiculos      n=  2978 p50=   152 p95=   208 p99=   269
+  empresas       n=  1491 p50=   145 p95=   166 p99=   227
+  indicadores    n=  1489 p50=   139 p95=   145 p99=  4711
+== k6-control2-detalle.csv.gz
+  infracciones   n=  1500 p50=   225 p95=   436 p99=   552
+  viajes         n=  1500 p50=   249 p95=   429 p99=   556
+  casos          n=  1501 p50=   242 p95=   423 p99=   580
+  habilitacion   n=  1501 p50=   151 p95=   210 p99=   273
+  eventos        n=  1500 p50=   148 p95=   185 p99=   242
+  vehiculos      n=  3001 p50=   147 p95=   184 p99=   236
+  viaje          n=  1500 p50=   145 p95=   182 p99=   229
+  empresas       n=  1501 p50=   143 p95=   182 p99=   241
+  indicadores    n=  1501 p50=   138 p95=   173 p99=   301
+== k6-reglas-en-regla-detalle.csv.gz
+  casos          n=  1482 p50=   838 p95=  1711 p99=  8634
+  viajes         n=  1479 p50=   824 p95=  1542 p99=  1894
+  infracciones   n=  1479 p50=   675 p95=  1509 p99=  7869
+  habilitacion   n=  1468 p50=   201 p95=   407 p99=   572
+  indicadores    n=  1468 p50=   145 p95=   373 p99= 12343
+  eventos        n=  1479 p50=   172 p95=   348 p99=   577
+  viaje          n=  1479 p50=   162 p95=   303 p99=   470
+  empresas       n=  1482 p50=   160 p95=   273 p99=   516
+  vehiculos      n=  2961 p50=   170 p95=   271 p99=   514
+== k6-reglas-todas-detalle.csv.gz
+  casos          n=  1499 p50=   646 p95=  1457 p99=  1800
+  viajes         n=  1494 p50=   624 p95=  1395 p99=  1689
+  infracciones   n=  1494 p50=   550 p95=  1306 p99=  1602
+  movil sync     n=   270 p50=   287 p95=   446 p99=   618
+  habilitacion   n=  1489 p50=   183 p95=   342 p99=   480
+  movil viajes   n=   301 p50=   172 p95=   282 p99=   492
+  vehiculos      n=  2993 p50=   164 p95=   224 p99=   428
+  eventos        n=  1494 p50=   165 p95=   213 p99=   435
+  viaje          n=  1494 p50=   158 p95=   206 p99=   393
+  empresas       n=  1499 p50=   156 p95=   199 p99=   451
+  indicadores    n=  1489 p50=   144 p95=   174 p99=  2733
+== k6-reglas-en-regla-145-detalle.csv.gz
+  viajes         n=  1497 p50=   193 p95=   336 p99=   483
+  infracciones   n=  1497 p50=   164 p95=   244 p99=   327
+  casos          n=  1500 p50=   164 p95=   239 p99=   328
+  habilitacion   n=  1498 p50=   161 p95=   220 p99=   291
+  eventos        n=  1497 p50=   156 p95=   219 p99=   284
+  viaje          n=  1497 p50=   153 p95=   205 p99=   294
+  vehiculos      n=  2997 p50=   153 p95=   187 p99=   225
+  empresas       n=  1500 p50=   152 p95=   179 p99=   234
+  indicadores    n=  1498 p50=   144 p95=   160 p99=   462
+== k6-reglas-todas-145-detalle.csv.gz
+  movil sync     n=   270 p50=   426 p95=  1646 p99=  1944
+  viajes         n=  1495 p50=   599 p95=  1223 p99=  1449
+  casos          n=  1501 p50=   234 p95=   845 p99=   997
+  infracciones   n=  1495 p50=   229 p95=   730 p99=   955
+  eventos        n=  1488 p50=   177 p95=   525 p99=   700
+  viaje          n=  1488 p50=   169 p95=   507 p99=   652
+  habilitacion   n=  1468 p50=   241 p95=   489 p99=   609
+  movil viajes   n=   301 p50=   184 p95=   314 p99=   577
+  vehiculos      n=  2996 p50=   175 p95=   275 p99=   377
+  empresas       n=  1501 p50=   162 p95=   209 p99=   340
+  indicadores    n=  1468 p50=   143 p95=   185 p99= 13567
+== k6-reglas-en-regla-145-3gib-detalle.csv.gz
+  viajes         n=  1498 p50=   397 p95=   764 p99=   923
+  infracciones   n=  1498 p50=   192 p95=   501 p99=   669
+  casos          n=  1500 p50=   193 p95=   482 p99=   677
+  habilitacion   n=  1493 p50=   202 p95=   405 p99=   527
+  eventos        n=  1498 p50=   174 p95=   405 p99=   575
+  viaje          n=  1498 p50=   166 p95=   370 p99=   530
+  vehiculos      n=  2998 p50=   167 p95=   239 p99=   336
+  empresas       n=  1500 p50=   158 p95=   194 p99=   389
+  indicadores    n=  1493 p50=   144 p95=   165 p99=  3386
+== k6-reglas-todas-145-3gib-detalle.csv.gz
+  movil sync     n=   268 p50=   413 p95=  1483 p99=  2037
+  viajes         n=  1495 p50=   691 p95=  1078 p99=  1244
+  casos          n=  1500 p50=   237 p95=   671 p99=   839
+  infracciones   n=  1495 p50=   232 p95=   656 p99=   881
+  eventos        n=  1485 p50=   179 p95=   482 p99=   624
+  habilitacion   n=  1464 p50=   237 p95=   461 p99=   565
+  viaje          n=  1485 p50=   170 p95=   451 p99=   584
+  movil viajes   n=   301 p50=   184 p95=   341 p99=   568
+  vehiculos      n=  2995 p50=   174 p95=   272 p99=   431
+  empresas       n=  1500 p50=   161 p95=   213 p99=   411
+  indicadores    n=  1464 p50=   144 p95=   208 p99= 12358
+== k6-detalle-calentamiento-detalle.csv.gz
+  viajes         n=  1498 p50=   259 p95=   496 p99=   713
+  infracciones   n=  1498 p50=   184 p95=   362 p99=   616
+  habilitacion   n=  1494 p50=   175 p95=   297 p99=   603
+  eventos        n=  1498 p50=   162 p95=   295 p99=   645
+  viaje          n=  1498 p50=   157 p95=   278 p99=   583
+  empresas       n=  1500 p50=   154 p95=   248 p99=   614
+  casos          n=  1500 p50=   161 p95=   225 p99=   605
+  vehiculos      n=  2998 p50=   158 p95=   206 p99=   599
+  indicadores    n=  1494 p50=   144 p95=   163 p99=   971
+== k6-detalle-detalle.csv.gz
+  movil sync acumulado n=   601 p50=   326 p95=   525 p99=   652
+  viajes en curso n=  1201 p50=   227 p95=   372 p99=   487
+  movil sync reenvio n=   601 p50=   237 p95=   337 p99=   428
+  viajes         n=  3000 p50=   205 p95=   332 p99=   445
+  movil sync     n=   601 p50=   209 p95=   302 p99=   394
+  notificaciones responsable n=  1201 p50=   158 p95=   231 p99=   361
+  pesajes        n=  1201 p50=   176 p95=   223 p99=   506
+  habilitacion   n=  3001 p50=   160 p95=   211 p99=   358
+  auditoria      n=  1201 p50=   153 p95=   209 p99=   369
+  infraccion     n=  1201 p50=   153 p95=   199 p99=   285
+  infracciones   n=  4201 p50=   160 p95=   195 p99=   321
+  movil viajes   n=  1202 p50=   156 p95=   191 p99=   372
+  caso           n=  1201 p50=   150 p95=   189 p99=   285
+  casos          n=  4202 p50=   155 p95=   181 p99=   238
+  eventos        n=  3000 p50=   153 p95=   179 p99=   237
+  vehiculos      n=  6001 p50=   152 p95=   178 p99=   266
+  posiciones     n=  1201 p50=   151 p95=   171 p99=   281
+  viaje          n=  3000 p50=   150 p95=   171 p99=   292
+  empresas       n=  3001 p50=   149 p95=   169 p99=   349
+  notificaciones funcionario n=  1201 p50=   149 p95=   166 p99=   237
+  indicadores    n=  3001 p50=   143 p95=   152 p99=   395

@@ -116,6 +116,32 @@
                   </excludes>
                 </configuration>
               </execution>
+              <!-- AC25: cada modulo con al menos 80% de las lineas cubiertas por sus propias pruebas, o el build falla.
+                   El modulo EAR no tiene clases y no se chequea -->
+              <execution>
+                <id>umbral-cobertura</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <configuration>
+                  <excludes>
+                    <exclude>tse/cargauy/adaptadores/pdi/soap/**</exclude>
+                  </excludes>
+                  <rules>
+                    <rule>
+                      <element>BUNDLE</element>
+                      <limits>
+                        <limit>
+                          <counter>LINE</counter>
+                          <value>COVEREDRATIO</value>
+                          <minimum>0.80</minimum>
+                        </limit>
+                      </limits>
+                    </rule>
+                  </rules>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
           <plugin>
