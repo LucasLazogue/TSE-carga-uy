@@ -36,6 +36,7 @@ import tse.cargauy.entities.Rol;
 import tse.cargauy.entities.TipoInfraccion;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.historico.HistoricoDAOLocal;
 
 @Stateless
 @RolesAllowed(Rol.AUTORIDAD)
@@ -51,6 +52,9 @@ public class InformeEJB implements InformeEJBLocal {
     @EJB
     InformeDAOLocal informeDAO;
 
+    @EJB
+    HistoricoDAOLocal historicoDAO;
+
     @Resource
     SessionContext contexto;
 
@@ -65,10 +69,10 @@ public class InformeEJB implements InformeEJBLocal {
         validar(filtro);
         LOGGER.info("informe consulta usuario=" + idUsuario() + " desde=" + filtro.getDesde() + " hasta=" + filtro.getHasta()
                 + " tipoCarga=" + filtro.getIdTipoCarga());
-        return calcular(informeDAO, filtro, hoy());
+        return calcular(informeDAO, historicoDAO, filtro, hoy());
     }
 
-    static IndicadoresDto calcular(InformeDAOLocal informeDAO, FiltroInforme filtro, LocalDate hoy) {
+    static IndicadoresDto calcular(InformeDAOLocal informeDAO, HistoricoDAOLocal historicoDAO, FiltroInforme filtro, LocalDate hoy) {
         LocalDate habilitadosAl = filtro.getHasta().isAfter(hoy) ? hoy : filtro.getHasta();
         Granularidad granularidad = granularidad(filtro);
 
@@ -79,9 +83,9 @@ public class InformeEJB implements InformeEJBLocal {
         indicadores.setEmpresasHabilitadas(informeDAO.contarEmpresasHabilitadas(habilitadosAl));
         indicadores.setVehiculosHabilitados(informeDAO.contarVehiculosHabilitados(habilitadosAl));
         indicadores.setGranularidad(granularidad);
-        indicadores.setViajes(agrupar(informeDAO.contarViajesPorDia(filtro), granularidad));
-        indicadores.setVolumenPorRubro(informeDAO.sumarVolumenPorRubro(filtro));
-        indicadores.setInfracciones(porTipo(informeDAO.contarInfracciones(filtro)));
+        indicadores.setViajes(agrupar(historicoDAO.contarViajesPorDia(filtro), granularidad));
+        indicadores.setVolumenPorRubro(historicoDAO.sumarVolumenPorRubro(filtro));
+        indicadores.setInfracciones(porTipo(historicoDAO.contarInfracciones(filtro)));
         return indicadores;
     }
 

@@ -33,6 +33,7 @@ import tse.cargauy.entities.TipoEvidencia;
 import tse.cargauy.entities.TipoInfraccion;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.negocio.EventoFalso;
 import tse.cargauy.negocio.empresa.EmpresaEJB;
 
 class CasoFiscalizacionEJBTest {
@@ -58,11 +59,13 @@ class CasoFiscalizacionEJBTest {
         }
     };
     private Long usuario = RESPONSABLE;
+    private final EventoFalso<CasoCambiado> cambios = new EventoFalso<>();
 
     @BeforeEach
     void preparar() {
         casos.empresaDeLosVehiculos = EMPRESA;
         ejb.casoDAO = casos;
+        ejb.cambioCaso = cambios;
         ejb.usuarioDAO = new UsuarioDAO() {
             @Override
             public Long getResponsableVigente(Long idCiudadano, Long idEmpresa, LocalDate fecha) {
@@ -105,6 +108,10 @@ class CasoFiscalizacionEJBTest {
         return List.of(new EvidenciaDto(TipoEvidencia.PESAJE, "b1/1", AHORA.minusHours(2), "36500 kg", "33800 kg", null, null));
     }
 
+    private List<Long> avisados() {
+        return cambios.disparados.stream().map(CasoCambiado::idCaso).toList();
+    }
+
     private List<AccionAuditoria> acciones(Long idCaso) {
         return casos.getAuditoria(idCaso).stream().map(p -> p.getAccion()).toList();
     }
@@ -128,6 +135,26 @@ class CasoFiscalizacionEJBTest {
         assertEquals(primero.getId(), segundo.getId());
         assertEquals(1, casos.casos.size());
         assertEquals(1, casos.notificaciones.size());
+        assertEquals(List.of(primero.getId()), avisados());
+    }
+
+    @Test
+    void cadaCambioDeEstadoDelCasoSeAvisaAlHistorico() {
+        Long id = ejb.registrarCaso(hecho("h1"), evidencia()).getId();
+        ejb.presentarDescargo(id, new DescargoDto("descargo"));
+        usuario = FUNCIONARIO;
+        ejb.resolver(id, new ResolucionDto(EstadoCaso.CONFIRMADA, "el ticket no coincide con la pesada"));
+
+        assertEquals(List.of(id, id, id), avisados());
+    }
+
+    @Test
+    void unaResolucionRechazadaNoSeAvisa() {
+        Long id = casos.agregar("d", EMPRESA, EstadoCaso.EN_DESCARGO, AHORA.plusDays(3)).getId();
+        usuario = FUNCIONARIO;
+
+        rechaza(CodigoError.CASO_FUNDAMENTO_REQUERIDO, () -> ejb.resolver(id, new ResolucionDto(EstadoCaso.CONFIRMADA, "   ")));
+        assertTrue(avisados().isEmpty());
     }
 
     @Test
