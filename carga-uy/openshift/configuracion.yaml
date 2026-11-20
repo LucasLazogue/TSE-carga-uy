@@ -13,3 +13,7 @@ data:
   OTEL_PROPORCION_TRAZAS: "0.1"
   # usuario de la consola del broker: el central lee por ahi el tamano de la cola (la clave va en carga-uy-secretos)
   ARTEMIS_CONSOLA_USUARIO: artemis
+  # suplantador de la PDI, en el proyecto de los nodos de tracking (pdi-suplantador/openshift); la clave va en
+  # carga-uy-secretos como PDI_PASSWORD_ENTIDAD
+  PDI_URL: https://pdi-suplantador-andres-murara-dev.apps.rm2.thpm.p1.openshiftapps.com/pdi-suplantador/ServicioBasicoInformacion
+  PDI_ORGANIZACION: carga-uy
