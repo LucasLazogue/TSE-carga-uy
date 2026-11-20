@@ -141,3 +141,48 @@ EXCESO_CARGA|270
 SIN_HABILITACION|1800
 VIAJE_SIN_GUIA|1800
 todas las reglas: nodos sin carga extra 00:34:18
+
+== 20/11: las cuatro reglas con #145 desplegado (release e6215bd)
+reinicio perfil performance cada_irregular=0 (todas las reglas con #145) 00:39:48
+todas las reglas 600/s inicio 00:40:57
+todas las reglas k6 5m inicio (flota en regla) 00:43:58
+k6 reglas-en-regla exit=0
+todas las reglas: pesajes de exceso en balanzas-sur para SIM0001 a SIM0300 00:49:00
+pesajes 204
+todas las reglas: infracciones en la flota 00:49:01
+DESVIO_RUTA|1800
+SIN_HABILITACION|1800
+VIAJE_SIN_GUIA|1800
+todas las reglas: casos de posicion abiertos 00:49:49
+todas las reglas k6 5m inicio (cuatro reglas, escenario movil) 00:50:49
+k6 reglas-todas exit=99
+todas las reglas fin 00:56:53
+DESVIO_RUTA|1800
+EXCESO_CARGA|252
+SIN_HABILITACION|1800
+VIAJE_SIN_GUIA|1800
+todas las reglas: nodos sin carga extra 00:57:00
+postgres: proceso terminado (signal 9) 00:54:45
+
+== 20/11: las cuatro reglas con #145 y PostgreSQL en 3 GiB
+postgres con limite de 3 GiB (antes 2) reinicio perfil performance cada_irregular=0 01:01:31
+todas las reglas 600/s inicio 01:02:39
+todas las reglas k6 5m inicio (flota en regla) 01:05:40
+k6 reglas-en-regla exit=99
+todas las reglas: pesajes de exceso en balanzas-sur para SIM0001 a SIM0300 01:10:43
+pesajes 204
+todas las reglas: infracciones en la flota 01:10:44
+DESVIO_RUTA|1800
+SIN_HABILITACION|1800
+VIAJE_SIN_GUIA|1800
+todas las reglas: casos de posicion abiertos 01:11:50
+todas las reglas k6 5m inicio (cuatro reglas, escenario movil) 01:12:51
+k6 reglas-todas exit=99
+todas las reglas fin 01:18:53
+DESVIO_RUTA|1800
+EXCESO_CARGA|249
+SIN_HABILITACION|1800
+VIAJE_SIN_GUIA|1800
+todas las reglas: nodos sin carga extra 01:18:59
+reinicio perfil demo 01:20:42
+postgres: proceso terminado (signal 9) 01:13:54

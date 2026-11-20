@@ -193,10 +193,13 @@ instancias (`OOMKilled`), y con 2 CPU no se sostienen a la vez las 600 posicione
 ([performance](performance.md#qué-limitó-cada-corrida)). Hay que darle recursos propios:
 
 ```sh
-oc set resources dc/postgres --limits=cpu=4,memory=2Gi --requests=cpu=250m,memory=512Mi
+oc set resources dc/postgres --limits=cpu=4,memory=3Gi --requests=cpu=250m,memory=512Mi
 ```
 
-Con la carga del volumen objetivo usa unas 2,2 a 2,9 CPU. MongoDB queda con 2 CPU y 5 GiB de disco en su
+Con la carga del volumen objetivo usa unas 2,2 a 2,9 CPU y hasta 1,7 GB de memoria (con 2 GiB quedaba sin margen).
+Aun así, el Sandbox puede terminar un proceso de PostgreSQL cuando el nodo compartido se queda sin memoria: el pod es
+Burstable y la cuota del proyecto no alcanza para reservarle sus 4 CPU. Ver
+[performance](performance.md#procesos-de-postgresql-terminados-en-el-sandbox). MongoDB queda con 2 CPU y 5 GiB de disco en su
 [manifiesto](../carga-uy/openshift/mongo.yaml).
 
 Las claves del central van en el Secret `carga-uy-secretos`:
