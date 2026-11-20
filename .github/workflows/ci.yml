@@ -60,8 +60,13 @@ jobs:
       fail-fast: false
       matrix:
         module: [carga-uy, carga-uy-client, nodo-tracking, nodo-balanzas, pdi-suplantador]
+        # el perfil ci mide la cobertura y exige el umbral (AC25) en los modulos que lo tienen
         include:
           - module: carga-uy
+            perfil: -Pci
+          - module: nodo-balanzas
+            perfil: -Pci
+          - module: nodo-tracking
             perfil: -Pci
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -103,6 +108,7 @@ jobs:
             ${{ matrix.module }}/**/target/surefire-reports/
             ${{ matrix.module }}/**/target/spotbugsXml.xml
             ${{ matrix.module }}/**/target/site/jacoco-aggregate/
+            ${{ matrix.module }}/**/target/site/jacoco/
           if-no-files-found: ignore
 
   frontend:
