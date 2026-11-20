@@ -15,6 +15,7 @@ import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import tse.cargauy.dtos.CasoFiscalizacionDto;
@@ -84,13 +85,20 @@ public class CasoFiscalizacionDAO implements CasoFiscalizacionDAOLocal {
 
         CriteriaQuery<CasoFiscalizacion> query = cb.createQuery(CasoFiscalizacion.class);
         Root<CasoFiscalizacion> caso = query.from(CasoFiscalizacion.class);
+        // el descargo y la resolucion son @OneToOne del lado mappedBy: si no vienen en la misma consulta, Hibernate
+        // los busca de a uno, dos consultas por cada caso de la pagina
+        caso.fetch(CasoFiscalizacion_.descargo, JoinType.LEFT);
+        caso.fetch(CasoFiscalizacion_.resolucion, JoinType.LEFT);
         query.select(caso)
                 .where(condiciones(filtro, cb, caso))
                 .orderBy(cb.desc(caso.get(CasoFiscalizacion_.fechaDeteccion)), cb.desc(caso.get(CasoFiscalizacion_.id)));
         List<CasoFiscalizacionDto> items = entityManager.createQuery(query)
                 .setFirstResult(paginacion.getDesde())
                 .setMaxResults(paginacion.getTamanio())
-                .getResultStream()
+                // la lista y no getResultStream: con el stream cada fila se carga sola y el vehiculo, la empresa y el
+                // viaje de cada caso salen en consultas separadas, en vez de agruparse por lotes
+                .getResultList()
+                .stream()
                 .map(c -> Serializers.toDto(c, false))
                 .toList();
 
