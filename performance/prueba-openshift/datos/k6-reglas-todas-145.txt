@@ -1,0 +1,56 @@
+
+
+  █ THRESHOLDS 
+
+    checks{scenario:movil}
+    ✓ 'rate>0.99' rate=99.76%
+
+    http_req_duration{scenario:funcionario}
+    ✗ 'p(95)<500' p(95)=575.21ms
+
+    http_req_duration{scenario:publico}
+    ✓ 'p(95)<500' p(95)=469.79ms
+
+    http_req_duration{scenario:responsable}
+    ✗ 'p(95)<500' p(95)=825.86ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.21%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 15741  52.024571/s
+    checks_succeeded...: 99.78% 15707 out of 15741
+    checks_failed......: 0.21%  34 out of 15741
+
+    ✗ respuesta 200
+      ↳  99% — ✓ 15169 / ✗ 32
+    ✗ sync 200
+      ↳  99% — ✓ 269 / ✗ 1
+    ✗ eventos aplicados
+      ↳  99% — ✓ 269 / ✗ 1
+
+    HTTP
+    http_req_duration..............: avg=302.75ms min=138.51ms med=185.81ms max=17.26s p(90)=555.55ms p(95)=743.72ms
+      { expected_response:true }...: avg=302.63ms min=138.51ms med=185.6ms  max=17.26s p(90)=555.58ms p(95)=744.16ms
+      { scenario:funcionario }.....: avg=232.49ms min=143.79ms med=180.14ms max=1.29s  p(90)=347.64ms p(95)=575.21ms
+      { scenario:publico }.........: avg=353.57ms min=138.51ms med=165.66ms max=17.26s p(90)=379.25ms p(95)=469.79ms
+      { scenario:responsable }.....: avg=318.22ms min=143.46ms med=193.19ms max=1.63s  p(90)=665.07ms p(95)=825.86ms
+    http_req_failed................: 0.21%  33 out of 15471
+    http_reqs......................: 15471  51.132211/s
+
+    EXECUTION
+    dropped_iterations.............: 39     0.128896/s
+    iteration_duration.............: avg=999.82ms min=146.96ms med=659.23ms max=17.86s p(90)=1.68s    p(95)=2.5s    
+    iterations.....................: 4765   15.748496/s
+    vus............................: 2      min=2           max=51
+    vus_max........................: 79     min=40          max=79
+
+    NETWORK
+    data_received..................: 50 MB  165 kB/s
+    data_sent......................: 7.2 MB 24 kB/s
+
+
+
+time="2026-11-20T00:55:53-03:00" level=error msg="thresholds on metrics 'http_req_duration{scenario:funcionario}, http_req_duration{scenario:responsable}' have been crossed"

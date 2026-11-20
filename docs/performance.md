@@ -139,14 +139,15 @@ y correrla con el central en la nube (se hizo en OpenShift: ver la sección sigu
 
 | Objetivo (letra, sección 4.3) | Resultado | Dónde |
 | --- | --- | --- |
-| p95 de las consultas del frontoffice < 500 ms | ✅ 168 a 426 ms con 600 pos/s, también durante 40 minutos y con una balanza caída | [Resultados](#resultados), [corrida larga](#sin-degradación-en-el-tiempo) |
-| Sostener el volumen estimado (600 pos/s) sin pérdida | ✅ procesa lo que llega, cola estable, DLQ en 0 y sin errores de ingesta | [Resultados](#resultados) |
+| p95 de las consultas del frontoffice < 500 ms | ✅ En operación normal, con [#145](https://github.com/LucasLazogue/TSE-carga-uy/pull/145): 204 / 278 / 205 ms (funcionario / responsable / público) con 600 pos/s. ⚠️ En el extremo de 5.400 infracciones abiertas a la vez y un fin de viaje por segundo, el responsable llega a ~830 ms | [Listados del frontoffice](#listados-del-frontoffice), [las cuatro reglas a la vez](#las-cuatro-reglas-a-la-vez) |
+| Sostener el volumen estimado (600 pos/s) sin pérdida | ✅ procesa lo que llega, cola estable y DLQ en 0 (los únicos errores son reentregas al apagarse una instancia) | [Resultados](#resultados) |
 | Los tiempos no se degradan a lo largo de la prueba | ✅ 40 minutos con p95 estable | [Corrida larga](#sin-degradación-en-el-tiempo) |
 | Punto de quiebre | ~1.600 pos/s con 4 instancias, limitado por la CPU de PostgreSQL | [Escalado](#escalado-horizontal) |
 | Cuellos de botella, con evidencia de la observabilidad | Índices, memoria y CPU de PostgreSQL, una consulta pública repetida, MongoDB, CPU del central | [Qué limitó cada corrida](#qué-limitó-cada-corrida) |
 | Pico ×3 (1.800 pos/s) | Se encola y se procesa con atraso, sin pérdida | [Pico](#pico-de-1800-posicioness) |
 | Balanzas indisponibles | El central sigue respondiendo; el viaje queda pendiente y se reevalúa al volver el nodo | [Escenarios de falla](#escenarios-de-falla) |
 | PDI que no responde | El ingreso sigue funcionando con el perfil pendiente | [Escenarios de falla](#escenarios-de-falla) |
+| Las cuatro reglas de fiscalización con carga | Sin habilitación, viaje sin guía y desvío (1.800 casos cada una) y exceso de carga (unos 250) se abren con 600 pos/s sin afectar la ingesta | [Las cuatro reglas a la vez](#las-cuatro-reglas-a-la-vez) |
 | Escalado horizontal efectivo (opcional 4) | 1 → 2 instancias: ×1,9; 2 → 4: ×1,4 | [Escalado](#escalado-horizontal) |
 
 ### Entorno
@@ -154,7 +155,7 @@ y correrla con el central en la nube (se hizo en OpenShift: ver la sección sigu
 | Componente | Recursos (límite) | Notas |
 | --- | --- | --- |
 | Central (WildFly) | 2 CPU, 2 GiB por instancia | Autoescalado de 1 a 4 instancias por CPU (70 %) |
-| PostgreSQL | 1 CPU y 512 MiB al empezar; 2 CPU y 2 GiB; **4 CPU y 2 GiB** desde la corrida 4 | Queda en 4 CPU ([infraestructura](infraestructura.md)) |
+| PostgreSQL | 1 CPU y 512 MiB al empezar; 2 CPU y 2 GiB; **4 CPU y 2 GiB** desde la corrida 4; 4 CPU y 3 GiB en la última corrida del 20/11 | Queda en 4 CPU y 3 GiB ([infraestructura](infraestructura.md)) |
 | MongoDB | 1 CPU; **2 CPU** desde la prueba de escalado; 1 GiB y 5 GiB de disco | Queda en 2 CPU |
 | Artemis | 1 CPU, 2,5 GiB | Cola `queue_tracking` |
 | Nodos de tracking (2) | 1 CPU cada uno | En otro proyecto del mismo clúster; publican al Artemis del central por su ruta |
@@ -206,6 +207,10 @@ posición) y la evaluación de un viaje terminado por segundo; con el límite de
    se cumplen los dos objetivos a la vez.
 5. **Por encima del volumen objetivo**, según la configuración: MongoDB en su límite de 1 CPU (pico), la CPU del
    central con una o dos instancias, y otra vez PostgreSQL con cuatro ([escalado](#escalado-horizontal)).
+6. **Tres listados del frontoffice con una consulta por fila.** Casos, infracciones y viajes de la empresa hacían entre
+   38 y 103 consultas por pedido y eran la cola del p95 en todas las corridas; con cada vez más casos y viajes, el p95
+   de funcionario y responsable pasaba de 500 ms según la sesión. Corregido en #145
+   ([listados del frontoffice](#listados-del-frontoffice)).
 
 ### Sin degradación en el tiempo
 
@@ -221,6 +226,13 @@ Corrida 5: 600 pos/s y k6 durante 40 minutos. p95 del frontoffice por tramos de 
 | 25–30 | 380 ms | 404 ms | 180 ms |
 | 30–35 | 363 ms | 392 ms | 179 ms |
 | 35–40 | 366 ms | 413 ms | 182 ms |
+
+![Tablero de la ingesta durante la corrida larga](imagenes/performance/corrida-larga-40-min.jpg)
+
+*Corrida 5 en el tablero de la ingesta: 600 pos/s parejas durante 40 minutos, con el procesamiento y la espera en la
+cola planos después del arranque y 4 instancias. El único error, al principio, es una transacción deshecha cuando el
+autoescalado apagó una instancia: el broker reentrega el mensaje a otra y no llega a la DLQ
+([infraestructura](infraestructura.md#varias-instancias-y-autoescalado)).*
 
 El primer tramo es más lento por el arranque (compilación de la JVM, cachés vacías y el autoescalado subiendo
 instancias); después los tiempos quedan estables, sin tendencia a crecer. La ingesta se mantuvo en 600 pos/s todo el
@@ -241,6 +253,12 @@ volvió a cada 30 s (600 pos/s):
   la transacción abierta mientras guardan la posición en MongoDB. El pool de conexiones no es el límite: está lleno
   porque cada consumidor retiene su conexión mientras espera.
 
+![Tablero de la ingesta en la corrida 4 y el pico](imagenes/performance/corrida4-600-900-y-pico-1800.jpg)
+
+*Corrida 4 y el pico: 600 y 900 pos/s sin cola; desde las 01:26, el pico de 1.800 pos/s procesado a unas 950 mientras
+la cola sube a ~240.000 mensajes y después baja. La espera y la antigüedad quedan en el tope del histograma (30 s)
+mientras hay cola.*
+
 La cola cumple su función: el pico no se pierde ni tira abajo al central, se procesa con atraso. Con MongoDB en 2 CPU,
 4 instancias procesan unas 1.600 pos/s ([escalado](#escalado-horizontal)): un pico de 1.800 casi no se acumula.
 
@@ -255,9 +273,16 @@ que se pueden procesar (llenada a 1.800 o 2.700 pos/s), lo que procesa el centra
 | 2 | ~1.170 (×1,9) | 60–75 ms | CPU del central | 3,8 (de 4) / 2,6 / 1,1 |
 | 4 | ~1.600 (×1,4) | ~50 ms | CPU de PostgreSQL | 4,5 (de 8) / 3,9 (de 4) / 1,6 |
 
+![Tablero de la ingesta con 1, 2 y 4 instancias](imagenes/performance/escalado-1-2-4-instancias.jpg)
+
+*Escalado: las tres mesetas de posiciones procesadas son 1, 2 y 4 instancias (unas 610, 1.170 y 1.600 pos/s), cada
+una con la cola llena. El panel de instancias cuenta las que procesaron algo en el último minuto, no las que fijó el
+autoescalado.*
+
 Hasta 2 instancias el límite es la CPU de cada instancia y agregar una casi duplica la capacidad. Con 4, el límite
-pasa a ser PostgreSQL, que comparten todas: ahí agregar instancias ya no rinde lo mismo. Las conexiones no limitaron en
-ningún caso (4 × 20 = 80, por debajo de las 100 de PostgreSQL). El paso siguiente para escalar más sería la base:
+pasa a ser PostgreSQL, que comparten todas: ahí agregar instancias ya no rinde lo mismo. Las conexiones no limitaron la
+cantidad de instancias (4 × 20 = 80, por debajo de las 100 de PostgreSQL), pero ver [el pool de cada
+instancia](#el-pool-de-cada-instancia-en-la-prueba). El paso siguiente para escalar más sería la base:
 más CPU, una réplica de lectura para el frontoffice, o sacar lecturas de la ingesta con cachés como la de normas.
 
 ### Escenarios de falla
@@ -277,6 +302,11 @@ quedaron pendientes de evaluar (hasta 251) y el job de reevaluación los complet
 que volvió el nodo. En esta prueba el corte era uno solo para todas las balanzas: mientras estaba abierto tampoco se le preguntaba al
 nodo que funcionaba. Ahora hay uno por nodo ([balanzas](balanzas.md#tolerancia-a-fallas)).
 
+![Tablero de la ingesta en la corrida 6](imagenes/performance/corrida-final-600-k6-movil-balanza-caida.jpg)
+
+*Corrida 6 (600 pos/s, k6, el móvil y `balanzas-norte` caída 4 minutos): la ingesta no cambia durante la caída del
+nodo; la cola del arranque se vacía en unos 3 minutos, cuando el autoescalado llega a 4 instancias.*
+
 **PDI que no responde.** En el compose local, con el ingreso simulado de gub.uy (`GUBUY_MOCK=true`): un ingreso de un
 ciudadano nuevo por segundo (cada uno consulta la PDI) y una consulta pública por segundo, con el suplantador pausado
 (`docker pause`: la conexión se acepta pero nunca llega respuesta) durante 3 minutos:
@@ -287,12 +317,141 @@ ciudadano nuevo por segundo (cada uno consulta la PDI) y una consulta pública p
 - El 100 % de los ingresos funcionó, y la consulta pública siguió en ~19 ms (p95 < 70 ms) todo el tiempo.
 - Al volver la PDI, los ingresos vuelven a consultarla enseguida.
 
+### Ráfaga de casos
+
+¿Abrir casos en masa afecta al resto? La clave de deduplicación de "sin habilitación" es por vehículo y por día: a
+medianoche, todos los vehículos con el permiso o la ITV vencidos abren su caso del día nuevo con su primera posición.
+El 19/11 se simuló con 600 pos/s y k6 estables, venciendo por SQL la ITV del 10 % de la flota y 5 minutos después la de
+otro 40 % ([prueba-openshift/rafaga_casos.sh](../performance/prueba-openshift/rafaga_casos.sh)):
+
+| Tramo | Casos abiertos | Procesadas (pos/s) | Procesamiento p95 | Espera por conexión | CPU PostgreSQL | Frontoffice p95 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Antes | | 604 | 42 ms | 3,2 ms | 2,9 | 581 / 580 / 196 ms |
+| Ráfaga 1 | 1.800 en unos 30 s | 600 | 45 ms | 3,4 ms | 2,9 | 538 / 575 / 191 ms |
+| Ráfaga 2 | 7.200 en unos 45 s | 602 | 47 ms | 3,4 ms | 3,3 (pico 3,5) | 581 / 614 / 199 ms |
+| Después, con la mitad de la flota con caso | | 599 | 49 ms | 3,5 ms | 3,4 | 588 / 629 / 206 ms |
+
+Abrir los casos no se nota: la ingesta siguió en 600 pos/s sin errores, el procesamiento subió unos milisegundos y el
+pool no cambió. El frontoffice ya estaba por encima de 500 ms antes de las ráfagas porque la corrida arrancó con la base
+recién cargada (como el primer tramo de la [corrida larga](#sin-degradación-en-el-tiempo)).
+
+Lo que sí pesa es lo que viene después. Cada posición de un vehículo que ya tiene su caso del día vuelve a evaluar la
+regla, encuentra el caso por la clave (0,04 ms con el índice) y lo carga entero con sus relaciones para devolverlo, aunque
+el motor no lo usa. Con la base ya caliente, dos controles de 5 minutos con 600 pos/s y k6:
+
+| Control | CPU PostgreSQL | Frontoffice p95 (funcionario / responsable / público) |
+| --- | --- | --- |
+| La mitad de la flota con caso abierto | 3,3 a 3,7 | **734 / 762 / 254 ms** |
+| Las ITV vigentes de nuevo | ~2,6 | 371 / 379 / 199 ms |
+
+Una flota con la mitad de los vehículos en infracción es un extremo, pero el costo es proporcional: cada vehículo con
+caso abierto suma esas consultas con cada posición, todo el día.
+
+Se corrigió en [#141](https://github.com/LucasLazogue/TSE-carga-uy/pull/141) sin tocar el criterio de las reglas: si el
+caso ya existe, el motor pregunta solo su id. En el compose local, con todos los vehículos con caso abierto, las
+consultas por posición bajaron de 25,8 a 19,8: las del caso pasan de 5 (el caso, su descargo, su resolución, la empresa
+y el vehículo) a 1. Con #141 desplegado se repitieron los controles esa noche
+([prueba-openshift/control_casos.sh](../performance/prueba-openshift/control_casos.sh)), con 5 minutos de k6 para
+calentar la base recién cargada y después alternando las dos situaciones dos veces:
+
+| Control, con #141 | CPU PostgreSQL | Frontoffice p95 (funcionario / responsable / público) |
+| --- | --- | --- |
+| La mitad de la flota con caso abierto | 2,8 | 507 / 568 / 211 ms |
+| Las ITV vigentes de nuevo | 2,8 | 512 / 572 / 217 ms |
+| Las ITV vigentes (repetición) | 2,8 | 593 / 624 / 242 ms |
+| La mitad de la flota con caso abierto (repetición) | 2,8 | 578 / 629 / 222 ms |
+
+Con el arreglo, la mitad de la flota con caso abierto cuesta lo mismo que ningún caso: la CPU de PostgreSQL y los tiempos
+del frontoffice son iguales en las dos situaciones, las dos veces.
+
+Lo que no se repitió es la línea de base. Esa noche, sin casos abiertos, funcionario y responsable dieron entre 510 y
+630 ms, contra 371 / 379 ms de la tarde, con PostgreSQL unos 0,3 CPU más arriba en todas las fases. La mediana fue la
+misma (unos 155 ms): lo que se mueve es la cola de la distribución. Con 600 pos/s y k6 a la vez, el p95 de esos dos
+escenarios queda cerca de los 500 ms y cambia de una sesión a otra. La causa apareció al día siguiente, con el tiempo de
+cada pedido: ver [listados del frontoffice](#listados-del-frontoffice).
+
+### Listados del frontoffice
+
+El resumen de k6 separa los tiempos por escenario, no por pedido. Con el detalle de cada pedido (`--out csv`, analizado
+con [pedidos_k6.py](../performance/prueba-openshift/pedidos_k6.py), salida en
+[datos/pedidos.txt](../performance/prueba-openshift/datos/pedidos.txt)), la cola de funcionario y responsable es de
+tres listados, en todas las corridas, incluida la larga, que pasaba el umbral en el total del escenario:
+
+| Corrida (p95, ms) | `casos` | `infracciones` | `viajes` de la empresa | Los otros seis pedidos |
+| --- | --- | --- | --- | --- |
+| Corrida larga (18/11) | 503 | 553 | 491 | 143 a 203 |
+| Control con la mitad de la flota con caso abierto (19/11) | 947 | 939 | 1.028 | 145 a 309 |
+| Control con las ITV vigentes (19/11) | 423 | 436 | 429 | 173 a 210 |
+
+Contando las consultas por pedido en el compose local, con el juego de datos de performance y `pg_stat_statements`:
+
+| Pedido | Consultas antes | Consultas con #145 | Tiempo antes | Tiempo con #145 |
+| --- | --- | --- | --- | --- |
+| `casos` (funcionario) | 103 | 6 | 29,5 ms | 9,2 ms |
+| `infracciones` (responsable) | 70 | 8 | 34,3 ms | 12,1 ms |
+| `viajes` de la empresa (responsable) | 38 | 9 | 29,9 ms | 21,2 ms |
+| Los otros seis | 3 a 7 | 3 a 7 | 5 a 9 ms | 5 a 9 ms |
+
+- **Casos e infracciones** salen de la misma búsqueda. Por cada uno de los 20 casos de la página, Hibernate buscaba
+  aparte el vehículo, la empresa, el viaje, el descargo y la resolución: el resultado se leía como stream, que carga fila
+  por fila, y el descargo y la resolución son `@OneToOne` del lado `mappedBy`, que se buscan de a uno.
+- **Viajes:** los roles del chofer, el rubro y el tipo de carga, por fila. Además, el total de la página recorría los
+  144.000 viajes (20 ms) para contar los 1.600 de una empresa.
+
+[#145](https://github.com/LucasLazogue/TSE-carga-uy/pull/145) carga las relaciones por lotes (`hibernate.default_batch_fetch_size`), trae el descargo y la
+resolución en la misma consulta y cuenta `guia_id`, que PostgreSQL resuelve con el índice único (1,7 ms). Las respuestas
+son las mismas: 33 respuestas de los tres listados (552 filas) dieron el mismo JSON antes y después.
+
+Con el central de la nube a 600 pos/s, cada listado retiene una conexión del pool durante 40 a 100 consultas: los pools
+de las cuatro instancias estaban llenos, con 7 a 10 pedidos esperando conexión.
+
+### Las cuatro reglas a la vez
+
+20/11, con [todas_las_reglas.sh](../performance/prueba-openshift/todas_las_reglas.sh): 600 pos/s y 5 minutos de k6 con
+la flota en regla; después, una parte de la flota en cada infracción y otros 5 minutos de k6 con el escenario móvil
+(un fin de viaje por segundo):
+
+- **Sin habilitación:** ITV vencida a 1.800 vehículos.
+- **Viaje sin guía:** 1.800 vehículos sin viaje en curso ni asignado, que siguen mandando posiciones.
+- **Desvío de ruta:** 1.800 Guías corridas un grado al norte (unos 111 km).
+- **Exceso de carga:** pesajes de 99.000 kg en `balanzas-sur` para los 300 vehículos que termina el escenario móvil.
+
+Los casos de las tres reglas de posición se abren en menos de un minuto (1.800 de cada una) y los de exceso de carga al
+terminar cada viaje (249 a 270: los vehículos sin viaje no tienen viaje que terminar). La ingesta sigue en 600 pos/s.
+La corrida se hizo antes y después de desplegar #145, y una tercera vez con PostgreSQL en 3 GiB:
+
+| Corrida | Fase | CPU PostgreSQL | Frontoffice p95 (funcionario / responsable / público) | `casos` / `infracciones` / `viajes` p95 | Errores k6 |
+| --- | --- | --- | --- | --- | --- |
+| Sin #145 | Flota en regla | 3,4 | 1.320 / 1.260 / 403 ms | 1.711 / 1.509 / 1.542 ms | 0 % |
+| Sin #145 | Cuatro reglas y móvil | 3,1 | 1.120 / 1.080 / 309 ms | 1.457 / 1.306 / 1.395 ms | 0 % |
+| Con #145 | Flota en regla | 2,4 | **204 / 278 / 205 ms** | **239 / 244 / 336 ms** | **0 %** |
+| Con #145 | Cuatro reglas y móvil | 2,5 | 575 / 826 / 470 ms | 845 / 730 / 1.223 ms | 0,21 % (33) |
+| Con #145, PostgreSQL en 3 GiB | Flota en regla | 2,9 | 362 / 567 / 368 ms | 482 / 501 / 764 ms | 0 % |
+| Con #145, PostgreSQL en 3 GiB | Cuatro reglas y móvil | 2,3 | 490 / 852 / 438 ms | 671 / 656 / 1.078 ms | 0,44 % (68) |
+
+En operación normal, con #145, el frontoffice cumple el p95 < 500 ms con margen. En el extremo de esta prueba (5.400
+infracciones abiertas de golpe, el 30 % de la flota, y un fin de viaje por segundo) el responsable llega a unos 830 ms,
+sobre todo por el listado de viajes de la empresa. La tercera corrida arrancó con la base recién reiniciada (el cambio
+de memoria reinicia PostgreSQL), con la caché vacía: por eso su primera fase da más alto que la segunda.
+
+### Procesos de PostgreSQL terminados en el Sandbox
+
+Todos los errores de esas corridas son del mismo segundo: el sistema terminó un proceso de PostgreSQL (`signal 9`), y
+PostgreSQL, como hace siempre que muere un proceso, cortó todas las conexiones, se reinicializó en menos de un segundo y
+arrancó con su caché (`shared_buffers`) vacía. En el log hay 14 desde el 19/11, casi todos durante las pruebas. Una, el
+19/11, reinició el contenedor entero.
+
+No es el límite del pod: con 3 GiB el pico de memoria fue de 1,67 GB y el contador de su cgroup no registra ningún
+proceso terminado por memoria (`oom_kill 0`). El pod es de clase Burstable (pide 512 MiB) y el kernel le da prioridad
+para terminarlo (`oom_score_adj` 984) cuando el nodo compartido del Sandbox se queda sin memoria. Para que sea
+Guaranteed tendría que pedir lo mismo que su límite, también en CPU (4), y la cuota del proyecto permite pedir 3 CPU en
+total. En un despliegue propio, PostgreSQL iría con sus recursos reservados (Guaranteed) o como servicio gestionado.
+
 ### Lo que esta prueba no cubre
 
-- **Exceso de carga:** los nodos de balanzas no tienen pesajes de los vehículos `SIM`, así que la regla se evalúa en
-  cada fin de viaje pero nunca abre un caso.
-- **Casos de desvío:** el nodo desvía uno de cada 100 vehículos en el tercio central de su ruta, a más de una hora del
-  arranque; en corridas de minutos el costo medido es el de evaluar la regla con cada posición, no el de abrir casos.
+- **Casos de exceso de carga y de desvío en las corridas 1 a 6:** los nodos de balanzas no tienen pesajes de los
+  vehículos `SIM` y el nodo desvía a los vehículos recién después de una hora de recorrido. Se probaron aparte, con
+  pesajes cargados en `balanzas-sur` y Guías corridas ([las cuatro reglas a la vez](#las-cuatro-reglas-a-la-vez)).
 - **Una sola corrida por configuración**, con k6 desde la máquina de desarrollo: los p95 incluyen unos 280 ms de red y
   TLS hasta el clúster.
 
@@ -371,6 +530,29 @@ oc exec deployment/carga-uy -- /opt/jboss/wildfly/bin/jboss-cli.sh -c --commands
 
 - **Qué se busca:** si al pasar de 1 a 4 instancias el throughput de la ingesta y el p95 del
   frontoffice escalan, o si aparecen esperas por conexión antes de que la CPU se sature.
+
+### El pool de cada instancia en la prueba
+
+En todas las corridas con carga, cada instancia tuvo su pool lleno (`datasources_pool_in_use_count` en 20) y
+`datasources_pool_wait_count` subió en proporción a lo procesado: unas 2,3 esperas por posición, por ejemplo unas
+1.450 por segundo con una instancia a 610 pos/s y unas 3.600 con cuatro a 1.600 pos/s.
+
+El 19/11 se midió si eso limita ([prueba-openshift/pool.sh](../performance/prueba-openshift/pool.sh)): una sola
+instancia, la cola con más posiciones de las que puede procesar y `DB_POOL_MAX` en 20 y en 40. La espera de cada
+pedido que espera sale de `datasources_pool_total_blocking_time` sobre `datasources_pool_wait_count`.
+
+| Pool | Procesadas (pos/s) | Procesamiento p95 | Espera por conexión | Hilos esperando (promedio) | Conexiones en uso | CPU de la instancia |
+| --- | --- | --- | --- | --- | --- | --- |
+| 20 (pod que venía de la corrida anterior) | ~510 | ~28 ms | ~4,5 ms | ~3 | 20 | 1,95 de 2 |
+| 40 (pod nuevo) | ~585 | ~14 ms | sin esperas | 0 | 20 a 24 | 1,93 de 2 |
+| 20 otra vez (pod nuevo, en el mismo nodo) | ~570 | ~15 ms | ~1,4 ms | ~2 | 20 | 1,95 de 2 |
+
+La primera comparación (510 contra 585) parecía darle la razón al pool, pero al volver a 20 en un pod nuevo la
+instancia procesó casi lo mismo que con 40: la diferencia venía del pod, no del pool. Con 20 conexiones las esperas son
+de 1 a 5 ms y la instancia está igual en su límite de CPU; con 40 desaparecen, y el uso máximo (24) muestra que a la
+instancia le faltan unas pocas conexiones en los picos. **El pool no es el cuello de botella**: lo es la CPU de cada
+instancia y, con cuatro, la de PostgreSQL. Tampoco conviene subirlo: con 40 por instancia, 4 instancias pedirían 160
+conexiones y PostgreSQL acepta 100. Queda en 20.
 
 ### Si las conexiones son el cuello de botella
 

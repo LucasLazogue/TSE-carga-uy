@@ -58,7 +58,7 @@ Las corridas 1 y 2 se hicieron a mano, cambiando `NODO_VEHICULOS_EXTRA` en los n
 | `control.csv`, `control2.csv` | Controles de 5 minutos con 600 pos/s y k6: con la mitad de la flota con caso abierto y con las ITV vigentes |
 | `pool.csv`, `pool-20-otra-vez.csv` | Pool de 20 y de 40, y de nuevo 20 en un pod nuevo |
 | `control-141.csv`, `control-141-repeticion.csv` | Control de los casos abiertos con #141 desplegado, y la repetición |
-| `todas-las-reglas.csv` | Las cuatro reglas de fiscalización a la vez |
+| `todas-las-reglas.csv`, `todas-las-reglas-145.csv`, `todas-las-reglas-145-3gib.csv` | Las cuatro reglas de fiscalización a la vez: antes de #145, con #145 y con #145 y PostgreSQL en 3 GiB |
 
 Los `k6-*.txt` y `k6-*.json` son los resúmenes de k6 de cada corrida; `pedidos.txt`, el tiempo de cada pedido en las corridas con detalle (salida de `pedidos_k6.py`); y `pg-activas.txt`, las consultas que se veían en
 `pg_stat_activity` cuando la consulta de indicadores públicos saturaba la base (corrida 2). El detalle de cada pedido de
