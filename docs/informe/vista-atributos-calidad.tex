@@ -16,7 +16,7 @@ La Vista de Atributos de Calidad se centra en los requerimientos de atributos de
     \hline
     AC01 & Seguridad & Las contraseñas de los usuarios del backoffice las guarda el directorio LDAP con hash y \textit{salt} (R7); el componente central no las almacena. El directorio solo es accesible dentro de la red interna del proyecto, por LDAP; no se publica fuera. \\
     \hline
-    AC02 & Seguridad & Las comunicaciones con los componentes periféricos, las plataformas externas y el componente móvil utilizan HTTPS (R8). El nodo de tracking publica en el broker con su protocolo, cifrado con TLS, y el suplantador de la PDI, que solo se ejecuta en el entorno local, se consulta por HTTP. \\
+    AC02 & Seguridad & Las comunicaciones con los componentes periféricos, las plataformas externas y el componente móvil utilizan HTTPS (R8). El nodo de tracking publica en el broker con su protocolo, cifrado con TLS, y el suplantador de la PDI se consulta por HTTPS en la nube y por HTTP en el entorno local. \\
     \hline
     AC03 & Seguridad & La autorización se controla en la capa de servicios, con permisos asociados a roles (R9). \\
     \hline
