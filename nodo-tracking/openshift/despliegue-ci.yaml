@@ -2,6 +2,7 @@
 # token para las pruebas: encender y apagar los nodos, cambiar la carga y ver pods, logs y metricas. No lee Secrets
 # ni crea o borra recursos. Su token va en el secreto OPENSHIFT_TRACKING_TOKEN del repositorio; los pasos estan
 # en ../README.md#despliegue-automático
+# El workflow Deploy PDI la usa tambien para actualizar el suplantador de la PDI, que esta en el mismo proyecto.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

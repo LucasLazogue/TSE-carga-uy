@@ -1,0 +1,174 @@
+# Suplantador de la PDI en OpenShift, en el proyecto de los nodos de tracking y no en el del central: hace de sistema
+# externo. El central lo llama por la Route pdi-suplantador, con SOAP sobre HTTPS (TLS terminado en el router).
+#
+# Las personas salen del Secret pdi-suplantador-personas, montado encima del archivo que trae la imagen: ahi van las
+# personas ficticias del repositorio y las de los integrantes, que entran por gub.uy con su cedula real y por eso no
+# estan en Git. El suplantador lee el archivo en cada consulta, asi que un cambio en el Secret se ve en uno o dos
+# minutos, sin reiniciar.
+#
+# WildFly exporta a observabilidad:4317 sin opcion para agregar un header de autenticacion: un colector en el mismo pod
+# recibe sus senales y las reenvia a la Plataforma de Observabilidad por su Route, con el token de los nodos de
+# tracking, como el colector de los nodos de balanzas.
+#
+# Los pasos estan en ../README.md#despliegue
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdi-suplantador-colector
+data:
+  otelcol.yaml: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 127.0.0.1:4317
+          http:
+            endpoint: 127.0.0.1:4318
+
+    processors:
+      batch: {}
+
+    exporters:
+      otlp_http/plataforma:
+        endpoint: ${env:PLATAFORMA_OTLP}
+        headers:
+          Authorization: Bearer ${env:OTLP_NODOS_TOKEN}
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http/plataforma]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http/plataforma]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_http/plataforma]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdi-suplantador
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pdi-suplantador
+  template:
+    metadata:
+      labels:
+        app: pdi-suplantador
+    spec:
+      containers:
+        - name: pdi-suplantador
+          image: ghcr.io/lucaslazogue/tse-carga-uy/pdi-suplantador:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: TZ
+              value: America/Montevideo
+            - name: SUPLANTADOR_ORGANIZACION
+              value: carga-uy
+            # la misma que PDI_PASSWORD_ENTIDAD en carga-uy-secretos, en el proyecto del central
+            - name: SUPLANTADOR_PASSWORD_ENTIDAD
+              valueFrom:
+                secretKeyRef:
+                  name: pdi-suplantador-secretos
+                  key: SUPLANTADOR_PASSWORD_ENTIDAD
+            - name: OTEL_ENDPOINT
+              value: http://localhost:4317
+            - name: OTEL_ENDPOINT_METRICAS
+              value: http://localhost:4318/v1/metrics
+            # la misma proporcion que el central (OTEL_PROPORCION_TRAZAS en carga-uy/openshift/configuracion.yaml)
+            - name: OTEL_PROPORCION_TRAZAS
+              value: "0.1"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+          # sin ella el pod figura listo antes de que WildFly despliegue el servicio
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9990
+            periodSeconds: 10
+          volumeMounts:
+            - name: personas
+              mountPath: /config/personas
+              readOnly: true
+        - name: colector
+          image: otel/opentelemetry-collector-contrib:0.161.0
+          args: ["--config=/etc/otelcol/otelcol.yaml"]
+          env:
+            # la Route observabilidad-otlp del proyecto del central (carga-uy/openshift/observabilidad.yaml)
+            - name: PLATAFORMA_OTLP
+              value: https://observabilidad-otlp-kevin-martinez-herna-dev.apps.rm2.thpm.p1.openshiftapps.com
+            - name: OTLP_NODOS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nodo-tracking-secretos
+                  key: OTLP_NODOS_TOKEN
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: colector
+              mountPath: /etc/otelcol
+              readOnly: true
+      volumes:
+        # sin subPath: con subPath, un cambio en el Secret no llega al contenedor hasta reiniciarlo
+        - name: personas
+          secret:
+            secretName: pdi-suplantador-personas
+            items:
+              - key: personas.json
+                path: personas.json
+        - name: colector
+          configMap:
+            name: pdi-suplantador-colector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdi-suplantador
+spec:
+  selector:
+    app: pdi-suplantador
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+# solo el servicio SOAP (path), con TLS terminado en el router de OpenShift; la consola de WildFly (9990) no sale del
+# pod. Apagado, el router responde 503
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: pdi-suplantador
+spec:
+  path: /pdi-suplantador
+  to:
+    kind: Service
+    name: pdi-suplantador
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

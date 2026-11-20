@@ -122,8 +122,59 @@ entorno.
 
 ## Despliegue
 
-Por ahora no se despliega: solo corre en el Compose, por HTTP. Al desplegarlo, la plataforma lo publica por HTTPS. Sin
-`PDI_URL`, el central deja entrar a los ciudadanos sin los datos de la PDI y sin control de mayoría de edad.
+En OpenShift corre en el proyecto de los nodos de tracking, separado del central porque hace de sistema externo. El
+central lo llama por la Route `pdi-suplantador`, con SOAP sobre HTTPS:
+
+    https://pdi-suplantador-andres-murara-dev.apps.rm2.thpm.p1.openshiftapps.com/pdi-suplantador/ServicioBasicoInformacion
+
+El [manifiesto](openshift/pdi-suplantador.yaml) tiene el Deployment, el Service, la Route y un colector de
+OpenTelemetry en el mismo pod, que reenvía logs, trazas y métricas a la Plataforma de Observabilidad con el token de los
+nodos de tracking. El workflow "Deploy PDI" publica la imagen `ghcr.io/lucaslazogue/tse-carga-uy/pdi-suplantador` en
+cada push a `release` que toque esta carpeta y actualiza el Deployment.
+
+### Primera vez
+
+Con la sesión de `oc` del dueño del proyecto (la cuenta de servicio del workflow no puede crear Secrets, Services ni
+Routes), desde esta carpeta:
+
+1. La clave que acepta, generada en el momento:
+
+       CLAVE=$(openssl rand -base64 24)
+       oc create secret generic pdi-suplantador-secretos --from-literal=SUPLANTADOR_PASSWORD_ENTIDAD="$CLAVE"
+
+2. Las personas: el archivo del repositorio más las de los integrantes (ver [abajo](#personas-reales-en-openshift)):
+
+       oc create secret generic pdi-suplantador-personas --from-file=personas.json=personas/personas.json
+
+3. `oc apply -f openshift/pdi-suplantador.yaml`
+
+4. En el proyecto del central, la misma clave y la dirección (`PDI_URL` y `PDI_ORGANIZACION` están en
+   [configuracion.yaml](../carga-uy/openshift/configuracion.yaml)):
+
+       oc set data secret/carga-uy-secretos PDI_PASSWORD_ENTIDAD="$CLAVE"
+       oc apply -f ../carga-uy/openshift/configuracion.yaml
+       oc rollout restart deployment/carga-uy
+
+La primera corrida de "Deploy PDI" crea el paquete en GHCR como privado: hay que hacerlo público (Package settings →
+Change visibility → Public), como los de los nodos, o OpenShift no puede bajar la imagen.
+
+### Personas reales en OpenShift
+
+En la demo, los integrantes entran por gub.uy con su cédula real. Para que la PDI les devuelva el nombre y la fecha, van
+en el Secret `pdi-suplantador-personas` y no en el repositorio. Para cambiarlas, armar el archivo completo fuera del
+repositorio (las ficticias de [personas.json](personas/personas.json) más las reales) y reemplazar el Secret:
+
+    oc create secret generic pdi-suplantador-personas --from-file=personas.json=RUTA_AL_ARCHIVO \
+      --dry-run=client -o yaml | oc apply -f -
+
+El cambio llega al pod en uno o dos minutos, sin reiniciar. Si el archivo tiene un error, el suplantador lo ignora y
+solo responden los casos especiales: el motivo queda en `oc logs deploy/pdi-suplantador -c pdi-suplantador`.
+
+### Probar la PDI caída
+
+    oc scale deployment/pdi-suplantador --replicas=0
+
+El router responde 503 y el central deja entrar al ciudadano sin los datos de la PDI. Para volver, `--replicas=1`.
 
 ## Tests
 
