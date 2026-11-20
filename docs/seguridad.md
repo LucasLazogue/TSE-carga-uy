@@ -89,18 +89,11 @@ GUBUY_MOCK=false
 GUBUY_REDIRECT_URI=http://localhost:8080
 ```
 
-Desde `carga-uy`, aplicar el cambio con `docker compose up -d carga-uy`. Para esta configuración
-de testing, agregar una vez la regla de WildFly que reenvía el retorno de la raíz al callback.
-Ejecutar desde Bash en el mismo directorio:
-
-```bash
-MSYS_NO_PATHCONV=1 docker compose exec -T carga-uy /opt/jboss/wildfly/bin/jboss-cli.sh --connect --user=admin --password=admin123 <<'EOF'
-/subsystem=undertow/configuration=filter/expression-filter=gubuy-callback:add(expression="path('/') and (exists('%{q,code}') or exists('%{q,error}')) -> redirect('/carga-uy/api/auth/callback%q')")
-/subsystem=undertow/server=default-server/host=default-host/filter-ref=gubuy-callback:add
-EOF
-```
-
-La regla queda en ese contenedor y debe aplicarse nuevamente si se recrea.
+Desde `carga-uy`, aplicar el cambio con `docker compose up -d carga-uy` (`restart` no toma el
+`.env` nuevo). gub.uy de testing solo vuelve a la raíz, `http://localhost:8080`; la regla de WildFly
+que reenvía ese retorno al callback de la API ya viene en la imagen
+([gubuy.cli](../carga-uy/config/gubuy.cli)) y solo actúa sobre `/` cuando trae `?code=` o `?error=`,
+así que no afecta al login simulado.
 Para ingresar, crear una cuenta en https://mi-testing.iduruguay.gub.uy.
 Para volver al simulado, restaurar `GUBUY_MOCK=true` y
 `GUBUY_REDIRECT_URI=http://localhost:8080/carga-uy/api/auth/callback`, y aplicar el cambio con Compose.

@@ -1,0 +1,9 @@
+# Vuelta de gub.uy: gub.uy no admite redirect a localhost/callback, asi que GUBUY_REDIRECT_URI es la raiz
+# (http://localhost:8080) y esta regla reenvia esa vuelta al callback de la API. Con el login simulado no se usa:
+# solo actua sobre / cuando trae ?code= o ?error=
+embed-server --server-config=standalone-full.xml
+
+/subsystem=undertow/configuration=filter/expression-filter=gubuy-callback:add(expression="path('/') and (exists('%{q,code}') or exists('%{q,error}')) -> redirect('/carga-uy/api/auth/callback%q')")
+/subsystem=undertow/server=default-server/host=default-host/filter-ref=gubuy-callback:add
+
+stop-embedded-server

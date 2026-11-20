@@ -50,6 +50,9 @@ RUN $CLI --file=/opt/jboss/artemis.cli
 COPY --chown=jboss:jboss config/observabilidad.cli /opt/jboss/observabilidad.cli
 RUN $CLI --file=/opt/jboss/observabilidad.cli
 
+COPY --chown=jboss:jboss config/gubuy.cli /opt/jboss/gubuy.cli
+RUN $CLI --file=/opt/jboss/gubuy.cli
+
 # activa fault tolerance para que anden @Timeout, @CircuitBreaker y @Fallback
 RUN $CLI --commands='embed-server --server-config=standalone-full.xml,\
 /extension=org.wildfly.extension.microprofile.fault-tolerance-smallrye:add,\

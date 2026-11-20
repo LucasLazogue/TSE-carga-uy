@@ -14,6 +14,12 @@ y WorkManager para enviar los eventos al componente central cuando hay red.
 
 ## Configuración
 
+Hay dos formas: con el login simulado o con gub.uy de testing. En las dos, si se pone
+`CARGAUY_JWT_SECRET` en `carga-uy/.env` tiene que tener al menos 32 bytes; si no, todo login vuelve con
+`?error=4008` (vacío usa el de desarrollo del compose).
+
+### Login simulado
+
 El celular o el emulador no llegan a la PC por `localhost`: hay que usar la IP de la máquina
 (`ipconfig`, "Dirección IPv4").
 
@@ -52,6 +58,35 @@ El celular o el emulador no llegan a la PC por `localhost`: hay que usar la IP d
 
    El token queda dentro del APK, así que se asume que se puede extraer: solo permite mandar trazas, y el
    router limita los pedidos por IP.
+
+### Login con gub.uy de testing
+
+gub.uy solo vuelve a la redirect URI registrada para el cliente, `http://localhost:8080`, y en el
+celular `localhost` es el propio celular. Por eso se redirige el puerto 8080 del dispositivo a la PC con
+`adb reverse` y la app usa `localhost` en vez de la IP.
+
+1. Configurar el `.env` del backend como dice
+   [gub.uy de testing](../docs/seguridad.md#gubuy-de-testing).
+
+2. En `mobile/local.properties`:
+
+       cargauy.url=http://localhost:8080/carga-uy/api/
+
+   Tiene que ser `localhost` y no la IP: el estado del login viaja en la cookie `cargauy_login`, que el
+   navegador solo manda al mismo host. Si el login empieza por la IP y vuelve por `localhost`, el central
+   no reconoce que es de la app y redirige al frontend (`http://localhost:5173/?error=...`). Si en debug
+   se guardó una URL en Configuración, esa manda sobre la de `local.properties`: cambiarla ahí también.
+
+3. Con el emulador abierto (o el celular conectado por USB), cada vez que arranca:
+
+       adb reverse tcp:8080 tcp:8080
+
+   Sin esto la app no llega al central. Si `adb` no está en el PATH, está en la carpeta `platform-tools`
+   del SDK (la ruta del SDK se ve en Android Studio, Settings > Languages & Frameworks > Android SDK).
+
+El campo "Cédula (login simulado)" se sigue viendo en debug, pero con `GUBUY_MOCK=false` el central lo
+ignora: "Ingresar con gub.uy" abre el login real (la cuenta de testing, ver la
+[documentación de seguridad](../docs/seguridad.md#gubuy-de-testing)).
 
 ## Ejecutar
 
