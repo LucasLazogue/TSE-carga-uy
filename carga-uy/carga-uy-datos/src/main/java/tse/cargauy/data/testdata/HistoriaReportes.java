@@ -1,6 +1,5 @@
 package tse.cargauy.data.testdata;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -80,14 +79,11 @@ final class HistoriaReportes {
         List<ViajeHistorico> viajes = new ArrayList<>();
         for (LocalDate dia = PRIMER_DIA; !dia.isAfter(ULTIMO_DIA); dia = dia.plusDays(1)) {
             int n = dia.getDayOfYear();
-            int cantidad;
-            if (dia.getDayOfWeek().equals(DayOfWeek.SUNDAY)) {
-                cantidad = 0;
-            } else if (dia.getDayOfWeek().equals(DayOfWeek.SATURDAY)) {
-                cantidad = n % 2;
-            } else {
-                cantidad = 2 + (n * 7) % 3 + (dia.getMonthValue() >= 3 && dia.getMonthValue() <= 5 ? 1 : 0);
-            }
+            int cantidad = switch (dia.getDayOfWeek()) {
+                case SUNDAY -> 0;
+                case SATURDAY -> n % 2;
+                default -> 2 + (n * 7) % 3 + (dia.getMonthValue() >= 3 && dia.getMonthValue() <= 5 ? 1 : 0);
+            };
             for (int i = 0; i < Math.min(cantidad, camiones); i++) {
                 int rubro = PESO_RUBROS[(n + 7 * i) % PESO_RUBROS.length] % rubros;
                 viajes.add(new ViajeHistorico((n * 3 + i) % camiones, dia, rubro, (n + 3 * i) % tipos,
