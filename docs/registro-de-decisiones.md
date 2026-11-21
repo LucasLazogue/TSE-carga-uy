@@ -35,8 +35,7 @@ inicial: cada instancia de WildFly tenía su propia cola y el nodo le enviaba to
 - La ingesta escala con las instancias: en la prueba en la nube, pasar de 1 a 2 instancias multiplicó por 1,9 las
   posiciones procesadas, y de 2 a 4, por 1,4. Cuando el autoescalado apaga una instancia, el broker reentrega sus
   mensajes a otra y ninguno llega a la cola de mensajes muertos.
-- Con el central detenido, el nodo sigue publicando y las posiciones esperan en la cola. Con PostgreSQL detenido, las
-  reentregas cubren unos 14 minutos sin perder posiciones.
+- Con el central detenido, el nodo sigue publicando y las posiciones esperan en la cola.
 - Como la entrega es al menos una vez y Artemis no deduplica la reentrega de una transacción deshecha, la ingesta
   tiene que ser idempotente (DA07).
 - Artemis usa su propio protocolo sobre TCP. En el Developer Sandbox, que solo publica tráfico web, hubo que exponerlo

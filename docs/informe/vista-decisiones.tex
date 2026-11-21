@@ -1,6 +1,6 @@
 \section{Vista de Decisiones de Arquitectura}\label{sec:vista-de-decisiones-de-arquitectura}
 
-La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión, justificación y decisiones relacionadas.
+La Vista de Decisiones de Arquitectura presenta y describe las principales decisiones de arquitectura tomadas \cite{VanHeesch2012}\cite{Kruchten2009}. Para cada decisión se especifican los campos de la plantilla: identificador, nombre, categorías, problema, alternativas, decisión, justificación y decisiones relacionadas. El registro de decisiones de la entrega final, con las siete principales en el formato de contexto, decisión, alternativas descartadas y consecuencias, está en \texttt{docs/registro-de-decisiones.md} del repositorio.
 
 
 \begin{table}[H]
@@ -84,7 +84,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
 \begin{table}[H]
     \small
     \centering
-    \caption{DA04: Ingreso desde el móvil con \textit{authorization code} y PKCE}
+    \caption{DA04: Ingreso desde el móvil con \textit{authorization code}, PKCE y DPoP}
     \label{tab:da04}
     \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
         \hline
@@ -172,7 +172,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Categorías} & Ingesta de eventos; opcional 10; R6; AC08, AC15, AC16. \\
         \hline
-            \textbf{Problema} & Las posiciones son el dato de mayor volumen y solo se agregan. Además, un mismo evento de tracking puede recibirse más de una vez (reentregas del broker o reenvíos del nodo) y la cola tiene varios consumidores en paralelo. Un evento duplicado no debe alterar el estado del viaje ni generar casos adicionales. \\
+            \textbf{Problema} & Las posiciones son el dato de mayor volumen y casi no se modifican: solo se marcan como procesadas y se reasocian a su viaje cuando un aviso llega tarde. Además, un mismo evento de tracking puede recibirse más de una vez (reentregas del broker o reenvíos del nodo) y la cola tiene varios consumidores en paralelo. Un evento duplicado no debe alterar el estado del viaje ni generar casos adicionales. \\
         \hline
             \textbf{Alternativas} & Guardar las posiciones en PostgreSQL con una restricción de unicidad; usar una colección de series temporales de MongoDB. \\
         \hline

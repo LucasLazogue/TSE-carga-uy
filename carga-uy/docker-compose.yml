@@ -1,3 +1,5 @@
+# Entorno local. Las claves y contraseñas por defecto de este archivo son solo de desarrollo: lo desplegado en
+# OpenShift toma las suyas de Secrets (ver openshift/), distintas a estas.
 services:
   postgres:
     image: postgres:17
