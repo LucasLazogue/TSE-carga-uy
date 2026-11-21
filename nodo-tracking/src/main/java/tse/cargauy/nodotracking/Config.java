@@ -8,7 +8,8 @@ public record Config(String nodoId, int puerto, String jmsUrl, String jmsUsuario
         Config config = new Config(
             obligatoria("NODO_ID"),
             numero("NODO_PUERTO", 8081),
-            // con TLS (R8): el certificado del broker de desarrollo esta en tls/confianza.p12
+            // con TLS (R8): el certificado del broker del entorno local esta en tls/confianza.p12, con una clave solo de
+            // desarrollo. En OpenShift el truststore y su clave vienen del Secret nodo-tracking-secretos
             texto("NODO_JMS_URL", "tcp://localhost:61617?sslEnabled=true&trustStorePath=tls/confianza.p12&trustStorePassword=cargauy-dev"),
             obligatoria("NODO_JMS_USUARIO"),
             obligatoria("NODO_JMS_CLAVE"),

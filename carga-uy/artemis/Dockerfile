@@ -1,6 +1,8 @@
 # broker de mensajeria (DA02): Apache Artemis con la configuracion de carga.uy
 FROM apache/artemis:2.57.0-alpine
 
+# etc/ trae el keystore (artemis.p12) y los usuarios del entorno local con Docker Compose. En OpenShift el Secret
+# artemis-secretos monta encima otro keystore y otros usuarios: las claves del repositorio no se usan desplegadas
 COPY --chown=artemis:artemis etc/ /opt/carga-uy/etc/
 COPY --chown=artemis:artemis --chmod=755 arranque.sh /opt/carga-uy/arranque.sh
 

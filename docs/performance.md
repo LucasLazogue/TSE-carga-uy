@@ -156,7 +156,7 @@ y correrla con el central en la nube (se hizo en OpenShift: ver la sección sigu
 | Pico ×3 (1.800 pos/s) | Se encola y se procesa con atraso, sin pérdida | [Pico](#pico-de-1800-posicioness) |
 | Balanzas indisponibles | El central sigue respondiendo; el viaje queda pendiente y se reevalúa al volver el nodo | [Escenarios de falla](#escenarios-de-falla) |
 | PDI que no responde | El ingreso sigue funcionando con el perfil pendiente | [Escenarios de falla](#escenarios-de-falla) |
-| Consultas de detalle y sincronización del móvil con eventos acumulados | 16 lecturas del frontoffice con p95 de 177 a 276 ms y 0 errores con 600 pos/s; 600 lotes de 20 eventos aplicados y sus reenvíos como duplicados | [Consultas de detalle](#consultas-de-detalle-y-móvil-con-eventos-acumulados) |
+| Consultas de detalle y sincronización del móvil con eventos acumulados | 5 escenarios de k6 con p95 de 177 a 276 ms (el pedido más lento, 372 ms) y 0 errores con 600 pos/s; 600 lotes de 20 eventos aplicados y sus reenvíos como duplicados | [Consultas de detalle](#consultas-de-detalle-y-móvil-con-eventos-acumulados) |
 | Las cuatro reglas de fiscalización con carga | Sin habilitación, viaje sin guía y desvío (1.800 casos cada una) y exceso de carga (unos 250) se abren con 600 pos/s sin afectar la ingesta | [Las cuatro reglas a la vez](#las-cuatro-reglas-a-la-vez) |
 | Escalado horizontal efectivo (opcional 4) | 1 → 2 instancias: ×1,9; 2 → 4: ×1,4 | [Escalado](#escalado-horizontal) |
 
