@@ -1,0 +1,60 @@
+\section{Declaración de Uso de Inteligencia Artificial}\label{sec:declaracion-ia}
+
+La letra ubica el laboratorio en la Categoría 3 (uso extensivo) de la guía de la Facultad de Ingeniería para el uso ético y crítico de inteligencia artificial \cite{LINS2026}\cite{FING2026}: las herramientas se usan como herramienta profesional, de forma crítica, verificada y declarada. Esta sección declara, para cada herramienta, su nombre y versión, en qué partes del trabajo se usó y con qué finalidad, y cómo se verificó la validez de lo obtenido.
+
+\subsection{Herramientas utilizadas}
+
+\begin{table}[H]
+    \small
+    \centering
+    \caption{Herramientas de inteligencia artificial por integrante}
+    \label{tab:herramientas-ia}
+    \begin{tabular}{|p{4.1cm}|p{11.7cm}|}
+        \hline
+            \textbf{Integrante} & \textbf{Herramienta y versión} \\
+        \hline
+            Lucas Lazogue & Claude Code 2.1.330, modelos Opus 5 y Sonnet 5.5 \\
+        \hline
+            Kevin Martínez & \textbf{[completar]} \\
+        \hline
+            Andrés Murara & \textbf{[completar]} \\
+        \hline
+            Eric Tift & \textbf{[completar]} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Proceso de uso}
+
+Claude Code y Antigravity se usaron con este ciclo:
+
+\begin{enumerate}
+    \item \textbf{Plan.} A partir del caso de uso y de este documento, la herramienta arma un plan por pull request: alcance y pruebas.
+    \item \textbf{Revisión del diseño.} El plan se revisa contra este documento y contra los contratos entre lotes antes de codificar. En este paso decide el grupo.
+    \item \textbf{Implementación.} Con Claude Code o Antigravity, en una rama propia y con los patrones del equipo.
+    \item \textbf{Prueba de punta a punta.} Claude recorre el flujo en el navegador o en el emulador y deja la evidencia en el pull request.
+\end{enumerate}
+
+\subsection{Verificación de los resultados}
+
+\begin{itemize}
+    \item \textbf{Integración continua.} La rama principal está protegida y solo acepta un pull request si pasan los checks: compilación, pruebas automatizadas, cobertura medida con JaCoCo con un mínimo del 80~\%, SpotBugs y el análisis de SonarCloud. Alrededor del 9/11, GitHub Actions estuvo cortado unos días por facturación y algunos pull requests entraron sin CI; al volver, la rama principal pasó en verde.
+    \item \textbf{Pruebas propias.} Las pruebas cubren el ciclo de vida de los casos de fiscalización, las transiciones no permitidas y la idempotencia de la ingesta de tracking y de la sincronización del móvil.
+    \item \textbf{Mediciones propias.} Las cifras del artículo son mediciones propias.
+\end{itemize}
+
+\subsection{Decisiones del grupo}
+
+La arquitectura y las decisiones de diseño son del grupo y están registradas en la Sección \ref{sec:vista-de-decisiones-de-arquitectura}. Por ejemplo:
+
+\begin{itemize}
+    \item El código generado ponía al chofer como subclase del ciudadano; se cambió por un vínculo con la empresa, como estaba en el modelo conceptual (Sección \ref{sec:vista-conceptual}).
+    \item Consultar a las balanzas al terminar el viaje fue una decisión del grupo (DA10).
+    \item La división en lotes salió de los casos de uso de este documento; se iteró con asistencia, la aceptó el grupo y cada integrante eligió su lote.
+\end{itemize}
+
+Un ejemplo de cómo se verificó un pull request:
+
+\begin{itemize}
+    \item \textbf{PR 144.} El análisis de SonarCloud en el CI marcó un error introducido en el PR 115: \texttt{getUsuarioActual()} fallaba si el usuario de la sesión ya no existía. Se corrigió para que responda \texttt{AUTH\_SESION\_INVALIDA}, con dos pruebas nuevas en \texttt{UsuarioEJBTest}, y el quality gate del PR pasó con cobertura total del código nuevo.
+\end{itemize}
