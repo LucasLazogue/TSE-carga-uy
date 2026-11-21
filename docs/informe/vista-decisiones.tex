@@ -18,7 +18,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & El componente central concentra la presentación para cuatro tipos de usuarios y la API del componente móvil, la lógica de negocio y de fiscalización, la persistencia y la integración con varios sistemas externos y nodos periféricos. \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & No se evaluaron alternativas: la organización en capas es la del práctico del curso, sobre el que se construyó el componente central. \\
         \hline
             \textbf{Decisión} & Organizar el componente central en cuatro capas: presentación (API REST, frontoffice y backoffice), servicios y procesamiento (Servicios de Negocio, Generación de Reportes, Ingesta de Eventos y Motor de Fiscalización), persistencia, y adaptadores e infraestructura, que aíslan cada integración externa (Figura \ref{fig:vista_logica}). \\
         \hline
@@ -148,7 +148,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & El chofer debe poder consultar la Guía y registrar los eventos del viaje sin conectividad, y la sincronización posterior debe ser idempotente. \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & No se evaluaron alternativas: el práctico del curso ya incluía un cliente Android nativo, que se tomó como base. \\
         \hline
             \textbf{Decisión} & Aplicación nativa para Android en Kotlin con Jetpack Compose, persistencia local con Room y un identificador UUID generado en el dispositivo para cada evento pendiente. La sincronización corre en segundo plano con WorkManager, que espera a tener conexión y reintenta con esperas crecientes, y las llamadas a la API REST usan Retrofit con OkHttp. \\
         \hline
@@ -226,7 +226,7 @@ La Vista de Decisiones de Arquitectura presenta y describe las principales decis
         \hline
             \textbf{Problema} & La autorización debe aplicarse en la capa de servicios y no solo en la interfaz de usuario (R9). Además, un responsable o un chofer solo debe acceder a los datos de su propia empresa. \\
         \hline
-            \textbf{Alternativas} & \pendiente{completar las alternativas consideradas.} \\
+            \textbf{Alternativas} & Verificar los roles con código en cada método de los EJB, que repite el control en cada operación y puede omitirse en alguna. Políticas de Jakarta Authorization, que agregan configuración y no resuelven el acceso a la propia empresa, que depende de cada operación. Controlar el acceso solo en la interfaz, que deja la API abierta a cualquier cliente que la llame directamente. \\
         \hline
             \textbf{Decisión} & Cada request se autentica con un mecanismo de Jakarta Security que valida el JWT de la cookie o del encabezado \texttt{Authorization} y le informa al contenedor el usuario y sus roles. Los EJB declaran los roles permitidos con \texttt{@RolesAllowed} y verifican además que el usuario tenga acceso a la empresa sobre la que opera. \\
         \hline
