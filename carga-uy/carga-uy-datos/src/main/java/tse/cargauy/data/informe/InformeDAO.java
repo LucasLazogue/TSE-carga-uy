@@ -8,16 +8,11 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
-import tse.cargauy.dtos.FiltroInforme;
+import tse.cargauy.dtos.CasoHistoricoDto;
 import tse.cargauy.dtos.InformeDto;
-import tse.cargauy.dtos.InfraccionesPorTipoDto;
 import tse.cargauy.dtos.PaginaDto;
 import tse.cargauy.dtos.Paginacion;
-import tse.cargauy.dtos.ViajesPorPeriodoDto;
-import tse.cargauy.dtos.ViajesPorMesPublicoDto;
-import tse.cargauy.dtos.VolumenPorRubroDto;
-import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
-import tse.cargauy.entities.EstadoCaso;
+import tse.cargauy.dtos.ViajeHistoricoDto;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.EstadoViaje;
@@ -35,8 +30,12 @@ public class InformeDAO implements InformeDAOLocal {
             + " AND EXISTS (SELECT i FROM Itv i WHERE i.vehiculo = p.vehiculo"
             + " AND i.fechaInspeccion <= :fecha AND i.fechaVencimiento >= :fecha)";
 
-    private static final String VIAJES_FINALIZADOS = " FROM Viaje v WHERE v.estado = :finalizado"
-            + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta";
+    private static final String VIAJE_HISTORICO = "SELECT NEW tse.cargauy.dtos.ViajeHistoricoDto(v.id, v.fechaFin,"
+            + " v.guia.empresa.id, v.vehiculo.id, v.guia.rubro.id, v.guia.rubro.nombre, v.guia.tipoCarga.id, v.guia.volumen)"
+            + " FROM Viaje v WHERE v.estado = :finalizado";
+
+    private static final String CASO_HISTORICO = "SELECT NEW tse.cargauy.dtos.CasoHistoricoDto(c.id, c.tipo, c.estado,"
+            + " c.fechaDeteccion, t.id) FROM CasoFiscalizacion c LEFT JOIN c.viaje v LEFT JOIN v.guia g LEFT JOIN g.tipoCarga t";
 
     @PersistenceContext(unitName = "carga-uy")
     private EntityManager entityManager;
@@ -69,97 +68,18 @@ public class InformeDAO implements InformeDAOLocal {
     }
 
     @Override
-    public List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro) {
-        String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND v.guia.tipoCarga.id = :idTipoCarga";
-        TypedQuery<ViajesPorPeriodoDto> query = consulta(
-                        "SELECT NEW tse.cargauy.dtos.ViajesPorPeriodoDto(EXTRACT(DATE FROM v.fechaFin), COUNT(v))"
-                                + " FROM Viaje v WHERE v.estado = :finalizado"
-                                + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta" + tipoCarga
-                                + " GROUP BY EXTRACT(DATE FROM v.fechaFin) ORDER BY EXTRACT(DATE FROM v.fechaFin)",
-                        ViajesPorPeriodoDto.class)
+    public ViajeHistoricoDto getViajeHistorico(Long idViaje) {
+        return entityManager.createQuery(VIAJE_HISTORICO + " AND v.id = :id", ViajeHistoricoDto.class)
                 .setParameter("finalizado", EstadoViaje.FINALIZADO)
-                .setParameter("desde", filtro.getDesde().atStartOfDay())
-                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
-        if (filtro.getIdTipoCarga() != null) {
-            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
-        }
-        return query.getResultList();
+                .setParameter("id", idViaje)
+                .getResultStream().findFirst().orElse(null);
     }
 
     @Override
-    public List<VolumenPorRubroDto> sumarVolumenPorRubro(FiltroInforme filtro) {
-        String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND v.guia.tipoCarga.id = :idTipoCarga";
-        TypedQuery<VolumenPorRubroDto> query = consulta(
-                        "SELECT NEW tse.cargauy.dtos.VolumenPorRubroDto(v.guia.rubro.nombre, SUM(v.guia.volumen))"
-                                + " FROM Viaje v WHERE v.estado = :finalizado"
-                                + " AND v.fechaFin >= :desde AND v.fechaFin < :hasta" + tipoCarga
-                                + " GROUP BY v.guia.rubro.nombre ORDER BY SUM(v.guia.volumen) DESC, v.guia.rubro.nombre",
-                        VolumenPorRubroDto.class)
-                .setParameter("finalizado", EstadoViaje.FINALIZADO)
-                .setParameter("desde", filtro.getDesde().atStartOfDay())
-                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
-        if (filtro.getIdTipoCarga() != null) {
-            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
-        }
-        return query.getResultList();
-    }
-
-    @Override
-    public List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro) {
-        String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND c.viaje.guia.tipoCarga.id = :idTipoCarga";
-        TypedQuery<InfraccionesPorTipoDto> query = consulta(
-                        "SELECT NEW tse.cargauy.dtos.InfraccionesPorTipoDto(c.tipo, COUNT(c),"
-                                + " SUM(CASE WHEN c.estado = :confirmada THEN 1 ELSE 0 END),"
-                                + " SUM(CASE WHEN c.estado = :desestimada THEN 1 ELSE 0 END))"
-                                + " FROM CasoFiscalizacion c"
-                                + " WHERE c.fechaDeteccion >= :desde AND c.fechaDeteccion < :hasta" + tipoCarga
-                                + " GROUP BY c.tipo", InfraccionesPorTipoDto.class)
-                .setParameter("confirmada", EstadoCaso.CONFIRMADA)
-                .setParameter("desestimada", EstadoCaso.DESESTIMADA)
-                .setParameter("desde", filtro.getDesde().atStartOfDay())
-                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
-        if (filtro.getIdTipoCarga() != null) {
-            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
-        }
-        return query.getResultList();
-    }
-
-    @Override
-    public List<ViajesPorMesPublicoDto> contarViajesPorMesPublico(FiltroInforme filtro, int umbral) {
-        String mes = "EXTRACT(YEAR FROM v.fechaFin), EXTRACT(MONTH FROM v.fechaFin)";
-        return publica("SELECT NEW tse.cargauy.dtos.ViajesPorMesPublicoDto(" + mes + ", " + siSuperaUmbral("COUNT(v)") + ")",
-                " GROUP BY " + mes + " ORDER BY " + mes, filtro, umbral, ViajesPorMesPublicoDto.class)
-                .getResultList();
-    }
-
-    @Override
-    public List<VolumenPorRubroPublicoDto> sumarVolumenPorRubroPublico(FiltroInforme filtro, int umbral) {
-        return publica("SELECT NEW tse.cargauy.dtos.VolumenPorRubroPublicoDto(v.guia.rubro.nombre, "
-                        + siSuperaUmbral("SUM(v.guia.volumen)") + ")",
-                " GROUP BY v.guia.rubro.nombre ORDER BY v.guia.rubro.nombre", filtro, umbral, VolumenPorRubroPublicoDto.class)
-                .getResultList();
-    }
-
-    private static String siSuperaUmbral(String valor) {
-        return "CASE WHEN COUNT(DISTINCT v.guia.empresa.id) >= :umbral AND COUNT(DISTINCT v.vehiculo.id) >= :umbral"
-                + " THEN " + valor + " ELSE NULL END";
-    }
-
-    private <T> TypedQuery<T> publica(String seleccion, String agrupamiento, FiltroInforme filtro, int umbral, Class<T> tipo) {
-        String tipoCarga = filtro.getIdTipoCarga() == null ? "" : " AND v.guia.tipoCarga.id = :idTipoCarga";
-        String rubro = filtro.getIdRubro() == null ? "" : " AND v.guia.rubro.id = :idRubro";
-        TypedQuery<T> query = consulta(seleccion + VIAJES_FINALIZADOS + tipoCarga + rubro + agrupamiento, tipo)
-                .setParameter("umbral", (long) umbral)
-                .setParameter("finalizado", EstadoViaje.FINALIZADO)
-                .setParameter("desde", filtro.getDesde().atStartOfDay())
-                .setParameter("hasta", filtro.getHasta().plusDays(1).atStartOfDay());
-        if (filtro.getIdTipoCarga() != null) {
-            query.setParameter("idTipoCarga", filtro.getIdTipoCarga());
-        }
-        if (filtro.getIdRubro() != null) {
-            query.setParameter("idRubro", filtro.getIdRubro());
-        }
-        return query;
+    public CasoHistoricoDto getCasoHistorico(Long idCaso) {
+        return entityManager.createQuery(CASO_HISTORICO + " WHERE c.id = :id", CasoHistoricoDto.class)
+                .setParameter("id", idCaso)
+                .getResultStream().findFirst().orElse(null);
     }
 
     @Override

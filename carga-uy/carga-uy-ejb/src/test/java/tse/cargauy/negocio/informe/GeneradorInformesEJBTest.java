@@ -24,6 +24,7 @@ import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
 import tse.cargauy.entities.TipoInfraccion;
+import tse.cargauy.historico.HistoricoDAO;
 
 class GeneradorInformesEJBTest {
 
@@ -66,6 +67,23 @@ class GeneradorInformesEJBTest {
             }
 
             @Override
+            public void guardarContenido(Long id, byte[] contenido, LocalDateTime fecha) {
+                guardado = contenido;
+            }
+
+            @Override
+            public int vencer(LocalDateTime generadosAntesDe) {
+                limiteVencimiento = generadosAntesDe;
+                return 2;
+            }
+
+            @Override
+            public void marcarFallido(Long id) {
+                fallido = true;
+            }
+        };
+        generador.historicoDAO = new HistoricoDAO() {
+            @Override
             public List<ViajesPorPeriodoDto> contarViajesPorDia(FiltroInforme filtro) {
                 return List.of();
             }
@@ -81,22 +99,6 @@ class GeneradorInformesEJBTest {
             @Override
             public List<InfraccionesPorTipoDto> contarInfracciones(FiltroInforme filtro) {
                 return List.of();
-            }
-
-            @Override
-            public void guardarContenido(Long id, byte[] contenido, LocalDateTime fecha) {
-                guardado = contenido;
-            }
-
-            @Override
-            public int vencer(LocalDateTime generadosAntesDe) {
-                limiteVencimiento = generadosAntesDe;
-                return 2;
-            }
-
-            @Override
-            public void marcarFallido(Long id) {
-                fallido = true;
             }
         };
     }

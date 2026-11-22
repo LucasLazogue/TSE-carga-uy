@@ -2,6 +2,7 @@ package tse.cargauy.data.informe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
@@ -10,13 +11,13 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
-import tse.cargauy.dtos.FiltroInforme;
 import tse.cargauy.entities.EstadoPermiso;
 import tse.cargauy.entities.EstadoViaje;
 
@@ -39,6 +40,7 @@ class InformeDAOTest {
                     }
                     case "getSingleResult" -> resultado;
                     case "getResultList" -> List.of();
+                    case "getResultStream" -> Stream.empty();
                     default -> proxy;
                 });
         EntityManager entityManager = (EntityManager) Proxy.newProxyInstance(getClass().getClassLoader(),
@@ -70,32 +72,20 @@ class InformeDAOTest {
     }
 
     @Test
-    void losViajesPublicosFiltranPorRubroYTipoDeCarga() {
-        dao.contarViajesPorMesPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), 2L, 4L), 5);
+    void elViajeVaAlHistoricoRecienCuandoFinaliza() {
+        assertNull(dao.getViajeHistorico(21L));
 
-        assertTrue(jpql.contains("v.guia.tipoCarga.id = :idTipoCarga AND v.guia.rubro.id = :idRubro GROUP BY"));
-        assertEquals(Map.of("umbral", 5L, "finalizado", EstadoViaje.FINALIZADO, "desde", LocalDate.of(2026, 3, 1).atStartOfDay(),
-                "hasta", LocalDate.of(2026, 4, 1).atStartOfDay(), "idTipoCarga", 2L, "idRubro", 4L), parametros);
+        assertTrue(jpql.endsWith("FROM Viaje v WHERE v.estado = :finalizado AND v.id = :id"));
+        assertEquals(Map.of("finalizado", EstadoViaje.FINALIZADO, "id", 21L), parametros);
     }
 
     @Test
-    void lasFilasBajoElUmbralVuelvenSinValor() {
-        dao.contarViajesPorMesPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), null, null), 5);
-        String viajes = jpql;
-        dao.sumarVolumenPorRubroPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), null, null), 5);
+    void elCasoSinViajeIgualVaAlHistorico() {
+        dao.getCasoHistorico(40L);
 
-        String condicion = "CASE WHEN COUNT(DISTINCT v.guia.empresa.id) >= :umbral AND COUNT(DISTINCT v.vehiculo.id) >= :umbral";
-        assertTrue(viajes.contains(condicion + " THEN COUNT(v) ELSE NULL END"));
-        assertTrue(jpql.contains(condicion + " THEN SUM(v.guia.volumen) ELSE NULL END"));
-    }
-
-    @Test
-    void elVolumenPublicoSeOrdenaPorRubroYNoPorValor() {
-        dao.sumarVolumenPorRubroPublico(new FiltroInforme(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31), null, null), 5);
-
-        assertTrue(jpql.endsWith("ORDER BY v.guia.rubro.nombre"));
-        assertFalse(jpql.contains(":idRubro"));
-        assertFalse(jpql.contains(":idTipoCarga"));
+        assertTrue(jpql.contains("FROM CasoFiscalizacion c LEFT JOIN c.viaje v LEFT JOIN v.guia g LEFT JOIN g.tipoCarga t"));
+        assertTrue(jpql.endsWith("WHERE c.id = :id"));
+        assertEquals(Map.of("id", 40L), parametros);
     }
 
     @Test

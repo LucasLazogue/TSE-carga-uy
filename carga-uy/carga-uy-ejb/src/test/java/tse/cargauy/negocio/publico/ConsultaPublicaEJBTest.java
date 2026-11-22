@@ -29,6 +29,7 @@ import tse.cargauy.dtos.ViajesPorMesPublicoDto;
 import tse.cargauy.dtos.VolumenPorRubroPublicoDto;
 import tse.cargauy.exceptions.CargaUYException;
 import tse.cargauy.exceptions.CodigoError;
+import tse.cargauy.historico.HistoricoDAO;
 
 class ConsultaPublicaEJBTest {
 
@@ -83,7 +84,8 @@ class ConsultaPublicaEJBTest {
             public long contarVehiculosHabilitados(LocalDate fecha) {
                 return vehiculosHabilitados;
             }
-
+        };
+        ejb.historicoDAO = new HistoricoDAO() {
             @Override
             public List<ViajesPorMesPublicoDto> contarViajesPorMesPublico(FiltroInforme filtro, int umbral) {
                 filtros.add(filtro);

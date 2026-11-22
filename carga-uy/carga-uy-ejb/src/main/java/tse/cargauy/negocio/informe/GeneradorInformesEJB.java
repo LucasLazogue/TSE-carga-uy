@@ -22,6 +22,7 @@ import tse.cargauy.dtos.ViajesPorPeriodoDto;
 import tse.cargauy.dtos.VolumenPorRubroDto;
 import tse.cargauy.entities.EstadoInforme;
 import tse.cargauy.entities.FormatoInforme;
+import tse.cargauy.historico.HistoricoDAOLocal;
 
 @Stateless
 @PermitAll
@@ -39,6 +40,9 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
     @EJB
     InformeDAOLocal informeDAO;
 
+    @EJB
+    HistoricoDAOLocal historicoDAO;
+
     public void generar(Long idInforme) {
         InformeDto informe = informeDAO.getInformeById(idInforme);
         if (informe == null || informe.getEstado() != EstadoInforme.PENDIENTE) {
@@ -47,7 +51,7 @@ public class GeneradorInformesEJB implements GeneradorInformesEJBLocal {
         LocalDateTime ahora = ahora();
         try {
             FiltroInforme filtro = new FiltroInforme(informe.getPeriodoDesde(), informe.getPeriodoHasta(), informe.getIdTipoCarga());
-            IndicadoresDto indicadores = InformeEJB.calcular(informeDAO, filtro, ahora.toLocalDate());
+            IndicadoresDto indicadores = InformeEJB.calcular(informeDAO, historicoDAO, filtro, ahora.toLocalDate());
             byte[] contenido = exportar(informe, secciones(indicadores), ahora);
             informeDAO.guardarContenido(idInforme, contenido, ahora());
             LOGGER.info("informe generacion=GENERADO informe=" + idInforme + " bytes=" + contenido.length);
