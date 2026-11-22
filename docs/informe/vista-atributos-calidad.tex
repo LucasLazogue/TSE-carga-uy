@@ -106,6 +106,8 @@ Este volumen es el que usa la prueba de performance (AC09 a AC11): el generador 
 
 La prueba se realizó entre el 18 y el 20 de noviembre de 2026 en el Escenario 2 de la Vista de Distribución: el componente central en OpenShift con entre 1 y 4 instancias, los nodos de tracking simulando la flota desde otro proyecto del mismo clúster y k6 simulando a los usuarios del frontoffice (funcionarios, responsables de empresa y público, unos 50 pedidos por segundo), más la sincronización del fin de un viaje por segundo desde el móvil. El detalle de cada corrida, los comandos para repetirla y las métricas en que se apoya están en \texttt{docs/performance.md} del repositorio.
 
+La carga de usuarios del frontoffice se dimensionó con el mismo criterio que el volumen de tracking: toda la flota profesional (18.000 vehículos) en la hora pico, con una visita por vehículo por hora en cada perfil. Para un responsable de empresa equivale a consultar una vez por hora cada vehículo de su flota; a los funcionarios y al público se les asignó la misma cantidad, como cota alta y no como uso esperado. Son 5 visitas por segundo de cada perfil (18.000 por hora). Cada visita hace los pedidos de la pantalla principal: 5 la del responsable, 3 la del funcionario y 2 la pública. En total son unos 50 pedidos por segundo ($5 \times 5 + 5 \times 3 + 5 \times 2$), en simultáneo con la ingesta al volumen objetivo.
+
 \begin{longtable}{|p{0.13\textwidth}|p{0.80\textwidth}|}
     \caption{Resultado de la prueba de performance}\label{tab:resultado-performance}\\
     \hline
