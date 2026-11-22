@@ -99,6 +99,21 @@ segundo cada uno):
   verifica que la primera vez se apliquen todos y que la segunda vuelvan como duplicados. Usa los vehículos desde
   `ACUMULADO_DESDE` (9001), lejos de los del escenario móvil.
 
+**Por qué esta carga.** El sistema no tiene uso real del que partir, así que la carga se dimensionó igual que el
+volumen de tracking: toda la flota profesional (17.869 vehículos, redondeado a 18.000) en la hora pico, con una visita
+por vehículo por hora en cada perfil. Con `TASA=5`, k6 arranca 5 visitas por segundo de cada perfil, que son 18.000 por
+hora. Para el responsable es una consulta por hora de cada vehículo de su empresa; para el funcionario y el público, la
+misma cantidad, como cota alta.
+
+| Perfil | Visitas por segundo | Pedidos por visita | Pedidos por segundo |
+| --- | --- | --- | --- |
+| Responsable | 5 | 5 | 25 |
+| Funcionario | 5 | 3 | 15 |
+| Público | 5 | 2 | 10 |
+| **Total** | | | **50** |
+
+La corrida larga lo confirma: unos 120.000 pedidos en 40 minutos, 50 por segundo.
+
 Los tokens no pasan por gub.uy: el script los firma con el mismo secreto del central
 (`CARGAUY_JWT_SECRET`) y las mismas claims que `UsuarioEJB`. Los usuarios salen de la base:
 
