@@ -137,7 +137,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        imagen: [carga-uy, nodo-tracking, nodo-balanzas]
+        imagen: [carga-uy, nodo-tracking, nodo-balanzas, frontend]
     env:
       CAMBIOS: ${{ contains(fromJSON(needs.cambios.outputs.cambios), matrix.imagen) }}
     steps:

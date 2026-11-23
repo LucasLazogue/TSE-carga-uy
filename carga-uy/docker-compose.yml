@@ -45,8 +45,9 @@ services:
       TZ: ${CARGAUY_ZONA_HORARIA:-America/Montevideo}
       DS_DM_PASSWORD: ${LDAP_DM_PASSWORD:-cargauy123}
       DS_SUFFIX_NAME: dc=carga,dc=uy
-      LDAP_ADMIN_USUARIO: ${LDAP_ADMIN_USUARIO:-}
-      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-}
+      # primer administrador del backoffice
+      LDAP_ADMIN_USUARIO: ${LDAP_ADMIN_USUARIO:-admin-local}
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD:-admin-local-123}
     ports:
       - "1389:3389"
     volumes:
@@ -117,7 +118,8 @@ services:
       GUBUY_URL: ${GUBUY_URL:-https://auth-testing.iduruguay.gub.uy/oidc/v1}
       GUBUY_CLIENT_ID: ${GUBUY_CLIENT_ID:-}
       GUBUY_CLIENT_SECRET: ${GUBUY_CLIENT_SECRET:-}
-      GUBUY_MOCK: ${GUBUY_MOCK:-false} # TODO mock
+      # login simulado salvo que el .env diga otra cosa: gub.uy de testing necesita las credenciales del grupo
+      GUBUY_MOCK: ${GUBUY_MOCK:-true} # TODO mock
       GUBUY_REDIRECT_URI: ${GUBUY_REDIRECT_URI:-http://localhost:8080/carga-uy/api/auth/callback}
       CARGAUY_FRONTEND_URL: ${CARGAUY_FRONTEND_URL:-http://localhost:5173}
       CARGAUY_API_URL: ${CARGAUY_API_URL:-}
@@ -143,12 +145,13 @@ services:
       PDI_URL: ${PDI_URL:-http://pdi-suplantador:8080/pdi-suplantador/ServicioBasicoInformacion}
       PDI_ORGANIZACION: ${PDI_ORGANIZACION:-carga-uy}
       PDI_PASSWORD_ENTIDAD: ${PDI_PASSWORD_ENTIDAD:-clave-pdi-desarrollo}
-      # elenco de la demo (ElencoDemo): cedulas reales y claves de nodos, solo en el .env; vacio no hace nada
+      # elenco de la demo (ElencoDemo): cedulas reales, solo en el .env; vacio no hace nada
       DEMO_FUNCIONARIOS: ${DEMO_FUNCIONARIOS:-}
       DEMO_RESPONSABLES: ${DEMO_RESPONSABLES:-}
       DEMO_CHOFERES: ${DEMO_CHOFERES:-}
       DEMO_CIUDADANOS: ${DEMO_CIUDADANOS:-}
-      DEMO_NODOS: ${DEMO_NODOS:-}
+      # los nodos de este compose quedan registrados y habilitados al arrancar, con las mismas claves que los nodos
+      DEMO_NODOS: ${DEMO_NODOS:-tracking-1;tracking-2;balanzas-sur|http://balanzas-sur:8080/nodo-balanzas|${BALANZAS_SUR_CLAVE_CENTRAL:-clave-central-balanzas-sur};balanzas-norte|http://balanzas-norte:8080/nodo-balanzas|${BALANZAS_NORTE_CLAVE_CENTRAL:-clave-central-balanzas-norte}}
       # trazas, metricas y logs hacia la Plataforma de Observabilidad; la proporcion de trazas que se guardan tiene
       # que ser la misma que en el nodo
       OTEL_ENDPOINT: ${OTEL_ENDPOINT:-http://observabilidad:4317}
@@ -158,6 +161,15 @@ services:
       - mongo
       - artemis
       - ldap
+
+  # frontend web: la aplicacion compilada, servida por nginx, que pasa /api al central como el proxy de Vite.
+  # en el despliegue va en Vercel; aca esta en el puerto de Vite, el de CARGAUY_FRONTEND_URL
+  frontend:
+    build: ../frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - carga-uy
 
   # nodo periferico de tracking: simula la flota y publica sus posiciones en queue_tracking.
   # en el despliegue va en otra PaaS; aca esta para levantar todo con un solo comando

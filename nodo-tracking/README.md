@@ -22,11 +22,11 @@ Preparar el [entorno local](../README.md#ejecución-local); el Compose ya incluy
 
 Cada nodo tiene que estar registrado y habilitado en el central con el identificador de `NODO_ID`
 (`tracking-1` y `tracking-2` en el compose); si no, la ingesta descarta sus eventos
-(`NODO_DESCONOCIDO` o `NODO_NO_HABILITADO`) y los del otro nodo siguen entrando. Hay que hacerlo una vez, y de
-nuevo después de cada `docker compose down -v`. Desde el backoffice, en
-http://localhost:8080/carga-uy/admin/nodos.xhtml, ingresar con el administrador LDAP configurado
-en el README principal, registrar los identificadores `tracking-1` y `tracking-2` con tipo `TRACKING` y habilitarlos.
-La API `/api/nodos` también requiere una sesión con rol `ADMINISTRADOR`.
+(`NODO_DESCONOCIDO` o `NODO_NO_HABILITADO`) y los del otro nodo siguen entrando. En el compose, el central
+registra y habilita los dos al arrancar (`DEMO_NODOS`). Otro nodo se registra desde el backoffice, en
+http://localhost:8080/carga-uy/admin/nodos.xhtml, con el administrador LDAP del README principal: su
+identificador con tipo `TRACKING`, y después habilitarlo. La API `/api/nodos` también requiere una sesión con rol
+`ADMINISTRADOR`.
 
 El contrato de posiciones, la persistencia y las reentregas están documentados en
 [mensajería](../docs/mensajeria.md). Los permisos del broker y la conexión TLS se describen en
