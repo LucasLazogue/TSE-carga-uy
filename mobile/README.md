@@ -23,8 +23,8 @@ El celular o el emulador no llegan a la PC por `localhost`: hay que usar la IP d
        GUBUY_REDIRECT_URI=http://<IP>:8080/carga-uy/api/auth/callback
 
    Si también se usa el frontend web, abrirlo por esa IP y configurar
-   `CARGAUY_FRONTEND_URL=http://<IP>:5173` en el mismo `.env`. Para exponer Vite a la red local,
-   ejecutar `npm run dev -- --host 0.0.0.0` desde `frontend`. Ver las
+   `CARGAUY_FRONTEND_URL=http://<IP>:5173` en el mismo `.env`. El contenedor del frontend ya acepta
+   conexiones de la red local; con Vite, ejecutar `npm run dev -- --host 0.0.0.0` desde `frontend`. Ver las
    [URLs del login](../docs/seguridad.md#urls-del-login).
 
    Desde `carga-uy`, ejecutar `docker compose up -d carga-uy` para aplicar las nuevas variables.

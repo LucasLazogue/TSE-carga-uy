@@ -3,9 +3,9 @@
 [Proyecto](../README.md) · [Seguridad](seguridad.md) · [Observabilidad](observabilidad.md)
 
 El entorno local está definido en [carga-uy/docker-compose.yml](../carga-uy/docker-compose.yml).
-Compose construye el central, los nodos y la plataforma de observabilidad, y conecta los servicios
-mediante sus nombres en la red del proyecto. El [arranque mínimo](../README.md#ejecución-local)
-incluye la preparación del `.env` y los comandos para iniciar el sistema.
+Compose construye el central, el frontend, los nodos y la plataforma de observabilidad, y conecta los
+servicios mediante sus nombres en la red del proyecto. El [arranque](../README.md#ejecución-local)
+es un solo comando desde la raíz del repositorio y no necesita `.env`.
 
 ## Servicios y puertos
 
@@ -15,6 +15,7 @@ y su puerto interno; por ejemplo, el central llega a PostgreSQL por `postgres:54
 | Servicio | Responsabilidad | Puertos publicados |
 | --- | --- | --- |
 | `carga-uy` | WildFly: API REST, backoffice JSF y EJB | `8080` aplicación; `9990` administración y salud |
+| `frontend` | nginx con la aplicación web compilada; reenvía `/api` al central | `5173` → `80` |
 | `postgres` | Base relacional del central | `5433` → `5432` |
 | `mongo` | Almacenamiento de posiciones | `27018` → `27017` |
 | `ldap` | Directorio del backoffice | `1389` → `3389` |
@@ -34,12 +35,14 @@ sin los datos de la PDI y se completan en un próximo ingreso.
 
 Cada nodo de balanzas tiene su propia base y arranca vacío. Los peajes, balanzas y lecturas de demo se
 cargan desde el host con `alta.mjs` y `simular.mjs`, según la guía de
-[balanzas](../nodo-balanzas/README.md#cómo-levantarlo-con-el-resto). El registro y la habilitación en el central se realizan
-desde el backoffice, según las guías de [tracking](../nodo-tracking/README.md#cómo-levantarlo)
-y [balanzas](../nodo-balanzas/README.md#agregar-un-nodo-nuevo).
+[balanzas](../nodo-balanzas/README.md#cómo-levantarlo-con-el-resto). El central registra y habilita los
+cuatro nodos al arrancar, con las claves de desarrollo del Compose (`DEMO_NODOS`, ver
+[datos del central](#datos-del-central)). Un nodo nuevo se registra desde el backoffice, según la guía de
+[balanzas](../nodo-balanzas/README.md#agregar-un-nodo-nuevo).
 
-El frontend se ejecuta por separado con Vite en el puerto `5173`. Android se conecta a la dirección
-del central accesible desde el dispositivo; ver la [configuración móvil](../mobile/README.md#configuración).
+El frontend queda en el puerto `5173`, el mismo que usa Vite en desarrollo, así que el retorno del login
+(`CARGAUY_FRONTEND_URL`) sirve para los dos. Android se conecta a la dirección del central accesible
+desde el dispositivo; ver la [configuración móvil](../mobile/README.md#configuración).
 
 ## Persistencia
 
@@ -57,9 +60,9 @@ un volumen persistente para la plataforma de observabilidad.
 
 ## Configuración del entorno
 
-`carga-uy/.env` proporciona los valores que el Compose pasa a cada servicio. El
-[archivo de ejemplo](../carga-uy/.env.example) contiene la configuración inicial; el Compose
-define el conjunto completo de variables y sus valores predeterminados.
+El Compose define el conjunto completo de variables y sus valores predeterminados, que alcanzan para
+el entorno local. `carga-uy/.env` es opcional y cambia los valores que el Compose pasa a cada servicio;
+el [archivo de ejemplo](../carga-uy/.env.example) sirve de punto de partida.
 
 | Variables | Área |
 | --- | --- |
@@ -418,8 +421,8 @@ Pide confirmación escribiendo el nombre del proyecto. No toca los usuarios de L
 Artemis ni los pesajes de los nodos de balanzas. Después del reinicio, cualquier cuenta de gub.uy que no esté en el
 elenco entra como ciudadano sin rol.
 
-En Compose, el perfil y el elenco se definen en el `.env` con las mismas variables (`CARGAUY_DATOS`, `DEMO_*`). El
-reinicio, desde `carga-uy`:
+En Compose, el perfil y el elenco se definen en el `.env` con las mismas variables (`CARGAUY_DATOS`, `DEMO_*`).
+Sin `DEMO_NODOS`, el Compose registra sus cuatro nodos con las claves de desarrollo. El reinicio, desde `carga-uy`:
 
 ```sh
 docker compose down -v && docker compose up -d                                   # demo
@@ -429,7 +432,8 @@ docker compose exec -T postgres psql -U cargauy -d cargauy < ../performance/dato
 ```
 
 Para que el central acepte las posiciones de la prueba, los nodos `tracking-1` y `tracking-2` tienen que estar
-registrados y habilitados: en el perfil `base`, eso lo hace el elenco con `DEMO_NODOS`.
+registrados y habilitados: en el perfil `base`, eso lo hace el elenco con `DEMO_NODOS`, que en Compose ya los
+incluye.
 
 ### Broker y almacén de posiciones
 

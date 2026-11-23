@@ -23,49 +23,41 @@ para gestionar empresas, vehículos, permisos, viajes y datos de fiscalización.
 
 ## Requisitos
 
-- Docker con Docker Compose para el central y sus servicios.
-- Node.js 24 y npm para el frontend.
+- Docker con Docker Compose para el entorno local.
+- Node.js 24 y npm para desarrollar el frontend y cargar los datos de los nodos de balanzas.
 - Maven y JDK 24 para compilar o probar Java fuera de Docker.
 - Para Android, los [requisitos de la app](mobile/README.md#requisitos).
 
 ## Ejecución local
 
-Desde la raíz del repositorio, copiar [carga-uy/.env.example](carga-uy/.env.example) a
-`carga-uy/.env`. En PowerShell:
-
-```powershell
-Copy-Item carga-uy/.env.example carga-uy/.env
-```
-
-En Bash, usar `cp carga-uy/.env.example carga-uy/.env`. Editar el archivo copiado para usar
-el login simulado y crear el administrador inicial del backoffice:
-
-```dotenv
-GUBUY_MOCK=true
-GUBUY_REDIRECT_URI=http://localhost:8080/carga-uy/api/auth/callback
-CARGAUY_JWT_SECRET=secreto-local-solo-para-desarrollo
-LDAP_ADMIN_USUARIO=admin-local
-LDAP_ADMIN_PASSWORD=admin-local-123
-```
-
-Estos valores son de desarrollo. El archivo de ejemplo trae el login simulado desactivado.
-Luego levantar el entorno:
+Desde la raíz del repositorio, con Docker en ejecución:
 
 ```sh
-cd carga-uy
-docker compose up --build -d
+docker compose -f carga-uy/docker-compose.yml up --build -d
 ```
 
-El backoffice queda en http://localhost:8080/carga-uy/, con el usuario LDAP configurado arriba.
-Los servicios, puertos y volúmenes están descritos en [infraestructura](docs/infraestructura.md).
+El comando construye y levanta todos los componentes: el central, el frontend, los nodos, el
+suplantador de la PDI y la plataforma de observabilidad. La primera vez tarda varios minutos en
+construir las imágenes.
 
-En otra terminal, iniciar el [frontend](frontend/README.md#ejecutar-en-desarrollo). Con login
-simulado, `11111111` corresponde al funcionario de prueba y `55555555` al chofer Carlos.
+| Componente | Dirección |
+| --- | --- |
+| Frontend | http://localhost:5173/ |
+| Backoffice | http://localhost:8080/carga-uy/, con el usuario `admin-local` y la clave `admin-local-123` |
+| Grafana | http://localhost:3000/ |
+
+El login de gub.uy es simulado: `11111111` corresponde al funcionario de prueba y `55555555` al
+chofer Carlos. Los nodos de tracking y de balanzas quedan registrados y habilitados en el central.
+Los peajes, balanzas y lecturas de demo se cargan con los
+[scripts de balanzas](nodo-balanzas/README.md#cómo-levantarlo-con-el-resto). Los servicios, puertos
+y volúmenes están descritos en [infraestructura](docs/infraestructura.md).
+
+Estos valores son de desarrollo y no hace falta configurar nada. Para cambiarlos, por ejemplo para
+usar [gub.uy de testing](docs/seguridad.md#gubuy-de-testing) u otro
+[perfil de datos](docs/infraestructura.md#datos-del-central), copiar
+[carga-uy/.env.example](carga-uy/.env.example) a `carga-uy/.env` y definir ahí las variables.
+Para trabajar en el frontend con Vite, ver su [README](frontend/README.md#ejecutar-en-desarrollo).
 Para usar un celular o emulador, seguir la [configuración de Android](mobile/README.md#configuración).
-
-El Compose incluye los nodos, pero su registro y habilitación en el central se realizan desde
-el backoffice. Las guías de [tracking](nodo-tracking/README.md#cómo-levantarlo) y
-[balanzas](nodo-balanzas/README.md#agregar-un-nodo-nuevo) explican ese paso y sus simulaciones.
 
 ## Documentación técnica
 

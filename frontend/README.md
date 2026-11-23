@@ -2,9 +2,23 @@
 
 Interfaz web en React y TypeScript, con Vite, Tailwind CSS y Oxlint.
 
+## Ejecutar en un contenedor
+
+El [entorno local](../README.md#ejecución-local) ya incluye el frontend. El servicio `frontend` del
+Compose compila la aplicación con el [Dockerfile](Dockerfile) y la sirve con nginx en
+http://localhost:5173/. [nginx.conf](nginx.conf) reenvía los pedidos a `/api` al central, igual que
+el proxy de Vite, y responde `index.html` en las demás rutas. Para ver cambios del código, desde la
+raíz del repositorio:
+
+```sh
+docker compose -f carga-uy/docker-compose.yml up --build -d frontend
+```
+
 ## Ejecutar en desarrollo
 
-Requiere Node.js 24, npm y el [central levantado](../README.md#ejecución-local).
+Requiere Node.js 24, npm y el [central levantado](../README.md#ejecución-local). El contenedor
+del frontend ocupa el puerto 5173, así que primero hay que detenerlo con
+`docker compose -f carga-uy/docker-compose.yml stop frontend`.
 Desde la raíz del repositorio, en PowerShell:
 
 ```powershell
