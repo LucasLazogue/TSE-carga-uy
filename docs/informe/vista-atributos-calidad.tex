@@ -137,29 +137,28 @@ La carga de usuarios del frontoffice se dimensionó con el mismo criterio que el
 
 La Tabla~\ref{tab:resultado-cobertura} resume la cobertura de líneas que midió JaCoCo en el pipeline de integración continua sobre la rama principal del 21 de noviembre de 2026 (AC25).
 
-\begin{longtable}{|p{0.40\textwidth}|p{0.18\textwidth}|p{0.30\textwidth}|}
-    \caption{Cobertura de las pruebas automatizadas}\label{tab:resultado-cobertura}\
-    \hline
-    \textbf{Componente} & \textbf{Pruebas} & \textbf{Cobertura de líneas} \
-    \hline
-    \endfirsthead
-    \hline
-    \textbf{Componente} & \textbf{Pruebas} & \textbf{Cobertura de líneas} \
-    \hline
-    \endhead
-    Componente central & 706 & 89,3~\% \
-    \hline
-    Nodo de tracking & 45 & 96,6~\% \
-    \hline
-    Nodo de balanzas & 32 & 86,2~\% \
-    \hline
-    Suplantador de la PDI & 39 & Sin medir \
-    \hline
-    Aplicación móvil & 60 & Sin medir \
-    \hline
-    Frontoffice & Sin pruebas & -- \
-    \hline
-\end{longtable}
+\begin{table}[H]
+    \centering
+    \caption{Cobertura de las pruebas automatizadas}
+    \label{tab:resultado-cobertura}
+    \begin{tabular}{|p{6.8cm}|p{3.3cm}|p{5.4cm}|}
+        \hline
+            \textbf{Componente} & \textbf{Pruebas} & \textbf{Cobertura de líneas} \\
+        \hline
+            Componente central & 706 & 89,3~\% \\
+        \hline
+            Nodo de tracking & 45 & 96,6~\% \\
+        \hline
+            Nodo de balanzas & 32 & 86,2~\% \\
+        \hline
+            Suplantador de la PDI & 39 & Sin medir \\
+        \hline
+            Aplicación móvil & 60 & Sin medir \\
+        \hline
+            Frontoffice & Sin pruebas & -- \\
+        \hline
+    \end{tabular}
+\end{table}
 
 En el componente central la cobertura no es pareja: es más alta donde un error tendría consecuencias para terceros y no se vería a simple vista.
 
