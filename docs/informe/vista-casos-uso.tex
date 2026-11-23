@@ -312,26 +312,28 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \textbf{\underline{Precondiciones:}} Existen datos declarados y recibidos, y los umbrales de tolerancia están parametrizados. \\ \hline
 \textbf{\underline{Flujo principal:}}\par
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item La detección se ejecuta en segundo plano.
-    \item Si el evento es el fin de un viaje, consulta a Balanzas los pesajes del vehículo y evalúa el exceso de carga.
-    \item Verifica la vigencia del Permiso y la ITV.
-    \item Detecta actividad de vehículos sin Guía.
+    \item La detección se ejecuta en segundo plano, después de confirmarse la transacción del evento.
+    \item Con cada posición, detecta un viaje sin Guía si el vehículo no tiene un viaje en curso ni asignado.
+    \item Verifica la vigencia del Permiso y la ITV: con cada posición, a su fecha; al finalizar el viaje, a la fecha de inicio.
     \item Con cada posición de un viaje en curso, compara su distancia al tramo entre el origen y el destino de la Guía con la distancia máxima configurada (DA12).
+    \item Al finalizar el viaje, consulta a Balanzas los pesajes del vehículo y evalúa el exceso de carga.
     \item Comprueba que el hecho no haya generado otro caso.
     \item Crea el caso en estado \emph{detectada} y almacena la evidencia.
     \item Lo notifica a la empresa en la bandeja de la plataforma; el caso pasa a \emph{notificada} e inicia el plazo de descargo.
-    \item Registra la creación en la pista de auditoría.
+    \item Registra la creación y la notificación en la pista de auditoría.
 \end{enumerate} \\ \hline
 \textbf{\underline{Alternativas y excepciones:}}\par
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt,partopsep=0pt]
-    \item Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma.
+    \item Si Balanzas no responde, la evaluación queda pendiente sin detener la plataforma y se reintenta cada minuto.
     \item En el exceso de carga, la evidencia nueva se agrega al caso existente del mismo viaje; en las reglas de posición, un hecho ya registrado no abre otro caso.
 \end{itemize} \\ \hline
-\textbf{\underline{Postcondiciones:}} Existe un caso con evidencia, en estado \emph{notificada} o en \emph{detectada} hasta que se confirme el envío, sin duplicados y con su creación auditada. \\ \hline
+\textbf{\underline{Postcondiciones:}} Existe un caso con evidencia, en estado \emph{notificada}, sin duplicados y con su creación auditada. \\ \hline
 \end{tabular}
 \end{table}
 
-\textbf{Consulta a balanzas.} La integración con balanzas es de solicitud--respuesta (R3): los pesajes no llegan solos, el componente central los pide por vehículo y fecha. Por eso el exceso de carga se evalúa cuando el viaje finaliza: el motor pide los pesajes de cada fecha del viaje y compara cada pesada del horario del viaje con el peso del vehículo más su capacidad declarada y la tolerancia vigente. La justificación está en la decisión DA10 (Tabla \ref{tab:da10}).
+\textbf{Consulta a balanzas.} La integración con balanzas es de solicitud--respuesta (R3): los pesajes no llegan solos, el componente central los pide por vehículo y fecha. Por eso el exceso de carga se evalúa cuando el viaje finaliza: el motor pide los pesajes de cada fecha del viaje y compara cada pesada del horario del viaje con el peso del vehículo más su capacidad declarada, aumentado en la tolerancia vigente. La justificación de evaluar al finalizar está en la decisión DA10 (Tabla \ref{tab:da10}).
+
+\textbf{Tolerancia de exceso de carga.} La tolerancia es un porcentaje sobre ese máximo, con un valor inicial del 5~\%: una pesada cuenta como exceso solo si supera el peso del vehículo más su capacidad en más de ese porcentaje, para no abrir casos por las diferencias propias de la medición de la balanza. Es una norma de fiscalización que el administrador cambia desde el backoffice sin redesplegar, como pide la letra, y cada pesada se juzga con la norma vigente a su fecha, así que reevaluar un viaje viejo no cambia el criterio con que se juzga.
 
 \subsubsection{CU-16 Consultar reportes gerenciales y exportarlos}\label{sec:cu-16}
 \begin{table}[H]
