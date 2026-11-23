@@ -133,3 +133,50 @@ La carga de usuarios del frontoffice se dimensionó con el mismo criterio que el
 \end{longtable}
 
 
+\subsection{Resultado de la cobertura de pruebas}\label{sec:resultado-cobertura}
+
+La Tabla~\ref{tab:resultado-cobertura} resume la cobertura de líneas que midió JaCoCo en el pipeline de integración continua sobre la rama principal del 21 de noviembre de 2026 (AC25).
+
+\begin{longtable}{|p{0.40\textwidth}|p{0.18\textwidth}|p{0.30\textwidth}|}
+    \caption{Cobertura de las pruebas automatizadas}\label{tab:resultado-cobertura}\
+    \hline
+    \textbf{Componente} & \textbf{Pruebas} & \textbf{Cobertura de líneas} \
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{Componente} & \textbf{Pruebas} & \textbf{Cobertura de líneas} \
+    \hline
+    \endhead
+    Componente central & 706 & 89,3~\% \
+    \hline
+    Nodo de tracking & 45 & 96,6~\% \
+    \hline
+    Nodo de balanzas & 32 & 86,2~\% \
+    \hline
+    Suplantador de la PDI & 39 & Sin medir \
+    \hline
+    Aplicación móvil & 60 & Sin medir \
+    \hline
+    Frontoffice & Sin pruebas & -- \
+    \hline
+\end{longtable}
+
+En el componente central la cobertura no es pareja: es más alta donde un error tendría consecuencias para terceros y no se vería a simple vista.
+
+\begin{itemize}
+    \item \textbf{Fiscalización (96~\%).} El Motor de Fiscalización (94~\%) y el ciclo de vida de los casos (95~\%). Un error acá abre un caso contra una empresa que no infringió nada o deja pasar una infracción. Las pruebas recorren cada regla con sus umbrales y las transiciones de estado permitidas y no permitidas (AC26).
+    \item \textbf{Ingesta de tracking (89~\%).} El consumidor de la cola, la ingesta y la reasociación de las posiciones al viaje están al 100~\%. Un error acá pierde o duplica posiciones, o abre casos de viaje sin Guía que no lo son.
+    \item \textbf{Sincronización del móvil (99~\%) y Guías y viajes (100~\%).} Un error acá aplica dos veces un evento o deja un viaje en un estado que no corresponde.
+\end{itemize}
+
+Lo más bajo es lo que no tiene lógica propia o lo que, si falla, falla a la vista:
+
+\begin{itemize}
+    \item \textbf{Entidades (72~\%).} Son en su mayoría métodos de acceso a los atributos, que las pruebas de los servicios ejercitan en forma indirecta.
+    \item \textbf{Pantallas del backoffice (78~\%), LDAP (75~\%) y administración de nodos periféricos (63~\%).} No tienen pruebas automatizadas la conexión y la autenticación contra LDAP ni la habilitación, deshabilitación y baja de un nodo. Un error acá impide operar y se nota en el momento, al ingresar al backoffice o al registrar un nodo, en lugar de dejar datos incorrectos.
+    \item \textbf{Conexión al Almacén de Posiciones (56~\%).} Falta abrir y cerrar la conexión a MongoDB al arrancar. Las consultas se prueban contra un MongoDB real en un contenedor, y la conexión la verifica \texttt{/api/salud} (AC22).
+\end{itemize}
+
+La cobertura tampoco mide dos cosas. Las pruebas ejercitan los servicios fuera del servidor de aplicaciones, así que la configuración en WildFly (la activación del consumidor de la cola, las transacciones y los recursos JNDI) se verifica al desplegar y en la prueba de performance. Y el frontoffice no tiene pruebas automatizadas: el pipeline lo compila, verifica los tipos y corre oxlint. Como las reglas y los permisos están en el componente central, un error del frontoffice afecta cómo se pide o se muestra un dato, pero no qué se registra. La aplicación móvil tiene pruebas de las acciones permitidas en cada estado del viaje, de la sesión y de los datos que envía, pero sin medir su cobertura.
+
+En conjunto, las pruebas protegen lo que decide qué se registra: las reglas, los casos, la ingesta y la sincronización. El riesgo que queda está en la integración con el servidor de aplicaciones y en el frontoffice.
