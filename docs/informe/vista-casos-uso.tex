@@ -331,7 +331,9 @@ Puede pasar también lo inverso: si el chofer inicia el viaje sin conexión, las
 \end{tabular}
 \end{table}
 
-\textbf{Consulta a balanzas.} La integración con balanzas es de solicitud--respuesta (R3): los pesajes no llegan solos, el componente central los pide por vehículo y fecha. Por eso el exceso de carga se evalúa cuando el viaje finaliza: el motor pide los pesajes de cada fecha del viaje y compara cada pesada del horario del viaje con el peso del vehículo más su capacidad declarada y la tolerancia vigente. La justificación está en la decisión DA10 (Tabla \ref{tab:da10}).
+\textbf{Consulta a balanzas.} La integración con balanzas es de solicitud--respuesta (R3): los pesajes no llegan solos, el componente central los pide por vehículo y fecha. Por eso el exceso de carga se evalúa cuando el viaje finaliza: el motor pide los pesajes de cada fecha del viaje y compara cada pesada del horario del viaje con el peso del vehículo más su capacidad declarada, aumentado en la tolerancia vigente. La justificación de evaluar al finalizar está en la decisión DA10 (Tabla \ref{tab:da10}).
+
+\textbf{Tolerancia de exceso de carga.} La tolerancia es un porcentaje sobre ese máximo, con un valor inicial del 5~\%: una pesada cuenta como exceso solo si supera el peso del vehículo más su capacidad en más de ese porcentaje, para no abrir casos por las diferencias propias de la medición de la balanza. Es una norma de fiscalización que el administrador cambia desde el backoffice sin redesplegar, como pide la letra, y cada pesada se juzga con la norma vigente a su fecha, así que reevaluar un viaje viejo no cambia el criterio con que se juzga.
 
 \subsubsection{CU-16 Consultar reportes gerenciales y exportarlos}\label{sec:cu-16}
 \begin{table}[H]
